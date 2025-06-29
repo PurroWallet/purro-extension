@@ -1,0 +1,27 @@
+/**
+ * Message types for communication between client and background script
+ */
+export const MESSAGE_TYPES = {
+    GET_ACCOUNTS: 'GET_ACCOUNTS',
+    CREATE_ACCOUNT: 'CREATE_ACCOUNT',
+    DELETE_ACCOUNT: 'DELETE_ACCOUNT',
+} as const;
+
+export type MessageType = typeof MESSAGE_TYPES[keyof typeof MESSAGE_TYPES];
+
+/**
+ * Error codes for message responses
+ */
+export const ERROR_CODES = {
+    UNKNOWN_MESSAGE_TYPE: 'UNKNOWN_MESSAGE_TYPE',
+    INVALID_PARAMETERS: 'INVALID_PARAMETERS',
+    WALLET_LOCKED: 'WALLET_LOCKED',
+    ACCOUNT_NOT_FOUND: 'ACCOUNT_NOT_FOUND',
+    INSUFFICIENT_BALANCE: 'INSUFFICIENT_BALANCE',
+    TRANSACTION_FAILED: 'TRANSACTION_FAILED',
+    SIGNATURE_FAILED: 'SIGNATURE_FAILED',
+    PERMISSION_DENIED: 'PERMISSION_DENIED',
+    NETWORK_ERROR: 'NETWORK_ERROR',
+} as const;
+
+export type ErrorCode = typeof ERROR_CODES[keyof typeof ERROR_CODES]; 

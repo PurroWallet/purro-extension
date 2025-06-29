@@ -1,0 +1,39 @@
+{
+	"type": "module",
+	"scripts": {
+		"build": "vite build",
+		"build:watch": "vite build --watch --mode development",
+		"type-check": "tsc --noEmit",
+		"test:encryption": "npx tsx src/background/lib/encryption-test.ts",
+		"test:storage": "npx tsx src/background/handlers/test/storage-handler.test.ts",
+		"test:account": "npx tsx src/background/handlers/test/account-handler.test.ts",
+		"test:handlers": "npx tsx src/background/handlers/test/run-all-tests.ts"
+	},
+	"dependencies": {
+		"@mysten/sui": "^1.30.5",
+		"@solana/web3.js": "^1.98.2",
+		"@tailwindcss/vite": "^4.1.8",
+		"@tanstack/react-query": "^5.80.7",
+		"alchemy-sdk": "^3.6.0",
+		"bs58": "^6.0.0",
+		"buffer": "^6.0.3",
+		"clsx": "^2.1.1",
+		"ethers": "^6.14.3",
+		"lucide-react": "^0.513.0",
+		"motion": "^12.16.0",
+		"qrcode.react": "^4.2.0",
+		"react": "^19.1.0",
+		"react-dom": "^19.1.0",
+		"tailwind-merge": "^3.3.0",
+		"tailwindcss": "^4.1.8",
+		"vite": "^6.3.5",
+		"zustand": "^5.0.5"
+	},
+	"devDependencies": {
+		"@types/chrome": "^0.0.326",
+		"@types/react": "^19.1.6",
+		"@types/react-dom": "^19.1.6",
+		"@vitejs/plugin-react": "^4.5.1",
+		"typescript": "^5.8.3"
+	}
+}
