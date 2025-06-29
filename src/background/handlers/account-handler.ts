@@ -9,32 +9,6 @@ import { ethers } from "ethers";
 import { CreateWalletData, ImportSeedPhraseData } from "../types/message-data";
 
 export const accountHandler = {
-
-    // Create First Wallet (Onboarding)
-    async createWallet(data: CreateWalletData): Promise<AccountInformation> {
-        // Validate
-        const [accounts, passwordStored] = await Promise.all([
-            storageHandler.getAccounts(),
-            storageHandler.getStoredPassword()
-        ]);
-        if (accounts.length > 0) {
-            throw new Error("Wallet already exists");
-        }
-        if (passwordStored) {
-            throw new Error("Password already exists");
-        }
-
-        // Validate mnemonic
-        const seedPhraseId = await this.importSeedPhrase(data);
-
-        const account = await this.createAccountBySeedPhrase({
-            seedPhraseId: seedPhraseId,
-            password: data.password,
-        });
-
-        return account;
-    },
-
     // Check methods
     async isSeedPhraseAlreadyImported(mnemonic: string): Promise<boolean> {
         try {
@@ -98,6 +72,34 @@ export const accountHandler = {
             console.error("Error getting private key ID:", error);
             return null;
         }
+    },
+
+
+    /*//////////////////////////////////////////////////////////////
+                                WRITE
+   //////////////////////////////////////////////////////////////*/
+    async createWallet(data: CreateWalletData): Promise<AccountInformation> {
+        // Validate
+        const [accounts, passwordStored] = await Promise.all([
+            storageHandler.getAccounts(),
+            storageHandler.getStoredPassword()
+        ]);
+        if (accounts.length > 0) {
+            throw new Error("Wallet already exists");
+        }
+        if (passwordStored) {
+            throw new Error("Password already exists");
+        }
+
+        // Validate mnemonic
+        const seedPhraseId = await this.importSeedPhrase(data);
+
+        const account = await this.createAccountBySeedPhrase({
+            seedPhraseId: seedPhraseId,
+            password: data.password,
+        });
+
+        return account;
     },
 
     async importSeedPhrase(data: ImportSeedPhraseData): Promise<string> {
@@ -200,7 +202,8 @@ export const accountHandler = {
                 storageHandler.saveAccountById(accountId, newAccount),
                 storageHandler.saveAccounts(accountId),
                 storageHandler.saveWallet(accountId, wallet),
-                storageHandler.updateSeedPhrase(data.seedPhraseId, { ...seedPhraseData, currentDerivationIndex: derivationIndex }, [accountId])
+                storageHandler.updateSeedPhrase(data.seedPhraseId, { ...seedPhraseData, currentDerivationIndex: derivationIndex }, [accountId]),
+                storageHandler.setActiveAccount(accountId)
             ])
 
             return newAccount;
@@ -317,7 +320,8 @@ export const accountHandler = {
             storageHandler.savePrivateKey(privateKeyId, encryptedPrivateKey),
             storageHandler.saveAccountById(accountId, newAccount),
             storageHandler.saveAccounts(accountId),
-            storageHandler.saveWallet(accountId, wallet)
+            storageHandler.saveWallet(accountId, wallet),
+            storageHandler.setActiveAccount(accountId)
         ])
 
         return newAccount;

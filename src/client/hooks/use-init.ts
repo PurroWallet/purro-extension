@@ -4,9 +4,7 @@ import { STORAGE_KEYS } from "@/background/constants/storage-keys";
 
 const useInit = () => {
     const { loading, hasWallet, initialized, loadWalletState } = useWalletStore();
-    console.log("loading", loading);
-    console.log("hasWallet", hasWallet);
-    console.log("initialized", initialized);
+
 
     useEffect(() => {
         // Initialize wallet state on first load

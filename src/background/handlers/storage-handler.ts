@@ -14,9 +14,6 @@ export const storageHandler = {
             this.getAllAccounts(),
             this.getAllWallets()
         ]);
-
-        console.log("accounts", accounts);
-
         return {
             isLocked: !isUnlocked,
             hasWallet: accounts.length > 0,
@@ -56,7 +53,18 @@ export const storageHandler = {
 
     async getActiveAccount(): Promise<AccountInformation | null> {
         const result = await chrome.storage.local.get([STORAGE_KEYS.ACCOUNT_ACTIVE_ACCOUNT]);
-        return result[STORAGE_KEYS.ACCOUNT_ACTIVE_ACCOUNT] || null;
+        const rawActive = result[STORAGE_KEYS.ACCOUNT_ACTIVE_ACCOUNT] as unknown;
+        const activeAccountId = rawActive as string | AccountInformation | undefined;
+        if (!activeAccountId) {
+            return null;
+        }
+
+        // If the stored value is an object (legacy data), return it directly
+        if (typeof activeAccountId !== 'string') {
+            return activeAccountId as AccountInformation;
+        }
+
+        return await storageHandler.getAccountById(activeAccountId);
     },
 
     async getAccounts(): Promise<string[]> {
@@ -194,6 +202,11 @@ export const storageHandler = {
                 [STORAGE_KEYS.ACCOUNTS]: [...currentAccounts, accountId]
             });
 
+            // Automatically set active account if this is the first account being added
+            if (currentAccounts.length === 0) {
+                await storageHandler.setActiveAccount(accountId);
+            }
+
             return [...currentAccounts, accountId];
         } catch (error) {
             console.error("Error saving accounts: ", error);
@@ -260,10 +273,10 @@ export const storageHandler = {
     },
 
     // Update
-    setActiveAccount: async (account: AccountInformation): Promise<void> => {
+    setActiveAccount: async (accountId: string): Promise<void> => {
         try {
             const storageKey = STORAGE_KEYS.ACCOUNT_ACTIVE_ACCOUNT;
-            await chrome.storage.local.set({ [storageKey]: account });
+            await chrome.storage.local.set({ [storageKey]: accountId });
         } catch (error) {
             console.error("Error setting active account: ", error);
             throw error;
@@ -315,6 +328,17 @@ export const storageHandler = {
             await chrome.storage.local.set({
                 [STORAGE_KEYS.ACCOUNTS]: updatedAccounts
             });
+
+            // If the removed account was active, update active account to the next available one or clear it
+            const currentActive = await storageHandler.getActiveAccount();
+            if (currentActive && currentActive.id === accountId) {
+                if (updatedAccounts.length > 0) {
+                    await storageHandler.setActiveAccount(updatedAccounts[0]);
+                } else {
+                    // No accounts left, remove active account key
+                    await chrome.storage.local.remove(STORAGE_KEYS.ACCOUNT_ACTIVE_ACCOUNT);
+                }
+            }
 
             return updatedAccounts;
         } catch (error) {

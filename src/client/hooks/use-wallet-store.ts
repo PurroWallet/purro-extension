@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { WalletState } from '@/types';
-import { walletMessageServices } from '../services/background-messaging/wallet-message-services';
+import { sendMessage } from '@/client/utils/extension-message-utils';
+import { AccountInformation } from '@/background/types/account';
 
 interface ExtendedWalletState extends WalletState {
     loading: boolean;
@@ -29,10 +30,8 @@ const useWalletStore = create<ExtendedWalletState & WalletStateAction>((set, get
 
     loadWalletState: async () => {
         try {
-            console.log('🔄 Loading wallet state...');
             set({ loading: true, error: null });
-            const walletState = await walletMessageServices.getWalletState();
-            console.log('✅ Wallet state loaded:', walletState);
+            const walletState = await sendMessage("GET_WALLET_STATE")
 
             // Transform to match ExtendedWalletState interface
             const transformedState: Partial<ExtendedWalletState> = {
@@ -64,7 +63,7 @@ const useWalletStore = create<ExtendedWalletState & WalletStateAction>((set, get
         try {
             console.log('🔄 Refreshing wallet state...');
             // Get wallet state from background
-            const walletState = await walletMessageServices.getWalletState();
+            const walletState = await sendMessage("GET_WALLET_STATE");
             console.log('✅ Wallet state refreshed:', walletState);
 
             const transformedState: Partial<ExtendedWalletState> = {

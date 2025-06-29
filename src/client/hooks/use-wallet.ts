@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 
 import useWalletStore from './use-wallet-store';
-import { sendMessage } from "../services/background-messaging/extension-message-utils";
+import { sendMessage } from "../utils/extension-message-utils";
 import { CreateWalletData } from "@/background/types/message-data";
 
 const useWallet = () => {
