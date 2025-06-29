@@ -39,6 +39,17 @@ class Background {
 
             return true;
         });
+
+        // Listen for auto-lock alarms
+        chrome.alarms.onAlarm.addListener(async (alarm) => {
+            if (alarm.name === 'AUTO_LOCK') {
+                try {
+                    await import('./handlers/auth-handler').then(m => m.authHandler.lock());
+                } catch (err) {
+                    console.error('Failed to auto-lock wallet:', err);
+                }
+            }
+        });
     }
 }
 

@@ -4,21 +4,22 @@ import Header from "@/client/component/common/header";
 import { useState } from "react";
 import logo from "@/assets/icon.png";
 import useDialogStore from "@/client/hooks/use-dialog-store";
-// import ForgotPassword from "@/client/screens/forgot-password";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import { Button, InputPassword } from "@/client/component/ui";
 import LoadingDisplay from "@/client/component/display/loading-display";
+import ForgotPassword from "../dialog/forgot-password";
 
 const LockDisplay = () => {
-  const { loading, isLocked, hasWallet } = useWalletStore();
-  // const { unlockWallet, loading } = useWallet();
+  const { loading, isLocked, hasWallet, loadWalletState } = useWalletStore();
+  const { unlockWallet } = useWallet();
   const [password, setPassword] = useState("");
   const [hasError, setHasError] = useState(false);
   const { openDialog } = useDialogStore();
 
   const handleUnlock = async () => {
     try {
-      // await unlockWallet(password);
+      await unlockWallet(password);
+      await loadWalletState();
     } catch (error) {
       setHasError(true);
     }
@@ -65,7 +66,7 @@ const LockDisplay = () => {
             />
             <p
               className="text-base cursor-pointer hover:underline text-gray-500"
-              // onClick={() => openDialog(<ForgotPassword />)}
+              onClick={() => openDialog(<ForgotPassword />)}
             >
               Forgot password?
             </p>

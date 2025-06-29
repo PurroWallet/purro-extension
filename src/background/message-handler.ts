@@ -1,6 +1,7 @@
 import { MessageResponse } from './background';
 import { MessageRequest } from './background';
 import { accountHandler } from './handlers/account-handler';
+import { authHandler } from './handlers/auth-handler';
 import { storageHandler } from './handlers/storage-handler';
 
 export class MessageHandler {
@@ -38,6 +39,15 @@ export class MessageHandler {
                     break;
                 case 'IMPORT_SEED_PHRASE':
                     result = await accountHandler.importSeedPhrase(data);
+                    break;
+                case 'UNLOCK_WALLET':
+                    result = await authHandler.unlock(data);
+                    break;
+                case 'LOCK_WALLET':
+                    result = await authHandler.lock();
+                    break;
+                case 'RESET_WALLET':
+                    result = await storageHandler.resetWallet();
                     break;
 
                 default:

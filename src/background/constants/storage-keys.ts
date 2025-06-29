@@ -9,6 +9,6 @@ export const STORAGE_KEYS = {
     ACCOUNT_ACTIVE_ACCOUNT: `purro:account:active`,
 
     // Session
-    SESSION_PASSWORD: `purro:session`,
     SESSION_TIMEOUT: `purro:session:timeout`,
+    SESSION_IS_LOCKED: `purro:session:isLocked`,
 }

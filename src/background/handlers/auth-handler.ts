@@ -10,6 +10,16 @@ export const MAX_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours max
 export const MIN_TIMEOUT = 5 * 60 * 1000; // 5 minutes min
 
 export const authHandler = {
+    // Utility: schedule automatic lock via Chrome alarms
+    scheduleAutoLock(timeoutMs: number) {
+        try {
+            // Clear any existing auto-lock alarm first
+            chrome.alarms.clear('AUTO_LOCK');
+            chrome.alarms.create('AUTO_LOCK', { when: Date.now() + timeoutMs });
+        } catch (e) {
+            console.warn('Unable to schedule auto-lock alarm', e);
+        }
+    },
     // Read
     async getSession(): Promise<SessionData | null> {
         // Auto-lock expired sessions
@@ -43,16 +53,28 @@ export const authHandler = {
             timestamp: Date.now(),
             expiresAt: Date.now() + timeout
         };
+
+        // Wallet is now unlocked
+        await chrome.storage.local.set({ [STORAGE_KEYS.SESSION_IS_LOCKED]: false });
+
+        // Schedule automatic lock
+        this.scheduleAutoLock(timeout);
     },
 
-    async unlock(password: string): Promise<void> {
+    async unlock(data: { password: string }): Promise<void> {
+        console.log("unlock", data.password);
         const passwordStored = await storageHandler.getStoredPassword();
 
-        if (!passwordStored) {
-            throw new Error("Password not found");
+        if (!passwordStored || !passwordStored.data || !passwordStored.salt) {
+            throw new Error("Password storage corrupted or not found");
         }
 
-        const isValidPassword = await encryption.verifyPassword(password, passwordStored.data, passwordStored.salt);
+        const isValidPassword = await encryption.verifyPassword(
+            data.password,
+            passwordStored.data,
+            passwordStored.salt
+        );
+
         if (!isValidPassword) {
             throw new Error("Invalid password");
         }
@@ -60,18 +82,41 @@ export const authHandler = {
         const timeout = await this.getSessionTimeout();
 
         session = {
-            password: password,
+            password: data.password,
             timestamp: Date.now(),
             expiresAt: Date.now() + timeout
         };
+
+        // Persist lock state for other extension contexts
+        await chrome.storage.local.set({ [STORAGE_KEYS.SESSION_IS_LOCKED]: false });
+
+        // Schedule automatic lock
+        this.scheduleAutoLock(timeout);
     },
 
     async lock(): Promise<void> {
-        // Clear sensitive data from memory for security
         if (session?.password) {
-            session.password = ''; // Overwrite password string
+            // Overwrite multiple times
+            const len = session.password.length;
+            session.password = '0'.repeat(len);
+            session.password = '1'.repeat(len);
+            session.password = crypto.getRandomValues(new Uint8Array(len)).join('');
+            session.password = '';
         }
         session = null;
+
+        // Force garbage collection if possible
+        if (global.gc) global.gc();
+
+        // Clear auto-lock alarm
+        try {
+            chrome.alarms.clear('AUTO_LOCK');
+        } catch (e) {
+            console.warn('Unable to clear auto-lock alarm', e);
+        }
+
+        // Update lock state flag in storage so UI can react
+        await chrome.storage.local.set({ [STORAGE_KEYS.SESSION_IS_LOCKED]: true });
     },
 
     async isUnlocked(): Promise<boolean> {

@@ -68,12 +68,31 @@ const useWallet = () => {
         return exists;
     }, []);
 
+    const unlockWallet = useCallback(async (password: string) => {
+        console.log("unlockWallet", password);
+        const unlocked = await sendMessage("UNLOCK_WALLET", { password });
+        return unlocked;
+    }, []);
+
+    const resetWallet = useCallback(async () => {
+        const reset = await sendMessage("RESET_WALLET");
+        return reset;
+    }, []);
+
+    const lockWallet = useCallback(async () => {
+        const locked = await sendMessage("LOCK_WALLET");
+        return locked;
+    }, []);
+
     return {
         createWallet,
         importWallet,
         importSeedPhrase,
         checkSeedPhraseExists,
-        checkPrivateKeyExists
+        checkPrivateKeyExists,
+        unlockWallet,
+        resetWallet,
+        lockWallet
     }
 };
 

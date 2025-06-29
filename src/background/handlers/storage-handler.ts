@@ -15,6 +15,8 @@ export const storageHandler = {
             this.getAllWallets()
         ]);
 
+        console.log("accounts", accounts);
+
         return {
             isLocked: !isUnlocked,
             hasWallet: accounts.length > 0,

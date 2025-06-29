@@ -56,7 +56,8 @@
         "tabs",
         "scripting",
         "sidePanel",
-        "system.display"
+        "system.display",
+        "alarms"
     ],
     "host_permissions": [
         "https://*/*"

@@ -402,7 +402,7 @@ export const accountHandler = {
             const currentSession = await authHandler.getSession();
             if (currentSession) {
                 await authHandler.lock();
-                await authHandler.unlock(data.newPassword);
+                await authHandler.unlock({ password: data.newPassword });
             }
 
         } catch (error) {
