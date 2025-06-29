@@ -48,7 +48,9 @@ const LockDisplay = () => {
     >
       <div className="flex flex-col h-full">
         <Header>
-          <div className="text-lg text-center w-full">PURRO</div>
+          <div className="text-lg text-center w-full font-livvic font-semibold">
+            PURRO
+          </div>
         </Header>
         <div className="flex-1 flex justify-center items-center p-4">
           <div className="w-full flex flex-col items-center gap-2">
