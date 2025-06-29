@@ -1,5 +1,6 @@
 import './polyfills';
 import { MessageHandler } from './message-handler';
+import { authHandler } from './handlers/auth-handler';
 
 export interface MessageRequest {
     type: string;
@@ -44,7 +45,7 @@ class Background {
         chrome.alarms.onAlarm.addListener(async (alarm) => {
             if (alarm.name === 'AUTO_LOCK') {
                 try {
-                    await import('./handlers/auth-handler').then(m => m.authHandler.lock());
+                    await authHandler.lock();
                 } catch (err) {
                     console.error('Failed to auto-lock wallet:', err);
                 }
