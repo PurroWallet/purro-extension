@@ -10,6 +10,7 @@ import MainHeader, {
 } from "./main-header";
 import { cn } from "@/client/lib/utils";
 import { Clock, HomeIcon, ImageIcon, Search } from "lucide-react";
+import AccountSheet from "@/client/component/account-sheet/account-sheet";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,8 @@ const Main = () => {
     <QueryClientProvider client={queryClient}>
       <LockDisplay />
       <Dialog />
+      <Drawer />
+      <AccountSheet />
       <MainContent />
     </QueryClientProvider>
   );
@@ -37,8 +40,6 @@ export const MainContent = () => {
 
   return (
     <div className="size-full relative flex flex-col h-screen">
-      <Dialog />
-      <Drawer />
       <MainHeader
         className={cn(
           mainScreen === "home" && "bg-[var(--primary-color)] border-b-0"

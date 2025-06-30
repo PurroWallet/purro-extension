@@ -114,7 +114,11 @@ export const accountHandler = {
         }
 
         // Check if seed phrase already exists
-        const isAlreadyImported = await this.isSeedPhraseAlreadyImported(data.mnemonic);
+        const [isAlreadyImported, allSeedPhrases] = await Promise.all([
+            this.isSeedPhraseAlreadyImported(data.mnemonic),
+            storageHandler.getAllSeedPhrases()
+        ]);
+
         if (isAlreadyImported) {
             // Return existing seed phrase ID instead of throwing error
             const existingId = await this.getSeedPhraseIdByMnemonic(data.mnemonic);
@@ -135,6 +139,7 @@ export const accountHandler = {
         ]);
 
         const seedPhraseData: SeedPhraseData = {
+            name: `Seed Phrase ${allSeedPhrases.length + 1}`,
             data: encryptedSeedPhrase,
             currentDerivationIndex: -1, // Initialize to -1 so first account starts at 0
         };
@@ -443,6 +448,12 @@ export const accountHandler = {
                 await storageHandler.removeAccountFromSeedPhrase(account.seedPhraseId, accountId);
             }
 
+            // Reset wallet if no accounts remain
+            const remainingAccounts = await storageHandler.getAccounts();
+            if (remainingAccounts.length === 0) {
+                await storageHandler.resetWallet();
+            }
+
         } catch (error) {
             console.error("Error removing account:", error);
             throw new Error("Failed to remove account. Please try again.");
@@ -494,6 +505,12 @@ export const accountHandler = {
                 storageHandler.removeSeedPhrase(seedPhraseId)
             ]);
 
+            // Reset wallet if no accounts remain
+            const remainingSeedAccounts = await storageHandler.getAccounts();
+            if (remainingSeedAccounts.length === 0) {
+                await storageHandler.resetWallet();
+            }
+
         } catch (error) {
             console.error("Error removing seed phrase:", error);
             throw new Error("Failed to remove seed phrase and associated accounts. Please try again.");
@@ -536,6 +553,12 @@ export const accountHandler = {
                 ...removeAccountPromises,
                 storageHandler.removePrivateKey(privateKeyId)
             ]);
+
+            // Reset wallet if no accounts remain
+            const remainingPKAccounts = await storageHandler.getAccounts();
+            if (remainingPKAccounts.length === 0) {
+                await storageHandler.resetWallet();
+            }
 
         } catch (error) {
             console.error("Error removing private key:", error);
@@ -600,7 +623,21 @@ export const accountHandler = {
         return privateKey;
     },
 
-    async exportPrivateKey(accountId: string, password: string): Promise<string> {
+    // Overload definitions for better DX
+    async exportPrivateKey(accountId: string, chainOrPassword: ChainType | string, maybePassword?: string): Promise<string> {
+        // Allow calling with (accountId, password) or (accountId, chain, password)
+        let selectedChain: ChainType = "eip155"; // Default to EVM
+        let password: string;
+
+        if (maybePassword === undefined) {
+            // Signature: (accountId, password)
+            password = chainOrPassword as string;
+        } else {
+            // Signature: (accountId, chain, password)
+            selectedChain = chainOrPassword as ChainType;
+            password = maybePassword as string;
+        }
+
         // Parallel validation and account retrieval
         const [passwordStored, account] = await Promise.all([
             storageHandler.getStoredPassword(),
@@ -622,26 +659,39 @@ export const accountHandler = {
 
         let privateKey: string;
 
+        // Case 1: Account created from an imported private key
         if (account.source === 'privateKey' && account.privateKeyId) {
-            // Get private key directly
             const encryptedPrivateKey = await storageHandler.getPrivateKeyById(account.privateKeyId);
             if (!encryptedPrivateKey) {
                 throw new Error("Private key not found");
             }
             privateKey = await encryption.decrypt(encryptedPrivateKey, password);
-        } else if (account.source === 'seedPhrase' && account.seedPhraseId && account.derivationIndex !== undefined) {
-            // Derive private key from seed phrase
+
+            // Optional: Validate the decrypted key matches the requested chain
+            if (!multiChainWalletUtils.isValidPrivateKey(privateKey, selectedChain)) {
+                throw new Error(`The stored private key is not valid for chain ${selectedChain}`);
+            }
+        }
+        // Case 2: Account derived from a seed phrase – derive key according to chain
+        else if (account.source === 'seedPhrase' && account.seedPhraseId && account.derivationIndex !== undefined) {
             const seedPhraseData = await storageHandler.getSeedPhraseById(account.seedPhraseId);
             if (!seedPhraseData) {
                 throw new Error("Seed phrase not found");
             }
 
             const mnemonic = await encryption.decrypt(seedPhraseData.data, password);
-            const mnemonicInstance = ethers.Mnemonic.fromPhrase(mnemonic);
-            const seed = Buffer.from(mnemonicInstance.computeSeed());
-            const evmWallet = evmWalletKeyUtils.deriveFromSeed(seed, account.derivationIndex);
-            privateKey = evmWallet.privateKey;
-        } else {
+
+            if (selectedChain === 'eip155') {
+                privateKey = evmWalletKeyUtils.deriveFromMnemonic(mnemonic, account.derivationIndex).privateKey;
+            } else if (selectedChain === 'solana') {
+                privateKey = solanaWalletKeyUtils.deriveFromMnemonic(mnemonic, account.derivationIndex).privateKey;
+            } else if (selectedChain === 'sui') {
+                privateKey = suiWalletKeyUtils.deriveFromMnemonic(mnemonic, account.derivationIndex).privateKey;
+            } else {
+                throw new Error("Unsupported chain type");
+            }
+        }
+        else {
             throw new Error("Invalid account configuration");
         }
 
@@ -649,7 +699,6 @@ export const accountHandler = {
     },
 
     async exportSeedPhrase(seedPhraseId: string, password: string): Promise<string> {
-        // Parallel validation and seed phrase retrieval
         const [passwordStored, seedPhraseData] = await Promise.all([
             storageHandler.getStoredPassword(),
             storageHandler.getSeedPhraseById(seedPhraseId)

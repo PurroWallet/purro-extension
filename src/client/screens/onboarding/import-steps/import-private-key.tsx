@@ -21,12 +21,8 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
 
   const validatePrivateKey = async () => {
     if (!privateKey) {
-      console.log("❌ Validation failed: No private key provided");
       return false;
     }
-
-    console.log(`🔍 Validating private key for chain: ${chain}`);
-    console.log(`📝 Private key length: ${privateKey.length} characters`);
 
     try {
       // First validate the private key format and get address
@@ -40,111 +36,36 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
         chain === "base" ||
         chain === "arbitrum"
       ) {
-        console.log(`🔗 Processing EVM chain: ${chain}`);
-        console.log(`📋 Private key format check:`, {
-          length: privateKey.length,
-          startsWithOx: privateKey.startsWith("0x"),
-          first10chars: privateKey.substring(0, 10),
-          last10chars: privateKey.substring(privateKey.length - 10),
-        });
-
         try {
           isValid = evmWalletKeyUtils.isValidPrivateKey(privateKey);
-          console.log(`✅ EVM private key validation result: ${isValid}`);
 
           if (isValid) {
             const wallet = evmWalletKeyUtils.fromPrivateKey(privateKey);
             walletAddress = wallet.address;
-            console.log(`🏠 EVM wallet address generated: ${walletAddress}`);
-            console.log(`🔑 EVM wallet details:`, {
-              privateKey: wallet.privateKey,
-              publicKey: wallet.publicKey.substring(0, 20) + "...",
-              address: wallet.address,
-            });
-          } else {
-            console.log(
-              `❌ EVM private key validation failed - trying to understand why...`
-            );
-
-            // Try to create wallet anyway to see what happens
-            try {
-              const testWallet = evmWalletKeyUtils.fromPrivateKey(privateKey);
-              console.log(`🧪 Test wallet creation succeeded:`, {
-                inputKey: privateKey,
-                walletKey: testWallet.privateKey,
-                address: testWallet.address,
-                keysMatch: privateKey === testWallet.privateKey,
-                normalizedMatch:
-                  (privateKey.startsWith("0x")
-                    ? privateKey
-                    : `0x${privateKey}`
-                  ).toLowerCase() === testWallet.privateKey.toLowerCase(),
-              });
-            } catch (testError) {
-              console.error(`🧪 Test wallet creation failed:`, testError);
-            }
           }
         } catch (evmError) {
           console.error(`❌ EVM validation error for ${chain}:`, evmError);
           isValid = false;
         }
       } else if (chain === "solana") {
-        console.log("🔗 Processing Solana chain");
         try {
           isValid = solanaWalletKeyUtils.isValidPrivateKey(privateKey);
-          console.log(`✅ Solana private key validation result: ${isValid}`);
 
           if (isValid) {
             const wallet = solanaWalletKeyUtils.fromPrivateKey(privateKey);
             walletAddress = wallet.address;
-            console.log(`🏠 Solana wallet address generated: ${walletAddress}`);
           }
         } catch (solanaError) {
           console.error("❌ Solana validation error:", solanaError);
           isValid = false;
         }
       } else if (chain === "sui") {
-        console.log("🔗 Processing Sui chain");
-        console.log(`📋 Sui private key format check:`, {
-          length: privateKey.length,
-          startsWithOx: privateKey.startsWith("0x"),
-          first10chars: privateKey.substring(0, 10),
-          last10chars: privateKey.substring(privateKey.length - 10),
-          isValidHex: /^[0-9a-fA-F]+$/.test(
-            privateKey.startsWith("0x") ? privateKey.slice(2) : privateKey
-          ),
-        });
-
         try {
           isValid = suiWalletKeyUtils.isValidPrivateKey(privateKey);
-          console.log(`✅ Sui private key validation result: ${isValid}`);
 
           if (isValid) {
             const wallet = suiWalletKeyUtils.fromPrivateKey(privateKey);
             walletAddress = wallet.address;
-            console.log(`🏠 Sui wallet address generated: ${walletAddress}`);
-            console.log(`🔑 Sui wallet details:`, {
-              privateKey: wallet.privateKey,
-              publicKey: wallet.publicKey.substring(0, 20) + "...",
-              address: wallet.address,
-            });
-          } else {
-            console.log(
-              `❌ Sui private key validation failed - trying to understand why...`
-            );
-
-            // Try to create wallet anyway to see what happens
-            try {
-              const testWallet = suiWalletKeyUtils.fromPrivateKey(privateKey);
-              console.log(`🧪 Sui test wallet creation succeeded:`, {
-                inputKey: privateKey,
-                walletKey: testWallet.privateKey,
-                address: testWallet.address,
-                publicKey: testWallet.publicKey,
-              });
-            } catch (testError) {
-              console.error(`🧪 Sui test wallet creation failed:`, testError);
-            }
           }
         } catch (suiError) {
           console.error("❌ Sui validation error:", suiError);
@@ -159,13 +80,10 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
 
       // Set the address for display
       setAddress(walletAddress);
-      console.log(`✅ Address set for display: ${walletAddress}`);
 
       // Check if private key already exists
-      console.log("🔍 Checking if private key already exists...");
       try {
         const exists = await checkPrivateKeyExists(privateKey);
-        console.log(`📋 Private key existence check result: ${exists}`);
 
         if (exists) {
           console.warn("⚠️ Private key already exists in wallet");
@@ -177,7 +95,6 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
         // Continue with import even if check fails
       }
 
-      console.log("✅ Private key validation completed successfully");
       return true;
     } catch (error) {
       console.error("❌ Private key validation failed with error:", error);
@@ -217,9 +134,6 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
               showToggle={false}
               onChange={async (e) => {
                 const inputValue = e.target.value;
-                console.log(
-                  `📝 Private key input changed, length: ${inputValue.length}`
-                );
 
                 setPrivateKey(inputValue);
                 setError(null); // Clear error when user types
@@ -227,8 +141,6 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
 
                 // Validate and show address if private key is valid
                 if (inputValue.trim()) {
-                  console.log(`🔍 Real-time validation for chain: ${chain}`);
-
                   try {
                     let isValid = false;
                     let walletAddress = "";
@@ -240,94 +152,48 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
                       chain === "base" ||
                       chain === "arbitrum"
                     ) {
-                      console.log(`🔗 Real-time EVM validation for: ${chain}`);
                       try {
                         isValid =
                           evmWalletKeyUtils.isValidPrivateKey(inputValue);
-                        console.log(
-                          `🔍 Real-time EVM isValidPrivateKey result: ${isValid}`
-                        );
 
                         if (isValid) {
                           const wallet =
                             evmWalletKeyUtils.fromPrivateKey(inputValue);
                           walletAddress = wallet.address;
-                          console.log(
-                            `✅ Real-time EVM validation successful: ${isValid}, address: ${walletAddress}`
-                          );
-                        } else {
-                          console.log(
-                            `❌ Real-time EVM validation failed: private key format is invalid`
-                          );
                         }
                       } catch (evmError) {
-                        console.log(
-                          `❌ Real-time EVM validation error for ${chain}:`,
-                          evmError
-                        );
                         isValid = false;
                       }
                     } else if (chain === "solana") {
-                      console.log("🔗 Real-time Solana validation");
                       try {
                         isValid =
                           solanaWalletKeyUtils.isValidPrivateKey(inputValue);
-                        console.log(
-                          `🔍 Real-time Solana isValidPrivateKey result: ${isValid}`
-                        );
 
                         if (isValid) {
                           const wallet =
                             solanaWalletKeyUtils.fromPrivateKey(inputValue);
                           walletAddress = wallet.publicKey;
-                          console.log(
-                            `✅ Real-time Solana validation successful: ${isValid}, publicKey: ${walletAddress}`
-                          );
-                        } else {
-                          console.log(
-                            `❌ Real-time Solana validation failed: private key format is invalid`
-                          );
                         }
                       } catch (solanaError) {
-                        console.log(
-                          "❌ Real-time Solana validation error:",
-                          solanaError
-                        );
                         isValid = false;
                       }
                     } else if (chain === "sui") {
-                      console.log("🔗 Real-time Sui validation");
                       try {
                         isValid =
                           suiWalletKeyUtils.isValidPrivateKey(inputValue);
-                        console.log(
-                          `🔍 Real-time Sui isValidPrivateKey result: ${isValid}`
-                        );
 
                         if (isValid) {
                           const wallet =
                             suiWalletKeyUtils.fromPrivateKey(inputValue);
                           walletAddress = wallet.address;
-                          console.log(
-                            `✅ Real-time Sui validation successful: ${isValid}, address: ${walletAddress}`
-                          );
-                        } else {
-                          console.log(
-                            `❌ Real-time Sui validation failed: private key format is invalid`
-                          );
                         }
                       } catch (suiError) {
-                        console.log(
-                          "❌ Real-time Sui validation error:",
-                          suiError
-                        );
                         isValid = false;
                       }
                     }
 
                     if (isValid && walletAddress) {
                       setAddress(walletAddress);
-                      console.log(`✅ Real-time address set: ${walletAddress}`);
 
                       // Check if private key already exists
                       try {
@@ -349,13 +215,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
                           return; // Unknown chain type
                         }
 
-                        console.log(
-                          `🔍 Real-time checking private key existence for chainType: ${chainType}`
-                        );
                         const exists = await checkPrivateKeyExists(inputValue);
-                        console.log(
-                          `📋 Real-time existence check result: ${exists}`
-                        );
 
                         if (exists) {
                           console.warn(
@@ -365,41 +225,18 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
                           setAddress(null);
                         }
                       } catch (error) {
-                        console.log(
-                          "❌ Real-time existence check error (ignored):",
-                          error
-                        );
                         // Ignore check errors during typing
                       }
-                    } else {
-                      console.log(
-                        "❌ Real-time validation failed or no address generated"
-                      );
                     }
                   } catch (error) {
-                    console.log(
-                      "❌ Real-time validation error (ignored):",
-                      error
-                    );
                     // Ignore validation errors during typing
                   }
-                } else {
-                  console.log("📝 Input is empty, skipping validation");
                 }
               }}
               onKeyDown={async (e) => {
                 if (e.key === "Enter") {
-                  console.log("⌨️ Enter key pressed, triggering validation");
                   if (await validatePrivateKey()) {
-                    console.log(
-                      "✅ Validation successful, proceeding to next step"
-                    );
                     onNext();
-                  } else {
-                    console.log(
-                      "❌ Validation failed, staying on current step"
-                    );
-                    // Error is already set in validatePrivateKey
                   }
                 }
               }}
@@ -432,15 +269,8 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
         className="w-full"
         disabled={!privateKey}
         onClick={async () => {
-          console.log("🔘 Import button clicked");
           if (await validatePrivateKey()) {
-            console.log(
-              "✅ Final validation successful, proceeding to next step"
-            );
             onNext();
-          } else {
-            console.log("❌ Final validation failed, staying on current step");
-            // Error is already set in validatePrivateKey
           }
         }}
       >

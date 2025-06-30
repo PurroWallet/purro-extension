@@ -5,5 +5,5 @@ export interface WalletState {
     hasWallet: boolean;
     accounts: AccountInformation[];
     activeAccount: AccountInformation | null;
-    wallets: AccountWallet[];
+    wallets: { [key: string]: AccountWallet };
 }

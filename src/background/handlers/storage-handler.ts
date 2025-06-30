@@ -12,14 +12,14 @@ export const storageHandler = {
             authHandler.isUnlocked(),
             this.getActiveAccount(),
             this.getAllAccounts(),
-            this.getAllWallets()
+            this.getAllWallets(),
         ]);
         return {
             isLocked: !isUnlocked,
             hasWallet: accounts.length > 0,
             accounts: allAccounts,
             activeAccount: activeAccount,
-            wallets: allWallets
+            wallets: allWallets,
         }
     },
 
@@ -39,7 +39,7 @@ export const storageHandler = {
         return accountResults.filter((account): account is AccountInformation => account !== null);
     },
 
-    async getAllWallets(): Promise<AccountWallet[]> {
+    async getAllWallets(): Promise<{ [key: string]: AccountWallet }> {
         const accounts = await this.getAllAccounts();
 
         // Parallel wallet fetching
@@ -48,13 +48,22 @@ export const storageHandler = {
         });
 
         const walletResults = await Promise.all(walletPromises);
-        return walletResults.filter((wallet): wallet is AccountWallet => wallet !== null);
+
+        // Build a mapping from account ID to its wallet, skipping null wallets
+        const walletMap: { [key: string]: AccountWallet } = {};
+        accounts.forEach((account, index) => {
+            const wallet = walletResults[index];
+            if (wallet) {
+                walletMap[account.id] = wallet;
+            }
+        });
+
+        return walletMap;
     },
 
     async getActiveAccount(): Promise<AccountInformation | null> {
         const result = await chrome.storage.local.get([STORAGE_KEYS.ACCOUNT_ACTIVE_ACCOUNT]);
-        const rawActive = result[STORAGE_KEYS.ACCOUNT_ACTIVE_ACCOUNT] as unknown;
-        const activeAccountId = rawActive as string | AccountInformation | undefined;
+        const activeAccountId = result[STORAGE_KEYS.ACCOUNT_ACTIVE_ACCOUNT] as unknown;
         if (!activeAccountId) {
             return null;
         }
@@ -278,7 +287,6 @@ export const storageHandler = {
             const storageKey = STORAGE_KEYS.ACCOUNT_ACTIVE_ACCOUNT;
             await chrome.storage.local.set({ [storageKey]: accountId });
         } catch (error) {
-            console.error("Error setting active account: ", error);
             throw error;
         }
     },
@@ -320,8 +328,7 @@ export const storageHandler = {
     // Remove/Delete methods
     removeAccountFromList: async (accountId: string): Promise<string[]> => {
         try {
-            const result = await chrome.storage.local.get(STORAGE_KEYS.ACCOUNTS);
-            const currentAccounts: string[] = result[STORAGE_KEYS.ACCOUNTS] || [];
+            const currentAccounts = await storageHandler.getAccounts();
 
             const updatedAccounts = currentAccounts.filter(id => id !== accountId);
 
@@ -396,6 +403,51 @@ export const storageHandler = {
             throw error;
         }
     },
+
+    reorderAccounts: async (orderedAccountIds: string[]): Promise<void> => {
+        try {
+            const result = await chrome.storage.local.get(STORAGE_KEYS.ACCOUNTS);
+            const currentAccounts: string[] = result[STORAGE_KEYS.ACCOUNTS] || [];
+
+            // Validate that all provided IDs exist in the current accounts
+            const allIdsExist = orderedAccountIds.every(id => currentAccounts.includes(id));
+            if (!allIdsExist) {
+                throw new Error("One or more account IDs do not exist in the current accounts");
+            }
+
+            // Reorder accounts
+            await chrome.storage.local.set({
+                [STORAGE_KEYS.ACCOUNTS]: orderedAccountIds
+            });
+        } catch (error) {
+            console.error("Error reordering accounts: ", error);
+            throw error;
+        }
+    },
+
+    changeAccountIcon: async (data: { accountId: string, icon: string }): Promise<void> => {
+        try {
+            const storageKey = STORAGE_KEYS.ACCOUNT_BY_ID.replace("id", data.accountId);
+            const currentAccount = await chrome.storage.local.get(storageKey);
+            const currentAccountData: AccountInformation = currentAccount[storageKey] || {};
+            await chrome.storage.local.set({ [storageKey]: { ...currentAccountData, icon: data.icon } });
+        } catch (error) {
+            console.error("Error changing account icon: ", error);
+            throw error;
+        }
+    },
+
+    changeAccountName: async (data: { accountId: string, name: string }): Promise<void> => {
+        try {
+            const storageKey = STORAGE_KEYS.ACCOUNT_BY_ID.replace("id", data.accountId);
+            const currentAccount = await chrome.storage.local.get(storageKey);
+            const currentAccountData: AccountInformation = currentAccount[storageKey] || {};
+            await chrome.storage.local.set({ [storageKey]: { ...currentAccountData, name: data.name } });
+        } catch (error) {
+            console.error("Error changing account name: ", error);
+            throw error;
+        }
+    }
 }
 
 

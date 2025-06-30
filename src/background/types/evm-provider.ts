@@ -72,6 +72,7 @@ export type ProviderEventMap = {
 // Chain Information
 export interface ChainInfo {
     chainId: string;
+    chainIdNumber: number;
     chainName: string;
     nativeCurrency: {
         name: string;
@@ -81,10 +82,12 @@ export interface ChainInfo {
     rpcUrls: string[];
     blockExplorerUrls?: string[];
     iconUrls?: string[];
+    logo: string;
+    isTestnet: boolean;
 }
 
 // Wallet Connection State
-export interface WalletState {
+export interface WalletConnectionState {
     isConnected: boolean;
     accounts: string[];
     chainId: string;

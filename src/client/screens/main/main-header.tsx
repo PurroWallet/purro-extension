@@ -28,8 +28,6 @@ const MainHeader = ({
   const isNftScreen = currentScreen === "nft";
   const isHistoryScreen = currentScreen === "history";
 
-  console.log(activeAccount);
-
   return (
     <div
       className={cn(

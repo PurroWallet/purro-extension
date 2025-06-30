@@ -10,3 +10,4 @@ export {
 } from "./dialog";
 export { Drawer } from "./drawer";
 export { Switch } from "./switch";
+export { HoldButton } from "./hold-button";

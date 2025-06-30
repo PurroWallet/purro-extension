@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import { WalletState } from '@/types';
 import { sendMessage } from '@/client/utils/extension-message-utils';
-import { AccountInformation } from '@/background/types/account';
-
 interface ExtendedWalletState extends WalletState {
     loading: boolean;
     error: string | null;
@@ -23,7 +21,7 @@ const useWalletStore = create<ExtendedWalletState & WalletStateAction>((set, get
     hasWallet: false,
     accounts: [],
     activeAccount: null,
-    wallets: [], // Add missing wallets property
+    wallets: {},
     loading: false,
     error: null,
     initialized: false,
@@ -46,7 +44,6 @@ const useWalletStore = create<ExtendedWalletState & WalletStateAction>((set, get
 
             set(transformedState);
         } catch (err) {
-            console.error('❌ Failed to load wallet state:', err);
             set({
                 error: err instanceof Error ? err.message : 'Failed to load wallet state',
                 loading: false,
@@ -61,10 +58,7 @@ const useWalletStore = create<ExtendedWalletState & WalletStateAction>((set, get
         if (!currentState.initialized) return;
 
         try {
-            console.log('🔄 Refreshing wallet state...');
-            // Get wallet state from background
             const walletState = await sendMessage("GET_WALLET_STATE");
-            console.log('✅ Wallet state refreshed:', walletState);
 
             const transformedState: Partial<ExtendedWalletState> = {
                 isLocked: walletState.isLocked,
@@ -76,7 +70,6 @@ const useWalletStore = create<ExtendedWalletState & WalletStateAction>((set, get
 
             set(transformedState);
         } catch (err) {
-            console.error('❌ Failed to refresh wallet state:', err);
             set({ error: err instanceof Error ? err.message : 'Failed to refresh wallet state' });
         }
     },

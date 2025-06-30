@@ -1,3 +1,4 @@
+import { supportedEVMChains } from '../constants/supported-chains';
 import {
     EIP1193Provider,
     RequestArguments,
@@ -5,15 +6,14 @@ import {
     JsonRpcResponse,
     EIP6963ProviderInfo,
     EIP6963ProviderDetail,
-    WalletState,
-    ChainInfo,
+    WalletConnectionState,
     ProviderError,
     ProviderErrorCode
 } from '../types/evm-provider';
 
 export class PurroEVMProvider implements EIP1193Provider {
     private eventEmitter = new EventTarget();
-    private state: WalletState = {
+    private state: WalletConnectionState = {
         isConnected: false,
         accounts: [],
         chainId: '0x1', // Ethereum Mainnet
@@ -23,34 +23,10 @@ export class PurroEVMProvider implements EIP1193Provider {
     // EIP-6963 Provider Information
     private providerInfo: EIP6963ProviderInfo = {
         uuid: crypto.randomUUID(),
-        name: 'Purro Wallet',
+        name: 'Purro',
         icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iMTYiIGZpbGw9IiM2MzY2RjEiLz4KPHBhdGggZD0iTTE2IDhMMjQgMTZMMTYgMjRMOCAxNkwxNiA4WiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+',
-        rdns: 'com.purro.wallet'
+        rdns: 'xyz.purro.app'
     };
-
-    private supportedChains: Map<string, ChainInfo> = new Map([
-        ['0x1', {
-            chainId: '0x1',
-            chainName: 'Ethereum Mainnet',
-            nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-            rpcUrls: ['https://mainnet.infura.io/v3/'],
-            blockExplorerUrls: ['https://etherscan.io']
-        }],
-        ['0x89', {
-            chainId: '0x89',
-            chainName: 'Polygon Mainnet',
-            nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
-            rpcUrls: ['https://polygon-rpc.com/'],
-            blockExplorerUrls: ['https://polygonscan.com']
-        }],
-        ['0xa4b1', {
-            chainId: '0xa4b1',
-            chainName: 'Arbitrum One',
-            nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-            rpcUrls: ['https://arb1.arbitrum.io/rpc'],
-            blockExplorerUrls: ['https://arbiscan.io']
-        }]
-    ]);
 
     constructor() {
         this.initializeProvider();
@@ -112,9 +88,6 @@ export class PurroEVMProvider implements EIP1193Provider {
                         paramsArray[1] as string,
                         paramsArray[0] as string
                     );
-
-                case 'wallet_addEthereumChain':
-                    return await this.addEthereumChain(paramsArray[0] as ChainInfo);
 
                 case 'wallet_switchEthereumChain':
                     return await this.switchEthereumChain(paramsArray[0] as { chainId: string });
@@ -287,24 +260,10 @@ export class PurroEVMProvider implements EIP1193Provider {
         return response.signature;
     }
 
-    private async addEthereumChain(chainInfo: ChainInfo): Promise<null> {
-        const response = await chrome.runtime.sendMessage({
-            type: 'ADD_ETHEREUM_CHAIN',
-            chainInfo
-        });
-
-        if (response.error) {
-            throw new ProviderError(ProviderErrorCode.USER_REJECTED, response.error);
-        }
-
-        this.supportedChains.set(chainInfo.chainId, chainInfo);
-        return null;
-    }
-
     private async switchEthereumChain(params: { chainId: string }): Promise<null> {
         const { chainId } = params;
 
-        if (!this.supportedChains.has(chainId)) {
+        if (!(chainId in supportedEVMChains)) {
             throw new ProviderError(
                 ProviderErrorCode.UNSUPPORTED_METHOD,
                 `Chain ${chainId} not supported`

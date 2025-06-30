@@ -62,7 +62,6 @@ export const authHandler = {
     },
 
     async unlock(data: { password: string }): Promise<void> {
-        console.log("unlock", data.password);
         const passwordStored = await storageHandler.getStoredPassword();
 
         if (!passwordStored || !passwordStored.data || !passwordStored.salt) {

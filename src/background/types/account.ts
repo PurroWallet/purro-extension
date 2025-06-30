@@ -37,6 +37,7 @@ export type DataEncryption = {
 
 export type SeedPhraseData = {
     data: DataEncryption;
+    name: string;
     currentDerivationIndex?: number;
     accountIds?: string[];
 }

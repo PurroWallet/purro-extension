@@ -29,6 +29,9 @@ export class MessageHandler {
                 case 'IS_PRIVATE_KEY_EXISTS':
                     result = await accountHandler.isPrivateKeyAlreadyImported(data);
                     break;
+                case "GET_SEED_PHRASE_BY_ID":
+                    result = await storageHandler.getSeedPhraseById(data);
+                    break;
 
                 // Write
                 case 'CREATE_WALLET':
@@ -49,6 +52,28 @@ export class MessageHandler {
                 case 'RESET_WALLET':
                     result = await storageHandler.resetWallet();
                     break;
+                case 'REORDER_ACCOUNTS':
+                    result = await storageHandler.reorderAccounts(data);
+                    break;
+                case 'SET_ACTIVE_ACCOUNT':
+                    result = await storageHandler.setActiveAccount(data);
+                    break;
+                case 'CHANGE_ACCOUNT_ICON':
+                    result = await storageHandler.changeAccountIcon(data);
+                    break;
+                case 'CHANGE_ACCOUNT_NAME':
+                    result = await storageHandler.changeAccountName(data);
+                    break;
+                case 'REMOVE_ACCOUNT':
+                    result = await accountHandler.removeAccount(data);
+                    break;
+                case 'EXPORT_SEED_PHRASE':
+                    result = await accountHandler.exportSeedPhrase(data.seedPhraseId, data.password);
+                    break;
+                case 'EXPORT_PRIVATE_KEY':
+                    result = await accountHandler.exportPrivateKey(data.privateKeyId, data.chain, data.password);
+                    break;
+
 
                 default:
                     throw new Error(`Unknown message type: ${type}`);
