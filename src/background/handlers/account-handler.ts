@@ -721,4 +721,60 @@ export const accountHandler = {
         return mnemonic;
     },
 
+    async importWatchOnlyWallet(address: string, chain: ChainType, accountName: string): Promise<AccountInformation> {
+        // Normalize address to avoid case-sensitive duplicates
+        const normalizedAddress = address.trim();
+
+        // Prevent duplicate watch-only wallets
+        const isExists = await this.isWalletAddressExists(normalizedAddress);
+        if (isExists) {
+            throw new Error("Address already exists in watch-only wallets");
+        }
+
+        const accountId = crypto.randomUUID();
+        const newAccount: AccountInformation = {
+            id: accountId,
+            name: accountName,
+            icon: '🐱',
+            source: 'watchOnly',
+        };
+
+        // Build an AccountWallet object that only includes data for the selected chain
+        const wallet: AccountWallet = {
+            eip155: chain === 'eip155' ? { address: normalizedAddress, pathType: 'watchOnly' } : null,
+            solana: chain === 'solana' ? { address: normalizedAddress, pathType: 'watchOnly' } : null,
+            sui: chain === 'sui' ? { address: normalizedAddress, pathType: 'watchOnly' } : null,
+        };
+
+        await Promise.all([
+            storageHandler.saveAccounts(accountId),
+            storageHandler.saveAccountById(accountId, newAccount),
+            storageHandler.saveWallet(accountId, wallet),
+            storageHandler.setActiveAccount(accountId)
+        ]);
+
+        return newAccount;
+    },
+
+    async isWalletAddressExists(address: string): Promise<boolean> {
+        const normalizedAddress = address.trim().toLowerCase();
+
+        const [accounts, wallets] = await Promise.all([
+            storageHandler.getAllAccounts(),
+            storageHandler.getAllWallets()
+        ]);
+
+        return accounts.some((account) => {
+            if (account.source !== 'watchOnly') return false;
+            const wallet = wallets[account.id];
+            if (!wallet) return false;
+
+            // Check all chains for matching address
+            return (['eip155', 'solana', 'sui'] as ChainType[]).some((chain) => {
+                const chainWallet = wallet[chain];
+                return chainWallet?.address?.toLowerCase() === normalizedAddress;
+            });
+        });
+    }
+
 };

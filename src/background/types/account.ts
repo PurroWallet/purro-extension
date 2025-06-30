@@ -18,11 +18,11 @@ export type SupportedChainType = (typeof supportedChain)[number];
 export type AccountWallet = {
     [key in ChainType]: {
         address: string;
-        publicKey: string | {
+        publicKey?: string | {
             data: string;
             type: "Buffer";
         };
-        pathType: string;
+        pathType?: string;
     } | null;
 }
 

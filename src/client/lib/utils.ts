@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
+import { ethers } from "ethers";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -106,3 +107,12 @@ export const openSidePanel = async () => {
     }
 };
 
+export const generateMnemonic = (strength = 128) => {
+    try {
+        const entropy = ethers.randomBytes(strength / 8);
+        const mnemonicObj = ethers.Mnemonic.fromEntropy(entropy);
+        return mnemonicObj.phrase;
+    } catch (error) {
+        console.error("Error generating mnemonic:", error);
+    }
+};

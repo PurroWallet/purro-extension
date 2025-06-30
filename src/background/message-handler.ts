@@ -24,7 +24,7 @@ export class MessageHandler {
                     result = await storageHandler.getWalletState();
                     break;
                 case 'IS_SEED_PHRASE_EXISTS':
-                    result = await accountHandler.isSeedPhraseAlreadyImported(data);
+                    result = await accountHandler.isSeedPhraseAlreadyImported(data.seedPhrase);
                     break;
                 case 'IS_PRIVATE_KEY_EXISTS':
                     result = await accountHandler.isPrivateKeyAlreadyImported(data);
@@ -32,10 +32,16 @@ export class MessageHandler {
                 case "GET_SEED_PHRASE_BY_ID":
                     result = await storageHandler.getSeedPhraseById(data);
                     break;
+                case 'GET_ALL_SEED_PHRASES':
+                    result = await storageHandler.getAllSeedPhrases();
+                    break;
 
                 // Write
                 case 'CREATE_WALLET':
                     result = await accountHandler.createWallet(data);
+                    break;
+                case 'CREATE_ACCOUNT_FROM_SEED_PHRASE':
+                    result = await accountHandler.createAccountBySeedPhrase(data);
                     break;
                 case 'IMPORT_PRIVATE_KEY':
                     result = await accountHandler.importAccountByPrivateKey(data);
@@ -73,7 +79,12 @@ export class MessageHandler {
                 case 'EXPORT_PRIVATE_KEY':
                     result = await accountHandler.exportPrivateKey(data.privateKeyId, data.chain, data.password);
                     break;
-
+                case 'IMPORT_WATCH_ONLY_WALLET':
+                    result = await accountHandler.importWatchOnlyWallet(data.address, data.chain, data.accountName);
+                    break;
+                case 'IS_WATCH_ONLY_ADDRESS_EXISTS':
+                    result = await accountHandler.isWalletAddressExists(data.address);
+                    break;
 
                 default:
                     throw new Error(`Unknown message type: ${type}`);

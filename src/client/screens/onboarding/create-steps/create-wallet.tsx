@@ -3,17 +3,7 @@ import SeedPhraseRender from "@/client/component/render/seed-phrase-render";
 import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
 import { Button } from "@/client/component/ui";
 import { ErrorDisplay } from "@/client/component/display";
-import { ethers } from "ethers";
-
-const generateMnemonic = (strength = 128) => {
-  try {
-    const entropy = ethers.randomBytes(strength / 8);
-    const mnemonicObj = ethers.Mnemonic.fromEntropy(entropy);
-    return mnemonicObj.phrase;
-  } catch (error) {
-    console.error("Error generating mnemonic:", error);
-  }
-};
+import { generateMnemonic } from "@/client/lib/utils";
 
 const CreateWallet = ({ onNext }: { onNext: () => void }) => {
   const { mnemonic, setMnemonic } = useCreateWalletStore();

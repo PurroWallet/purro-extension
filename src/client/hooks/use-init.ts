@@ -5,7 +5,6 @@ import { STORAGE_KEYS } from "@/background/constants/storage-keys";
 const useInit = () => {
     const { loading, hasWallet, initialized, loadWalletState } = useWalletStore();
 
-
     useEffect(() => {
         // Initialize wallet state on first load
         if (!initialized && !loading) {
@@ -24,8 +23,18 @@ const useInit = () => {
     useEffect(() => {
         function handleStorageChange(changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) {
             if (areaName !== 'local') return;
-            if (changes[STORAGE_KEYS.SESSION_IS_LOCKED]) {
-                // Refresh wallet state when lock state flag updates
+            // Refresh when any Purro storage key that may affect wallet state changes
+            const shouldRefresh = Object.keys(changes).some((key) =>
+                // Generic prefixes for account / wallet related keys
+                key.startsWith("purro:account") ||
+                key.startsWith("purro:wallet") ||
+                // Explicit keys we rely on
+                key === STORAGE_KEYS.ACCOUNTS ||
+                key === STORAGE_KEYS.ACCOUNT_ACTIVE_ACCOUNT ||
+                key === STORAGE_KEYS.SESSION_IS_LOCKED
+            );
+
+            if (shouldRefresh) {
                 loadWalletState();
             }
         }

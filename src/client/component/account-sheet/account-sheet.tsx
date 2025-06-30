@@ -70,7 +70,7 @@ const AccountSheet = () => {
             <button
               className="size-full px-2 py-3 hover:bg-white/10 transition-colors flex items-center justify-center cursor-pointer"
               onClick={() => {
-                chrome.tabs.create({ url: "import.html" });
+                window.open("import.html", "_blank");
               }}
             >
               <Plus className="size-5" />

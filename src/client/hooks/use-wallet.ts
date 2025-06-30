@@ -4,16 +4,16 @@ import useWalletStore from './use-wallet-store';
 import { sendMessage } from "../utils/extension-message-utils";
 import { CreateWalletData } from "@/background/types/message-data";
 import { ChainType } from "@/background/types/account";
+import { SeedPhraseData } from "@/background/types/account";
 
 const useWallet = () => {
-    const { setLoading, setError, loadWalletState } = useWalletStore();
+    const { setLoading, setError } = useWalletStore();
 
     const createWallet = useCallback(async ({ password, mnemonic }: CreateWalletData) => {
         try {
             setLoading(true);
             setError(null);
             const account = await sendMessage("CREATE_WALLET", { password, mnemonic });
-            await loadWalletState();
             return account;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to create wallet';
@@ -22,14 +22,28 @@ const useWallet = () => {
         } finally {
             setLoading(false);
         }
-    }, [loadWalletState, setLoading, setError]);
+    }, [setLoading, setError]);
 
-    const importWallet = useCallback(async ({ privateKey, accountName, chain, password }: { privateKey: string, accountName: string, chain: string, password?: string }) => {
+    const createAccountFromSeedPhrase = useCallback(async ({ name, icon, seedPhraseId }: { name?: string, icon?: string, seedPhraseId: string }) => {
+        try {
+            setLoading(true);
+            setError(null);
+            const account = await sendMessage("CREATE_ACCOUNT_FROM_SEED_PHRASE", { name, icon, seedPhraseId });
+            return account;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Failed to create account from seed phrase';
+            setError(errorMessage);
+            throw new Error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    }, [setLoading, setError]);
+
+    const importPrivateKey = useCallback(async ({ privateKey, accountName, chain, password }: { privateKey: string, accountName: string, chain: string, password?: string }) => {
         try {
             setLoading(true);
             setError(null);
             const account = await sendMessage("IMPORT_PRIVATE_KEY", { privateKey, password, accountName, chain });
-            await loadWalletState(); // Refresh state
             return account;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to import wallet';
@@ -39,14 +53,13 @@ const useWallet = () => {
         } finally {
             setLoading(false);
         }
-    }, [loadWalletState, setLoading, setError]);
+    }, [setLoading, setError]);
 
-    const importSeedPhrase = useCallback(async ({ privateKey, accountName, password }: { privateKey: string, accountName: string, password?: string }) => {
+    const importSeedPhrase = useCallback(async ({ mnemonic, accountName, password }: { mnemonic: string, accountName: string, password?: string }): Promise<string> => {
         try {
             setLoading(true);
             setError(null);
-            const account = await sendMessage("IMPORT_SEED_PHRASE", { privateKey, password, accountName });
-            await loadWalletState();
+            const account = await sendMessage("IMPORT_SEED_PHRASE", { mnemonic, password, accountName });
             return account;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to import seed phrase';
@@ -56,7 +69,7 @@ const useWallet = () => {
         } finally {
             setLoading(false);
         }
-    }, [loadWalletState, setLoading, setError]);
+    }, [setLoading, setError]);
 
     const checkSeedPhraseExists = useCallback(async (seedPhrase: string) => {
         const exists = await sendMessage("IS_SEED_PHRASE_EXISTS", { seedPhrase });
@@ -70,33 +83,28 @@ const useWallet = () => {
 
     const unlockWallet = useCallback(async (password: string) => {
         const unlocked = await sendMessage("UNLOCK_WALLET", { password });
-        await loadWalletState();
         return unlocked;
-    }, [loadWalletState]);
+    }, []);
 
     const resetWallet = useCallback(async () => {
         const reset = await sendMessage("RESET_WALLET");
-        await loadWalletState();
         return reset;
-    }, [loadWalletState]);
+    }, []);
 
     const lockWallet = useCallback(async () => {
         const locked = await sendMessage("LOCK_WALLET");
-        await loadWalletState();
         return locked;
-    }, [loadWalletState]);
+    }, []);
 
     const reorderAccounts = useCallback(async (orderedAccountIds: string[]) => {
         const reordered = await sendMessage("REORDER_ACCOUNTS", orderedAccountIds);
-        await loadWalletState();
         return reordered;
-    }, [loadWalletState]);
+    }, []);
 
     const setActiveAccount = useCallback(async (accountId: string) => {
         const active = await sendMessage("SET_ACTIVE_ACCOUNT", accountId);
-        await loadWalletState();
         return active;
-    }, [loadWalletState]);
+    }, []);
 
     const getSeedPhraseById = useCallback(async (seedPhraseId: string) => {
         const seedPhrase = await sendMessage("GET_SEED_PHRASE_BY_ID", seedPhraseId);
@@ -105,21 +113,18 @@ const useWallet = () => {
 
     const changeAccountName = useCallback(async (accountId: string, name: string) => {
         const changed = await sendMessage("CHANGE_ACCOUNT_NAME", { accountId, name });
-        await loadWalletState();
         return changed;
-    }, [loadWalletState]);
+    }, []);
 
     const changeAccountIcon = useCallback(async (accountId: string, icon: string) => {
         const changed = await sendMessage("CHANGE_ACCOUNT_ICON", { accountId, icon });
-        await loadWalletState();
         return changed;
-    }, [loadWalletState]);
+    }, []);
 
     const removeAccount = useCallback(async (accountId: string) => {
         const removed = await sendMessage("REMOVE_ACCOUNT", accountId);
-        await loadWalletState();
         return removed;
-    }, [loadWalletState]);
+    }, []);
 
     const exportSeedPhrase = useCallback(async (seedPhraseId: string, password: string) => {
         const exported = await sendMessage("EXPORT_SEED_PHRASE", { seedPhraseId, password });
@@ -131,9 +136,27 @@ const useWallet = () => {
         return exported;
     }, []);
 
+    const importWatchOnlyWallet = useCallback(async (address: string, chain: ChainType, accountName: string) => {
+        const imported = await sendMessage("IMPORT_WATCH_ONLY_WALLET", { address, chain, accountName });
+        return imported;
+    }, []);
+
+    const checkWatchOnlyAddressExists = useCallback(async (address: string) => {
+        const exists = await sendMessage("IS_WATCH_ONLY_ADDRESS_EXISTS", { address });
+        return exists;
+    }, []);
+
+    type SeedPhraseWithId = SeedPhraseData & { id: string };
+
+    const getAllSeedPhrases = useCallback(async (): Promise<SeedPhraseWithId[]> => {
+        const seedPhrases: { id: string; data: SeedPhraseData }[] = await sendMessage("GET_ALL_SEED_PHRASES");
+        return seedPhrases.map((sp) => ({ id: sp.id, ...sp.data }));
+    }, []);
+
     return {
         createWallet,
-        importWallet,
+        createAccountFromSeedPhrase,
+        importPrivateKey,
         importSeedPhrase,
         checkSeedPhraseExists,
         checkPrivateKeyExists,
@@ -147,7 +170,10 @@ const useWallet = () => {
         changeAccountIcon,
         removeAccount,
         exportSeedPhrase,
-        exportPrivateKey
+        exportPrivateKey,
+        importWatchOnlyWallet,
+        checkWatchOnlyAddressExists,
+        getAllSeedPhrases
     }
 };
 

@@ -1,7 +1,7 @@
 import { ChainType } from "./account";
 
 export type CreateWalletData = {
-    password: string;
+    password?: string;
     mnemonic: string;
 }
 

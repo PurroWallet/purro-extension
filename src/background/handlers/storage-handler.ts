@@ -115,34 +115,19 @@ export const storageHandler = {
 
     getAllSeedPhrases: async (): Promise<{ id: string, data: SeedPhraseData }[]> => {
         try {
-            // Get all accounts to find unique seed phrase IDs
-            const result = await chrome.storage.local.get([STORAGE_KEYS.ACCOUNTS]);
-            const accountIds: string[] = result[STORAGE_KEYS.ACCOUNTS] || [];
+            // Fetch every item from chrome storage
+            const allItems = await chrome.storage.local.get(null);
 
-            // Parallel account fetching to collect seed phrase IDs
-            const accountPromises = accountIds.map(async (accountId: string) => {
-                const account = await storageHandler.getAccountById(accountId);
-                return account;
-            });
+            const prefix = STORAGE_KEYS.ACCOUNT_SEED_PHRASE_BY_ID.replace("id", ""); // 'purro:account:seed-phrase:'
 
-            const accountResults = await Promise.all(accountPromises);
+            const seedPhraseEntries = Object.entries(allItems)
+                .filter(([key]) => key.startsWith(prefix))
+                .map(([key, value]) => {
+                    const id = key.substring(prefix.length);
+                    return { id, data: value as SeedPhraseData };
+                });
 
-            // Collect unique seed phrase IDs
-            const seedPhraseIds = new Set<string>();
-            accountResults.forEach((account: AccountInformation | null) => {
-                if (account && account.source === 'seedPhrase' && account.seedPhraseId) {
-                    seedPhraseIds.add(account.seedPhraseId);
-                }
-            });
-
-            // Parallel seed phrase fetching
-            const seedPhrasePromises = Array.from(seedPhraseIds).map(async (seedPhraseId: string) => {
-                const seedPhraseData = await storageHandler.getSeedPhraseById(seedPhraseId);
-                return seedPhraseData ? { id: seedPhraseId, data: seedPhraseData } : null;
-            });
-
-            const seedPhraseResults = await Promise.all(seedPhrasePromises);
-            return seedPhraseResults.filter((item: { id: string, data: SeedPhraseData } | null): item is { id: string, data: SeedPhraseData } => item !== null);
+            return seedPhraseEntries;
         } catch (error) {
             console.error("Error getting all seed phrases: ", error);
             throw error;

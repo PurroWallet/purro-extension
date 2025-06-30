@@ -28,8 +28,8 @@ const Finish = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [hasExecuted, setHasExecuted] = useState<boolean>(false);
-  const { accounts } = useWalletStore();
-  const { createWallet, importWallet } = useWallet();
+  const { accounts, refreshState } = useWalletStore();
+  const { createWallet, importPrivateKey } = useWallet();
 
   useEffect(() => {
     const handleWalletOperation = async () => {
@@ -78,7 +78,7 @@ const Finish = () => {
           } else {
             chainType = chain;
           }
-          await importWallet({
+          await importPrivateKey({
             privateKey,
             password,
             accountName:
@@ -125,7 +125,7 @@ const Finish = () => {
     }
   }, [
     createWallet,
-    importWallet,
+    importPrivateKey,
     importType,
     password,
     mnemonic,
