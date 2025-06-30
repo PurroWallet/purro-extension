@@ -48,7 +48,7 @@ const LockDisplay = () => {
     >
       <div className="flex flex-col h-full">
         <Header>
-          <div className="text-lg text-center w-full font-livvic font-semibold">
+          <div className="text-xl text-[var(--primary-color)] text-center w-full font-livvic font-semibold">
             PURRO
           </div>
         </Header>
