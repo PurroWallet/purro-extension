@@ -15,6 +15,7 @@ import { SeedPhraseData } from "@/background/types/account";
 import useDialogStore from "@/client/hooks/use-dialog-store";
 import useEditAccountStore from "@/client/hooks/use-edit-account-store";
 import { AccountIcon } from "../../account";
+import { Menu } from "../../ui/menu";
 
 interface MainEditAccountProps {
   onEditIcon: () => void;
@@ -68,86 +69,51 @@ const MainEditAccount = ({
             </button>
           </div>
         </div>
-
-        <div className="bg-[var(--card-color)] rounded-lg w-full">
-          <button
-            className="flex items-center gap-3 pl-4 w-full hover:bg-white/10 transition-colors duration-200 cursor-pointer"
-            onClick={onEditName}
-          >
-            <IdCard className="size-5" />
-            <div className={`flex-grow flex items-center gap-3 py-4 pr-4`}>
-              <p className="text-base font-medium w-full text-left">Name</p>
-              <div className="flex items-center gap-2">
-                <p className="text-base text-gray-400 text-right truncate flex-1">
-                  {account?.name && account?.name.length > 20
-                    ? `${account?.name.substring(0, 20)}...`
-                    : account?.name}
-                </p>
-                <ChevronRightIcon className="size-5" />
-              </div>
-            </div>
-          </button>
-        </div>
-
+        <Menu
+          items={[
+            {
+              icon: IdCard,
+              label: "Name",
+              onClick: onEditName,
+              arrowLeft: true,
+            },
+          ]}
+        />
         {!isWatchOnly && (
-          <div className="bg-[var(--card-color)] rounded-lg w-full">
-            {seedPhrase && (
-              <button className="flex items-center gap-3 pl-4 w-full border-b border-white/10">
-                <ListOrdered className="size-5" />
-                <div className={`flex-grow flex items-center gap-3 py-4 pr-4`}>
-                  <p className="text-base font-medium w-full text-left">
-                    Recovery Phrase
-                  </p>
-                  <div className="flex items-center gap-2 w-full">
-                    <p className="text-base text-gray-400 w-full text-right truncate">
-                      {seedPhrase?.name}
-                    </p>
-                  </div>
-                </div>
-              </button>
-            )}
-            {seedPhrase && (
-              <button
-                className="flex items-center gap-3 pl-4 w-full border-b border-white/10 hover:bg-white/10 transition-colors duration-200 cursor-pointer"
-                onClick={onShowSeedPhrase}
-              >
-                <FileLock className="size-5" />
-                <div className={`flex-grow flex items-center gap-3 py-4 pr-4`}>
-                  <p className="text-base font-medium w-full text-left">
-                    Show Recovery Phrase
-                  </p>
-                  <ChevronRightIcon className="size-5" />
-                </div>
-              </button>
-            )}
-            <button
-              className="flex items-center gap-3 pl-4 w-full hover:bg-white/10 transition-colors duration-200 cursor-pointer"
-              onClick={onShowPrivateKey}
-            >
-              <FileKey2 className="size-5" />
-              <div className={`flex-grow flex items-center gap-3 py-4 pr-4`}>
-                <p className="text-base font-medium w-full text-left">
-                  Show Private Key
-                </p>
-                <ChevronRightIcon className="size-5" />
-              </div>
-            </button>
-          </div>
+          <Menu
+            items={[
+              {
+                isHidden: !seedPhrase,
+                icon: ListOrdered,
+                label: "Recovery Phrase",
+                description: seedPhrase?.name,
+              },
+              {
+                isHidden: !seedPhrase,
+                icon: FileLock,
+                label: "Show Recovery Phrase",
+                onClick: onShowSeedPhrase,
+                arrowLeft: true,
+              },
+              {
+                icon: FileKey2,
+                label: "Private Key",
+                onClick: onShowPrivateKey,
+                arrowLeft: true,
+              },
+            ]}
+          />
         )}
-
-        <div className="bg-[var(--card-color)] rounded-lg w-full">
-          <button
-            className="flex items-center gap-3 pl-4 w-full transition-colors duration-200 cursor-pointer"
-            onClick={onRemoveAccount}
-          >
-            <Trash2 className="size-5 text-red-400" />
-            <div className={`flex-grow flex items-center gap-3 py-4 pr-4`}>
-              <p className="text-base font-medium w-full text-left text-red-400">
-                Remove Account
-              </p>
-            </div>
-          </button>
-        </div>
+        <Menu
+          items={[
+            {
+              icon: Trash2,
+              label: "Remove Account",
+              onClick: onRemoveAccount,
+              itemClassName: "text-red-400",
+            },
+          ]}
+        />
       </DialogContent>
     </>
   );
