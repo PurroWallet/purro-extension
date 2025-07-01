@@ -32,7 +32,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
       // EVM chains (Ethereum, Hyperliquid, Base, Arbitrum) all use the same validation
       if (
         chain === "ethereum" ||
-        chain === "hyperliquid" ||
+        chain === "hyperevm" ||
         chain === "base" ||
         chain === "arbitrum"
       ) {
@@ -121,7 +121,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
             {chain === "ethereum" && "Enter your Ethereum private key"}
             {chain === "solana" && "Enter your Solana private key"}
             {chain === "sui" && "Enter your Sui private key"}
-            {chain === "hyperliquid" && "Enter your Hyperliquid private key"}
+            {chain === "hyperevm" && "Enter your Hyperliquid private key"}
             {chain === "base" && "Enter your Base private key"}
             {chain === "arbitrum" && "Enter your Arbitrum private key"}
           </p>
@@ -148,7 +148,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
                     // EVM chains (Ethereum, Hyperliquid, Base, Arbitrum) all use the same validation
                     if (
                       chain === "ethereum" ||
-                      chain === "hyperliquid" ||
+                      chain === "hyperevm" ||
                       chain === "base" ||
                       chain === "arbitrum"
                     ) {
@@ -189,43 +189,6 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
                         }
                       } catch (suiError) {
                         isValid = false;
-                      }
-                    }
-
-                    if (isValid && walletAddress) {
-                      setAddress(walletAddress);
-
-                      // Check if private key already exists
-                      try {
-                        // Map chain names to ChainType
-                        let chainType: "eip155" | "solana" | "sui";
-                        if (
-                          chain === "ethereum" ||
-                          chain === "hyperliquid" ||
-                          chain === "base" ||
-                          chain === "arbitrum"
-                        ) {
-                          chainType = "eip155";
-                        } else if (chain === "solana") {
-                          chainType = "solana";
-                        } else if (chain === "sui") {
-                          chainType = "sui";
-                        } else {
-                          console.warn(`⚠️ Unknown chain type: ${chain}`);
-                          return; // Unknown chain type
-                        }
-
-                        const exists = await checkPrivateKeyExists(inputValue);
-
-                        if (exists) {
-                          console.warn(
-                            "⚠️ Real-time check: Private key already exists"
-                          );
-                          setError("This private key is already imported.");
-                          setAddress(null);
-                        }
-                      } catch (error) {
-                        // Ignore check errors during typing
                       }
                     }
                   } catch (error) {

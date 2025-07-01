@@ -2,9 +2,7 @@ import { Button } from "@/client/component/ui";
 import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
 import { useEffect, useState, useRef } from "react";
 import { ChevronDown } from "lucide-react";
-import { SeedPhraseData } from "@/background/types/account";
-
-type SeedPhraseWithId = SeedPhraseData & { id: string };
+import { SeedPhraseWithId } from "@/types";
 
 interface CreateFromExistingSeedProps {
   onNext: () => void;

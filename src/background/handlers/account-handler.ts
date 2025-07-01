@@ -460,7 +460,20 @@ export const accountHandler = {
         }
     },
 
-    async removeSeedPhrase(seedPhraseId: string): Promise<void> {
+    async removeSeedPhrase(data: { seedPhraseId: string, password: string }): Promise<void> {
+        const { seedPhraseId, password } = data;
+
+        const passwordStored = await storageHandler.getStoredPassword();
+
+        if (!passwordStored) {
+            throw new Error("No password found");
+        }
+
+        const isValidPassword = await encryption.verifyPassword(password, passwordStored.data, passwordStored.salt);
+        if (!isValidPassword) {
+            throw new Error("Invalid password");
+        }
+
         const seedPhraseData = await storageHandler.getSeedPhraseById(seedPhraseId);
 
         if (!seedPhraseData) {
@@ -505,10 +518,19 @@ export const accountHandler = {
                 storageHandler.removeSeedPhrase(seedPhraseId)
             ]);
 
-            // Reset wallet if no accounts remain
-            const remainingSeedAccounts = await storageHandler.getAccounts();
-            if (remainingSeedAccounts.length === 0) {
+            // After removals, handle active account and potential wallet reset
+            const remainingAccounts = await storageHandler.getAccounts();
+
+            if (remainingAccounts.length === 0) {
+                // No accounts left – fully reset wallet
                 await storageHandler.resetWallet();
+            } else {
+                // Ensure the active account is still valid; if not, default to the first remaining account
+                const activeAccount = await storageHandler.getActiveAccount();
+
+                if (!activeAccount || !remainingAccounts.includes(activeAccount.id)) {
+                    await storageHandler.setActiveAccount(remainingAccounts[0]);
+                }
             }
 
         } catch (error) {

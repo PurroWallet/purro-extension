@@ -41,6 +41,13 @@ export const authHandler = {
             throw new Error("Timeout must be between 5 minutes and 24 hours");
         }
         await chrome.storage.local.set({ [STORAGE_KEYS.SESSION_TIMEOUT]: timeout });
+
+        // If a session is currently active we need to update its expiry and reschedule
+        // the auto-lock alarm so the new timeout takes effect immediately.
+        if (session) {
+            session.expiresAt = Date.now() + timeout;
+            this.scheduleAutoLock(timeout);
+        }
     },
 
     async importPassword(data: { password: string }): Promise<void> {

@@ -28,7 +28,7 @@ const Finish = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [hasExecuted, setHasExecuted] = useState<boolean>(false);
-  const { accounts, refreshState } = useWalletStore();
+  const { accounts } = useWalletStore();
   const { createWallet, importPrivateKey } = useWallet();
 
   useEffect(() => {
@@ -69,7 +69,7 @@ const Finish = () => {
           }
           let chainType: ChainType;
           if (
-            chain === "hyperliquid" ||
+            chain === "hyperevm" ||
             chain === "base" ||
             chain === "arbitrum" ||
             chain === "ethereum"

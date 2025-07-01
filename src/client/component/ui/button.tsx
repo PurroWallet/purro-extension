@@ -25,7 +25,7 @@ export const Button = ({
         variant === "secondary" &&
           "bg-[var(--button-color-secondary)] hover:bg-[var(--button-color-secondary)]/80 text-white",
         variant === "destructive" &&
-          "bg-[var(--button-color-destructive)] hover:bg-[var(--button-color-destructive)]/80 text-white",
+          "bg-[var(--button-color-destructive)] hover:bg-[var(--button-color-destructive)]/80 text-black",
         className
       )}
     >
@@ -37,14 +37,19 @@ export const Button = ({
 export const IconButton = ({
   children,
   onClick,
+  className,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
+  className?: string;
 }) => {
   return (
     <button
       onClick={onClick}
-      className="p-2 rounded-full hover:bg-[var(--card-color)]/80 size-8 transition-all cursor-pointer"
+      className={cn(
+        "p-2 rounded-full hover:bg-[var(--card-color)]/80 size-8 transition-all cursor-pointer flex justify-center items-center",
+        className
+      )}
     >
       {children}
     </button>

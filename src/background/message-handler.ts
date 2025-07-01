@@ -55,6 +55,12 @@ export class MessageHandler {
                 case 'LOCK_WALLET':
                     result = await authHandler.lock();
                     break;
+                case 'GET_SESSION_TIMEOUT':
+                    result = await authHandler.getSessionTimeout();
+                    break;
+                case 'SET_SESSION_TIMEOUT':
+                    result = await authHandler.setSessionTimeout(data);
+                    break;
                 case 'RESET_WALLET':
                     result = await storageHandler.resetWallet();
                     break;
@@ -84,6 +90,12 @@ export class MessageHandler {
                     break;
                 case 'IS_WATCH_ONLY_ADDRESS_EXISTS':
                     result = await accountHandler.isWalletAddressExists(data.address);
+                    break;
+                case 'CHANGE_PASSWORD':
+                    result = await accountHandler.changePassword(data);
+                    break;
+                case 'REMOVE_SEED_PHRASE':
+                    result = await accountHandler.removeSeedPhrase(data);
                     break;
 
                 default:

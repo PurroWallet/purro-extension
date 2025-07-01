@@ -1,10 +1,10 @@
 import { useCallback } from "react";
-
 import useWalletStore from './use-wallet-store';
 import { sendMessage } from "../utils/extension-message-utils";
 import { CreateWalletData } from "@/background/types/message-data";
 import { ChainType } from "@/background/types/account";
 import { SeedPhraseData } from "@/background/types/account";
+import { SeedPhraseWithId } from "@/types";
 
 const useWallet = () => {
     const { setLoading, setError } = useWalletStore();
@@ -146,12 +146,21 @@ const useWallet = () => {
         return exists;
     }, []);
 
-    type SeedPhraseWithId = SeedPhraseData & { id: string };
-
     const getAllSeedPhrases = useCallback(async (): Promise<SeedPhraseWithId[]> => {
         const seedPhrases: { id: string; data: SeedPhraseData }[] = await sendMessage("GET_ALL_SEED_PHRASES");
         return seedPhrases.map((sp) => ({ id: sp.id, ...sp.data }));
     }, []);
+
+    const changePassword = useCallback(async (oldPassword: string, newPassword: string) => {
+        const changed = await sendMessage("CHANGE_PASSWORD", { oldPassword, newPassword });
+        return changed;
+    }, []);
+
+    const removeSeedPhrase = useCallback(async (seedPhraseId: string, password: string) => {
+        const removed = await sendMessage("REMOVE_SEED_PHRASE", { seedPhraseId, password });
+        return removed;
+    }, []);
+
 
     return {
         createWallet,
@@ -173,7 +182,9 @@ const useWallet = () => {
         exportPrivateKey,
         importWatchOnlyWallet,
         checkWatchOnlyAddressExists,
-        getAllSeedPhrases
+        getAllSeedPhrases,
+        changePassword,
+        removeSeedPhrase
     }
 };
 

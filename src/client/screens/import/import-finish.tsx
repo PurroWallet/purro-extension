@@ -78,7 +78,7 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
             }
             let chainType: ChainType;
             if (
-              chain === "hyperliquid" ||
+              chain === "hyperevm" ||
               chain === "base" ||
               chain === "arbitrum" ||
               chain === "ethereum"

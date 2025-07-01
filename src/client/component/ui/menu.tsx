@@ -1,16 +1,16 @@
 import { cn } from "@/client/lib/utils";
-import { ChevronRightIcon, LucideIcon } from "lucide-react";
+import { ChevronRightIcon } from "lucide-react";
 
 interface MenuProps {
   items: {
     isHidden?: boolean;
-    icon?: LucideIcon;
+    icon?: React.ElementType;
     label: string;
     description?: string;
     isLongDescription?: boolean;
     onClick?: () => void;
     arrowLeft?: boolean;
-    arrowLeftIcon?: LucideIcon;
+    arrowLeftIcon?: React.ElementType;
     itemClassName?: string;
   }[];
 }

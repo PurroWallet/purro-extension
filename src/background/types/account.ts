@@ -12,7 +12,7 @@ export type AccountInformation = {
 
 export type ChainType = "eip155" | "solana" | "sui"
 
-export const supportedChain = ["solana", "sui", "hyperliquid", "base", "arbitrum", "ethereum"] as const;
+export const supportedChain = ["solana", "sui", "hyperevm", "base", "arbitrum", "ethereum"] as const;
 export type SupportedChainType = (typeof supportedChain)[number];
 
 export type AccountWallet = {

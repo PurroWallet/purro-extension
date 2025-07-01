@@ -1,4 +1,4 @@
-import { AccountInformation, AccountWallet } from "@/background/types/account";
+import { AccountInformation, AccountWallet, SeedPhraseData } from "@/background/types/account";
 
 export interface WalletState {
     isLocked: boolean;
@@ -7,3 +7,5 @@ export interface WalletState {
     activeAccount: AccountInformation | null;
     wallets: { [key: string]: AccountWallet };
 }
+
+export type SeedPhraseWithId = SeedPhraseData & { id: string };
