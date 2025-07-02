@@ -23,10 +23,12 @@ export default defineConfig({
                 sidepanel: resolve(__dirname, 'html/sidepanel.html'),
                 onboarding: resolve(__dirname, 'html/onboarding.html'),
                 import: resolve(__dirname, 'html/import.html'),
+                offscreen: resolve(__dirname, 'html/offscreen.html'),
 
                 // Background scripts and dependencies
                 background: resolve(__dirname, 'src/background/background.ts'),
                 contentScript: resolve(__dirname, 'src/background/content-script.ts'),
+                offscreenScript: resolve(__dirname, 'src/background/offscreen.ts'),
             },
             output: {
                 entryFileNames: (chunkInfo) => {
@@ -36,6 +38,9 @@ export default defineConfig({
                     }
                     if (chunkInfo.name === 'contentScript') {
                         return 'contentScript.js';
+                    }
+                    if (chunkInfo.name === 'offscreen') {
+                        return 'offscreen.js';
                     }
 
                     return '[name].js';

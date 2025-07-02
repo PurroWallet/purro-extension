@@ -2,8 +2,7 @@ import { STORAGE_KEYS } from "../constants/storage-keys";
 import { encryption } from "../lib/encryption";
 import { SessionData } from "../types/storage";
 import { storageHandler } from "./storage-handler";
-
-let session: SessionData | null = null;
+import { offscreenManager } from "../lib/offscreen-manager";
 
 export const DEFAULT_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 export const MAX_TIMEOUT = 24 * 60 * 60 * 1000; // 24 hours max
@@ -20,14 +19,24 @@ export const authHandler = {
             console.warn('Unable to schedule auto-lock alarm', e);
         }
     },
+
     // Read
     async getSession(): Promise<SessionData | null> {
-        // Auto-lock expired sessions
-        if (session && session.expiresAt <= Date.now()) {
-            await this.lock();
+        try {
+            const session = await offscreenManager.sendToOffscreen('GET_SESSION');
+
+            // Auto-lock expired sessions
+            if (session && session.expiresAt <= Date.now()) {
+                await this.lock();
+                return null;
+            }
+            return session;
+        } catch (error) {
+            console.warn('Failed to get secure session:', error);
+            // Force lock state when session is not accessible
+            await chrome.storage.local.set({ [STORAGE_KEYS.SESSION_IS_LOCKED]: true });
             return null;
         }
-        return session;
     },
 
     async getSessionTimeout(): Promise<number> {
@@ -44,9 +53,15 @@ export const authHandler = {
 
         // If a session is currently active we need to update its expiry and reschedule
         // the auto-lock alarm so the new timeout takes effect immediately.
-        if (session) {
-            session.expiresAt = Date.now() + timeout;
-            this.scheduleAutoLock(timeout);
+        try {
+            const session = await offscreenManager.sendToOffscreen('GET_SESSION');
+            if (session) {
+                session.expiresAt = Date.now() + timeout;
+                await offscreenManager.sendToOffscreen('SET_SESSION', session);
+                this.scheduleAutoLock(timeout);
+            }
+        } catch (error) {
+            console.warn('Failed to update session timeout - session may have been lost');
         }
     },
 
@@ -55,11 +70,14 @@ export const authHandler = {
         await storageHandler.savePassword(passwordEncrypted);
         const timeout = await this.getSessionTimeout();
 
-        session = {
+        const sessionData: SessionData = {
             password: data.password,
             timestamp: Date.now(),
             expiresAt: Date.now() + timeout
         };
+
+        // This will throw if offscreen is not available - FAIL SECURELY
+        await offscreenManager.sendToOffscreen('SET_SESSION', sessionData);
 
         // Wallet is now unlocked
         await chrome.storage.local.set({ [STORAGE_KEYS.SESSION_IS_LOCKED]: false });
@@ -87,11 +105,14 @@ export const authHandler = {
 
         const timeout = await this.getSessionTimeout();
 
-        session = {
+        const sessionData: SessionData = {
             password: data.password,
             timestamp: Date.now(),
             expiresAt: Date.now() + timeout
         };
+
+        // This will throw if offscreen is not available - FAIL SECURELY
+        await offscreenManager.sendToOffscreen('SET_SESSION', sessionData);
 
         // Persist lock state for other extension contexts
         await chrome.storage.local.set({ [STORAGE_KEYS.SESSION_IS_LOCKED]: false });
@@ -101,18 +122,16 @@ export const authHandler = {
     },
 
     async lock(): Promise<void> {
-        if (session?.password) {
-            // Overwrite multiple times
-            const len = session.password.length;
-            session.password = '0'.repeat(len);
-            session.password = '1'.repeat(len);
-            session.password = crypto.getRandomValues(new Uint8Array(len)).join('');
-            session.password = '';
-        }
-        session = null;
+        try {
+            // Clear session in offscreen document with secure cleanup
+            await offscreenManager.sendToOffscreen('CLEAR_SESSION');
 
-        // Force garbage collection if possible
-        if (global.gc) global.gc();
+            // Close offscreen document to ensure complete memory cleanup
+            await offscreenManager.closeOffscreenDocument();
+        } catch (error) {
+            console.warn('Error during secure session cleanup:', error);
+            // Still proceed with lock state update
+        }
 
         // Clear auto-lock alarm
         try {
@@ -126,12 +145,12 @@ export const authHandler = {
     },
 
     async isUnlocked(): Promise<boolean> {
-        const currentSession = await this.getSession(); // Will auto-lock if expired
+        const currentSession = await this.getSession(); // Will auto-lock if expired or unavailable
         return currentSession !== null;
     },
 
     async getPassword(): Promise<string | null> {
-        const currentSession = await this.getSession(); // Will auto-lock if expired
+        const currentSession = await this.getSession(); // Will auto-lock if expired or unavailable
         return currentSession?.password || null;
     },
 }
