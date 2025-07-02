@@ -1,9 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/client/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { supportedEVMChains } from "@/background/constants/supported-chains";
 import { hyperliquidLogo } from "@/assets/logo";
+import useNetworkSettingsStore from "@/store/network-settings-store";
+import { ChainTypeClient } from "@/types/wallet";
 
 interface SupportedChainsDropdownProps {
   isOpen: boolean;
@@ -16,15 +18,59 @@ const SupportedChainsDropdown = ({
   onToggle,
   className,
 }: SupportedChainsDropdownProps) => {
-  const [_selectedChain, setSelectedChain] = useState("ethereum");
+  // Currently selected chainId (hex string) – default to Ethereum Mainnet (value unused, only setter kept)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [, setSelectedChain] = useState<string>("0x1");
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Access active networks from global settings store
+  const { networks } = useNetworkSettingsStore();
+
+  // Build an array of active network slugs (e.g. 'ethereum', 'base', ...)
+  const activeNetworkSlugs = useMemo<ChainTypeClient[]>(
+    () =>
+      Object.values(networks)
+        .filter((n) => n.isActive)
+        .map((n) => n.id),
+    [networks]
+  );
+
+  // Mapping between EVM hex chainIds (used by supportedEVMChains) and our internal slugs
+  const CHAIN_ID_TO_SLUG: Record<string, ChainTypeClient> = {
+    "0x1": "ethereum",
+    "0xa4b1": "arbitrum",
+    "0x2105": "base",
+    "0x3e7": "hyperevm",
+    "0x3e6": "hyperevm", // testnet maps to same slug
+  } as const;
 
   const handleChainSelect = (chainId: string) => {
     setSelectedChain(chainId);
     onToggle(); // Close dropdown after selection
   };
+
+  // Filter supported chains based on active network slugs
+  const displayedChains = useMemo(() => {
+    return Object.values(supportedEVMChains).filter((chain) => {
+      const slug = CHAIN_ID_TO_SLUG[chain.chainId];
+      return activeNetworkSlugs.includes(slug);
+    });
+  }, [activeNetworkSlugs]);
+
+  // Build ordered list of chains for logo row (Hyperliquid first)
+  const logoRowChains = useMemo(() => {
+    const ordered = [...displayedChains];
+    ordered.sort((a, b) => {
+      const slugA = CHAIN_ID_TO_SLUG[a.chainId];
+      const slugB = CHAIN_ID_TO_SLUG[b.chainId];
+      if (slugA === "hyperevm") return -1;
+      if (slugB === "hyperevm") return 1;
+      return 0;
+    });
+    return ordered;
+  }, [displayedChains]);
 
   // Calculate dropdown position when opened
   useEffect(() => {
@@ -76,12 +122,29 @@ const SupportedChainsDropdown = ({
       <button
         ref={buttonRef}
         className={cn(
-          "size-8 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center cursor-pointer",
+          "h-8 px-2 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center cursor-pointer",
           className
         )}
         onClick={onToggle}
       >
-        <img src={hyperliquidLogo} alt="Account" className="size-5" />
+        <div className="flex items-center -space-x-2">
+          {logoRowChains.length > 0 ? (
+            logoRowChains.map((chain, idx) => {
+              if (chain.chainId === "0x3e7") return null;
+              return (
+                <img
+                  key={chain.chainId}
+                  src={chain.logo}
+                  alt={chain.chainName}
+                  className="size-5 rounded-full"
+                  style={{ zIndex: logoRowChains.length - idx }}
+                />
+              );
+            })
+          ) : (
+            <img src={hyperliquidLogo} alt="Hyperliquid" className="size-5" />
+          )}
+        </div>
       </button>
 
       {/* Dropdown Menu - Using Portal to render outside overflow container */}
@@ -103,7 +166,7 @@ const SupportedChainsDropdown = ({
               <p className="p-2 text-sm font-medium text-[var(--text-color)] border-b border-white/10">
                 Supported Chains
               </p>
-              {Object.values(supportedEVMChains).map((chain) => (
+              {displayedChains.map((chain) => (
                 <button
                   key={chain.chainId}
                   onClick={() => handleChainSelect(chain.chainId)}
@@ -125,19 +188,7 @@ const SupportedChainsDropdown = ({
                       </p> */}
                     </div>
                   </div>
-                  {/* {selectedChain === chain.id && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{
-                        delay: 0.1,
-                        type: "spring",
-                        stiffness: 500,
-                      }}
-                    >
-                      <Check className="w-4 h-4 text-green-500" />
-                    </motion.div>
-                  )} */}
+                  {/* Tick icon removed as per requirement */}
                 </button>
               ))}
             </motion.div>
