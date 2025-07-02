@@ -1,4 +1,4 @@
-import IconName from "@/assets/icon-name.png";
+import IconName from "@/assets/icon-name-dark.png";
 import { cn } from "@/client/lib/utils";
 
 const IconNameLogo = ({ className }: { className?: string }) => {
