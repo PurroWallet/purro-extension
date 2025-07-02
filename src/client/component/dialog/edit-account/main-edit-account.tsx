@@ -1,11 +1,11 @@
 import {
-  ChevronRightIcon,
   FileKey2,
   FileLock,
   IdCard,
   ListOrdered,
   Pencil,
   Trash2,
+  X,
 } from "lucide-react";
 import { DialogContent, DialogHeader } from "../../ui";
 import useWalletStore from "@/client/hooks/use-wallet-store";
@@ -52,7 +52,11 @@ const MainEditAccount = ({
 
   return (
     <>
-      <DialogHeader title="Edit Account" onClose={() => closeDialog()} />
+      <DialogHeader
+        title="Edit Account"
+        onClose={() => closeDialog()}
+        icon={<X className="size-4" />}
+      />
       <DialogContent>
         <div className="flex items-center justify-center size-24 bg-[var(--card-color)] rounded-full relative">
           <AccountIcon
@@ -75,6 +79,7 @@ const MainEditAccount = ({
               icon: IdCard,
               label: "Name",
               onClick: onEditName,
+              description: account?.name,
               arrowLeft: true,
             },
           ]}

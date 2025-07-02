@@ -57,7 +57,8 @@
         "scripting",
         "sidePanel",
         "system.display",
-        "alarms"
+        "alarms",
+        "offscreen"
     ],
     "host_permissions": [
         "https://*/*"

@@ -31,21 +31,19 @@ export const Menu = ({ items }: MenuProps) => {
               onClick={item.onClick}
             >
               {item.icon && <item.icon className="size-5" />}
-              <div className={`flex-grow flex items-center gap-3 py-4 pr-4`}>
-                <p className="text-base font-medium w-full text-left">
-                  {item.label}
-                </p>
-                {item.description && (
-                  <div className="flex items-center gap-2 w-full">
-                    <p className="text-base text-gray-400 w-full text-right truncate">
+              <div className="flex items-center justify-between gap-3 py-4 pr-4 w-full">
+                <p className="text-base font-medium text-left">{item.label}</p>
+                <div className="flex items-center gap-2">
+                  {item.description && (
+                    <p className="flex-1 text-base text-gray-400 text-right truncate max-w-[150px]">
                       {item.description}
                     </p>
-                  </div>
-                )}
-                {item.arrowLeft && <ChevronRightIcon className="size-5" />}
-                {item.arrowLeftIcon && (
-                  <item.arrowLeftIcon className="size-5" />
-                )}
+                  )}
+                  {item.arrowLeft && <ChevronRightIcon className="size-5" />}
+                  {item.arrowLeftIcon && (
+                    <item.arrowLeftIcon className="size-5" />
+                  )}
+                </div>
               </div>
             </button>
           )
