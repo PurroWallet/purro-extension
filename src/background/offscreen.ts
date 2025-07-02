@@ -20,7 +20,7 @@ function secureSessionCleanup() {
 }
 
 // Listen for messages from service worker
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.type !== 'OFFSCREEN_SESSION') {
         return false;
     }
@@ -68,5 +68,5 @@ setInterval(() => {
 // Heartbeat to keep offscreen document alive
 setInterval(() => {
     // Just a small operation to prevent the document from being terminated
-    const now = Date.now();
+    Date.now();
 }, 30000); // Every 30 seconds
