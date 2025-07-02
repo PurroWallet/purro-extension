@@ -8,6 +8,7 @@ import useWalletStore from "@/client/hooks/use-wallet-store";
 import { Button, InputPassword } from "@/client/component/ui";
 import LoadingDisplay from "@/client/component/display/loading-display";
 import ForgotPassword from "../dialog/forgot-password";
+import IconNameLogo from "../icon-name-logo";
 
 const LockDisplay = () => {
   const { loading, isLocked, hasWallet, loadWalletState } = useWalletStore();
@@ -47,10 +48,8 @@ const LockDisplay = () => {
       )}
     >
       <div className="flex flex-col h-full">
-        <Header>
-          <div className="text-xl text-[var(--primary-color)] text-center w-full font-livvic font-semibold">
-            PURRO
-          </div>
+        <Header className="justify-center">
+          <IconNameLogo className="h-6" />
         </Header>
         <div className="flex-1 flex justify-center items-center p-4">
           <div className="w-full flex flex-col items-center gap-2">
