@@ -1,7 +1,7 @@
 {
     "name": "Purro New",
     "description": "A Hyperliquid Wallet",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "manifest_version": 3,
     "action": {
         "default_popup": "html/main.html",
@@ -36,7 +36,9 @@
             "resources": [
                 "html/onboarding.html",
                 "html/import.html",
-                "html/main.html"
+                "html/main.html",
+                "injectedProviderBundle.js",
+                "purro-icon.js"
             ],
             "matches": [
                 "<all_urls>"

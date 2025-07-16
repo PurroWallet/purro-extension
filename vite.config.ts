@@ -29,6 +29,8 @@ export default defineConfig({
                 background: resolve(__dirname, 'src/background/background.ts'),
                 contentScript: resolve(__dirname, 'src/background/content-script.ts'),
                 offscreenScript: resolve(__dirname, 'src/background/offscreen.ts'),
+                injectedProviderBundle: resolve(__dirname, 'src/background/providers/injected-provider-bundle.ts'),
+                'purro-icon': resolve(__dirname, 'src/background/utils/purro-icon.ts'),
             },
             output: {
                 entryFileNames: (chunkInfo) => {
@@ -41,6 +43,9 @@ export default defineConfig({
                     }
                     if (chunkInfo.name === 'offscreen') {
                         return 'offscreen.js';
+                    }
+                    if (chunkInfo.name === 'injectedProviderBundle') {
+                        return 'injectedProviderBundle.js';
                     }
 
                     return '[name].js';

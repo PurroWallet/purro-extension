@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Purro Wallet Detection Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+      h1,
+      h2 {
+        color: #333;
+      }
+      .test-section {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+      }
+      .success {
+        background: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+      }
+      .error {
+        background: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+      }
+      .warning {
+        background: #fff3cd;
+        border-color: #ffeaa7;
+        color: #856404;
+      }
+      .info {
+        background: #d1ecf1;
+        border-color: #bee5eb;
+        color: #0c5460;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      button:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+      }
+      .code-block {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+        padding: 10px;
+        font-family: monospace;
+        white-space: pre-wrap;
+        overflow-x: auto;
+      }
+      .provider-info {
+        margin: 10px 0;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 4px;
+      }
+      .test-result {
+        margin: 5px 0;
+        padding: 8px;
+        border-radius: 4px;
+      }
+      .log-container {
+        max-height: 300px;
+        overflow-y: auto;
+        background: #000;
+        color: #0f0;
+        padding: 10px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🐱 Purro Wallet Detection Test</h1>
+      <p>
+        Script này sẽ kiểm tra xem dApps có thể phát hiện và tương tác với Purro
+        wallet hay không.
+      </p>
+
+      <div class="test-section">
+        <h2>📋 Test Controls</h2>
+        <button onclick="runAllTests()">🚀 Run All Tests</button>
+        <button onclick="clearLogs()">🗑️ Clear Logs</button>
+        <button onclick="detectProviders()">🔍 Detect Providers</button>
+        <button onclick="testConnection()">🔗 Test Connection</button>
+      </div>
+
+      <div class="test-section">
+        <h2>📊 Test Results</h2>
+        <div id="testResults"></div>
+      </div>
+
+      <div class="test-section">
+        <h2>🔍 Provider Detection</h2>
+        <div id="providerDetection"></div>
+      </div>
+
+      <div class="test-section">
+        <h2>⚡ Connection Tests</h2>
+        <div id="connectionTests"></div>
+      </div>
+
+      <div class="test-section">
+        <h2>🧪 RPC Method Tests</h2>
+        <div id="rpcTests"></div>
+      </div>
+
+      <div class="test-section">
+        <h2>📝 Console Logs</h2>
+        <div id="logs" class="log-container"></div>
+      </div>
+    </div>
+
+    <script>
+      // Global variables
+      let detectedProviders = [];
+      let purroProvider = null;
+      let testResults = {
+        eip6963: false,
+        legacyWindow: false,
+        purroWindow: false,
+        connection: false,
+        rpcMethods: {},
+      };
+
+      // Logging function
+      function log(message, type = "info") {
+        const timestamp = new Date().toLocaleTimeString();
+        const logElement = document.getElementById("logs");
+        const color =
+          type === "error"
+            ? "#ff6b6b"
+            : type === "success"
+            ? "#51cf66"
+            : type === "warning"
+            ? "#ffd43b"
+            : "#74c0fc";
+        logElement.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+        logElement.scrollTop = logElement.scrollHeight;
+        console.log(`[${timestamp}] ${message}`);
+      }
+
+      function clearLogs() {
+        document.getElementById("logs").innerHTML = "";
+      }
+
+      // Test result display
+      function displayTestResult(testName, passed, details = "") {
+        const resultsDiv = document.getElementById("testResults");
+        const resultClass = passed ? "success" : "error";
+        const icon = passed ? "✅" : "❌";
+        resultsDiv.innerHTML += `
+                <div class="test-result ${resultClass}">
+                    ${icon} <strong>${testName}</strong>: ${
+          passed ? "PASSED" : "FAILED"
+        }
+                    ${details ? `<br><small>${details}</small>` : ""}
+                </div>
+            `;
+      }
+
+      // EIP-6963 Provider Detection
+      function detectEIP6963Providers() {
+        return new Promise((resolve) => {
+          const providers = [];
+
+          // Listen for provider announcements
+          function handleProviderAnnouncement(event) {
+            log(
+              `📢 EIP-6963 Provider announced: ${event.detail.info.name}`,
+              "info"
+            );
+            providers.push(event.detail);
+          }
+
+          window.addEventListener(
+            "eip6963:announceProvider",
+            handleProviderAnnouncement
+          );
+
+          // Request providers to announce themselves
+          log("🔍 Requesting EIP-6963 providers...", "info");
+          window.dispatchEvent(new CustomEvent("eip6963:requestProvider"));
+
+          // Give providers time to announce
+          setTimeout(() => {
+            window.removeEventListener(
+              "eip6963:announceProvider",
+              handleProviderAnnouncement
+            );
+            resolve(providers);
+          }, 2000);
+        });
+      }
+
+      // Legacy provider detection
+      function detectLegacyProviders() {
+        const providers = [];
+
+        // Check window.ethereum
+        if (window.ethereum) {
+          log("🔍 Found window.ethereum", "info");
+          providers.push({
+            name: "window.ethereum",
+            provider: window.ethereum,
+            info: {
+              name: window.ethereum.info?.name || "Unknown",
+              rdns: window.ethereum.info?.rdns || "unknown",
+            },
+          });
+        }
+
+        // Check window.purro
+        if (window.purro) {
+          log("🔍 Found window.purro", "info");
+          providers.push({
+            name: "window.purro",
+            provider: window.purro,
+            info: {
+              name: "Purro",
+              rdns: "io.purro.wallet",
+            },
+          });
+        }
+
+        return providers;
+      }
+
+      // Main provider detection
+      async function detectProviders() {
+        log("🚀 Starting provider detection...", "info");
+        detectedProviders = [];
+
+        // EIP-6963 detection
+        log("📋 Phase 1: EIP-6963 Provider Detection", "info");
+        const eip6963Providers = await detectEIP6963Providers();
+        detectedProviders.push(...eip6963Providers);
+
+        // Legacy detection
+        log("📋 Phase 2: Legacy Provider Detection", "info");
+        const legacyProviders = detectLegacyProviders();
+        detectedProviders.push(...legacyProviders);
+
+        // Find Purro provider
+        purroProvider = detectedProviders.find(
+          (p) =>
+            p.info.rdns === "io.purro.wallet" ||
+            p.info.name === "Purro" ||
+            p.name === "window.purro"
+        );
+
+        // Display results
+        displayProviderResults();
+
+        // Update test results
+        testResults.eip6963 = eip6963Providers.length > 0;
+        testResults.legacyWindow = window.ethereum !== undefined;
+        testResults.purroWindow = window.purro !== undefined;
+
+        log(
+          `✅ Provider detection complete. Found ${detectedProviders.length} providers.`,
+          "success"
+        );
+
+        if (purroProvider) {
+          log("🎉 Purro provider detected!", "success");
+        } else {
+          log("❌ Purro provider not found!", "error");
+        }
+      }
+
+      // Display provider results
+      function displayProviderResults() {
+        const div = document.getElementById("providerDetection");
+        div.innerHTML = "<h3>Detected Providers:</h3>";
+
+        if (detectedProviders.length === 0) {
+          div.innerHTML += '<p class="error">❌ No providers detected</p>';
+          return;
+        }
+
+        detectedProviders.forEach((provider, index) => {
+          const isPurro =
+            provider.info.rdns === "io.purro.wallet" ||
+            provider.info.name === "Purro" ||
+            provider.name === "window.purro";
+
+          const providerClass = isPurro ? "success" : "info";
+
+          div.innerHTML += `
+                    <div class="provider-info ${providerClass}">
+                        <strong>${isPurro ? "🐱 " : ""}${
+            provider.info.name
+          }</strong>
+                        <br>RDNS: ${provider.info.rdns}
+                        <br>Source: ${provider.name || "EIP-6963"}
+                        <br>isPurro: ${provider.provider.isPurro || false}
+                        <br>isMetaMask: ${provider.provider.isMetaMask || false}
+                        <br>chainId: ${provider.provider.chainId || "unknown"}
+                    </div>
+                `;
+        });
+      }
+
+      // Test connection
+      async function testConnection() {
+        if (!purroProvider) {
+          log("❌ No Purro provider found for connection test", "error");
+          displayTestResult(
+            "Connection Test",
+            false,
+            "No Purro provider detected"
+          );
+          return;
+        }
+
+        log("🔗 Testing connection to Purro wallet...", "info");
+
+        try {
+          const provider = purroProvider.provider;
+
+          // Test eth_requestAccounts
+          log("📞 Calling eth_requestAccounts...", "info");
+          const accounts = await provider.request({
+            method: "eth_requestAccounts",
+          });
+          log(`✅ Got accounts: ${JSON.stringify(accounts)}`, "success");
+
+          // Test eth_accounts
+          log("📞 Calling eth_accounts...", "info");
+          const currentAccounts = await provider.request({
+            method: "eth_accounts",
+          });
+          log(
+            `✅ Current accounts: ${JSON.stringify(currentAccounts)}`,
+            "success"
+          );
+
+          // Test eth_chainId
+          log("📞 Calling eth_chainId...", "info");
+          const chainId = await provider.request({ method: "eth_chainId" });
+          log(`✅ Chain ID: ${chainId}`, "success");
+
+          testResults.connection = true;
+          displayTestResult(
+            "Connection Test",
+            true,
+            `Connected with ${accounts.length} accounts`
+          );
+
+          // Display connection results
+          const div = document.getElementById("connectionTests");
+          div.innerHTML = `
+                    <div class="success">
+                        <h3>✅ Connection Successful</h3>
+                        <p><strong>Accounts:</strong> ${accounts.length}</p>
+                        <p><strong>Active Account:</strong> ${
+                          accounts[0] || "None"
+                        }</p>
+                        <p><strong>Chain ID:</strong> ${chainId}</p>
+                    </div>
+                `;
+        } catch (error) {
+          log(`❌ Connection failed: ${error.message}`, "error");
+          testResults.connection = false;
+          displayTestResult("Connection Test", false, error.message);
+
+          const div = document.getElementById("connectionTests");
+          div.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Connection Failed</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p><strong>Code:</strong> ${error.code || "Unknown"}</p>
+                    </div>
+                `;
+        }
+      }
+
+      // Test RPC methods
+      async function testRPCMethods() {
+        if (!purroProvider) {
+          log("❌ No Purro provider found for RPC tests", "error");
+          return;
+        }
+
+        const provider = purroProvider.provider;
+        const rpcMethods = [
+          { method: "eth_accounts", params: [] },
+          { method: "eth_chainId", params: [] },
+          { method: "net_version", params: [] },
+          {
+            method: "eth_getBalance",
+            params: ["0x0000000000000000000000000000000000000000", "latest"],
+          },
+          { method: "wallet_getPermissions", params: [] },
+        ];
+
+        const div = document.getElementById("rpcTests");
+        div.innerHTML = "<h3>RPC Method Tests:</h3>";
+
+        for (const rpc of rpcMethods) {
+          try {
+            log(`📞 Testing ${rpc.method}...`, "info");
+            const result = await provider.request({
+              method: rpc.method,
+              params: rpc.params,
+            });
+
+            log(
+              `✅ ${rpc.method} success: ${JSON.stringify(result)}`,
+              "success"
+            );
+            testResults.rpcMethods[rpc.method] = true;
+
+            div.innerHTML += `
+                        <div class="test-result success">
+                            ✅ <strong>${rpc.method}</strong>: Success
+                            <br><small>Result: ${JSON.stringify(result)}</small>
+                        </div>
+                    `;
+          } catch (error) {
+            log(`❌ ${rpc.method} failed: ${error.message}`, "error");
+            testResults.rpcMethods[rpc.method] = false;
+
+            div.innerHTML += `
+                        <div class="test-result error">
+                            ❌ <strong>${rpc.method}</strong>: Failed
+                            <br><small>Error: ${error.message}</small>
+                        </div>
+                    `;
+          }
+        }
+      }
+
+      // Test event listeners
+      function testEventListeners() {
+        if (!purroProvider) {
+          log("❌ No Purro provider found for event tests", "error");
+          return;
+        }
+
+        const provider = purroProvider.provider;
+
+        // Test accountsChanged event
+        provider.on("accountsChanged", (accounts) => {
+          log(
+            `📢 Event: accountsChanged - ${JSON.stringify(accounts)}`,
+            "info"
+          );
+        });
+
+        // Test chainChanged event
+        provider.on("chainChanged", (chainId) => {
+          log(`📢 Event: chainChanged - ${chainId}`, "info");
+        });
+
+        // Test connect event
+        provider.on("connect", (connectInfo) => {
+          log(`📢 Event: connect - ${JSON.stringify(connectInfo)}`, "info");
+        });
+
+        // Test disconnect event
+        provider.on("disconnect", (error) => {
+          log(`📢 Event: disconnect - ${JSON.stringify(error)}`, "info");
+        });
+
+        log("✅ Event listeners registered", "success");
+      }
+
+      // Run all tests
+      async function runAllTests() {
+        log("🚀 Starting comprehensive Purro wallet detection test...", "info");
+
+        // Clear previous results
+        document.getElementById("testResults").innerHTML = "";
+        document.getElementById("providerDetection").innerHTML = "";
+        document.getElementById("connectionTests").innerHTML = "";
+        document.getElementById("rpcTests").innerHTML = "";
+
+        // Reset test results
+        testResults = {
+          eip6963: false,
+          legacyWindow: false,
+          purroWindow: false,
+          connection: false,
+          rpcMethods: {},
+        };
+
+        try {
+          // Step 1: Detect providers
+          await detectProviders();
+
+          // Step 2: Test connection
+          await testConnection();
+
+          // Step 3: Test RPC methods
+          await testRPCMethods();
+
+          // Step 4: Setup event listeners
+          testEventListeners();
+
+          // Display final results
+          displayFinalResults();
+
+          log("✅ All tests completed!", "success");
+        } catch (error) {
+          log(`❌ Test suite failed: ${error.message}`, "error");
+        }
+      }
+
+      // Display final results
+      function displayFinalResults() {
+        displayTestResult("EIP-6963 Detection", testResults.eip6963);
+        displayTestResult(
+          "window.ethereum Detection",
+          testResults.legacyWindow
+        );
+        displayTestResult("window.purro Detection", testResults.purroWindow);
+        displayTestResult("Wallet Connection", testResults.connection);
+
+        const rpcPassed = Object.values(testResults.rpcMethods).filter(
+          Boolean
+        ).length;
+        const rpcTotal = Object.keys(testResults.rpcMethods).length;
+        displayTestResult(
+          "RPC Methods",
+          rpcPassed > 0,
+          `${rpcPassed}/${rpcTotal} methods working`
+        );
+
+        // Overall result
+        const overallPassed =
+          testResults.eip6963 ||
+          testResults.legacyWindow ||
+          testResults.purroWindow;
+        if (overallPassed) {
+          log(
+            "🎉 OVERALL RESULT: Purro wallet is detectable by dApps!",
+            "success"
+          );
+        } else {
+          log(
+            "❌ OVERALL RESULT: Purro wallet is NOT detectable by dApps!",
+            "error"
+          );
+        }
+      }
+
+      // Initialize on page load
+      window.addEventListener("load", () => {
+        log("🔄 Page loaded. Purro wallet detection test ready.", "info");
+        log('💡 Click "Run All Tests" to start comprehensive testing.', "info");
+      });
+
+      // Auto-detect on page load after a short delay
+      setTimeout(() => {
+        log("🔄 Auto-detecting providers...", "info");
+        detectProviders();
+      }, 1000);
+    </script>
+  </body>
+</html>
