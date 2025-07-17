@@ -30,7 +30,6 @@ export class PurroProviderManager implements PurroProvider {
     private readonly ACCOUNTS_CACHE_TTL = 5000; // 5 seconds cache
 
     constructor() {
-        console.log('🚀 Creating PurroProviderManager for origin:', window.location.origin);
         this.init();
     }
 
@@ -44,36 +43,25 @@ export class PurroProviderManager implements PurroProvider {
 
             if (type === 'RESPONSE' && requestId) {
                 // Handle response to a pending request
-                console.log(`📨 Received response for requestId: ${requestId}`, response);
 
                 // Special debugging for ETH_REQUEST_ACCOUNTS
                 const pendingRequest = this.pendingRequests.get(requestId);
                 if (pendingRequest) {
-                    console.log(`✅ Found pending request ${requestId}`);
 
                     // Check if this was an ETH_REQUEST_ACCOUNTS request
                     const isEthRequest = Array.from(this.pendingRequests.entries())
                         .some(([id, _req]) => id === requestId);
 
                     if (isEthRequest) {
-                        console.log('🔥 This is ETH_REQUEST_ACCOUNTS response in provider manager');
-                        console.log('📊 Response details:');
-                        console.log('  - success:', response.success);
-                        console.log('  - data:', response.data);
-                        console.log('  - data.accounts:', response.data?.accounts);
-                        console.log('  - data.data:', response.data?.data);
-                        console.log('  - data.data.accounts:', response.data?.data?.accounts);
                     }
 
                     this.pendingRequests.delete(requestId);
-                    console.log(`✅ Resolving pending request ${requestId}`);
                     if (response.success) {
                         pendingRequest.resolve(response.data);
                     } else {
                         pendingRequest.reject(new Error(response.error || 'Request failed'));
                     }
                 } else {
-                    console.warn(`⚠️ No pending request found for requestId: ${requestId}`);
                 }
             }
 
@@ -112,7 +100,6 @@ export class PurroProviderManager implements PurroProvider {
 
         // Initialize connection state immediately and with retries
         setTimeout(() => {
-            console.log('⏰ Starting connection state initialization...');
             this.initializeConnectionState();
         }, 50);
     }
@@ -120,7 +107,6 @@ export class PurroProviderManager implements PurroProvider {
     // Initialize connection state with better error handling
     private async initializeConnectionState() {
         try {
-            console.log('🔄 Initializing connection state for origin:', window.location.origin);
 
             // Use unified connection status check
             const connectedAccountForSite = await this.getConnectedAccountForSite();
@@ -135,14 +121,10 @@ export class PurroProviderManager implements PurroProvider {
                 this.accountsCache = this.accounts;
                 this.accountsCacheTimestamp = Date.now();
 
-                console.log('🔗 Provider initialized with connected account:', connectedAccountForSite.address);
-                console.log('📊 Provider state:', { isConnected: this.isConnected, accounts: this.accounts });
-
                 // Emit events to notify dApp with a small delay to ensure listeners are ready
                 setTimeout(() => {
                     this.emit('connect', { accounts: this.accounts, activeAccount: this.activeAccount });
                     this.emit('accountsChanged', this.accounts);
-                    console.log('📢 Provider events emitted for connected account');
                 }, 150);
 
             } else {
@@ -153,12 +135,9 @@ export class PurroProviderManager implements PurroProvider {
                 this.accountsCache = null;
                 this.accountsCacheTimestamp = 0;
 
-                console.log('🔌 Provider initialized - not connected to this site');
-
                 // Still emit accountsChanged with empty array to let dApp know we're ready
                 setTimeout(() => {
                     this.emit('accountsChanged', []);
-                    console.log('📢 Provider events emitted - no connection');
                 }, 150);
             }
         } catch (error) {
@@ -173,7 +152,6 @@ export class PurroProviderManager implements PurroProvider {
             // Emit empty accountsChanged to let dApp know we're ready (but not connected)
             setTimeout(() => {
                 this.emit('accountsChanged', []);
-                console.log('📢 Provider events emitted - error state');
             }, 150);
         }
     }
@@ -235,7 +213,6 @@ export class PurroProviderManager implements PurroProvider {
     public sendMessage(type: string, data?: any): Promise<any> {
         return new Promise((resolve, reject) => {
             const requestId = this.generateRequestId();
-            console.log(`📤 ProviderManager sending message: ${type} with requestId: ${requestId}`);
 
             this.pendingRequests.set(requestId, { resolve, reject });
 
@@ -246,7 +223,6 @@ export class PurroProviderManager implements PurroProvider {
                 requestId
             };
 
-            console.log(`  - message payload:`, message);
             window.postMessage(message, '*');
 
             // Increase timeout to match signing/connect timeout (10 minutes)
@@ -263,17 +239,13 @@ export class PurroProviderManager implements PurroProvider {
     // Core provider methods
     async connect(): Promise<{ accounts: string[]; activeAccount: string | null }> {
         try {
-            console.log('🔗 ProviderManager.connect() called for origin:', window.location.origin);
 
             // First check if already connected using the unified connection status check
-            console.log('  - checking connection status...');
             const connectionStatus = await this.sendMessage('CHECK_CONNECTION_STATUS', {
                 origin: window.location.origin
             });
-            console.log('  - connection status:', connectionStatus);
 
             if (connectionStatus && connectionStatus.success && connectionStatus.data?.isConnected) {
-                console.log('  - already connected, returning existing accounts');
                 this.isConnected = true;
                 this.accounts = connectionStatus.data.accounts || [];
                 this.activeAccount = connectionStatus.data.activeAccount || null;
@@ -293,9 +265,7 @@ export class PurroProviderManager implements PurroProvider {
 
             // Not connected yet - proceed with connection flow using ETH_REQUEST_ACCOUNTS
             // This ensures consistent behavior with dApp connection requests
-            console.log('  - not connected, sending ETH_REQUEST_ACCOUNTS message...');
             const result = await this.sendMessage('ETH_REQUEST_ACCOUNTS');
-            console.log('  - received result from ETH_REQUEST_ACCOUNTS:', result);
 
             if (!result || !result.success) {
                 throw new Error(result?.error || 'Connection failed');
@@ -332,7 +302,6 @@ export class PurroProviderManager implements PurroProvider {
 
     async disconnect(): Promise<void> {
         try {
-            console.log('🔌 ProviderManager.disconnect() called for origin:', window.location.origin);
 
             await this.sendMessage('DISCONNECT_WALLET');
 
@@ -347,7 +316,6 @@ export class PurroProviderManager implements PurroProvider {
             this.emit('disconnect');
             this.emit('accountsChanged', []);
 
-            console.log('✅ ProviderManager disconnected successfully');
         } catch (error) {
             console.error('❌ ProviderManager.disconnect() error:', error);
             this.emit('error', error);
@@ -378,7 +346,6 @@ export class PurroProviderManager implements PurroProvider {
 
         // If we have cached accounts and they're recent, return them
         if (this.accountsCache && this.accountsCacheTimestamp + this.ACCOUNTS_CACHE_TTL > Date.now()) {
-            console.log('📦 Returning cached accounts:', this.accountsCache);
             return this.accountsCache;
         }
 
@@ -386,13 +353,11 @@ export class PurroProviderManager implements PurroProvider {
         if (this.accounts.length > 0) {
             this.accountsCache = this.accounts;
             this.accountsCacheTimestamp = Date.now();
-            console.log('💾 Returning memory accounts:', this.accounts);
             return this.accounts;
         }
 
         // If no accounts in memory but connected, refresh state
         try {
-            console.log('🔄 Refreshing connection state...');
             await this.refreshConnectionState();
             return this.accounts;
         } catch (error) {
@@ -510,4 +475,3 @@ export class PurroProviderManager implements PurroProvider {
         }
     }
 }
-

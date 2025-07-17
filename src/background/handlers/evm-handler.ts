@@ -33,18 +33,13 @@ export const evmHandler = {
             title = sender.tab.title || '';
         }
 
-        console.log('🔥 ETH_REQUEST_ACCOUNTS called');
-        console.log('📍 Origin:', origin);
-        console.log('🏷️ Tab ID:', sender.tab?.id);
-        console.log('⏰ Timestamp:', new Date().toISOString());
 
         try {
             // First check connection status using the unified method
             const connectionStatus = await this.handleCheckConnectionStatus({ origin }, sender);
 
             if (connectionStatus.success && connectionStatus.data?.isConnected) {
-                console.log('✅ Found existing connection, returning accounts');
-                console.log('🚀 EARLY RETURN - No popup should be created!');
+
 
                 // Close any existing connect popups since we have existing connection
                 await this.closeExistingConnectPopups();
@@ -58,8 +53,7 @@ export const evmHandler = {
                 };
             }
 
-            // No existing connection - proceed with connection flow
-            console.log('🆕 New connection request for origin:', origin);
+
 
             // Validate wallet state before showing popup
             const { hasWallet } = await storageHandler.getWalletState();
@@ -141,21 +135,18 @@ export const evmHandler = {
                 activeAccount: wallet.eip155.address
             };
 
-            // Find and resolve the pending connection
-            console.log('🔍 Looking for pending connection for origin:', data.origin);
-            console.log('📋 Current pending connections:', Array.from(pendingConnections.entries()).map(([key, conn]) => ({ key, origin: conn.origin })));
 
             const pendingConnection = Array.from(pendingConnections.values())
                 .find(conn => conn.origin === data.origin);
 
             if (pendingConnection) {
-                console.log('✅ Found pending connection, resolving with:', connectionResult);
+
                 pendingConnection.resolve(connectionResult);
                 // Remove from pending connections
                 for (const [key, conn] of pendingConnections.entries()) {
                     if (conn.origin === data.origin) {
                         pendingConnections.delete(key);
-                        console.log('🗑️ Removed pending connection:', key);
+
                         break;
                     }
                 }
@@ -287,7 +278,7 @@ export const evmHandler = {
                 };
             }
 
-            console.log('🔍 Checking connection status for origin:', origin);
+
 
             const { hasWallet } = await storageHandler.getWalletState();
             if (!hasWallet) {
@@ -313,7 +304,7 @@ export const evmHandler = {
             const existingConnection = connectedSites.find(site => site.origin === origin);
 
             if (existingConnection && wallet && wallet.eip155) {
-                console.log('✅ Connection status: connected');
+
                 return {
                     success: true,
                     data: {
@@ -324,7 +315,7 @@ export const evmHandler = {
                 };
             }
 
-            console.log('❌ Connection status: not connected');
+
             return {
                 success: true,
                 data: { isConnected: false, accounts: [] }
@@ -341,7 +332,6 @@ export const evmHandler = {
 
     async handleConnectWallet(sender: chrome.runtime.MessageSender): Promise<MessageResponse> {
         try {
-            console.log('🔗 CONNECT_WALLET called - delegating to ETH_REQUEST_ACCOUNTS');
             // CONNECT_WALLET is essentially the same as ETH_REQUEST_ACCOUNTS
             // Delegate to the existing handler
             return await this.handleEthRequestAccounts(sender);
@@ -373,7 +363,6 @@ export const evmHandler = {
                 };
             }
 
-            console.log('🔌 Disconnecting wallet for origin:', origin);
 
             const activeAccount = await storageHandler.getActiveAccount();
             if (!activeAccount) {
@@ -386,7 +375,7 @@ export const evmHandler = {
             // Remove the connected site
             await storageHandler.deleteConnectedSite(activeAccount.id, origin);
 
-            console.log('✅ Wallet disconnected successfully');
+
             return {
                 success: true,
                 data: { disconnected: true }
@@ -409,7 +398,7 @@ export const evmHandler = {
                 if (window.type === 'popup' && window.tabs) {
                     for (const tab of window.tabs) {
                         if (tab.url && tab.url.includes('connect.html')) {
-                            console.log('🗑️ Closing existing connect popup:', window.id);
+
                             if (window.id) {
                                 await chrome.windows.remove(window.id);
                             }
@@ -461,7 +450,7 @@ function createPendingConnection(origin: string, tabId?: number): Promise<any> {
     return new Promise((resolve, reject) => {
         const connectionId = `${origin}_${Date.now()}`;
 
-        console.log('🆕 Creating pending connection:', connectionId, 'for origin:', origin);
+
 
         pendingConnections.set(connectionId, {
             origin,
@@ -471,12 +460,12 @@ function createPendingConnection(origin: string, tabId?: number): Promise<any> {
             reject,
         });
 
-        console.log('📋 Total pending connections:', pendingConnections.size);
+
 
         // Auto-cleanup after 1 minutes
         setTimeout(() => {
             if (pendingConnections.has(connectionId)) {
-                console.log('⏰ Connection timeout for:', connectionId);
+
                 pendingConnections.delete(connectionId);
                 reject(new Error('Connection request timeout - Please try connecting again'));
             }

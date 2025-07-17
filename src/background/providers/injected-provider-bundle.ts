@@ -85,23 +85,18 @@ class EIP6963Provider {
 }
 
 // Initialize providers
-console.log('🚀 Initializing Purro providers...');
 
 try {
     const providerManager = new PurroProviderManager();
-    console.log('✅ PurroProviderManager created');
 
     const evmProvider = new PurroEVMProvider(providerManager);
-    console.log('✅ PurroEVMProvider created');
 
     // Expose providers to window object
     (window as any).purro = providerManager;
     (window as any).ethereum = evmProvider;
-    console.log('✅ Providers exposed to window object');
 
     // Initialize EIP-6963 provider with EVM provider
     new EIP6963Provider(evmProvider);
-    console.log('✅ EIP-6963 provider initialized');
 
     // Dispatch ready events
     window.dispatchEvent(new CustomEvent('purro#initialized', {
@@ -112,7 +107,6 @@ try {
         detail: evmProvider
     }));
 
-    console.log('✅ All providers initialized successfully');
 } catch (error) {
     console.error('❌ Error initializing providers:', error);
 }

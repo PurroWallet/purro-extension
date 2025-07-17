@@ -65,17 +65,16 @@ window.addEventListener('message', async (event) => {
     if (event.data.source !== 'purro-provider') return;
 
     const { type, data, requestId } = event.data;
-    console.log(`📨 Content script received message: ${type} with requestId: ${requestId}`);
+
 
     try {
-        // Forward the message to background script
-        console.log(`  - forwarding to background script...`);
+
         const response = await sendMessageToBackground({
             type,
             data,
             requestId
         });
-        console.log(`  - received response from background:`, response);
+
 
         // Send response back to the injected provider
         window.postMessage({
@@ -84,9 +83,9 @@ window.addEventListener('message', async (event) => {
             requestId,
             response
         }, '*');
-        console.log(`  - sent response back to provider`);
+
     } catch (error) {
-        console.error(`❌ Content script error for ${type} with requestId: ${requestId}:`, error);
+
         // Send error response back to the injected provider
         window.postMessage({
             source: 'purro-content-script',

@@ -171,12 +171,12 @@ export class PurroEVMProvider implements EthereumProvider {
 
     // Event handling methods
     on(eventName: string, listener: (...args: any[]) => void): this {
-        console.log(`👂 dApp registering listener for: ${eventName}`);
+
         if (!this.eventListeners.has(eventName)) {
             this.eventListeners.set(eventName, []);
         }
         this.eventListeners.get(eventName)!.push(listener);
-        console.log(`📋 Total listeners for ${eventName}: ${this.eventListeners.get(eventName)!.length}`);
+
         return this;
     }
 
@@ -193,13 +193,12 @@ export class PurroEVMProvider implements EthereumProvider {
 
     protected emit(eventName: string, ...args: any[]): void {
         const listeners = this.eventListeners.get(eventName);
-        console.log(`📡 Emitting ${eventName} with args:`, args);
-        console.log(`👂 Found ${listeners?.length || 0} listeners for ${eventName}`);
+
 
         if (listeners && listeners.length > 0) {
-            listeners.forEach((listener, index) => {
+            listeners.forEach((listener, _index) => {
                 try {
-                    console.log(`🔔 Calling listener ${index} for ${eventName}`);
+
                     listener(...args);
                 } catch (error) {
                     console.error('Error in event listener:', error);
@@ -398,35 +397,20 @@ export class PurroEVMProvider implements EthereumProvider {
     // Account management methods
     private async handleRequestAccounts(): Promise<string[]> {
         try {
-            console.log('🚀 Starting handleRequestAccounts...');
             const result = await this.sendMessage("ETH_REQUEST_ACCOUNTS");
-            console.log('🔍 Raw result from ETH_REQUEST_ACCOUNTS:', result);
-            console.log('✅ Successfully received response from background');
 
             // Handle double-wrapped response from message handler
             let accounts = [];
-            console.log('🔍 Detailed result analysis:');
-            console.log('  - result:', result);
-            console.log('  - result.data:', result?.data);
-            console.log('  - result.data.data:', result?.data?.data);
-            console.log('  - result.data.data.accounts:', result?.data?.data?.accounts);
-            console.log('  - result.data.accounts:', result?.data?.accounts);
 
             if (result?.data?.data?.accounts) {
                 // Double wrapped: message handler wraps EVM handler response
                 accounts = result.data.data.accounts;
-                console.log('📦 Found double-wrapped accounts:', accounts);
             } else if (result?.data?.accounts) {
                 // Single wrapped
                 accounts = result.data.accounts;
-                console.log('📦 Found single-wrapped accounts:', accounts);
             } else if (result?.accounts) {
                 // Direct accounts
                 accounts = result.accounts;
-                console.log('📦 Found direct accounts:', accounts);
-            } else {
-                console.log('❌ No accounts found in result');
-                console.log('🔍 Full result structure:', JSON.stringify(result, null, 2));
             }
 
             // Update provider state when we get accounts (including existing connections)
@@ -443,9 +427,6 @@ export class PurroEVMProvider implements EthereumProvider {
                     this.providerManager.activeAccount = newAddress;
                 }
 
-                console.log('🔗 Provider isConnected:', this.isConnected);
-                console.log('🔗 ProviderManager isConnected:', this.providerManager?.isConnected);
-
                 // Emit accountsChanged event to notify dApp
                 this.emit('accountsChanged', accounts);
                 this.lastEmittedAccounts = accounts;
@@ -453,18 +434,13 @@ export class PurroEVMProvider implements EthereumProvider {
                 // Also emit connect event for dApps that listen for it
                 this.emit('connect', { accounts, activeAccount: newAddress });
 
-                console.log('✅ Updated provider state with accounts:', accounts);
-                console.log('📢 Emitted accountsChanged and connect events');
-
                 // Force trigger any pending dApp checks with a small delay
                 setTimeout(() => {
-                    console.log('🔄 Force emitting events again for stubborn dApps');
                     this.emit('accountsChanged', accounts);
                     this.emit('connect', { accounts, activeAccount: newAddress });
                 }, 100);
             }
 
-            console.log('🎯 handleRequestAccounts returning:', accounts);
             return accounts;
         } catch (error) {
             console.error('❌ handleRequestAccounts error:', error);
@@ -510,23 +486,19 @@ export class PurroEVMProvider implements EthereumProvider {
             if (accounts.length > 0) {
                 if (this.selectedAddress !== accounts[0]) {
                     this.selectedAddress = accounts[0];
-                    console.log('🔗 Updated selectedAddress from provider:', accounts);
 
                     if (JSON.stringify(this.lastEmittedAccounts) !== JSON.stringify(accounts)) {
                         this.emit('accountsChanged', accounts);
                         this.lastEmittedAccounts = accounts;
-                        console.log('📢 Emitted accountsChanged from provider fallback:', accounts);
                     }
                 }
             } else {
                 if (this.selectedAddress !== null) {
                     this.selectedAddress = null;
-                    console.log('🔗 No accounts available, cleared selectedAddress');
 
                     if (this.lastEmittedAccounts.length > 0) {
                         this.emit('accountsChanged', []);
                         this.lastEmittedAccounts = [];
-                        console.log('📢 Emitted empty accountsChanged');
                     }
                 }
             }
@@ -839,19 +811,13 @@ export class PurroEVMProvider implements EthereumProvider {
             throw this.createProviderError(4001, 'Missing chainId parameter');
         }
 
-        console.log('🔄 handleSwitchEthereumChain called with chainId:', chainId);
-
         try {
-            console.log('📤 Sending SWITCH_ETHEREUM_CHAIN message...');
             const result = await this.sendMessage("SWITCH_ETHEREUM_CHAIN", { chainId });
-            console.log('📦 SWITCH_ETHEREUM_CHAIN result:', result);
 
             if (result && result.data && result.data.chainId) {
                 // Update local state
                 const newChainId = `0x${result.data.chainId.toString(16)}`;
                 const oldChainId = this.chainId;
-
-                console.log('🔄 Updating chain from', oldChainId, 'to', newChainId);
 
                 this.chainId = newChainId;
                 this.networkVersion = result.data.chainId.toString();
@@ -859,7 +825,6 @@ export class PurroEVMProvider implements EthereumProvider {
                 // Emit chainChanged event if chain actually changed
                 if (oldChainId !== newChainId) {
                     this.emit('chainChanged', newChainId);
-                    console.log('📢 Emitted chainChanged event:', newChainId);
                 }
             } else {
                 console.warn('⚠️ Unexpected result structure:', result);
