@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Test dApp - Purro Extension</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 10px 0;
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .result {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 15px;
+        margin: 10px 0;
+        white-space: pre-wrap;
+        font-family: monospace;
+      }
+      .error {
+        background: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+      }
+      .success {
+        background: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Test dApp - Purro Extension</h1>
+    <p>This page tests the Purro wallet extension integration.</p>
+
+    <div>
+      <h2>Connection Tests</h2>
+      <button onclick="testRequestAccounts()">Test eth_requestAccounts</button>
+      <button onclick="testGetAccounts()">Test eth_accounts</button>
+      <button onclick="testChainId()">Test eth_chainId</button>
+      <button onclick="testSwitchChain()">
+        Test wallet_switchEthereumChain
+      </button>
+      <button onclick="checkProvider()">Check Provider</button>
+    </div>
+
+    <div id="results"></div>
+
+    <script>
+      function addResult(title, content, isError = false) {
+        const resultsDiv = document.getElementById("results");
+        const resultDiv = document.createElement("div");
+        resultDiv.className = `result ${isError ? "error" : "success"}`;
+        resultDiv.innerHTML = `<strong>${title}:</strong>\n${JSON.stringify(
+          content,
+          null,
+          2
+        )}`;
+        resultsDiv.appendChild(resultDiv);
+      }
+
+      function checkProvider() {
+        if (typeof window.ethereum !== "undefined") {
+          addResult("Provider Check", {
+            exists: true,
+            isMetaMask: window.ethereum.isMetaMask,
+            isPurro: window.ethereum.isPurro,
+            chainId: window.ethereum.chainId,
+            selectedAddress: window.ethereum.selectedAddress,
+          });
+        } else {
+          addResult("Provider Check", { exists: false }, true);
+        }
+      }
+
+      async function testRequestAccounts() {
+        try {
+          console.log("🔍 Testing eth_requestAccounts...");
+          const accounts = await window.ethereum.request({
+            method: "eth_requestAccounts",
+          });
+          console.log("✅ eth_requestAccounts result:", accounts);
+
+          addResult("eth_requestAccounts", {
+            success: true,
+            accounts: accounts,
+            type: Array.isArray(accounts) ? "array" : typeof accounts,
+            length: Array.isArray(accounts) ? accounts.length : "N/A",
+          });
+        } catch (error) {
+          console.error("❌ eth_requestAccounts error:", error);
+          addResult(
+            "eth_requestAccounts",
+            {
+              success: false,
+              error: error.message,
+            },
+            true
+          );
+        }
+      }
+
+      async function testGetAccounts() {
+        try {
+          console.log("🔍 Testing eth_accounts...");
+          const accounts = await window.ethereum.request({
+            method: "eth_accounts",
+          });
+          console.log("✅ eth_accounts result:", accounts);
+
+          addResult("eth_accounts", {
+            success: true,
+            accounts: accounts,
+            type: Array.isArray(accounts) ? "array" : typeof accounts,
+            length: Array.isArray(accounts) ? accounts.length : "N/A",
+          });
+        } catch (error) {
+          console.error("❌ eth_accounts error:", error);
+          addResult(
+            "eth_accounts",
+            {
+              success: false,
+              error: error.message,
+            },
+            true
+          );
+        }
+      }
+
+      async function testChainId() {
+        try {
+          console.log("🔍 Testing eth_chainId...");
+          const chainId = await window.ethereum.request({
+            method: "eth_chainId",
+          });
+          console.log("✅ eth_chainId result:", chainId);
+
+          addResult("eth_chainId", {
+            success: true,
+            chainId: chainId,
+            type: typeof chainId,
+          });
+        } catch (error) {
+          console.error("❌ eth_chainId error:", error);
+          addResult(
+            "eth_chainId",
+            {
+              success: false,
+              error: error.message,
+            },
+            true
+          );
+        }
+      }
+
+      async function testSwitchChain() {
+        try {
+          console.log("🔍 Testing wallet_switchEthereumChain...");
+
+          // Test switching to different chains
+          const chains = [
+            { name: "Ethereum", chainId: "0x1" },
+            { name: "Arbitrum", chainId: "0xa4b1" },
+            { name: "Base", chainId: "0x2105" },
+            { name: "HyperEVM", chainId: "0x3e7" },
+          ];
+
+          const selectedChain =
+            chains[Math.floor(Math.random() * chains.length)];
+
+          const result = await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: selectedChain.chainId }],
+          });
+
+          console.log("✅ wallet_switchEthereumChain result:", result);
+
+          // Get current chain ID after switch
+          const newChainId = await window.ethereum.request({
+            method: "eth_chainId",
+          });
+
+          addResult("wallet_switchEthereumChain", {
+            success: true,
+            requestedChain: selectedChain,
+            result: result,
+            newChainId: newChainId,
+            switchSuccessful: newChainId === selectedChain.chainId,
+          });
+        } catch (error) {
+          console.error("❌ wallet_switchEthereumChain error:", error);
+          addResult(
+            "wallet_switchEthereumChain",
+            {
+              success: false,
+              error: error.message,
+              code: error.code,
+            },
+            true
+          );
+        }
+      }
+
+      // Auto-check provider on load
+      window.addEventListener("load", () => {
+        setTimeout(checkProvider, 1000);
+      });
+
+      // Listen for account changes
+      if (typeof window.ethereum !== "undefined") {
+        window.ethereum.on("accountsChanged", (accounts) => {
+          console.log("📢 accountsChanged event:", accounts);
+          addResult("accountsChanged Event", {
+            accounts: accounts,
+            type: Array.isArray(accounts) ? "array" : typeof accounts,
+            length: Array.isArray(accounts) ? accounts.length : "N/A",
+          });
+        });
+
+        window.ethereum.on("chainChanged", (chainId) => {
+          console.log("📢 chainChanged event:", chainId);
+          addResult("chainChanged Event", {
+            chainId: chainId,
+            type: typeof chainId,
+          });
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -166,6 +166,16 @@ export const storageHandler = {
         }
     },
 
+    getConnectedSites: async (accountId: string): Promise<{
+        origin: string;
+        favicon?: string;
+        timestamp: number;
+    }[]> => {
+        const storageKey = STORAGE_KEYS.ACCOUNT_CONNECTED_SITES.replace("id", accountId);
+        const result = await chrome.storage.local.get(storageKey);
+        return result[storageKey] || [];
+    },
+
     // Write
     savePassword: async (data: PasswordData): Promise<void> => {
         try {
@@ -262,6 +272,37 @@ export const storageHandler = {
             await chrome.storage.local.set({ [storageKey]: wallet });
         } catch (error) {
             console.error("Error saving wallet: ", error);
+            throw error;
+        }
+    },
+
+    saveConnectedSite: async (accountId: string, site: {
+        origin: string;
+        favicon?: string;
+        timestamp: number;
+    }): Promise<void> => {
+        try {
+            const storageKey = STORAGE_KEYS.ACCOUNT_CONNECTED_SITES.replace("id", accountId);
+            const currentSites = await storageHandler.getConnectedSites(accountId);
+
+            // Check if site already exists to prevent duplicates
+            const existingIndex = currentSites.findIndex(existingSite => existingSite.origin === site.origin);
+
+            if (existingIndex >= 0) {
+                // Update existing site with new timestamp and favicon
+                currentSites[existingIndex] = {
+                    ...currentSites[existingIndex],
+                    favicon: site.favicon || currentSites[existingIndex].favicon,
+                    timestamp: site.timestamp
+                };
+            } else {
+                // Add new site
+                currentSites.push(site);
+            }
+
+            await chrome.storage.local.set({ [storageKey]: currentSites });
+        } catch (error) {
+            console.error("Error saving connected site: ", error);
             throw error;
         }
     },
@@ -430,6 +471,27 @@ export const storageHandler = {
             await chrome.storage.local.set({ [storageKey]: { ...currentAccountData, name: data.name } });
         } catch (error) {
             console.error("Error changing account name: ", error);
+            throw error;
+        }
+    },
+
+    deleteConnectedSite: async (accountId: string, origin: string): Promise<void> => {
+        try {
+            const storageKey = STORAGE_KEYS.ACCOUNT_CONNECTED_SITES.replace("id", accountId);
+            const currentSites = await storageHandler.getConnectedSites(accountId);
+            await chrome.storage.local.set({ [storageKey]: currentSites.filter(site => site.origin !== origin) });
+        } catch (error) {
+            console.error("Error deleting connected site: ", error);
+            throw error;
+        }
+    },
+
+    deleteAllConnectedSites: async (accountId: string): Promise<void> => {
+        try {
+            const storageKey = STORAGE_KEYS.ACCOUNT_CONNECTED_SITES.replace("id", accountId);
+            await chrome.storage.local.remove(storageKey);
+        } catch (error) {
+            console.error("Error deleting all connected sites: ", error);
             throw error;
         }
     }

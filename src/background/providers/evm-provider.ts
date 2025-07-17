@@ -171,10 +171,12 @@ export class PurroEVMProvider implements EthereumProvider {
 
     // Event handling methods
     on(eventName: string, listener: (...args: any[]) => void): this {
+        console.log(`👂 dApp registering listener for: ${eventName}`);
         if (!this.eventListeners.has(eventName)) {
             this.eventListeners.set(eventName, []);
         }
         this.eventListeners.get(eventName)!.push(listener);
+        console.log(`📋 Total listeners for ${eventName}: ${this.eventListeners.get(eventName)!.length}`);
         return this;
     }
 
@@ -191,14 +193,20 @@ export class PurroEVMProvider implements EthereumProvider {
 
     protected emit(eventName: string, ...args: any[]): void {
         const listeners = this.eventListeners.get(eventName);
-        if (listeners) {
-            listeners.forEach(listener => {
+        console.log(`📡 Emitting ${eventName} with args:`, args);
+        console.log(`👂 Found ${listeners?.length || 0} listeners for ${eventName}`);
+
+        if (listeners && listeners.length > 0) {
+            listeners.forEach((listener, index) => {
                 try {
+                    console.log(`🔔 Calling listener ${index} for ${eventName}`);
                     listener(...args);
                 } catch (error) {
                     console.error('Error in event listener:', error);
                 }
             });
+        } else {
+            console.warn(`⚠️ No listeners found for event: ${eventName}`);
         }
     }
 
@@ -217,12 +225,28 @@ export class PurroEVMProvider implements EthereumProvider {
 
     private async getConnectedAccountForSite(): Promise<any> {
         try {
-            const result = await chrome.storage.local.get(['connectedSites']);
-            const connectedSites = result.connectedSites || {};
-            const currentSite = connectedSites[window.location.origin];
+            // Get active account and check if current site is connected
+            const activeAccountResult = await this.sendMessage('GET_ACTIVE_ACCOUNT');
+            if (!activeAccountResult || !activeAccountResult.data) {
+                return null;
+            }
 
-            if (currentSite && currentSite.address) {
-                return { address: currentSite.address };
+            const activeAccount = activeAccountResult.data;
+            const connectedSitesResult = await this.sendMessage('GET_CONNECTED_SITES', { accountId: activeAccount.id });
+
+            if (!connectedSitesResult || !connectedSitesResult.data) {
+                return null;
+            }
+
+            const connectedSites = connectedSitesResult.data;
+            const currentSite = connectedSites.find((site: any) => site.origin === window.location.origin);
+
+            if (currentSite) {
+                // Get wallet address for this account
+                const walletResult = await this.sendMessage('GET_WALLET_BY_ID', { accountId: activeAccount.id });
+                if (walletResult && walletResult.data && walletResult.data.eip155) {
+                    return { address: walletResult.data.eip155.address };
+                }
             }
 
             return null;
@@ -248,11 +272,11 @@ export class PurroEVMProvider implements EthereumProvider {
                     // Ensure we have the latest chainId from background
                     try {
                         const result = await this.sendMessage("GET_CURRENT_CHAIN_ID");
-                        if (result && result.chainId) {
-                            const newChainId = `0x${result.chainId.toString(16)}`;
+                        if (result && result.data && result.data.chainId) {
+                            const newChainId = `0x${result.data.chainId.toString(16)}`;
                             if (newChainId !== this.chainId) {
                                 this.chainId = newChainId;
-                                this.networkVersion = result.chainId.toString();
+                                this.networkVersion = result.data.chainId.toString();
                             }
                         }
                     } catch (error) {
@@ -264,9 +288,9 @@ export class PurroEVMProvider implements EthereumProvider {
                     // Ensure we have the latest networkVersion from background
                     try {
                         const result = await this.sendMessage("GET_CURRENT_CHAIN_ID");
-                        if (result && result.chainId) {
-                            const newChainId = `0x${result.chainId.toString(16)}`;
-                            const newNetworkVersion = result.chainId.toString();
+                        if (result && result.data && result.data.chainId) {
+                            const newChainId = `0x${result.data.chainId.toString(16)}`;
+                            const newNetworkVersion = result.data.chainId.toString();
                             if (newChainId !== this.chainId) {
                                 this.chainId = newChainId;
                                 this.networkVersion = newNetworkVersion;
@@ -293,9 +317,6 @@ export class PurroEVMProvider implements EthereumProvider {
                 case 'eth_signTypedData_v3':
                 case 'eth_signTypedData_v4':
                     return await this.handleSignTypedData(params);
-
-                case 'wallet_switchEthereumChain':
-                    return await this.handleSwitchChain(params);
 
                 case 'wallet_addEthereumChain':
                     return await this.handleAddChain(params);
@@ -360,6 +381,9 @@ export class PurroEVMProvider implements EthereumProvider {
                 case 'wallet_requestPermissions':
                     return await this.handleRequestPermissions(params);
 
+                case 'wallet_switchEthereumChain':
+                    return await this.handleSwitchEthereumChain(params);
+
                 default:
                     throw this.createProviderError(4200, `Method ${method} not supported`);
             }
@@ -374,37 +398,73 @@ export class PurroEVMProvider implements EthereumProvider {
     // Account management methods
     private async handleRequestAccounts(): Promise<string[]> {
         try {
-            console.log('🎯 handleRequestAccounts called for origin:', window.location.origin);
-
+            console.log('🚀 Starting handleRequestAccounts...');
             const result = await this.sendMessage("ETH_REQUEST_ACCOUNTS");
-            console.log('📦 ETH_REQUEST_ACCOUNTS result:', result);
+            console.log('🔍 Raw result from ETH_REQUEST_ACCOUNTS:', result);
+            console.log('✅ Successfully received response from background');
 
-            const accounts = Array.isArray(result) ? result : [];
-            console.log('📋 Processed accounts:', accounts);
+            // Handle double-wrapped response from message handler
+            let accounts = [];
+            console.log('🔍 Detailed result analysis:');
+            console.log('  - result:', result);
+            console.log('  - result.data:', result?.data);
+            console.log('  - result.data.data:', result?.data?.data);
+            console.log('  - result.data.data.accounts:', result?.data?.data?.accounts);
+            console.log('  - result.data.accounts:', result?.data?.accounts);
 
+            if (result?.data?.data?.accounts) {
+                // Double wrapped: message handler wraps EVM handler response
+                accounts = result.data.data.accounts;
+                console.log('📦 Found double-wrapped accounts:', accounts);
+            } else if (result?.data?.accounts) {
+                // Single wrapped
+                accounts = result.data.accounts;
+                console.log('📦 Found single-wrapped accounts:', accounts);
+            } else if (result?.accounts) {
+                // Direct accounts
+                accounts = result.accounts;
+                console.log('📦 Found direct accounts:', accounts);
+            } else {
+                console.log('❌ No accounts found in result');
+                console.log('🔍 Full result structure:', JSON.stringify(result, null, 2));
+            }
+
+            // Update provider state when we get accounts (including existing connections)
             if (accounts.length > 0) {
-                this.selectedAddress = accounts[0];
-                console.log('✅ Updated selectedAddress to:', this.selectedAddress);
+                const newAddress = accounts[0];
 
+                // Update selectedAddress
+                this.selectedAddress = newAddress;
+
+                // Update provider manager state
                 if (this.providerManager) {
                     this.providerManager.isConnected = true;
                     this.providerManager.accounts = accounts;
-                    this.providerManager.activeAccount = accounts[0];
-                    console.log('✅ Updated providerManager state');
+                    this.providerManager.activeAccount = newAddress;
                 }
 
+                console.log('🔗 Provider isConnected:', this.isConnected);
+                console.log('🔗 ProviderManager isConnected:', this.providerManager?.isConnected);
+
+                // Emit accountsChanged event to notify dApp
                 this.emit('accountsChanged', accounts);
                 this.lastEmittedAccounts = accounts;
-                console.log('📢 Emitted accountsChanged event with:', accounts);
-            } else {
-                this.selectedAddress = null;
-                console.log('❌ No accounts returned');
 
-                this.emit('accountsChanged', []);
-                this.lastEmittedAccounts = [];
-                console.log('📢 Emitted empty accountsChanged event');
+                // Also emit connect event for dApps that listen for it
+                this.emit('connect', { accounts, activeAccount: newAddress });
+
+                console.log('✅ Updated provider state with accounts:', accounts);
+                console.log('📢 Emitted accountsChanged and connect events');
+
+                // Force trigger any pending dApp checks with a small delay
+                setTimeout(() => {
+                    console.log('🔄 Force emitting events again for stubborn dApps');
+                    this.emit('accountsChanged', accounts);
+                    this.emit('connect', { accounts, activeAccount: newAddress });
+                }, 100);
             }
 
+            console.log('🎯 handleRequestAccounts returning:', accounts);
             return accounts;
         } catch (error) {
             console.error('❌ handleRequestAccounts error:', error);
@@ -569,27 +629,6 @@ export class PurroEVMProvider implements EthereumProvider {
     }
 
     // Chain management methods
-    private async handleSwitchChain(params: any): Promise<null> {
-        if (!params || !Array.isArray(params) || params.length === 0) {
-            throw this.createProviderError(4001, 'Invalid switch chain parameters');
-        }
-
-        const [{ chainId }] = params;
-
-        const result = await this.sendMessage("SWITCH_ETHEREUM_CHAIN", {
-            chainId
-        });
-
-        if (result.success) {
-            this.chainId = chainId;
-            this.networkVersion = parseInt(chainId, 16).toString();
-            this.emit('chainChanged', chainId);
-            return null;
-        }
-
-        throw this.createProviderError(4902, 'Unrecognized chain ID');
-    }
-
     private async handleAddChain(params: any): Promise<null> {
         if (!params || !Array.isArray(params) || params.length === 0) {
             throw this.createProviderError(4001, 'Invalid add chain parameters');
@@ -787,6 +826,65 @@ export class PurroEVMProvider implements EthereumProvider {
         }
 
         throw this.createProviderError(4001, 'Requested permissions not supported');
+    }
+
+    private async handleSwitchEthereumChain(params: any): Promise<null> {
+        if (!params || !Array.isArray(params) || params.length === 0) {
+            throw this.createProviderError(4001, 'Invalid switch chain parameters');
+        }
+
+        const [{ chainId }] = params;
+
+        if (!chainId) {
+            throw this.createProviderError(4001, 'Missing chainId parameter');
+        }
+
+        console.log('🔄 handleSwitchEthereumChain called with chainId:', chainId);
+
+        try {
+            console.log('📤 Sending SWITCH_ETHEREUM_CHAIN message...');
+            const result = await this.sendMessage("SWITCH_ETHEREUM_CHAIN", { chainId });
+            console.log('📦 SWITCH_ETHEREUM_CHAIN result:', result);
+
+            if (result && result.data && result.data.chainId) {
+                // Update local state
+                const newChainId = `0x${result.data.chainId.toString(16)}`;
+                const oldChainId = this.chainId;
+
+                console.log('🔄 Updating chain from', oldChainId, 'to', newChainId);
+
+                this.chainId = newChainId;
+                this.networkVersion = result.data.chainId.toString();
+
+                // Emit chainChanged event if chain actually changed
+                if (oldChainId !== newChainId) {
+                    this.emit('chainChanged', newChainId);
+                    console.log('📢 Emitted chainChanged event:', newChainId);
+                }
+            } else {
+                console.warn('⚠️ Unexpected result structure:', result);
+            }
+
+            // wallet_switchEthereumChain returns null on success
+            return null;
+        } catch (error) {
+            console.error('❌ handleSwitchEthereumChain error:', error);
+
+            // Handle specific error cases
+            if (error instanceof Error) {
+                if (error.message.includes('Extension context invalidated')) {
+                    throw this.createProviderError(4001, 'Extension was reloaded. Please refresh the page and try again.');
+                }
+                if (error.message.includes('Unsupported chain')) {
+                    throw this.createProviderError(4902, error.message);
+                }
+                if (error.message.includes('timeout')) {
+                    throw this.createProviderError(4001, 'Request timeout. Please try again.');
+                }
+                throw this.createProviderError(4001, error.message);
+            }
+            throw this.createProviderError(4001, 'Failed to switch chain');
+        }
     }
 
     private createProviderError(code: number, message: string, data?: unknown): ProviderError {

@@ -1,7 +1,7 @@
 {
     "name": "Purro",
     "description": "The Purr-fect Web3 Wallet",
-    "version": "0.1.7",
+    "version": "0.1.8",
     "manifest_version": 3,
     "action": {
         "default_popup": "html/main.html",
@@ -37,6 +37,7 @@
                 "html/onboarding.html",
                 "html/import.html",
                 "html/main.html",
+                "html/connect.html",
                 "injectedProviderBundle.js",
                 "purro-icon.js"
             ],

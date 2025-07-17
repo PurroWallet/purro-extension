@@ -7,8 +7,12 @@ export const STORAGE_KEYS = {
     ACCOUNT_SEEDLESS_BY_ID: `purro:account:seedless:id`,
     ACCOUNT_PASSWORD: `purro:account:password`,
     ACCOUNT_ACTIVE_ACCOUNT: `purro:account:active`,
+    ACCOUNT_CONNECTED_SITES: `purro:connected-sites:id`,
 
     // Session
     SESSION_TIMEOUT: `purro:session:timeout`,
     SESSION_IS_LOCKED: `purro:session:isLocked`,
+
+    // EVM Chain
+    CURRENT_CHAIN_ID: `purro:evm:current-chain-id`,
 }

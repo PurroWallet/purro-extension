@@ -24,6 +24,7 @@ export default defineConfig({
                 onboarding: resolve(__dirname, 'html/onboarding.html'),
                 import: resolve(__dirname, 'html/import.html'),
                 offscreen: resolve(__dirname, 'html/offscreen.html'),
+                connect: resolve(__dirname, 'html/connect.html'),
 
                 // Background scripts and dependencies
                 background: resolve(__dirname, 'src/background/background.ts'),

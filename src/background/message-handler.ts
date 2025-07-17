@@ -3,6 +3,7 @@ import { MessageRequest } from './background';
 import { accountHandler } from './handlers/account-handler';
 import { authHandler } from './handlers/auth-handler';
 import { storageHandler } from './handlers/storage-handler';
+import { evmHandler } from './handlers/evm-handler';
 
 export class MessageHandler {
     async handleMessage(message: MessageRequest, sender: chrome.runtime.MessageSender): Promise<MessageResponse> {
@@ -34,6 +35,15 @@ export class MessageHandler {
                     break;
                 case 'GET_ALL_SEED_PHRASES':
                     result = await storageHandler.getAllSeedPhrases();
+                    break;
+                case 'GET_ACTIVE_ACCOUNT':
+                    result = await storageHandler.getActiveAccount();
+                    break;
+                case 'GET_CONNECTED_SITES':
+                    result = await storageHandler.getConnectedSites(data.accountId);
+                    break;
+                case 'GET_WALLET_BY_ID':
+                    result = await storageHandler.getWalletById(data.accountId);
                     break;
 
                 // Write
@@ -96,6 +106,30 @@ export class MessageHandler {
                     break;
                 case 'REMOVE_SEED_PHRASE':
                     result = await accountHandler.removeSeedPhrase(data);
+                    break;
+                case 'ETH_REQUEST_ACCOUNTS':
+                    result = await evmHandler.handleEthRequestAccounts(sender);
+                    break;
+                case 'ETH_APPROVE_CONNECTION':
+                    result = await evmHandler.handleApproveConnection(data);
+                    break;
+                case 'ETH_REJECT_CONNECTION':
+                    result = await evmHandler.handleRejectConnection(data);
+                    break;
+                case 'GET_CURRENT_CHAIN_ID':
+                    result = await evmHandler.handleGetCurrentChainId();
+                    break;
+                case 'SWITCH_ETHEREUM_CHAIN':
+                    result = await evmHandler.handleSwitchEthereumChain(data);
+                    break;
+                case 'CHECK_CONNECTION_STATUS':
+                    result = await evmHandler.handleCheckConnectionStatus(data, sender);
+                    break;
+                case 'CONNECT_WALLET':
+                    result = await evmHandler.handleConnectWallet(sender);
+                    break;
+                case 'DISCONNECT_WALLET':
+                    result = await evmHandler.handleDisconnectWallet(data, sender);
                     break;
 
                 default:

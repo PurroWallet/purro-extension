@@ -44,14 +44,36 @@ export class PurroProviderManager implements PurroProvider {
 
             if (type === 'RESPONSE' && requestId) {
                 // Handle response to a pending request
+                console.log(`📨 Received response for requestId: ${requestId}`, response);
+
+                // Special debugging for ETH_REQUEST_ACCOUNTS
                 const pendingRequest = this.pendingRequests.get(requestId);
                 if (pendingRequest) {
+                    console.log(`✅ Found pending request ${requestId}`);
+
+                    // Check if this was an ETH_REQUEST_ACCOUNTS request
+                    const isEthRequest = Array.from(this.pendingRequests.entries())
+                        .some(([id, _req]) => id === requestId);
+
+                    if (isEthRequest) {
+                        console.log('🔥 This is ETH_REQUEST_ACCOUNTS response in provider manager');
+                        console.log('📊 Response details:');
+                        console.log('  - success:', response.success);
+                        console.log('  - data:', response.data);
+                        console.log('  - data.accounts:', response.data?.accounts);
+                        console.log('  - data.data:', response.data?.data);
+                        console.log('  - data.data.accounts:', response.data?.data?.accounts);
+                    }
+
                     this.pendingRequests.delete(requestId);
+                    console.log(`✅ Resolving pending request ${requestId}`);
                     if (response.success) {
                         pendingRequest.resolve(response.data);
                     } else {
                         pendingRequest.reject(new Error(response.error || 'Request failed'));
                     }
+                } else {
+                    console.warn(`⚠️ No pending request found for requestId: ${requestId}`);
                 }
             }
 
@@ -100,13 +122,13 @@ export class PurroProviderManager implements PurroProvider {
         try {
             console.log('🔄 Initializing connection state for origin:', window.location.origin);
 
-            // Check if already connected to this site (cached)
+            // Use unified connection status check
             const connectedAccountForSite = await this.getConnectedAccountForSite();
 
             if (connectedAccountForSite && connectedAccountForSite.address) {
                 // Site is connected - set up state immediately
                 this.isConnected = true;
-                this.accounts = [connectedAccountForSite.address];
+                this.accounts = connectedAccountForSite.accounts || [connectedAccountForSite.address];
                 this.activeAccount = connectedAccountForSite.address;
 
                 // Update cache
@@ -114,6 +136,7 @@ export class PurroProviderManager implements PurroProvider {
                 this.accountsCacheTimestamp = Date.now();
 
                 console.log('🔗 Provider initialized with connected account:', connectedAccountForSite.address);
+                console.log('📊 Provider state:', { isConnected: this.isConnected, accounts: this.accounts });
 
                 // Emit events to notify dApp with a small delay to ensure listeners are ready
                 setTimeout(() => {
@@ -162,7 +185,7 @@ export class PurroProviderManager implements PurroProvider {
 
             if (connectedAccountForSite && connectedAccountForSite.address) {
                 this.isConnected = true;
-                this.accounts = [connectedAccountForSite.address];
+                this.accounts = connectedAccountForSite.accounts || [connectedAccountForSite.address];
                 this.activeAccount = connectedAccountForSite.address;
                 this.accountsCache = this.accounts;
                 this.accountsCacheTimestamp = Date.now();
@@ -185,12 +208,16 @@ export class PurroProviderManager implements PurroProvider {
 
     private async getConnectedAccountForSite(): Promise<any> {
         try {
-            const result = await chrome.storage.local.get(['connectedSites']);
-            const connectedSites = result.connectedSites || {};
-            const currentSite = connectedSites[window.location.origin];
+            // Use the unified connection status check
+            const connectionStatus = await this.sendMessage('CHECK_CONNECTION_STATUS', {
+                origin: window.location.origin
+            });
 
-            if (currentSite && currentSite.address) {
-                return { address: currentSite.address };
+            if (connectionStatus && connectionStatus.success && connectionStatus.data?.isConnected) {
+                return {
+                    address: connectionStatus.data.activeAccount,
+                    accounts: connectionStatus.data.accounts
+                };
             }
 
             return null;
@@ -238,20 +265,22 @@ export class PurroProviderManager implements PurroProvider {
         try {
             console.log('🔗 ProviderManager.connect() called for origin:', window.location.origin);
 
-            // First check if already connected
+            // First check if already connected using the unified connection status check
             console.log('  - checking connection status...');
             const connectionStatus = await this.sendMessage('CHECK_CONNECTION_STATUS', {
                 origin: window.location.origin
             });
             console.log('  - connection status:', connectionStatus);
 
-            if (connectionStatus) {
-                // Already connected - get the connected accounts
-                const accounts = await this.getAccounts();
-
+            if (connectionStatus && connectionStatus.success && connectionStatus.data?.isConnected) {
+                console.log('  - already connected, returning existing accounts');
                 this.isConnected = true;
-                this.accounts = accounts;
-                this.activeAccount = accounts[0] || null;
+                this.accounts = connectionStatus.data.accounts || [];
+                this.activeAccount = connectionStatus.data.activeAccount || null;
+
+                // Update caches
+                this.accountsCache = this.accounts;
+                this.accountsCacheTimestamp = Date.now();
 
                 this.emit('connect', { accounts: this.accounts, activeAccount: this.activeAccount });
                 this.emit('accountsChanged', this.accounts);
@@ -262,31 +291,30 @@ export class PurroProviderManager implements PurroProvider {
                 };
             }
 
-            // Not connected yet - proceed with normal connection flow
-            console.log('  - not connected, sending CONNECT_WALLET message...');
-            const result = await this.sendMessage('CONNECT_WALLET');
-            console.log('  - received result from CONNECT_WALLET:', result);
+            // Not connected yet - proceed with connection flow using ETH_REQUEST_ACCOUNTS
+            // This ensures consistent behavior with dApp connection requests
+            console.log('  - not connected, sending ETH_REQUEST_ACCOUNTS message...');
+            const result = await this.sendMessage('ETH_REQUEST_ACCOUNTS');
+            console.log('  - received result from ETH_REQUEST_ACCOUNTS:', result);
+
+            if (!result || !result.success) {
+                throw new Error(result?.error || 'Connection failed');
+            }
 
             this.isConnected = true;
 
             // Handle response format consistently
-            let connectionData;
-            if (result && typeof result === 'object') {
-                if (result.data && typeof result.data === 'object') {
-                    connectionData = result.data;
-                } else {
-                    connectionData = result;
-                }
-            } else {
+            const connectionData = result.data;
+            if (!connectionData || typeof connectionData !== 'object') {
                 throw new Error('Invalid connection response format');
             }
 
             this.accounts = connectionData.accounts || [];
             this.activeAccount = connectionData.activeAccount || null;
 
-            // Invalidate caches since we have new connection
-            this.accountsCache = null;
-            this.accountsCacheTimestamp = 0;
+            // Update caches with new connection
+            this.accountsCache = this.accounts;
+            this.accountsCacheTimestamp = Date.now();
 
             this.emit('connect', { accounts: this.accounts, activeAccount: this.activeAccount });
             this.emit('accountsChanged', this.accounts);
