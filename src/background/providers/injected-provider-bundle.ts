@@ -35,7 +35,7 @@ class EIP6963Provider {
             uuid: crypto.randomUUID(),
             name: "Purro",
             icon: this.getIconDataUri(),
-            rdns: "io.purro.wallet"
+            rdns: "xyz.purro.app"
         };
 
         this.init();

@@ -1,6 +1,6 @@
 {
-    "name": "Purro New",
-    "description": "A Hyperliquid Wallet",
+    "name": "Purro",
+    "description": "The Purr-fect Web3 Wallet",
     "version": "0.1.7",
     "manifest_version": 3,
     "action": {
