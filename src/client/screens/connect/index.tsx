@@ -1,8 +1,8 @@
-import { AccountIcon, AccountName } from "@/client/component/account";
-import AccountSheet from "@/client/component/account-sheet/account-sheet";
-import { LoadingDisplay, LockDisplay } from "@/client/component/display";
-import { Dialog, DialogFooter } from "@/client/component/ui";
-import { Button } from "@/client/component/ui/button";
+import { AccountIcon, AccountName } from "@/client/components/account";
+import AccountSheet from "@/client/components/account-sheet/account-sheet";
+import { LoadingDisplay, LockDisplay } from "@/client/components/display";
+import { Dialog, DialogFooter } from "@/client/components/ui";
+import { Button } from "@/client/components/ui/button";
 import useAccountSheetStore from "@/client/hooks/use-account-sheet-store";
 import useInit from "@/client/hooks/use-init";
 import useWalletStore from "@/client/hooks/use-wallet-store";

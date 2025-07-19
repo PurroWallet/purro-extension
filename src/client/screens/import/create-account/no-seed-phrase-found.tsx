@@ -1,4 +1,4 @@
-import { Button } from "@/client/component/ui";
+import { Button } from "@/client/components/ui";
 import { AlertCircle, Plus } from "lucide-react";
 
 interface NoSeedPhraseFoundProps {

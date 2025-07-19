@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
-import ErorrDisplay from "@/client/component/display/error-display";
-import LoadingDisplay from "@/client/component/display/loading-display";
-import { Button } from "@/client/component/ui";
+import ErorrDisplay from "@/client/components/display/error-display";
+import LoadingDisplay from "@/client/components/display/loading-display";
+import { Button } from "@/client/components/ui";
 import logo from "@/assets/icon.png";
 import { openSidePanel } from "@/client/lib/utils";
 import useWallet from "@/client/hooks/use-wallet";

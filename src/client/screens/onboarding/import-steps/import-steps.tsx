@@ -1,4 +1,4 @@
-import Header from "@/client/component/common/header";
+import Header from "@/client/components/common/header";
 import { useState } from "react";
 import StepTracker from "../step-tracker";
 import Finish from "../finish";
@@ -9,7 +9,7 @@ import ImportSeedPhrase from "./import-seed-phrase";
 import ImportPrivateKey from "./import-private-key";
 import ChooseChain from "./choose-chain";
 import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
-import { IconButton } from "@/client/component/ui/button";
+import { IconButton } from "@/client/components/ui/button";
 
 const steps = ["import-method", "import", "password", "finish"];
 

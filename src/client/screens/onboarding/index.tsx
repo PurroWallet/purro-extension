@@ -1,6 +1,6 @@
 import { Buffer } from "buffer";
 (globalThis as any).Buffer = Buffer;
-import UniverseBackground from "@/client/component/universe-background";
+import UniverseBackground from "@/client/components/universe-background";
 import { createRoot } from "react-dom/client";
 import { useState } from "react";
 import Welcome from "./welcome";

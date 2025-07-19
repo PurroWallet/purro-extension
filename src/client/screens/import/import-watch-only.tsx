@@ -1,4 +1,4 @@
-import { Button } from "@/client/component/ui";
+import { Button } from "@/client/components/ui";
 import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
 import { X } from "lucide-react";
 import { useState } from "react";
@@ -76,7 +76,7 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
 
     try {
       let finalChain: ChainType;
-      if (chain === "hyperliquid") {
+      if (chain === "hyperevm") {
         finalChain = "eip155";
       } else if (chain === "base") {
         finalChain = "eip155";
@@ -113,7 +113,7 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
             {chain === "ethereum" && "Enter your Ethereum wallet address"}
             {chain === "solana" && "Enter your Solana wallet address"}
             {chain === "sui" && "Enter your Sui wallet address"}
-            {chain === "hyperliquid" && "Enter your Hyperliquid wallet address"}
+            {chain === "hyperevm" && "Enter your Hyperliquid wallet address"}
             {chain === "base" && "Enter your Base wallet address"}
             {chain === "arbitrum" && "Enter your Arbitrum wallet address"}
           </p>

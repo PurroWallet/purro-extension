@@ -9,8 +9,8 @@ import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
 import ChooseChain from "../onboarding/import-steps/choose-chain";
 import ImportFinish from "./import-finish";
 import CreateAccount from "./create-account";
-import Header from "@/client/component/common/header";
-import { IconButton } from "@/client/component/ui";
+import Header from "@/client/components/common/header";
+import { IconButton } from "@/client/components/ui";
 
 const steps = ["import-method", "import", "finish"];
 

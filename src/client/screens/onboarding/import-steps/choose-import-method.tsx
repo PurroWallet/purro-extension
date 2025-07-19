@@ -1,4 +1,4 @@
-import { Button } from "@/client/component/ui/button";
+import { Button } from "@/client/components/ui";
 import { ChevronRight, ListOrdered, KeyRound } from "lucide-react";
 import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
 

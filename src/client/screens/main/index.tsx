@@ -1,5 +1,5 @@
-import LockDisplay from "@/client/component/display/lock-display";
-import { Dialog, Drawer } from "@/client/component/ui";
+import LockDisplay from "@/client/components/display/lock-display";
+import { Dialog, Drawer } from "@/client/components/ui";
 import useInit from "@/client/hooks/use-init";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -10,7 +10,8 @@ import MainHeader, {
 } from "./main-header";
 import { cn } from "@/client/lib/utils";
 import { Clock, HomeIcon, ImageIcon, Search } from "lucide-react";
-import AccountSheet from "@/client/component/account-sheet/account-sheet";
+import AccountSheet from "@/client/components/account-sheet/account-sheet";
+import Home from "./main-screens/home";
 
 const queryClient = new QueryClient();
 
@@ -57,13 +58,13 @@ export const MainContent = () => {
         <HistoryNotification isVisible={isHistoryVisible} />
       )}
       <div className="flex-1 overflow-y-auto">
-        {/* {mainScreen === "home" && <Home />}
-        {mainScreen === "explore" && <Explore />}
+        {mainScreen === "home" && <Home />}
+        {/* {mainScreen === "explore" && <Explore />}
         {mainScreen === "history" && <History />}
         {mainScreen === "nft" && <Nft />} */}
       </div>
 
-      <div className="grid grid-cols-4 w-full border-t border-white/10">
+      <div className="grid grid-cols-3 w-full border-t border-white/10">
         <MainScreenTabButton
           isActive={mainScreen === "home"}
           onClick={() => setMainScreen("home")}
@@ -97,7 +98,7 @@ export const MainContent = () => {
             />
           }
         />
-        <MainScreenTabButton
+        {/* <MainScreenTabButton
           isActive={mainScreen === "explore"}
           onClick={() => setMainScreen("explore")}
           icon={
@@ -107,7 +108,7 @@ export const MainContent = () => {
               )}
             />
           }
-        />
+        /> */}
       </div>
     </div>
   );

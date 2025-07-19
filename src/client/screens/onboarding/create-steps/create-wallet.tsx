@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import SeedPhraseRender from "@/client/component/render/seed-phrase-render";
+import SeedPhraseRender from "@/client/components/render/seed-phrase-render";
 import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
-import { Button } from "@/client/component/ui";
-import { ErrorDisplay } from "@/client/component/display";
+import { Button } from "@/client/components/ui";
+import { ErrorDisplay } from "@/client/components/display";
 import { generateMnemonic } from "@/client/lib/utils";
 
 const CreateWallet = ({ onNext }: { onNext: () => void }) => {

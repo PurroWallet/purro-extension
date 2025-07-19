@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import logo from "@/assets/icon.png";
-import { Button } from "@/client/component/ui/button";
+import { Button } from "@/client/components/ui/button";
 import { CircleArrowDown, CirclePlus } from "lucide-react";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import { openSidePanel } from "@/client/lib/utils";
-import { LoadingDisplay } from "@/client/component/display";
+import { LoadingDisplay } from "@/client/components/display";
 
 const Welcome = ({
   onCreate,

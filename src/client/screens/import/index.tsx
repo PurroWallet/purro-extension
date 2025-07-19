@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
-import { LockDisplay } from "@/client/component/display";
-import UniverseBackground from "@/client/component/universe-background";
+import { LockDisplay } from "@/client/components/display";
+import UniverseBackground from "@/client/components/universe-background";
 import ImportSteps from "./import-steps";
 
 const Import = () => {

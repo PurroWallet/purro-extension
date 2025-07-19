@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { Button, Input } from "@/client/component/ui";
+import { Button, Input } from "@/client/components/ui";
 import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
 import { cn } from "@/client/lib/utils";
 

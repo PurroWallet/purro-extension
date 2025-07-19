@@ -5,8 +5,8 @@ import XTwitter from "@/assets/icon-component/x-twitter";
 import { openSidePanel } from "@/client/lib/utils";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
-import { LoadingDisplay, ErrorDisplay } from "@/client/component/display";
-import { Button } from "@/client/component/ui";
+import { LoadingDisplay, ErrorDisplay } from "@/client/components/display";
+import { Button } from "@/client/components/ui";
 import useWallet from "@/client/hooks/use-wallet";
 import {
   ChainType,

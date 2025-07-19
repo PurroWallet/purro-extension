@@ -1,6 +1,6 @@
 import DockToLeftIcon from "@/assets/icon-component/dock-to-left-icon";
 import { hyperliquidLogo } from "@/assets/logo";
-import { AccountIcon, AccountName } from "@/client/component/account";
+import { AccountIcon, AccountName } from "@/client/components/account";
 import { openSidePanel } from "@/client/lib/utils";
 import { cn } from "@/client/lib/utils";
 import { X } from "lucide-react";

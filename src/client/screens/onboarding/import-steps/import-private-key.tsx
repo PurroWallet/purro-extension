@@ -1,5 +1,4 @@
-import { Button } from "@/client/component/ui/button";
-import { InputPassword } from "@/client/component/ui";
+import { Button, InputPassword } from "@/client/components/ui";
 import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
 import { Check, X } from "lucide-react";
 import { useState } from "react";

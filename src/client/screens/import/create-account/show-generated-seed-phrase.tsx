@@ -1,5 +1,5 @@
-import { Button } from "@/client/component/ui";
-import SeedPhraseRender from "@/client/component/render/seed-phrase-render";
+import { Button } from "@/client/components/ui";
+import SeedPhraseRender from "@/client/components/render/seed-phrase-render";
 
 interface ShowGeneratedSeedPhraseProps {
   seedPhrase: string;

@@ -1,6 +1,6 @@
 import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
 import usePassword from "@/client/hooks/use-password";
-import { Button } from "@/client/component/ui";
+import { Button } from "@/client/components/ui";
 import { Eye, EyeOff, Check, X } from "lucide-react";
 
 const AddPassword = ({ onNext }: { onNext: () => void }) => {

@@ -8,7 +8,7 @@ export const supportedEVMChains: { [key: string]: ChainInfo } = {
         chainIdNumber: 1,
         chainName: 'Ethereum Mainnet',
         nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-        rpcUrls: ['https://mainnet.infura.io/v3/'],
+        rpcUrls: ['https://ethereum.publicnode.com', 'https://rpc.ankr.com/eth'],
         blockExplorerUrls: ['https://etherscan.io'],
         isTestnet: false,
         logo: ethereumLogo
@@ -18,7 +18,7 @@ export const supportedEVMChains: { [key: string]: ChainInfo } = {
         chainIdNumber: 42161,
         chainName: 'Arbitrum One',
         nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-        rpcUrls: ['https://arb1.arbitrum.io/rpc'],
+        rpcUrls: ['https://arb1.arbitrum.io/rpc', 'https://arbitrum.publicnode.com'],
         blockExplorerUrls: ['https://arbiscan.io'],
         isTestnet: false,
         logo: arbitrumLogo
@@ -28,7 +28,7 @@ export const supportedEVMChains: { [key: string]: ChainInfo } = {
         chainIdNumber: 8453,
         chainName: 'Base',
         nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-        rpcUrls: ['https://mainnet.base.org'],
+        rpcUrls: ['https://mainnet.base.org', 'https://base.publicnode.com'],
         blockExplorerUrls: ['https://basescan.org'],
         isTestnet: false,
         logo: baseLogo

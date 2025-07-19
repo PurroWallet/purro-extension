@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { Button } from "@/client/component/ui/button";
+import { Button, MnemonicInput } from "@/client/components/ui";
 import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
-import MnemonicInput from "@/client/component/ui/mnemonic-input";
 
 const ImportSeedPhrase = ({ onNext }: { onNext: () => void }) => {
   const [wordCount, setWordCount] = useState<12 | 24>(12);

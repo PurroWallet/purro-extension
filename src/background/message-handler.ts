@@ -4,6 +4,7 @@ import { accountHandler } from './handlers/account-handler';
 import { authHandler } from './handlers/auth-handler';
 import { storageHandler } from './handlers/storage-handler';
 import { evmHandler } from './handlers/evm-handler';
+import { evmRpcHandler } from './handlers/evm-rpc-handler';
 
 export class MessageHandler {
     async handleMessage(message: MessageRequest, sender: chrome.runtime.MessageSender): Promise<MessageResponse> {
@@ -130,6 +131,9 @@ export class MessageHandler {
                     break;
                 case 'DISCONNECT_WALLET':
                     result = await evmHandler.handleDisconnectWallet(data, sender);
+                    break;
+                case 'EVM_GET_BALANCE':
+                    result = await evmRpcHandler.handleEvmGetBalance(data);
                     break;
 
                 default:

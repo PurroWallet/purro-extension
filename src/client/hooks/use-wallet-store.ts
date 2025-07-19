@@ -1,10 +1,13 @@
 import { create } from 'zustand';
 import { WalletState } from '@/types';
 import { sendMessage } from '@/client/utils/extension-message-utils';
+import { AccountWallet } from '@/background/types/account';
+
 interface ExtendedWalletState extends WalletState {
     loading: boolean;
     error: string | null;
     initialized: boolean;
+    activeAccountAddress: { [key: string]: string };
 }
 
 interface WalletStateAction {
@@ -14,6 +17,10 @@ interface WalletStateAction {
     setError: (error: string | null) => void;
     clearError: () => void;
     refreshState: () => Promise<void>; // Refresh from storage changes
+
+    // Helper functions
+    getActiveAccountWalletObject: () => AccountWallet | null;
+    getAccountWalletObject: (accountId: string) => AccountWallet | null;
 }
 
 const useWalletStore = create<ExtendedWalletState & WalletStateAction>((set, get) => ({
@@ -25,6 +32,7 @@ const useWalletStore = create<ExtendedWalletState & WalletStateAction>((set, get
     loading: false,
     error: null,
     initialized: false,
+    activeAccountAddress: {},
 
     loadWalletState: async () => {
         try {
@@ -41,6 +49,8 @@ const useWalletStore = create<ExtendedWalletState & WalletStateAction>((set, get
                 loading: false,
                 initialized: true
             };
+
+
 
             set(transformedState);
         } catch (err) {
@@ -79,6 +89,21 @@ const useWalletStore = create<ExtendedWalletState & WalletStateAction>((set, get
     setError: (error: string | null) => set({ error }),
 
     clearError: () => set({ error: null }),
+
+    // Get active account wallet object
+    getActiveAccountWalletObject: () => {
+        const { activeAccount, wallets } = get();
+        if (!activeAccount || !wallets[activeAccount.id]) {
+            return null;
+        }
+        return wallets[activeAccount.id];
+    },
+
+    // Get account wallet object for any account
+    getAccountWalletObject: (accountId: string) => {
+        const { wallets } = get();
+        return wallets[accountId] || null;
+    },
 }))
 
 export default useWalletStore;

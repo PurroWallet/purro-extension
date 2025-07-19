@@ -1,4 +1,4 @@
-import { Button } from "@/client/component/ui/button";
+import { Button } from "@/client/components/ui";
 import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
 import { ChevronRight } from "lucide-react";
 import hyperliquidLogo from "@/assets/logo/hl-mint-logo.png";
@@ -20,7 +20,7 @@ const ChooseChain = () => {
             {chain === "ethereum" && "Enter your Ethereum private key"}
             {chain === "solana" && "Enter your Solana private key"}
             {chain === "sui" && "Enter your Sui private key"}
-            {chain === "hyperliquid" && "Enter your Hyperliquid private key"}
+            {chain === "hyperevm" && "Enter your Hyperliquid private key"}
             {chain === "base" && "Enter your Base private key"}
             {chain === "arbitrum" && "Enter your Arbitrum private key"}
           </p>
@@ -28,7 +28,7 @@ const ChooseChain = () => {
         {chain == null && (
           <div className="space-y-2">
             <Button
-              onClick={() => setChain("hyperliquid")}
+              onClick={() => setChain("hyperevm")}
               className="w-full bg-[var(--card-color)] text-[var(--primary-color-light)] hover:bg-[var(--card-color)]/80 justify-between py-4"
             >
               <div className="flex items-center gap-3">

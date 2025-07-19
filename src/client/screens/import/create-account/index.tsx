@@ -6,7 +6,7 @@ import NoSeedPhraseFound from "./no-seed-phrase-found";
 import CreateFromExistingSeed from "./create-from-existing-seed";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import { generateMnemonic } from "@/client/lib/utils";
-import LoadingDisplay from "@/client/component/display/loading-display";
+import LoadingDisplay from "@/client/components/display/loading-display";
 import { SeedPhraseWithId } from "@/types";
 
 const CreateAccount = ({ onNext }: { onNext: () => void }) => {

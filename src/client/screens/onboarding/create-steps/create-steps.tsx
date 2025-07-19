@@ -1,13 +1,13 @@
 import { useState } from "react";
 import CreateWallet from "./create-wallet";
 import { ChevronLeft } from "lucide-react";
-import Header from "@/client/component/common/header";
+import Header from "@/client/components/common/header";
 import StepTracker from "../step-tracker";
 import { cn } from "@/client/lib/utils";
 import VerifyMnemonic from "./verify-mnemonic";
 import AddPassword from "../add-password";
 import Finish from "../finish";
-import { IconButton } from "@/client/component/ui/button";
+import { IconButton } from "@/client/components/ui/button";
 
 const steps = ["create", "verify-mnemonic", "add-password", "finish"];
 
