@@ -7,7 +7,7 @@ import useDialogStore from "@/client/hooks/use-dialog-store";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import { Button, InputPassword } from "@/client/components/ui";
 import LoadingDisplay from "@/client/components/display/loading-display";
-import ForgotPassword from "../dialog/forgot-password";
+import ForgotPassword from "../dialogs/forgot-password";
 import IconNameLogo from "../icon-name-logo";
 
 const LockDisplay = () => {

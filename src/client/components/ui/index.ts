@@ -1,5 +1,5 @@
 export { Button, IconButton } from "./button";
-export { InputPassword, Input } from "./input";
+export { InputPassword, Input, InputCurrency } from "./input";
 export { MnemonicInput } from "./mnemonic-input";
 export {
     DialogContent,

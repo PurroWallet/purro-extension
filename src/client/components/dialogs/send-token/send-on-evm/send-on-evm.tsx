@@ -1,0 +1,17 @@
+import ChooseToken from "./choose-token";
+import useSendTokenStore from "@/client/hooks/use-send-token-store";
+import SendToken from "./send-token";
+import ConfirmSend from "./confirm-send";
+
+const SendOnEvm = () => {
+  const { step } = useSendTokenStore();
+  return (
+    <>
+      {step === "select" && <ChooseToken />}
+      {step === "send" && <SendToken />}
+      {step === "confirm" && <ConfirmSend />}
+    </>
+  );
+};
+
+export default SendOnEvm;

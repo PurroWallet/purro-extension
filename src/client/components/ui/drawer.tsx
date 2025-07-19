@@ -17,7 +17,7 @@ export const Drawer = () => {
           onClick={() => closeDrawer()}
         >
           <motion.div
-            className="bg-[var(--card-color)] flex flex-col h-fit w-full round z-[40] rounded-t-lg"
+            className="bg-[var(--card-color)] flex flex-col h-fit w-full round z-[40] rounded-t-3xl"
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}

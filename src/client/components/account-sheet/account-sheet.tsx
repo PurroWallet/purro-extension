@@ -7,7 +7,7 @@ import SupportedChainsDropdown from "./supported-chains-dropdown";
 import AccountList from "./account-list";
 import useDialogStore from "@/client/hooks/use-dialog-store";
 import useWallet from "@/client/hooks/use-wallet";
-import SettingsDialog from "../dialog/settings/settings-dialog";
+import SettingsDialog from "../dialogs/settings/settings-dialog";
 
 const AccountSheet = () => {
   const { isOpen, close } = useAccountSheetStore();

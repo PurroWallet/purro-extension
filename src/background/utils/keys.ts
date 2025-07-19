@@ -88,6 +88,10 @@ export const evmWalletKeyUtils = {
         } catch (error) {
             return false;
         }
+    },
+
+    isValidAddress: (address: string): boolean => {
+        return ethers.isAddress(address);
     }
 }
 

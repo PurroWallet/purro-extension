@@ -8,7 +8,7 @@ import useDialogStore from "@/client/hooks/use-dialog-store";
 import useWallet from "@/client/hooks/use-wallet";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import { AccountIcon, AccountName } from "../account";
-import EditAccount from "../dialog/edit-account";
+import EditAccount from "../dialogs/edit-account";
 
 const AccountList = () => {
   const { reorderAccounts, setActiveAccount } = useWallet();

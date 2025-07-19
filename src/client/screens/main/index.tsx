@@ -9,7 +9,7 @@ import MainHeader, {
   NftNetworkNotification,
 } from "./main-header";
 import { cn } from "@/client/lib/utils";
-import { Clock, HomeIcon, ImageIcon, Search } from "lucide-react";
+import { Clock, HomeIcon, ImageIcon } from "lucide-react";
 import AccountSheet from "@/client/components/account-sheet/account-sheet";
 import Home from "./main-screens/home";
 

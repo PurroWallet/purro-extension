@@ -8,10 +8,12 @@ import { formatCurrency } from "@/client/utils/formatters";
 import { useState, useEffect } from "react";
 import { cn } from "@/client/lib/utils";
 import useDrawerStore from "@/client/hooks/use-drawer-store";
-// import ReceiveChooseDrawer from "@/components/drawers/receive-choose";
-// import SwapDrawer from "@/components/drawers/swap-drawer";
-// import BridgeDrawer from "@/components/drawers/bridge-drawer";
-// import SendDrawer from "@/components/drawers/send-drawer";
+import {
+  ReceiveChooseDrawer,
+  SwapDrawer,
+  BridgeDrawer,
+  SendDrawer,
+} from "@/client/components/drawers";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 
 const Home = () => {
@@ -60,7 +62,7 @@ const Home = () => {
                   <SendIcon className="text-[var(--primary-color-light)] size-5" />
                 }
                 onClick={() => {
-                  // openDrawer(<SendDrawer />);
+                  openDrawer(<SendDrawer />);
                 }}
               >
                 Send
@@ -70,7 +72,7 @@ const Home = () => {
                   <CircleFadingPlus className="text-[var(--primary-color-light)] size-5" />
                 }
                 onClick={() => {
-                  // openDrawer(<ReceiveChooseDrawer />);
+                  openDrawer(<ReceiveChooseDrawer />);
                 }}
               >
                 Receive
@@ -80,7 +82,7 @@ const Home = () => {
                   <SwapVertIcon className="text-[var(--primary-color-light)]" />
                 }
                 onClick={() => {
-                  // openDrawer(<SwapDrawer />);
+                  openDrawer(<SwapDrawer />);
                 }}
               >
                 Swap
@@ -90,7 +92,7 @@ const Home = () => {
                   <ShuffleIcon className="text-[var(--primary-color-light)]" />
                 }
                 onClick={() => {
-                  // openDrawer(<BridgeDrawer />);
+                  openDrawer(<BridgeDrawer />);
                 }}
               >
                 Bridge

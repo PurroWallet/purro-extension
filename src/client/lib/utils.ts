@@ -116,3 +116,15 @@ export const generateMnemonic = (strength = 128) => {
         console.error("Error generating mnemonic:", error);
     }
 };
+
+export const calculateGasFeeInETH = (gasAmount: number, gasPriceGwei: number) => {
+    // Gas fee = gas amount × gas price (in wei)
+    // 1 Gwei = 10^9 wei
+    // 1 ETH = 10^18 wei
+
+    const gasPriceWei = gasPriceGwei * 1e9; // Chuyển Gwei sang wei
+    const gasFeeWei = gasAmount * gasPriceWei; // Tổng phí gas tính bằng wei
+    const gasFeeETH = gasFeeWei / 1e18; // Chuyển wei sang ETH
+
+    return gasFeeETH;
+}
