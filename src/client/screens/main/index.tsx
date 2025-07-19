@@ -126,23 +126,14 @@ const MainScreenTabButton = ({
   return (
     <button
       className={cn(
-        "flex items-center justify-center py-4 transition-all duration-300 cursor-pointer group relative overflow-hidden",
-        "hover:bg-white/5 active:scale-95",
-        isActive && "border-t border-[var(--primary-color-light)]"
+        "flex items-center justify-center py-4 transition-all cursor-pointer relative overflow-hidden",
+        "hover:bg-white/5",
+        "before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:transition-all",
+        isActive && "before:bg-[var(--primary-color-light)]"
       )}
       onClick={onClick}
     >
-      <div
-        className={cn(
-          "transition-all duration-500 ease-out relative z-10",
-          "group-hover:scale-110 group-hover:rotate-12 group-hover:-translate-y-1",
-          "group-active:scale-90 group-active:rotate-0 group-active:translate-y-0",
-          // Hiệu ứng khi active - tinh tế hơn
-          isActive && "scale-105 -translate-y-0.5"
-        )}
-      >
-        {icon}
-      </div>
+      <div className={cn("transition-all relative z-10")}>{icon}</div>
     </button>
   );
 };

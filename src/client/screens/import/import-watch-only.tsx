@@ -5,6 +5,7 @@ import { useState } from "react";
 import useWallet from "@/client/hooks/use-wallet";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import { ChainType } from "@/background/types/account";
+import { evmWalletKeyUtils } from "@/background/utils/keys";
 
 const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
   const { address, chain, accountName, setAddress, setAccountName } =
@@ -14,26 +15,24 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
   const [error, setError] = useState<string | null>(null);
 
   const validateAddress = (address: string, blockchain: string): boolean => {
-    if (!address) return false;
-
+    if (!address) {
+      return false;
+    }
     try {
       switch (blockchain) {
         case "ethereum":
-        case "hyperliquid":
+        case "hyperevm":
         case "base":
         case "arbitrum":
-          // Ethereum address validation
-          return /^0x[a-fA-F0-9]{40}$/.test(address);
+          return evmWalletKeyUtils.isValidAddress(address);
         case "solana":
-          // Solana address validation
           return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
         case "sui":
-          // Sui address validation
           return /^0x[a-fA-F0-9]{64}$/.test(address);
         default:
           return false;
       }
-    } catch {
+    } catch (error) {
       return false;
     }
   };
@@ -49,18 +48,19 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
       return;
     }
 
-    if (!validateAddress(address, chain)) {
+    const isValidAddress = validateAddress(address, chain);
+    if (!isValidAddress) {
       setError(`Invalid address format for selected chain`);
       return;
     }
 
     const finalAccountName = accountName || `Account ${accounts.length + 1}`;
+
     if (!finalAccountName || !finalAccountName.trim()) {
       setError("Account name is required");
       return;
     }
 
-    // Check if address already exists
     try {
       const addressExists = await checkWatchOnlyAddressExists(address);
 
@@ -69,30 +69,26 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
         return;
       }
     } catch (err) {
-      console.error("Failed to check address existence:", err);
       setError("Failed to validate address");
       return;
     }
 
     try {
       let finalChain: ChainType;
-      if (chain === "hyperevm") {
-        finalChain = "eip155";
-      } else if (chain === "base") {
-        finalChain = "eip155";
-      } else if (chain === "arbitrum") {
-        finalChain = "eip155";
-      } else if (chain === "ethereum") {
+      if (
+        chain === "hyperevm" ||
+        chain === "base" ||
+        chain === "arbitrum" ||
+        chain === "ethereum"
+      ) {
         finalChain = "eip155";
       } else {
         finalChain = chain as ChainType;
       }
 
       await importWatchOnlyWallet(address, finalChain, finalAccountName);
-
       onNext();
     } catch (err) {
-      console.error("Import failed:", err);
       const errorMessage =
         err instanceof Error
           ? err.message
