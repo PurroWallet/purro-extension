@@ -13,6 +13,7 @@ import { Clock, HomeIcon, ImageIcon } from "lucide-react";
 import AccountSheet from "@/client/components/account-sheet/account-sheet";
 import Home from "./main-screens/home";
 import Nft from "./main-screens/nft";
+import History from "./main-screens/history";
 
 const queryClient = new QueryClient();
 
@@ -60,8 +61,8 @@ export const MainContent = () => {
       )}
       <div className="flex-1 overflow-y-auto">
         {mainScreen === "home" && <Home />}
-        {/* {mainScreen === "explore" && <Explore />}
-        {mainScreen === "history" && <History />}*/}
+        {/* {mainScreen === "explore" && <Explore />} */}
+        {mainScreen === "history" && <History />}
         {mainScreen === "nft" && <Nft />}
       </div>
 
