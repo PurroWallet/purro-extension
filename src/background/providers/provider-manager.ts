@@ -107,7 +107,6 @@ export class PurroProviderManager implements PurroProvider {
     // Initialize connection state with better error handling
     private async initializeConnectionState() {
         try {
-
             // Use unified connection status check
             const connectedAccountForSite = await this.getConnectedAccountForSite();
 
@@ -121,11 +120,10 @@ export class PurroProviderManager implements PurroProvider {
                 this.accountsCache = this.accounts;
                 this.accountsCacheTimestamp = Date.now();
 
-                // Emit events to notify dApp with a small delay to ensure listeners are ready
-                setTimeout(() => {
-                    this.emit('connect', { accounts: this.accounts, activeAccount: this.activeAccount });
-                    this.emit('accountsChanged', this.accounts);
-                }, 150);
+                console.log('🔗 Restoring connection for site:', window.location.origin, 'with account:', this.activeAccount);
+
+                // Emit events immediately and with retries to ensure dApp receives them
+                this.emitConnectionEvents();
 
             } else {
                 // Not connected - ensure clean state
@@ -135,10 +133,10 @@ export class PurroProviderManager implements PurroProvider {
                 this.accountsCache = null;
                 this.accountsCacheTimestamp = 0;
 
+                console.log('🔌 No existing connection for site:', window.location.origin);
+
                 // Still emit accountsChanged with empty array to let dApp know we're ready
-                setTimeout(() => {
-                    this.emit('accountsChanged', []);
-                }, 150);
+                this.emitDisconnectedState();
             }
         } catch (error) {
             console.error('❌ Error initializing connection state:', error);
@@ -150,10 +148,40 @@ export class PurroProviderManager implements PurroProvider {
             this.accountsCacheTimestamp = 0;
 
             // Emit empty accountsChanged to let dApp know we're ready (but not connected)
+            this.emitDisconnectedState();
+        }
+    }
+
+    // Helper method to emit connection events with retries
+    private emitConnectionEvents() {
+        const connectionData = { accounts: this.accounts, activeAccount: this.activeAccount };
+
+        // Emit immediately
+        this.emit('connect', connectionData);
+        this.emit('accountsChanged', this.accounts);
+
+        // Emit with delays to catch dApps that setup listeners later
+        const delays = [50, 150, 300, 500];
+        delays.forEach(delay => {
+            setTimeout(() => {
+                this.emit('connect', connectionData);
+                this.emit('accountsChanged', this.accounts);
+            }, delay);
+        });
+    }
+
+    // Helper method to emit disconnected state
+    private emitDisconnectedState() {
+        // Emit immediately
+        this.emit('accountsChanged', []);
+
+        // Emit with delays to catch dApps that setup listeners later
+        const delays = [50, 150, 300];
+        delays.forEach(delay => {
             setTimeout(() => {
                 this.emit('accountsChanged', []);
-            }, 150);
-        }
+            }, delay);
+        });
     }
 
     // Simplified method to refresh connection state
@@ -254,8 +282,8 @@ export class PurroProviderManager implements PurroProvider {
                 this.accountsCache = this.accounts;
                 this.accountsCacheTimestamp = Date.now();
 
-                this.emit('connect', { accounts: this.accounts, activeAccount: this.activeAccount });
-                this.emit('accountsChanged', this.accounts);
+                // Use the helper method to emit events with retries
+                this.emitConnectionEvents();
 
                 return {
                     accounts: this.accounts,
@@ -286,8 +314,8 @@ export class PurroProviderManager implements PurroProvider {
             this.accountsCache = this.accounts;
             this.accountsCacheTimestamp = Date.now();
 
-            this.emit('connect', { accounts: this.accounts, activeAccount: this.activeAccount });
-            this.emit('accountsChanged', this.accounts);
+            // Use the helper method to emit events with retries
+            this.emitConnectionEvents();
 
             return {
                 accounts: this.accounts,

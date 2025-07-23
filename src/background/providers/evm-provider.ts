@@ -52,6 +52,7 @@ export class PurroEVMProvider implements EthereumProvider {
     private providerManager: any;
     private lastEmittedAccounts: string[] = [];
     private isInitializing = false;
+    private lastEmitTime: number = 0;
 
     // Expose isConnected property for dApps that check it
     get isConnected(): boolean {
@@ -63,7 +64,11 @@ export class PurroEVMProvider implements EthereumProvider {
         this.initializeSelectedAddressSync();
         this.init();
         this.initializeNetworkState();
-        this.initializeSelectedAddress();
+
+        // Delay initialization to allow ProviderManager to complete its initialization first
+        setTimeout(() => {
+            this.initializeSelectedAddress();
+        }, 100);
     }
 
     private async initializeNetworkState() {
@@ -91,48 +96,71 @@ export class PurroEVMProvider implements EthereumProvider {
         this.isInitializing = true;
 
         try {
+            // Check if ProviderManager already has connection state
+            if (this.providerManager.isConnected && this.providerManager.activeAccount) {
+                const newAddress = this.providerManager.activeAccount;
+                const accountsToEmit = this.providerManager.accounts || [newAddress];
+
+                console.log('🔗 EVMProvider: Using existing connection from ProviderManager:', newAddress);
+
+                if (this.selectedAddress !== newAddress ||
+                    JSON.stringify(this.lastEmittedAccounts) !== JSON.stringify(accountsToEmit)) {
+
+                    this.selectedAddress = newAddress;
+
+                    // Only emit if we haven't emitted these accounts recently
+                    const now = Date.now();
+                    if (!this.lastEmitTime || now - this.lastEmitTime > 100) {
+                        this.emit('accountsChanged', accountsToEmit);
+                        this.emit('connect', { accounts: accountsToEmit, activeAccount: newAddress });
+                        this.lastEmittedAccounts = accountsToEmit;
+                        this.lastEmitTime = now;
+                    }
+                }
+                return;
+            }
+
+            // Fallback: check connection status directly
             const result = await this.getConnectedAccountForSite();
 
             if (result && result.address) {
                 const newAddress = result.address;
                 const accountsToEmit = [newAddress];
 
+                console.log('🔗 EVMProvider: Found connection via direct check:', newAddress);
+
                 if (this.selectedAddress !== newAddress ||
                     JSON.stringify(this.lastEmittedAccounts) !== JSON.stringify(accountsToEmit)) {
 
                     this.selectedAddress = newAddress;
 
+                    // Sync with ProviderManager
                     if (this.providerManager) {
                         this.providerManager.isConnected = true;
                         this.providerManager.accounts = accountsToEmit;
                         this.providerManager.activeAccount = newAddress;
                     }
 
-                    this.emit('accountsChanged', accountsToEmit);
-                    this.lastEmittedAccounts = accountsToEmit;
+                    const now = Date.now();
+                    if (!this.lastEmitTime || now - this.lastEmitTime > 100) {
+                        this.emit('accountsChanged', accountsToEmit);
+                        this.emit('connect', { accounts: accountsToEmit, activeAccount: newAddress });
+                        this.lastEmittedAccounts = accountsToEmit;
+                        this.lastEmitTime = now;
+                    }
                 }
                 return;
             }
 
-            if (this.providerManager.isConnected && this.providerManager.activeAccount) {
-                const newAddress = this.providerManager.activeAccount;
-                const accountsToEmit = [newAddress];
-
-                if (this.selectedAddress !== newAddress ||
-                    JSON.stringify(this.lastEmittedAccounts) !== JSON.stringify(accountsToEmit)) {
-
-                    this.selectedAddress = newAddress;
-                    this.emit('accountsChanged', accountsToEmit);
-                    this.lastEmittedAccounts = accountsToEmit;
-                }
-            } else {
-                if (this.selectedAddress !== null || this.lastEmittedAccounts.length > 0) {
-                    this.selectedAddress = null;
-                    this.emit('accountsChanged', []);
-                    this.lastEmittedAccounts = [];
-                }
+            // No connection found
+            if (this.selectedAddress !== null || this.lastEmittedAccounts.length > 0) {
+                console.log('🔌 EVMProvider: No connection found, emitting empty state');
+                this.selectedAddress = null;
+                this.emit('accountsChanged', []);
+                this.lastEmittedAccounts = [];
             }
         } catch (error) {
+            console.error('❌ Error in initializeSelectedAddress:', error);
             if (this.selectedAddress !== null || this.lastEmittedAccounts.length > 0) {
                 this.selectedAddress = null;
                 this.emit('accountsChanged', []);
@@ -145,7 +173,18 @@ export class PurroEVMProvider implements EthereumProvider {
 
     private init() {
         this.providerManager.on('connect', (data: any) => {
+            const now = Date.now();
+            // Prevent duplicate events within short time window
+            if (this.lastEmitTime && now - this.lastEmitTime < 50) {
+                return;
+            }
+
             this.selectedAddress = data.activeAccount;
+            this.lastEmittedAccounts = data.accounts || [];
+            this.lastEmitTime = now;
+
+            console.log('🔗 EVMProvider: Emitting connect event from ProviderManager:', data);
+
             this.emit('connect', data);
             this.emit('accountsChanged', data.accounts || []);
             // Emit chainChanged to ensure dApp has correct network info
@@ -154,18 +193,57 @@ export class PurroEVMProvider implements EthereumProvider {
 
         this.providerManager.on('disconnect', () => {
             this.selectedAddress = null;
+            this.lastEmittedAccounts = [];
+            this.lastEmitTime = Date.now();
+
+            console.log('🔌 EVMProvider: Emitting disconnect event from ProviderManager');
+
             this.emit('disconnect');
             this.emit('accountsChanged', []);
         });
 
         this.providerManager.on('accountsChanged', (accounts: string[]) => {
+            const now = Date.now();
+            // Prevent duplicate events within short time window
+            if (this.lastEmitTime && now - this.lastEmitTime < 50) {
+                return;
+            }
+
+            // Check if accounts actually changed
+            if (JSON.stringify(this.lastEmittedAccounts) === JSON.stringify(accounts)) {
+                return;
+            }
+
             this.selectedAddress = accounts[0] || null;
+            this.lastEmittedAccounts = accounts;
+            this.lastEmitTime = now;
+
+            console.log('🔄 EVMProvider: Emitting accountsChanged from ProviderManager:', accounts);
+
             this.emit('accountsChanged', accounts);
         });
 
         this.providerManager.on('accountChanged', (account: string) => {
+            const accountsToEmit = account ? [account] : [];
+            const now = Date.now();
+
+            // Prevent duplicate events within short time window
+            if (this.lastEmitTime && now - this.lastEmitTime < 50) {
+                return;
+            }
+
+            // Check if account actually changed
+            if (JSON.stringify(this.lastEmittedAccounts) === JSON.stringify(accountsToEmit)) {
+                return;
+            }
+
             this.selectedAddress = account;
-            this.emit('accountsChanged', account ? [account] : []);
+            this.lastEmittedAccounts = accountsToEmit;
+            this.lastEmitTime = now;
+
+            console.log('🔄 EVMProvider: Emitting accountChanged from ProviderManager:', account);
+
+            this.emit('accountsChanged', accountsToEmit);
         });
     }
 
@@ -452,8 +530,20 @@ export class PurroEVMProvider implements EthereumProvider {
 
     private async handleGetAccounts(): Promise<string[]> {
         try {
-            // Fast path: return selectedAddress if already set
+            console.log('🔍 EVMProvider: handleGetAccounts called');
+
+            // Check if ProviderManager already has connection state
+            if (this.providerManager.isConnected && this.providerManager.accounts.length > 0) {
+                const accounts = this.providerManager.accounts;
+                this.selectedAddress = accounts[0];
+
+                console.log('🔗 EVMProvider: Returning accounts from ProviderManager:', accounts);
+                return accounts;
+            }
+
+            // Fast path: return selectedAddress if already set and valid
             if (this.selectedAddress) {
+                console.log('🔗 EVMProvider: Returning cached selectedAddress:', this.selectedAddress);
                 return [this.selectedAddress];
             }
 
@@ -464,17 +554,25 @@ export class PurroEVMProvider implements EthereumProvider {
                 const newAddress = result.address;
                 const accountsToReturn = [newAddress];
 
+                console.log('🔗 EVMProvider: Found connection in storage:', newAddress);
+
                 this.selectedAddress = newAddress;
 
+                // Sync with ProviderManager
                 if (this.providerManager) {
                     this.providerManager.isConnected = true;
                     this.providerManager.accounts = accountsToReturn;
                     this.providerManager.activeAccount = newAddress;
                 }
 
+                // Only emit if accounts changed
                 if (JSON.stringify(this.lastEmittedAccounts) !== JSON.stringify(accountsToReturn)) {
-                    this.emit('accountsChanged', accountsToReturn);
-                    this.lastEmittedAccounts = accountsToReturn;
+                    const now = Date.now();
+                    if (!this.lastEmitTime || now - this.lastEmitTime > 100) {
+                        this.emit('accountsChanged', accountsToReturn);
+                        this.lastEmittedAccounts = accountsToReturn;
+                        this.lastEmitTime = now;
+                    }
                 }
 
                 return accountsToReturn;
@@ -484,26 +582,36 @@ export class PurroEVMProvider implements EthereumProvider {
             const accounts = await this.providerManager.getAccounts();
 
             if (accounts.length > 0) {
+                console.log('🔗 EVMProvider: Got accounts from ProviderManager fallback:', accounts);
+
                 if (this.selectedAddress !== accounts[0]) {
                     this.selectedAddress = accounts[0];
 
                     if (JSON.stringify(this.lastEmittedAccounts) !== JSON.stringify(accounts)) {
-                        this.emit('accountsChanged', accounts);
-                        this.lastEmittedAccounts = accounts;
+                        const now = Date.now();
+                        if (!this.lastEmitTime || now - this.lastEmitTime > 100) {
+                            this.emit('accountsChanged', accounts);
+                            this.lastEmittedAccounts = accounts;
+                            this.lastEmitTime = now;
+                        }
                     }
                 }
-            } else {
-                if (this.selectedAddress !== null) {
-                    this.selectedAddress = null;
 
-                    if (this.lastEmittedAccounts.length > 0) {
-                        this.emit('accountsChanged', []);
-                        this.lastEmittedAccounts = [];
-                    }
+                return accounts;
+            }
+
+            // No connection found
+            console.log('🔌 EVMProvider: No connection found');
+            if (this.selectedAddress !== null) {
+                this.selectedAddress = null;
+
+                if (this.lastEmittedAccounts.length > 0) {
+                    this.emit('accountsChanged', []);
+                    this.lastEmittedAccounts = [];
                 }
             }
 
-            return accounts;
+            return [];
         } catch (error) {
             console.error('Error getting accounts:', error);
             if (this.selectedAddress !== null) {
