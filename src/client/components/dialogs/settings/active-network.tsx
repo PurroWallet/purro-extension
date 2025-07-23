@@ -7,10 +7,10 @@ import { Switch } from "@/client/components/ui/switch";
 import { cn } from "@/client/lib/utils";
 import useNetworkSettingsStore, {
   NetworkConfig,
-} from "@/store/network-settings-store";
+} from "@/client/hooks/use-network-store";
 import { RefreshCcw, TrendingUp } from "lucide-react";
-import { getNetworkIcon } from "@/utils/network-icons";
 import { ChainTypeClient } from "@/types/wallet";
+import { getNetworkIcon } from "@/client/utils/icons";
 
 const ActiveNetwork = ({ onBack }: { onBack: () => void }) => {
   const {

@@ -4,7 +4,7 @@ import { cn } from "@/client/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { supportedEVMChains } from "@/background/constants/supported-chains";
 import { hyperliquidLogo } from "@/assets/logo";
-import useNetworkSettingsStore from "@/store/network-settings-store";
+import useNetworkSettingsStore from "@/client/hooks/use-network-store";
 import { ChainTypeClient } from "@/types/wallet";
 
 interface SupportedChainsDropdownProps {

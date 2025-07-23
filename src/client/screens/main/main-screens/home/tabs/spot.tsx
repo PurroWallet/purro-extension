@@ -5,7 +5,7 @@ import { formatCurrency } from "@/client/utils/formatters";
 import HyperLiquidSpotDataIndexer from "@/client/lib/spot-data-indexer";
 import TabsLoading from "./tabs-loading";
 import TabsError from "./tabs-error";
-import useNetworkSettingsStore from "@/store/network-settings-store";
+import useNetworkSettingsStore from "@/client/hooks/use-network-store";
 import { getSpotTokenImage } from "@/client/utils/icons";
 
 const WalletTabsSpot = () => {
