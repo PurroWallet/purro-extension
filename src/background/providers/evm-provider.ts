@@ -659,7 +659,16 @@ export class PurroEVMProvider implements EthereumProvider {
             transactionData: txObject
         });
 
-        return result.signedTransaction;
+        // Result comes as {success: true, data: signedTransaction} from message handler
+        if (typeof result === 'string') {
+            return result;
+        } else if (result?.data) {
+            return result.data;
+        } else if (result?.signedTransaction) {
+            return result.signedTransaction;
+        } else {
+            throw this.createProviderError(4001, 'No signed transaction returned from signing process');
+        }
     }
 
     // Signing methods
@@ -671,11 +680,20 @@ export class PurroEVMProvider implements EthereumProvider {
         const [message, address] = params;
 
         const result = await this.sendMessage("EVM_PERSONAL_SIGN", {
-            message,
-            address: address || this.selectedAddress
+            address: address || this.selectedAddress,
+            message
         });
 
-        return result.signature;
+        // Result comes as {success: true, data: signature} from message handler
+        if (typeof result === 'string') {
+            return result;
+        } else if (result?.data) {
+            return result.data;
+        } else if (result?.signature) {
+            return result.signature;
+        } else {
+            throw this.createProviderError(4001, 'No signature returned from signing process');
+        }
     }
 
     private async handleEthSign(params: any): Promise<string> {
@@ -690,7 +708,16 @@ export class PurroEVMProvider implements EthereumProvider {
             message
         });
 
-        return result.signature;
+        // Result comes as {success: true, data: signature} from message handler
+        if (typeof result === 'string') {
+            return result;
+        } else if (result?.data) {
+            return result.data;
+        } else if (result?.signature) {
+            return result.signature;
+        } else {
+            throw this.createProviderError(4001, 'No signature returned from signing process');
+        }
     }
 
     private async handleSignTypedData(params: any): Promise<string> {
@@ -705,7 +732,16 @@ export class PurroEVMProvider implements EthereumProvider {
             typedData
         });
 
-        return result.signature;
+        // Result comes as {success: true, data: signature} from message handler
+        if (typeof result === 'string') {
+            return result;
+        } else if (result?.data) {
+            return result.data;
+        } else if (result?.signature) {
+            return result.signature;
+        } else {
+            throw this.createProviderError(4001, 'No signature returned from signing process');
+        }
     }
 
     // Chain management methods

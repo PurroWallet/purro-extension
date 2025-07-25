@@ -8,7 +8,16 @@ import useInit from "@/client/hooks/use-init";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import { sendMessage } from "@/client/utils/extension-message-utils";
 import { formatTime, getTimeColor } from "@/client/utils/formatters";
-import { Check, Clock, FileText, Globe, Shield, X } from "lucide-react";
+import {
+  Check,
+  Clock,
+  FileText,
+  Globe,
+  Shield,
+  X,
+  AlertTriangle,
+  RefreshCw,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -23,11 +32,21 @@ export interface SignRequest {
 
 const TIMEOUT_DURATION = 1 * 60; // 1 minute in seconds
 
-const approveSign = (origin: string, message: string, address: string) =>
-  sendMessage("ETH_APPROVE_SIGN", { origin, message, address });
+// Error retry configuration
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
 
-const rejectSign = (origin: string) =>
-  sendMessage("ETH_REJECT_SIGN", { origin });
+const approveSign = async (
+  origin: string,
+  message: string,
+  address: string
+) => {
+  return await sendMessage("ETH_APPROVE_SIGN", { origin, message, address });
+};
+
+const rejectSign = async (origin: string) => {
+  return await sendMessage("ETH_REJECT_SIGN", { origin });
+};
 
 export const SignScreen = () => {
   useInit();
@@ -35,6 +54,8 @@ export const SignScreen = () => {
   const { activeAccount } = useWalletStore();
   const [signRequest, setSignRequest] = useState<SignRequest | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const [timeLeft, setTimeLeft] = useState<number>(TIMEOUT_DURATION);
   const { open: openAccountSheet } = useAccountSheetStore();
 
@@ -56,6 +77,14 @@ export const SignScreen = () => {
         address: decodeURIComponent(address),
         timestamp: Date.now(),
       });
+
+      // Debug: print typed data payload if it is valid JSON
+      try {
+        const parsed = JSON.parse(decodeURIComponent(message));
+        console.log("[Purro] 🔍 TypedData payload:", parsed);
+      } catch (_) {
+        // Not JSON, ignore
+      }
     }
   }, []);
 
@@ -80,6 +109,8 @@ export const SignScreen = () => {
     if (!signRequest || !activeAccount) return;
 
     setLoading(true);
+    setError(null);
+
     try {
       console.log(
         "🔄 Approving sign for:",
@@ -104,7 +135,33 @@ export const SignScreen = () => {
       window.close();
     } catch (error) {
       console.error("❌ Error approving sign:", error);
-      // Don't close popup on error so user can retry
+
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      setError(errorMessage);
+
+      // Check if it's a retryable error (session/connection issues)
+      const isRetryableError =
+        errorMessage.includes("session") ||
+        errorMessage.includes("unlock") ||
+        errorMessage.includes("storage") ||
+        errorMessage.includes("timeout");
+
+      if (isRetryableError && retryCount < MAX_RETRIES) {
+        console.log(
+          `🔄 Retryable error detected, attempting retry ${
+            retryCount + 1
+          }/${MAX_RETRIES}`
+        );
+        setRetryCount((prev) => prev + 1);
+
+        // Auto-retry after delay
+        setTimeout(() => {
+          handleApprove();
+        }, RETRY_DELAY * (retryCount + 1)); // Exponential backoff
+      }
+
+      // Don't close popup on error so user can retry or see error message
     } finally {
       setLoading(false);
     }
@@ -121,7 +178,15 @@ export const SignScreen = () => {
       window.close();
     } catch (error) {
       console.error("Error rejecting sign:", error);
+      // Still close popup even on rejection error
+      window.close();
     }
+  };
+
+  const handleRetry = () => {
+    setError(null);
+    setRetryCount(0);
+    handleApprove();
   };
 
   if (!signRequest) {
@@ -186,6 +251,28 @@ export const SignScreen = () => {
       </div>
 
       <div className="flex-1 p-4 overflow-y-auto">
+        {error && (
+          <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="size-5 text-red-400" />
+              <span className="text-base font-medium text-red-400">
+                Signing Failed
+              </span>
+            </div>
+            <p className="text-sm text-red-200 mb-3">{error}</p>
+            {retryCount < MAX_RETRIES && (
+              <Button
+                onClick={handleRetry}
+                disabled={loading}
+                className="bg-red-500/20 text-red-200 hover:bg-red-500/30 border border-red-500/30"
+              >
+                <RefreshCw className="size-4" />
+                Retry ({retryCount}/{MAX_RETRIES})
+              </Button>
+            )}
+          </div>
+        )}
+
         <div className="bg-[var(--primary-color)]/20 border border-[var(--primary-color)]/30 rounded-lg p-4 mb-4">
           <div className="flex items-center gap-2 mb-3">
             <Shield className="size-5 text-[var(--primary-color)]" />
@@ -236,8 +323,19 @@ export const SignScreen = () => {
             disabled={loading || !activeAccount}
             className="w-full"
           >
-            <Check className="size-4" />
-            {loading ? "Signing..." : "Sign"}
+            {loading ? (
+              <>
+                <RefreshCw className="size-4 animate-spin" />
+                {retryCount > 0
+                  ? `Retrying... (${retryCount}/${MAX_RETRIES})`
+                  : "Signing..."}
+              </>
+            ) : (
+              <>
+                <Check className="size-4" />
+                Sign
+              </>
+            )}
           </Button>
         </div>
       </DialogFooter>

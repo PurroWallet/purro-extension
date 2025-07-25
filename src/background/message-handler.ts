@@ -138,6 +138,9 @@ export class MessageHandler {
                 case 'EVM_PERSONAL_SIGN':
                     result = await evmHandler.handlePersonalSign(data, sender);
                     break;
+                case 'EVM_SIGN_TYPED_DATA':
+                    result = await evmHandler.handleSignTypedData(data, sender);
+                    break;
                 case 'ETH_APPROVE_SIGN':
                     result = await evmHandler.handleApproveSign(data);
                     break;

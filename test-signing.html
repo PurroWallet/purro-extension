@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Purro Extension - Signing Test</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #1a1a1a;
+        color: #ffffff;
+      }
+      .container {
+        background: #2a2a2a;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      button {
+        background: #6366f1;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin: 5px;
+        font-size: 14px;
+      }
+      button:hover {
+        background: #5856eb;
+      }
+      button:disabled {
+        background: #4a5568;
+        cursor: not-allowed;
+      }
+      .result {
+        background: #1f2937;
+        padding: 15px;
+        border-radius: 6px;
+        margin-top: 10px;
+        border-left: 4px solid #6366f1;
+      }
+      .error {
+        border-left-color: #ef4444;
+        background: #7f1d1d;
+      }
+      .success {
+        border-left-color: #10b981;
+        background: #064e3b;
+      }
+      textarea {
+        width: 100%;
+        height: 100px;
+        background: #1f2937;
+        color: #ffffff;
+        border: 1px solid #4b5563;
+        border-radius: 6px;
+        padding: 10px;
+        font-family: monospace;
+        resize: vertical;
+      }
+      .status {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: bold;
+      }
+      .connected {
+        background: #10b981;
+        color: white;
+      }
+      .disconnected {
+        background: #ef4444;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🐱 Purro Extension - Signing Test</h1>
+
+    <div class="container">
+      <h2>Connection Status</h2>
+      <p>
+        Status:
+        <span id="connectionStatus" class="status disconnected"
+          >Disconnected</span
+        >
+      </p>
+      <p>Account: <span id="currentAccount">None</span></p>
+      <button onclick="connectWallet()">Connect Wallet</button>
+      <button onclick="checkConnection()">Check Connection</button>
+    </div>
+
+    <div class="container">
+      <h2>Personal Message Signing</h2>
+      <p>Test personal_sign functionality with a simple message:</p>
+      <textarea id="personalMessage" placeholder="Enter message to sign...">
+Hello, this is a test message from Purro Extension!</textarea
+      >
+      <br />
+      <button onclick="signPersonalMessage()" id="signPersonalBtn" disabled>
+        Sign Personal Message
+      </button>
+      <div id="personalResult"></div>
+    </div>
+
+    <div class="container">
+      <h2>EIP-712 Typed Data Signing</h2>
+      <p>Test EIP-712 signTypedData functionality:</p>
+      <textarea id="typedDataMessage" placeholder="EIP-712 typed data JSON...">
+{
+  "domain": {
+    "name": "Test DApp",
+    "version": "1",
+    "chainId": 1,
+    "verifyingContract": "0x1234567890123456789012345678901234567890"
+  },
+  "primaryType": "Message",
+  "types": {
+    "Message": [
+      { "name": "content", "type": "string" },
+      { "name": "timestamp", "type": "uint256" }
+    ]
+  },
+  "message": {
+    "content": "Hello from Purro Extension!",
+    "timestamp": 1234567890
+  }
+}</textarea
+      >
+      <br />
+      <button onclick="signTypedData()" id="signTypedBtn" disabled>
+        Sign Typed Data
+      </button>
+      <div id="typedResult"></div>
+    </div>
+
+    <script>
+      let currentAccount = null;
+      let isConnected = false;
+
+      // Check if Purro provider is available
+      if (typeof window.ethereum === "undefined") {
+        document.body.innerHTML =
+          '<div class="container"><h2>❌ Purro Extension Not Found</h2><p>Please install and activate the Purro Extension to use this test page.</p></div>';
+      }
+
+      async function connectWallet() {
+        try {
+          console.log("🔄 Connecting wallet...");
+          const accounts = await window.ethereum.request({
+            method: "eth_requestAccounts",
+          });
+
+          if (accounts && accounts.length > 0) {
+            currentAccount = accounts[0];
+            isConnected = true;
+            updateUI();
+            console.log("✅ Connected to account:", currentAccount);
+          } else {
+            throw new Error("No accounts returned");
+          }
+        } catch (error) {
+          console.error("❌ Connection failed:", error);
+          showResult(
+            "connectionResult",
+            `Connection failed: ${error.message}`,
+            "error"
+          );
+        }
+      }
+
+      async function checkConnection() {
+        try {
+          console.log("🔄 Checking connection...");
+          const accounts = await window.ethereum.request({
+            method: "eth_accounts",
+          });
+
+          if (accounts && accounts.length > 0) {
+            currentAccount = accounts[0];
+            isConnected = true;
+            console.log("✅ Already connected to:", currentAccount);
+          } else {
+            currentAccount = null;
+            isConnected = false;
+            console.log("ℹ️ Not connected");
+          }
+          updateUI();
+        } catch (error) {
+          console.error("❌ Check connection failed:", error);
+          showResult(
+            "connectionResult",
+            `Check failed: ${error.message}`,
+            "error"
+          );
+        }
+      }
+
+      async function signPersonalMessage() {
+        try {
+          const message = document
+            .getElementById("personalMessage")
+            .value.trim();
+          if (!message) {
+            throw new Error("Please enter a message to sign");
+          }
+
+          console.log("🔄 Signing personal message:", message);
+          const signature = await window.ethereum.request({
+            method: "personal_sign",
+            params: [message, currentAccount],
+          });
+
+          console.log("✅ Personal message signed successfully:", signature);
+          showResult(
+            "personalResult",
+            `
+                    <strong>✅ Signature Generated:</strong><br>
+                    <code style="word-break: break-all; font-size: 12px;">${signature}</code><br><br>
+                    <strong>Message:</strong><br>
+                    <code>${message}</code><br><br>
+                    <strong>Signer:</strong><br>
+                    <code>${currentAccount}</code>
+                `,
+            "success"
+          );
+        } catch (error) {
+          console.error("❌ Personal message signing failed:", error);
+          showResult(
+            "personalResult",
+            `❌ Signing failed: ${error.message}`,
+            "error"
+          );
+        }
+      }
+
+      async function signTypedData() {
+        try {
+          const typedDataText = document
+            .getElementById("typedDataMessage")
+            .value.trim();
+          if (!typedDataText) {
+            throw new Error("Please enter typed data to sign");
+          }
+
+          let typedData;
+          try {
+            typedData = JSON.parse(typedDataText);
+          } catch (parseError) {
+            throw new Error("Invalid JSON format for typed data");
+          }
+
+          console.log("🔄 Signing typed data:", typedData);
+          const signature = await window.ethereum.request({
+            method: "eth_signTypedData",
+            params: [currentAccount, typedData],
+          });
+
+          console.log("✅ Typed data signed successfully:", signature);
+          showResult(
+            "typedResult",
+            `
+                    <strong>✅ EIP-712 Signature Generated:</strong><br>
+                    <code style="word-break: break-all; font-size: 12px;">${signature}</code><br><br>
+                    <strong>Domain:</strong><br>
+                    <code>${JSON.stringify(
+                      typedData.domain,
+                      null,
+                      2
+                    )}</code><br><br>
+                    <strong>Message:</strong><br>
+                    <code>${JSON.stringify(
+                      typedData.message,
+                      null,
+                      2
+                    )}</code><br><br>
+                    <strong>Signer:</strong><br>
+                    <code>${currentAccount}</code>
+                `,
+            "success"
+          );
+        } catch (error) {
+          console.error("❌ Typed data signing failed:", error);
+          showResult(
+            "typedResult",
+            `❌ Signing failed: ${error.message}`,
+            "error"
+          );
+        }
+      }
+
+      function updateUI() {
+        const statusEl = document.getElementById("connectionStatus");
+        const accountEl = document.getElementById("currentAccount");
+        const personalBtn = document.getElementById("signPersonalBtn");
+        const typedBtn = document.getElementById("signTypedBtn");
+
+        if (isConnected) {
+          statusEl.textContent = "Connected";
+          statusEl.className = "status connected";
+          accountEl.textContent = currentAccount;
+          personalBtn.disabled = false;
+          typedBtn.disabled = false;
+        } else {
+          statusEl.textContent = "Disconnected";
+          statusEl.className = "status disconnected";
+          accountEl.textContent = "None";
+          personalBtn.disabled = true;
+          typedBtn.disabled = true;
+        }
+      }
+
+      function showResult(elementId, message, type = "result") {
+        const element = document.getElementById(elementId);
+        if (element) {
+          element.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+      }
+
+      // Check connection on page load
+      document.addEventListener("DOMContentLoaded", () => {
+        setTimeout(checkConnection, 500);
+      });
+
+      // Listen for account changes
+      if (window.ethereum) {
+        window.ethereum.on("accountsChanged", (accounts) => {
+          console.log("🔄 Accounts changed:", accounts);
+          if (accounts.length > 0) {
+            currentAccount = accounts[0];
+            isConnected = true;
+          } else {
+            currentAccount = null;
+            isConnected = false;
+          }
+          updateUI();
+        });
+      }
+    </script>
+  </body>
+</html>

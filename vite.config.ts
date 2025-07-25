@@ -25,6 +25,7 @@ export default defineConfig({
                 import: resolve(__dirname, 'html/import.html'),
                 offscreen: resolve(__dirname, 'html/offscreen.html'),
                 connect: resolve(__dirname, 'html/connect.html'),
+                sign: resolve(__dirname, 'html/sign.html'),
 
                 // Background scripts and dependencies
                 background: resolve(__dirname, 'src/background/background.ts'),
