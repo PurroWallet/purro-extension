@@ -11,6 +11,10 @@ export const MESSAGE_TYPES = {
     EVM_PERSONAL_SIGN: 'EVM_PERSONAL_SIGN',
     // EVM Typed Data Signing
     EVM_SIGN_TYPED_DATA: 'EVM_SIGN_TYPED_DATA',
+    // EVM Transactions
+    EVM_SEND_TRANSACTION: 'EVM_SEND_TRANSACTION',
+    ETH_APPROVE_TRANSACTION: 'ETH_APPROVE_TRANSACTION',
+    ETH_REJECT_TRANSACTION: 'ETH_REJECT_TRANSACTION',
 } as const;
 
 export type MessageType = typeof MESSAGE_TYPES[keyof typeof MESSAGE_TYPES];
@@ -99,6 +103,57 @@ export const SIGNING_ERRORS = {
     OFFSCREEN_TIMEOUT: {
         code: 4001,
         message: 'Secure session storage timeout. Please unlock your wallet again.',
+        retryable: true
+    }
+} as const;
+
+/**
+ * Transaction error constants for consistent error handling
+ */
+export const TRANSACTION_ERRORS = {
+    INVALID_TRANSACTION_DATA: {
+        code: 4001,
+        message: 'Invalid transaction data provided.',
+        retryable: false
+    },
+    INSUFFICIENT_BALANCE: {
+        code: 4001,
+        message: 'Insufficient balance to complete transaction.',
+        retryable: false
+    },
+    GAS_ESTIMATION_FAILED: {
+        code: 4001,
+        message: 'Failed to estimate gas for transaction.',
+        retryable: true
+    },
+    TRANSACTION_FAILED: {
+        code: 4001,
+        message: 'Transaction failed to execute.',
+        retryable: true
+    },
+    INVALID_TO_ADDRESS: {
+        code: 4001,
+        message: 'Invalid recipient address.',
+        retryable: false
+    },
+    INVALID_VALUE: {
+        code: 4001,
+        message: 'Invalid transaction value.',
+        retryable: false
+    },
+    NETWORK_ERROR: {
+        code: 4001,
+        message: 'Network error occurred while processing transaction.',
+        retryable: true
+    },
+    USER_REJECTED_TRANSACTION: {
+        code: 4001,
+        message: 'User rejected the transaction.',
+        retryable: false
+    },
+    TRANSACTION_TIMEOUT: {
+        code: 4001,
+        message: 'Transaction request timeout.',
         retryable: true
     }
 } as const;

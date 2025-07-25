@@ -4,7 +4,8 @@ import { STORAGE_KEYS } from '../constants/storage-keys';
 import { accountHandler } from './account-handler';
 import { ethers } from 'ethers';
 import { authHandler } from './auth-handler';
-import { SIGNING_ERRORS } from '../constants/message-types';
+import { SIGNING_ERRORS, TRANSACTION_ERRORS } from '../constants/message-types';
+import { TransactionRequest, PendingTransactionRequest } from '../types/evm-provider';
 
 export interface MessageResponse {
     success: boolean;
@@ -34,6 +35,11 @@ interface PendingSignRequest {
 
 let pendingConnections: Map<string, PendingConnection> = new Map();
 let pendingSignRequests: Map<string, PendingSignRequest> = new Map();
+let pendingTransactionRequests: Map<string, PendingTransactionRequest> = new Map();
+
+// Transaction timeout constants
+const TRANSACTION_TIMEOUT = 5 * 60 * 1000; // 5 minutes
+const GAS_LIMIT_BUFFER = 1.2; // 20% buffer for gas estimation
 
 export const evmHandler = {
     async handleEthRequestAccounts(sender: chrome.runtime.MessageSender): Promise<MessageResponse> {
@@ -966,6 +972,364 @@ export const evmHandler = {
         }
     },
 
+    async handleSendTransaction(data: { transaction: TransactionRequest }, sender: chrome.runtime.MessageSender): Promise<MessageResponse> {
+        console.log('[Purro] 🔄 Starting handleSendTransaction process...', data.transaction);
+
+        try {
+            const { transaction } = data;
+
+            // Validate transaction data
+            if (!transaction.to) {
+                return {
+                    success: false,
+                    error: TRANSACTION_ERRORS.INVALID_TO_ADDRESS.message,
+                    code: TRANSACTION_ERRORS.INVALID_TO_ADDRESS.code
+                };
+            }
+
+            // Validate value if provided
+            if (transaction.value) {
+                try {
+                    ethers.parseEther(transaction.value);
+                } catch (error) {
+                    return {
+                        success: false,
+                        error: TRANSACTION_ERRORS.INVALID_VALUE.message,
+                        code: TRANSACTION_ERRORS.INVALID_VALUE.code
+                    };
+                }
+            }
+
+            // Check wallet state
+            const { hasWallet } = await storageHandler.getWalletState();
+            if (!hasWallet) {
+                return {
+                    success: false,
+                    error: 'No wallet found',
+                    code: 4001
+                };
+            }
+
+            // Get active account
+            const activeAccount = await storageHandler.getActiveAccount();
+            if (!activeAccount) {
+                return {
+                    success: false,
+                    error: 'No active account found',
+                    code: 4001
+                };
+            }
+
+            // Get wallet for the active account
+            const wallet = await storageHandler.getWalletById(activeAccount.id);
+            if (!wallet || !wallet.eip155) {
+                return {
+                    success: false,
+                    error: 'EVM wallet not found for active account',
+                    code: 4001
+                };
+            }
+
+            // Set from address
+            const transactionWithFrom = {
+                ...transaction,
+                from: wallet.eip155.address
+            };
+
+            // Get current chain ID
+            const result = await chrome.storage.local.get(STORAGE_KEYS.CURRENT_CHAIN_ID);
+            const chainId = result[STORAGE_KEYS.CURRENT_CHAIN_ID] || '0x1';
+            transactionWithFrom.chainId = chainId;
+
+            // Estimate gas if not provided
+            try {
+                await this.estimateTransactionGas(transactionWithFrom, chainId);
+            } catch (error) {
+                console.error('[Purro] ❌ Gas estimation failed:', error);
+                return {
+                    success: false,
+                    error: TRANSACTION_ERRORS.GAS_ESTIMATION_FAILED.message,
+                    code: TRANSACTION_ERRORS.GAS_ESTIMATION_FAILED.code
+                };
+            }
+
+            // Get origin and site info for the popup
+            let origin = 'unknown';
+            let favicon = '';
+            let title = '';
+
+            if (sender.tab?.url) {
+                const url = new URL(sender.tab.url);
+                origin = url.origin;
+                favicon = sender.tab.favIconUrl || '';
+                title = sender.tab.title || '';
+            }
+
+            // Create pending transaction request and show popup
+            const transactionPromise = createPendingTransactionRequest(origin, transactionWithFrom, sender.tab?.id);
+
+            const transactionUrl = chrome.runtime.getURL('html/transaction.html') +
+                `?origin=${encodeURIComponent(origin)}&favicon=${encodeURIComponent(favicon)}&title=${encodeURIComponent(title)}&transaction=${encodeURIComponent(JSON.stringify(transactionWithFrom))}`;
+
+            const popupConfig = await this.calculatePopupPosition(sender);
+            await chrome.windows.create({
+                url: transactionUrl,
+                type: 'popup',
+                width: popupConfig.width,
+                height: popupConfig.height,
+                focused: true,
+                left: popupConfig.left,
+                top: popupConfig.top,
+            });
+
+            const transactionResult = await transactionPromise;
+
+            return {
+                success: true,
+                data: transactionResult,
+            };
+
+        } catch (error) {
+            console.error('[Purro] ❌ Error in handleSendTransaction:', error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to send transaction',
+                code: 4001
+            };
+        }
+    },
+
+    async handleApproveTransaction(data: { origin: string; transaction: TransactionRequest }): Promise<MessageResponse> {
+        console.log('[Purro] 🔄 Starting handleApproveTransaction process...', { origin: data.origin });
+
+        try {
+            const { origin, transaction } = data;
+
+            // Get the active account
+            const activeAccount = await storageHandler.getActiveAccount();
+            if (!activeAccount) {
+                console.error('[Purro] ❌ No active account found');
+                return {
+                    success: false,
+                    error: 'No active account found',
+                    code: 4001
+                };
+            }
+
+            console.log('[Purro] ✅ Active account found:', activeAccount.id);
+
+            // Get wallet to verify address matches
+            const wallet = await storageHandler.getWalletById(activeAccount.id);
+            if (!wallet || !wallet.eip155) {
+                console.error('[Purro] ❌ EVM wallet not found for active account');
+                return {
+                    success: false,
+                    error: 'EVM wallet not found for active account',
+                    code: 4001
+                };
+            }
+
+            console.log('[Purro] ✅ Wallet found:', wallet.eip155.address);
+
+            // Get private key for signing
+            let privateKey: string;
+            try {
+                console.log('[Purro] 🔄 Retrieving private key...');
+                privateKey = await accountHandler.getPrivateKeyByAccountId(activeAccount.id);
+                console.log('[Purro] ✅ Private key retrieved successfully');
+            } catch (error) {
+                console.error('[Purro] ❌ Failed to retrieve private key:', error);
+                return {
+                    success: false,
+                    error: 'Failed to retrieve private key',
+                    code: 4001
+                };
+            }
+
+            // Create wallet instance for transaction
+            const signerWallet = new ethers.Wallet(privateKey);
+
+            // Get current chain info and create provider
+            const result = await chrome.storage.local.get(STORAGE_KEYS.CURRENT_CHAIN_ID);
+            const chainId = result[STORAGE_KEYS.CURRENT_CHAIN_ID] || '0x1';
+            const chainInfo = supportedEVMChains[chainId];
+
+            if (!chainInfo) {
+                return {
+                    success: false,
+                    error: 'Unsupported chain',
+                    code: 4001
+                };
+            }
+
+            // Create provider and connect wallet
+            const provider = new ethers.JsonRpcProvider(chainInfo.rpcUrls[0]);
+            const connectedWallet = signerWallet.connect(provider);
+
+            console.log('[Purro] 🔄 Sending transaction...');
+
+            // Send transaction - convert transaction to ethers format
+            const ethersTransaction = {
+                to: transaction.to,
+                value: transaction.value ? ethers.parseEther(transaction.value) : undefined,
+                data: transaction.data,
+                gasLimit: transaction.gas ? BigInt(transaction.gas) : undefined,
+                gasPrice: transaction.gasPrice ? BigInt(transaction.gasPrice) : undefined,
+                maxFeePerGas: transaction.maxFeePerGas ? BigInt(transaction.maxFeePerGas) : undefined,
+                maxPriorityFeePerGas: transaction.maxPriorityFeePerGas ? BigInt(transaction.maxPriorityFeePerGas) : undefined,
+                nonce: transaction.nonce ? parseInt(transaction.nonce, 16) : undefined,
+                type: transaction.type ? parseInt(transaction.type, 16) : undefined,
+                chainId: transaction.chainId ? parseInt(transaction.chainId, 16) : undefined,
+            };
+
+            let txResponse: ethers.TransactionResponse;
+            try {
+                txResponse = await connectedWallet.sendTransaction(ethersTransaction);
+                console.log('[Purro] ✅ Transaction sent:', txResponse.hash);
+            } catch (error) {
+                console.error('[Purro] ❌ Transaction failed:', error);
+                return {
+                    success: false,
+                    error: TRANSACTION_ERRORS.TRANSACTION_FAILED.message,
+                    code: TRANSACTION_ERRORS.TRANSACTION_FAILED.code
+                };
+            }
+
+            // Resolve the pending transaction request
+            const pendingTransaction = Array.from(pendingTransactionRequests.values())
+                .find(req => req.origin === origin);
+
+            if (pendingTransaction) {
+                console.log('[Purro] ✅ Resolving pending transaction request for origin:', origin);
+                pendingTransaction.resolve(txResponse.hash);
+                // Remove from pending requests
+                for (const [key, req] of pendingTransactionRequests.entries()) {
+                    if (req.origin === origin) {
+                        pendingTransactionRequests.delete(key);
+                        console.log('[Purro] ✅ Removed pending transaction request:', key);
+                        break;
+                    }
+                }
+            } else {
+                console.warn('[Purro] ⚠️ No pending transaction request found for origin:', origin);
+            }
+
+            console.log('[Purro] ✅ Transaction approval completed successfully');
+            return {
+                success: true,
+                data: txResponse.hash
+            };
+        } catch (error) {
+            console.error('[Purro] ❌ Error in handleApproveTransaction:', error);
+
+            // Clean up any pending requests on error
+            const pendingTransaction = Array.from(pendingTransactionRequests.values())
+                .find(req => req.origin === data.origin);
+
+            if (pendingTransaction) {
+                console.log('[Purro] 🧹 Cleaning up pending transaction request due to error');
+                pendingTransaction.reject(error);
+                for (const [key, req] of pendingTransactionRequests.entries()) {
+                    if (req.origin === data.origin) {
+                        pendingTransactionRequests.delete(key);
+                        break;
+                    }
+                }
+            }
+
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to approve transaction',
+                code: 4001
+            };
+        }
+    },
+
+    async handleRejectTransaction(data: { origin: string }): Promise<MessageResponse> {
+        try {
+            const { origin } = data;
+
+            // Find and reject the pending transaction request
+            const pendingTransaction = Array.from(pendingTransactionRequests.values())
+                .find(req => req.origin === origin);
+
+            if (pendingTransaction) {
+                pendingTransaction.reject(new Error(TRANSACTION_ERRORS.USER_REJECTED_TRANSACTION.message));
+                // Remove from pending requests
+                for (const [key, req] of pendingTransactionRequests.entries()) {
+                    if (req.origin === origin) {
+                        pendingTransactionRequests.delete(key);
+                        break;
+                    }
+                }
+            }
+
+            return {
+                success: true,
+                data: { rejected: true }
+            };
+        } catch (error) {
+            console.error('Error in handleRejectTransaction:', error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to reject transaction',
+                code: 4001
+            };
+        }
+    },
+
+    async estimateTransactionGas(transaction: TransactionRequest, chainId: string): Promise<void> {
+        const chainInfo = supportedEVMChains[chainId];
+        if (!chainInfo) {
+            throw new Error('Unsupported chain for gas estimation');
+        }
+
+        const provider = new ethers.JsonRpcProvider(chainInfo.rpcUrls[0]);
+
+        try {
+            // Estimate gas limit if not provided
+            if (!transaction.gas) {
+                const gasLimit = await provider.estimateGas({
+                    to: transaction.to,
+                    from: transaction.from,
+                    value: transaction.value ? ethers.parseEther(transaction.value) : undefined,
+                    data: transaction.data
+                });
+
+                // Add buffer to gas limit
+                const bufferedGasLimit = Math.floor(Number(gasLimit) * GAS_LIMIT_BUFFER);
+                transaction.gas = `0x${bufferedGasLimit.toString(16)}`;
+            }
+
+            // Get gas price if not provided
+            if (!transaction.gasPrice && !transaction.maxFeePerGas) {
+                try {
+                    // Try to get EIP-1559 fees first
+                    const feeData = await provider.getFeeData();
+                    if (feeData.maxFeePerGas && feeData.maxPriorityFeePerGas) {
+                        transaction.maxFeePerGas = `0x${feeData.maxFeePerGas.toString(16)}`;
+                        transaction.maxPriorityFeePerGas = `0x${feeData.maxPriorityFeePerGas.toString(16)}`;
+                        transaction.type = '0x2'; // EIP-1559 transaction
+                    } else if (feeData.gasPrice) {
+                        transaction.gasPrice = `0x${feeData.gasPrice.toString(16)}`;
+                        transaction.type = '0x0'; // Legacy transaction
+                    }
+                } catch (error) {
+                    console.warn('Failed to get fee data, using legacy gas price');
+                    const feeData = await provider.getFeeData();
+                    if (feeData.gasPrice) {
+                        transaction.gasPrice = `0x${feeData.gasPrice.toString(16)}`;
+                        transaction.type = '0x0'; // Legacy transaction
+                    }
+                }
+            }
+
+        } catch (error) {
+            console.error('Gas estimation failed:', error);
+            throw error;
+        }
+    },
+
     // Helper methods
     async closeExistingConnectPopups(): Promise<void> {
         try {
@@ -1070,5 +1434,28 @@ function createPendingSignRequest(origin: string, message: string, address: stri
                 reject(new Error('Sign request timeout - Please try signing again'));
             }
         }, 1 * 60 * 1000);
+    });
+}
+
+function createPendingTransactionRequest(origin: string, transaction: TransactionRequest, tabId?: number): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const transactionRequestId = `${origin}_${Date.now()}`;
+
+        pendingTransactionRequests.set(transactionRequestId, {
+            origin,
+            transaction,
+            tabId,
+            timestamp: Date.now(),
+            resolve,
+            reject,
+        });
+
+        // Auto-cleanup after transaction timeout
+        setTimeout(() => {
+            if (pendingTransactionRequests.has(transactionRequestId)) {
+                pendingTransactionRequests.delete(transactionRequestId);
+                reject(new Error('Transaction request timeout - Please try again'));
+            }
+        }, TRANSACTION_TIMEOUT);
     });
 }

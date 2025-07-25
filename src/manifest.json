@@ -39,6 +39,7 @@
                 "html/main.html",
                 "html/connect.html",
                 "html/sign.html",
+                "html/transaction.html",
                 "injectedProviderBundle.js",
                 "purro-icon.js"
             ],

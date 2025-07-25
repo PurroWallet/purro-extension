@@ -94,6 +94,44 @@ export interface WalletConnectionState {
     networkVersion: string;
 }
 
+// Transaction Types
+export interface TransactionRequest {
+    to?: string;
+    from?: string;
+    value?: string;
+    data?: string;
+    gas?: string;
+    gasPrice?: string;
+    maxFeePerGas?: string;
+    maxPriorityFeePerGas?: string;
+    nonce?: string;
+    type?: string;
+    chainId?: string;
+}
+
+export interface PendingTransactionRequest {
+    origin: string;
+    transaction: TransactionRequest;
+    tabId?: number;
+    timestamp: number;
+    resolve: (response: any) => void;
+    reject: (error: any) => void;
+}
+
+export interface TransactionReceipt {
+    transactionHash: string;
+    transactionIndex: string;
+    blockHash: string;
+    blockNumber: string;
+    from: string;
+    to: string | null;
+    cumulativeGasUsed: string;
+    gasUsed: string;
+    contractAddress: string | null;
+    logs: any[];
+    status: string;
+}
+
 // Provider Error Codes (EIP-1193)
 export enum ProviderErrorCode {
     USER_REJECTED = 4001,
