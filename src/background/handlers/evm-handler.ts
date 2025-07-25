@@ -1,6 +1,8 @@
 import { storageHandler } from './storage-handler';
 import { supportedEVMChains } from '../constants/supported-chains';
 import { STORAGE_KEYS } from '../constants/storage-keys';
+import { accountHandler } from './account-handler';
+import { ethers } from 'ethers';
 
 export interface MessageResponse {
     success: boolean;
@@ -18,7 +20,18 @@ interface PendingConnection {
     reject: (error: any) => void;
 }
 
+interface PendingSignRequest {
+    origin: string;
+    message: string;
+    address: string;
+    tabId?: number;
+    timestamp: number;
+    resolve: (response: any) => void;
+    reject: (error: any) => void;
+}
+
 let pendingConnections: Map<string, PendingConnection> = new Map();
+let pendingSignRequests: Map<string, PendingSignRequest> = new Map();
 
 export const evmHandler = {
     async handleEthRequestAccounts(sender: chrome.runtime.MessageSender): Promise<MessageResponse> {
@@ -390,6 +403,218 @@ export const evmHandler = {
         }
     },
 
+    async handlePersonalSign(data: { message: string, address: string }, sender: chrome.runtime.MessageSender): Promise<MessageResponse> {
+        try {
+            const { message, address } = data;
+
+            // Validate input parameters
+            if (!message) {
+                return {
+                    success: false,
+                    error: 'Message is required',
+                    code: 4001
+                };
+            }
+
+            if (!address) {
+                return {
+                    success: false,
+                    error: 'Address is required',
+                    code: 4001
+                };
+            }
+
+            // Check if wallet exists and is unlocked
+            const { hasWallet } = await storageHandler.getWalletState();
+            if (!hasWallet) {
+                return {
+                    success: false,
+                    error: 'No wallet found',
+                    code: 4001
+                };
+            }
+
+            // Get active account
+            const activeAccount = await storageHandler.getActiveAccount();
+            if (!activeAccount) {
+                return {
+                    success: false,
+                    error: 'No active account found',
+                    code: 4001
+                };
+            }
+
+            // Get wallet for the active account
+            const wallet = await storageHandler.getWalletById(activeAccount.id);
+            if (!wallet || !wallet.eip155) {
+                return {
+                    success: false,
+                    error: 'EVM wallet not found for active account',
+                    code: 4001
+                };
+            }
+
+            // Verify that the requested address matches the active account's address
+            if (wallet.eip155.address.toLowerCase() !== address.toLowerCase()) {
+                return {
+                    success: false,
+                    error: 'Address does not match active account',
+                    code: 4001
+                };
+            }
+
+            // Get origin and site info for the popup
+            let origin = 'unknown';
+            let favicon = '';
+            let title = '';
+
+            if (sender.tab?.url) {
+                const url = new URL(sender.tab.url);
+                origin = url.origin;
+                favicon = sender.tab.favIconUrl || '';
+                title = sender.tab.title || '';
+            }
+
+            // Create pending sign request and show popup
+            const signPromise = createPendingSignRequest(origin, message, address, sender.tab?.id);
+
+            const signUrl = chrome.runtime.getURL('html/sign.html') +
+                `?origin=${encodeURIComponent(origin)}&favicon=${encodeURIComponent(favicon)}&title=${encodeURIComponent(title)}&message=${encodeURIComponent(message)}&address=${encodeURIComponent(address)}`;
+
+            const popupConfig = await this.calculatePopupPosition(sender);
+            await chrome.windows.create({
+                url: signUrl,
+                type: 'popup',
+                width: popupConfig.width,
+                height: popupConfig.height,
+                focused: true,
+                left: popupConfig.left,
+                top: popupConfig.top,
+            });
+
+            const signResult = await signPromise;
+
+            return {
+                success: true,
+                data: signResult,
+            };
+
+        } catch (error) {
+            console.error('Error in handlePersonalSign:', error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to sign message',
+                code: 4001
+            };
+        }
+    },
+
+    async handleApproveSign(data: { origin: string; message: string; address: string }): Promise<MessageResponse> {
+        try {
+            const { origin, message, address } = data;
+
+            // Get the active account
+            const activeAccount = await storageHandler.getActiveAccount();
+            if (!activeAccount) {
+                return {
+                    success: false,
+                    error: 'No active account found',
+                    code: 4001
+                };
+            }
+
+            // Get wallet to verify address matches
+            const wallet = await storageHandler.getWalletById(activeAccount.id);
+            if (!wallet || !wallet.eip155) {
+                return {
+                    success: false,
+                    error: 'EVM wallet not found for active account',
+                    code: 4001
+                };
+            }
+
+            // Verify address matches
+            if (wallet.eip155.address.toLowerCase() !== address.toLowerCase()) {
+                return {
+                    success: false,
+                    error: 'Address mismatch',
+                    code: 4001
+                };
+            }
+
+            // Get private key for signing
+            const privateKey = await accountHandler.getPrivateKeyByAccountId(activeAccount.id);
+
+            // Create wallet instance for signing
+            const signerWallet = new ethers.Wallet(privateKey);
+
+            // Sign the message (personal_sign uses eth_sign format)
+            const signature = await signerWallet.signMessage(message);
+
+            // Resolve the pending sign request
+            const pendingSignRequest = Array.from(pendingSignRequests.values())
+                .find(req => req.origin === origin);
+
+            if (pendingSignRequest) {
+                pendingSignRequest.resolve({ signature });
+                // Remove from pending requests
+                for (const [key, req] of pendingSignRequests.entries()) {
+                    if (req.origin === origin) {
+                        pendingSignRequests.delete(key);
+                        break;
+                    }
+                }
+            } else {
+                console.warn('⚠️ No pending sign request found for origin:', origin);
+            }
+
+            return {
+                success: true,
+                data: { signature }
+            };
+        } catch (error) {
+            console.error('Error in handleApproveSign:', error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to approve sign',
+                code: 4001
+            };
+        }
+    },
+
+    async handleRejectSign(data: { origin: string }): Promise<MessageResponse> {
+        try {
+            const { origin } = data;
+
+            // Find and reject the pending sign request
+            const pendingSignRequest = Array.from(pendingSignRequests.values())
+                .find(req => req.origin === origin);
+
+            if (pendingSignRequest) {
+                pendingSignRequest.reject(new Error('User rejected the request'));
+                // Remove from pending requests
+                for (const [key, req] of pendingSignRequests.entries()) {
+                    if (req.origin === origin) {
+                        pendingSignRequests.delete(key);
+                        break;
+                    }
+                }
+            }
+
+            return {
+                success: true,
+                data: { rejected: true }
+            };
+        } catch (error) {
+            console.error('Error in handleRejectSign:', error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to reject sign',
+                code: 4001
+            };
+        }
+    },
+
     // Helper methods
     async closeExistingConnectPopups(): Promise<void> {
         try {
@@ -468,6 +693,30 @@ function createPendingConnection(origin: string, tabId?: number): Promise<any> {
 
                 pendingConnections.delete(connectionId);
                 reject(new Error('Connection request timeout - Please try connecting again'));
+            }
+        }, 1 * 60 * 1000);
+    });
+}
+
+function createPendingSignRequest(origin: string, message: string, address: string, tabId?: number): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const signRequestId = `${origin}_${Date.now()}`;
+
+        pendingSignRequests.set(signRequestId, {
+            origin,
+            message,
+            address,
+            tabId,
+            timestamp: Date.now(),
+            resolve,
+            reject,
+        });
+
+        // Auto-cleanup after 1 minute
+        setTimeout(() => {
+            if (pendingSignRequests.has(signRequestId)) {
+                pendingSignRequests.delete(signRequestId);
+                reject(new Error('Sign request timeout - Please try signing again'));
             }
         }, 1 * 60 * 1000);
     });

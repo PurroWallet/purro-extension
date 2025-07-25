@@ -19,6 +19,18 @@
     -ms-user-select: none;
 }
 
+/* Translation prevention styles */
+.notranslate {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
+/* Prevent translation for specific elements */
+[translate="no"] {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+
 /* Hide scrollbars globally */
 * {
     scrollbar-width: none;

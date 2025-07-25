@@ -634,9 +634,7 @@ export const accountHandler = {
             }
 
             const mnemonic = await encryption.decrypt(seedPhraseData.data, session.password);
-            const mnemonicInstance = ethers.Mnemonic.fromPhrase(mnemonic);
-            const seed = Buffer.from(mnemonicInstance.computeSeed());
-            const evmWallet = evmWalletKeyUtils.deriveFromSeed(seed, account.derivationIndex);
+            const evmWallet = evmWalletKeyUtils.deriveFromMnemonic(mnemonic, account.derivationIndex);
             privateKey = evmWallet.privateKey;
         } else {
             throw new Error("Invalid account configuration");

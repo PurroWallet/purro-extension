@@ -135,6 +135,15 @@ export class MessageHandler {
                 case 'EVM_GET_BALANCE':
                     result = await evmRpcHandler.handleEvmGetBalance(data);
                     break;
+                case 'EVM_PERSONAL_SIGN':
+                    result = await evmHandler.handlePersonalSign(data, sender);
+                    break;
+                case 'ETH_APPROVE_SIGN':
+                    result = await evmHandler.handleApproveSign(data);
+                    break;
+                case 'ETH_REJECT_SIGN':
+                    result = await evmHandler.handleRejectSign(data);
+                    break;
 
                 default:
                     throw new Error(`Unknown message type: ${type}`);

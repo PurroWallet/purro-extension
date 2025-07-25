@@ -38,6 +38,7 @@
                 "html/import.html",
                 "html/main.html",
                 "html/connect.html",
+                "html/sign.html",
                 "injectedProviderBundle.js",
                 "purro-icon.js"
             ],

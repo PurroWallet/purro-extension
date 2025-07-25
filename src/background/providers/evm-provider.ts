@@ -670,7 +670,7 @@ export class PurroEVMProvider implements EthereumProvider {
 
         const [message, address] = params;
 
-        const result = await this.sendMessage("PERSONAL_SIGN", {
+        const result = await this.sendMessage("EVM_PERSONAL_SIGN", {
             message,
             address: address || this.selectedAddress
         });
@@ -700,7 +700,7 @@ export class PurroEVMProvider implements EthereumProvider {
 
         const [address, typedData] = params;
 
-        const result = await this.sendMessage("SIGN_TYPED_DATA", {
+        const result = await this.sendMessage("EVM_SIGN_TYPED_DATA", {
             address: address || this.selectedAddress,
             typedData
         });
