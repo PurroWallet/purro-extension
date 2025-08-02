@@ -48,24 +48,48 @@ export const AccountName = ({
 
   const truncatedName = name.length > 20 ? `${name.substring(0, 10)}...` : name;
   const [hlName, setHlName] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(!!address);
 
   useEffect(() => {
+    let isMounted = true;
     if (address) {
-      getHLNameByAddress(address).then((hlName) => {
-        setHlName(hlName);
-      });
+      setLoading(true);
+      getHLNameByAddress(address)
+        .then((hlName) => {
+          if (isMounted) setHlName(hlName);
+        })
+        .finally(() => {
+          if (isMounted) setLoading(false);
+        });
+    } else {
+      setHlName(null);
+      setLoading(false);
     }
+    return () => {
+      isMounted = false;
+    };
   }, [address]);
+
+  // Nếu có hlName thì thay thế tên wallet
+  const displayName = hlName || truncatedName;
 
   return (
     <div className="flex flex-col items-start">
-      <p
-        className={cn("text-base font-medium truncate", className)}
-        title={name}
-      >
-        {truncatedName}
-      </p>
-      {hlName && <p className="text-xs text-white/50">{hlName}</p>}
+      {loading ? (
+        <div
+          className={cn(
+            "h-6 w-24 bg-white/10 rounded-full animate-pulse",
+            className
+          )}
+        />
+      ) : (
+        <p
+          className={cn("text-base font-medium truncate", className)}
+          title={hlName ? hlName : name}
+        >
+          {displayName}
+        </p>
+      )}
     </div>
   );
 };

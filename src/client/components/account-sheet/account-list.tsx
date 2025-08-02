@@ -162,13 +162,15 @@ const AccountList = () => {
               {/* Account name */}
               <AccountName name={account.name} className="text-base flex-1" />
 
+              {/* Settings button - positioned on the right */}
               {!isConnect && (
                 <button
                   className={cn(
-                    "flex items-center justify-center gap-2 transition-transform duration-200 hover:bg-white/10 rounded-full p-2 cursor-pointer",
+                    "flex items-center justify-center gap-2 transition-transform duration-200 hover:bg-white/10 rounded-full p-2 cursor-pointer ml-auto",
                     isHovered ? "block" : "hidden"
                   )}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setSelectedAccountId(account.id);
                     openDialog(<EditAccount />);
                   }}

@@ -1,4 +1,5 @@
 import {
+  ArrowUpRightIcon,
   FileKey2,
   FileLock,
   IdCard,
@@ -16,6 +17,11 @@ import useDialogStore from "@/client/hooks/use-dialog-store";
 import useEditAccountStore from "@/client/hooks/use-edit-account-store";
 import { AccountIcon } from "../../account";
 import { Menu } from "../../ui/menu";
+import { getHLNameByAddress } from "@/client/services/hyperliquid-name-api";
+import { HlNameIcon } from "@/assets/icon-component/hl-name-icon";
+
+// Constants for easy customization
+const HL_NAME_LABEL = "HL Name";
 
 interface MainEditAccountProps {
   onEditIcon: () => void;
@@ -33,12 +39,37 @@ const MainEditAccount = ({
   onRemoveAccount,
 }: MainEditAccountProps) => {
   const { closeDialog } = useDialogStore();
-  const { accounts } = useWalletStore();
+  const { accounts, getAccountWalletObject } = useWalletStore();
   const { selectedAccountId } = useEditAccountStore();
   const { getSeedPhraseById } = useWallet();
   const account = accounts.find((account) => account.id === selectedAccountId);
+  const accountWallet = selectedAccountId
+    ? getAccountWalletObject(selectedAccountId)
+    : null;
   const isWatchOnly = account?.source === "watchOnly";
   const [seedPhrase, setSeedPhrase] = useState<SeedPhraseData | null>(null);
+  const [hlName, setHlName] = useState<string | null>(null);
+
+  // Get the first available address from the wallet object
+  const accountAddress =
+    accountWallet?.eip155?.address ||
+    accountWallet?.solana?.address ||
+    accountWallet?.sui?.address;
+
+  // Fetch HL name if account has an address
+  useEffect(() => {
+    let isMounted = true;
+    if (accountAddress) {
+      getHLNameByAddress(accountAddress).then((name) => {
+        if (isMounted) setHlName(name);
+      });
+    } else {
+      setHlName(null);
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [accountAddress]);
 
   if (account?.source === "seedPhrase") {
     useEffect(() => {
@@ -75,6 +106,23 @@ const MainEditAccount = ({
         </div>
         <Menu
           items={[
+            ...(hlName
+              ? [
+                  {
+                    icon: HlNameIcon,
+                    label: HL_NAME_LABEL,
+                    description: hlName,
+                    arrowLeft: false,
+                    arrowLeftIcon: ArrowUpRightIcon,
+                    onClick: () => {
+                      window.open(
+                        `https://app.hlnames.xyz/name/${hlName}`,
+                        "_blank"
+                      );
+                    },
+                  },
+                ]
+              : []),
             {
               icon: IdCard,
               label: "Name",
