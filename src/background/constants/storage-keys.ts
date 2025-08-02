@@ -15,4 +15,7 @@ export const STORAGE_KEYS = {
 
     // EVM Chain
     CURRENT_CHAIN_ID: `purro:evm:current-chain-id`,
+
+    // HL Name Public API Key
+    HL_NAME_API_KEY: 'CPEPKMI-HUSUX6I-SE2DHEA-YYWFG5Y'
 }

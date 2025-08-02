@@ -795,6 +795,5 @@ export const accountHandler = {
                 return chainWallet?.address?.toLowerCase() === normalizedAddress;
             });
         });
-    }
-
+    },
 };

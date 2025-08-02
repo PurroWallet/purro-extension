@@ -9,7 +9,6 @@ import useWalletStore from "@/client/hooks/use-wallet-store";
 import { sendMessage } from "@/client/utils/extension-message-utils";
 import { formatTime, getTimeColor } from "@/client/utils/formatters";
 import {
-  Check,
   Clock,
   Send,
   Globe,

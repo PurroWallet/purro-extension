@@ -19,10 +19,15 @@ import {
   CheckCircle,
   AlertTriangle,
   X,
+  CircleAlert,
+  CircleCheck,
 } from "lucide-react";
 import { getNetworkIcon } from "@/utils/network-icons";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import { sendMessage } from "@/client/utils/extension-message-utils";
+import useDebounce from "@/client/hooks/use-debounce";
+import { getAddressByDomain } from "@/client/services/hyperliquid-name-api";
+import { useEffect } from "react";
 
 type InputMode = "token" | "usd";
 type Step = "select" | "send" | "confirm";
@@ -257,6 +262,11 @@ export const SendOnEVM = () => {
   const [inputMode, setInputMode] = useState<InputMode>("token");
   const [gasEstimate, setGasEstimate] = useState<any>(null);
   const [isEstimatingGas, setIsEstimatingGas] = useState(false);
+  const [isValidDomain, setIsValidDomain] = useState<boolean>(false);
+  const debouncedRecipientAddress = useDebounce(recipientAddress, 500);
+  const [addressFromDomain, setAddressFromDomain] = useState<string | null>(
+    null
+  );
 
   const activeAccountId = activeAccount?.id;
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
@@ -361,7 +371,7 @@ export const SendOnEVM = () => {
   const handleSend = async () => {
     if (
       selectedToken &&
-      recipientAddress &&
+      (recipientAddress || addressFromDomain) &&
       isValidAmount &&
       activeAccountAddress
     ) {
@@ -370,7 +380,9 @@ export const SendOnEVM = () => {
         const estimate = await estimateGas(
           selectedToken,
           tokenAmount, // Use tokenAmount instead of usdAmount for gas estimation
-          recipientAddress,
+          isValidDomain && addressFromDomain
+            ? addressFromDomain
+            : recipientAddress,
           activeAccountAddress
         );
         setGasEstimate(estimate);
@@ -387,7 +399,7 @@ export const SendOnEVM = () => {
   const handleConfirmSend = async () => {
     if (
       selectedToken &&
-      recipientAddress &&
+      (recipientAddress || addressFromDomain) &&
       isValidAmount &&
       gasEstimate &&
       activeAccountAddress
@@ -409,7 +421,7 @@ export const SendOnEVM = () => {
           // Native token transfer (ETH, HYPE)
           transactionData = {
             type: "eth_sendTransaction",
-            to: recipientAddress,
+            to: isValidDomain ? addressFromDomain : recipientAddress,
             value: `0x${Math.floor(parseFloat(tokenAmount) * 1e18).toString(
               16
             )}`,
@@ -422,7 +434,9 @@ export const SendOnEVM = () => {
         } else {
           // ERC-20 token transfer
           const transferMethodId = "0xa9059cbb";
-          const paddedRecipient = recipientAddress.slice(2).padStart(64, "0");
+          const paddedRecipient = isValidDomain
+            ? addressFromDomain?.slice(2).padStart(64, "0")
+            : recipientAddress.slice(2).padStart(64, "0");
           const paddedAmount = Math.floor(
             parseFloat(tokenAmount) * Math.pow(10, selectedToken.decimals || 18)
           )
@@ -461,9 +475,15 @@ export const SendOnEVM = () => {
             `Sent: ${formatDisplayNumber(tokenAmount, "token")} ${
               selectedToken.symbol
             }\n` +
-            `To: ${recipientAddress.slice(0, 6)}...${recipientAddress.slice(
-              -4
-            )}\n` +
+            `To: ${
+              isValidDomain
+                ? addressFromDomain?.slice(0, 6) +
+                  "..." +
+                  addressFromDomain?.slice(-4)
+                : recipientAddress.slice(0, 6) +
+                  "..." +
+                  recipientAddress.slice(-4)
+            }\n` +
             `Gas Fee: ${gasEstimate.gasCostEth} ETH (≈$${gasEstimate.gasCostUsd})\n\n` +
             `Transaction Hash: ${txHash}\n\n` +
             `Your transaction is being processed on the ${selectedToken.chain} network.\n` +
@@ -501,10 +521,39 @@ export const SendOnEVM = () => {
   const handleBackFromConfirm = () => {
     setStep("send");
     setGasEstimate(null);
+    setAddressFromDomain(null);
+    setIsValidDomain(false);
   };
 
-  const isAddressValid =
-    recipientAddress.length > 0 && recipientAddress.startsWith("0x");
+  useEffect(() => {
+    const checkDomain = async () => {
+      const addressResponse = await getAddressByDomain(
+        debouncedRecipientAddress
+      );
+
+      const isValidDomain = addressResponse !== null;
+      setIsValidDomain(isValidDomain);
+      if (isValidDomain) {
+        setAddressFromDomain(addressResponse);
+      }
+    };
+    checkDomain();
+  }, [debouncedRecipientAddress]);
+
+  const isValidAddress = useMemo(() => {
+    return (
+      (debouncedRecipientAddress.length > 0 &&
+        debouncedRecipientAddress.startsWith("0x")) ||
+      isValidDomain
+    );
+  }, [debouncedRecipientAddress, isValidDomain]);
+
+  const isDomainFormatted = useMemo(() => {
+    return (
+      debouncedRecipientAddress.length >= 0 &&
+      !!debouncedRecipientAddress.match(/^[a-zA-Z0-9-]+\.hl$/)
+    );
+  }, [debouncedRecipientAddress]);
 
   const renderTokenSelection = () => (
     <DialogWrapper>
@@ -550,7 +599,7 @@ export const SendOnEVM = () => {
                 {selectedToken.symbol.charAt(0).toUpperCase()}
               </p>
               {selectedToken.chain && (
-                <div className="absolute bottom-0 right-0 flex items-center justify-center bg-white/90 rounded-full">
+                <div className="absolute bottom-0 p-1 right-0 flex items-center justify-center bg-white/90 rounded-full">
                   <img
                     src={getNetworkIcon(selectedToken.chain)}
                     alt={selectedToken.chain}
@@ -572,15 +621,31 @@ export const SendOnEVM = () => {
                 onKeyDown={() => {}}
                 placeholder="0x..."
                 className={`${
-                  recipientAddress && !isAddressValid
+                  recipientAddress && !isValidAddress
                     ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                     : "border-white/10 focus:ring-[var(--primary-color-light)]"
                 }`}
               />
-              {recipientAddress && !isAddressValid && (
-                <p className="text-red-500 text-xs">
-                  Please enter a valid address starting with 0x
-                </p>
+              {recipientAddress && !isValidAddress && !isDomainFormatted && (
+                <div className="text-muted-foreground text-xs rounded-full bg-red-500/10 px-4 py-2 flex items-center">
+                  <CircleAlert className="size-4 mr-2" />{" "}
+                  <p>Please enter a valid address starting with 0x</p>
+                </div>
+              )}
+              {recipientAddress && isDomainFormatted && !isValidDomain && (
+                <div className="text-muted-foreground text-xs rounded-full bg-red-500/10 px-4 py-2 flex items-center">
+                  <CircleAlert className="size-4 mr-2" />{" "}
+                  <p>Invalid Hyperliquid Name</p>
+                </div>
+              )}
+              {recipientAddress && isValidDomain && isDomainFormatted && (
+                <div className="text-muted-foreground text-xs rounded-full bg-green-500/10 px-4 py-2 flex items-center">
+                  <CircleCheck className="size-4 mr-2" />{" "}
+                  <p>
+                    Valid destination: {addressFromDomain?.slice(0, 6)}...
+                    {addressFromDomain?.slice(-4)}
+                  </p>
+                </div>
               )}
             </div>
 
@@ -665,7 +730,7 @@ export const SendOnEVM = () => {
         <Button
           onClick={handleSend}
           className="flex-1"
-          disabled={!isAddressValid || !isValidAmount || isEstimatingGas}
+          disabled={!isValidAddress || !isValidAmount || isEstimatingGas}
         >
           {isEstimatingGas ? (
             <>

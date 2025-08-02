@@ -6,6 +6,7 @@ import { cn } from "@/client/lib/utils";
 import { X } from "lucide-react";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import useAccountSheetStore from "@/client/hooks/use-account-sheet-store";
+import { useMemo } from "react";
 
 const MainHeader = ({
   className,
@@ -22,11 +23,14 @@ const MainHeader = ({
   isNftNetworkVisible: boolean;
   isHistoryVisible: boolean;
 }) => {
-  const { activeAccount } = useWalletStore();
+  const { activeAccount, wallets } = useWalletStore();
   const { open: openAccountSheet } = useAccountSheetStore();
   const isSidepanel = window.location.pathname.includes("sidepanel.html");
   const isNftScreen = currentScreen === "nft";
   const isHistoryScreen = currentScreen === "history";
+  const activeAccountAddress = useMemo(() => {
+    return wallets[activeAccount?.id as string]?.eip155?.address;
+  }, [activeAccount, wallets]);
 
   return (
     <div
@@ -36,13 +40,16 @@ const MainHeader = ({
       )}
     >
       <div
-        className="flex items-center gap-2 pr-3 hover:bg-white/10 rounded-full transition-all duration-300 cursor-pointer"
+        className="flex items-center py-1 px-2 gap-2 pr-3 hover:bg-white/10 rounded-full transition-all duration-300 cursor-pointer"
         onClick={openAccountSheet}
       >
         <div className="size-8 rounded-full bg-white/10 flex items-center justify-center cursor-pointer">
           <AccountIcon icon={activeAccount?.icon} alt="Account" />
         </div>
-        <AccountName name={activeAccount?.name} />
+        <AccountName
+          name={activeAccount?.name}
+          address={activeAccountAddress}
+        />
       </div>
 
       {!isSidepanel && !isNftScreen && !isHistoryScreen && (

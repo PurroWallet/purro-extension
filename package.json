@@ -24,6 +24,7 @@
 		"qrcode.react": "^4.2.0",
 		"react": "^19.1.0",
 		"react-dom": "^19.1.0",
+		"react-infinite-scroll-component": "^6.1.0",
 		"tailwind-merge": "^3.3.0",
 		"tailwindcss": "^4.1.8",
 		"vite": "^6.3.5",

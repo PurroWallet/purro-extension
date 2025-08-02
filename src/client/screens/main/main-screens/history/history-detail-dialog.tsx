@@ -14,8 +14,10 @@ import { truncateAddress } from "@/client/utils/formatters";
 
 const HistoryDetailDialog = ({
   transaction,
+  hlNames,
 }: {
   transaction: HyperScanTokenTransfersItems;
+  hlNames: Record<string, string | null>[];
 }) => {
   const { closeDialog } = useDialogStore();
   const { getActiveAccountWalletObject } = useWalletStore();
@@ -116,11 +118,22 @@ const HistoryDetailDialog = ({
               <p className="text-base text-left font-semibold">
                 {isSend ? "To" : "From"}
               </p>
-              <p className="text-sm text-muted-foreground text-right truncate w-full">
-                {isSend
-                  ? truncateAddress(transaction.to.hash)
-                  : truncateAddress(transaction.from.hash)}
-              </p>
+              <div className="flex flex-col items-end">
+                <p className="text-sm text-muted-foreground text-right truncate w-full">
+                  {isSend
+                    ? truncateAddress(transaction.to.hash)
+                    : truncateAddress(transaction.from.hash)}
+                </p>
+                <p className="text-xs text-muted-foreground text-right truncate w-full">
+                  {
+                    hlNames.find((hlName) =>
+                      isSend
+                        ? hlName[transaction.to.hash]
+                        : hlName[transaction.from.hash]
+                    )?.[isSend ? transaction.to.hash : transaction.from.hash]
+                  }
+                </p>
+              </div>
             </div>
             <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
               <p className="text-base text-left font-semibold">Amount</p>

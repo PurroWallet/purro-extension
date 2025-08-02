@@ -5,4 +5,5 @@ export const ENDPOINTS = {
     ALCHEMY_ETH_MAINNET: 'https://eth-mainnet.g.alchemy.com/v2/pQZCrFA4q__RcYkvhoPOHUivAjmSIgyF',
     ALCHEMY_BASE_MAINNET: 'https://base-mainnet.g.alchemy.com/v2/pQZCrFA4q__RcYkvhoPOHUivAjmSIgyF',
     ALCHEMY_ARB_MAINNET: 'https://arb-mainnet.g.alchemy.com/v2/pQZCrFA4q__RcYkvhoPOHUivAjmSIgyF',
+    HL_NAME_API_BASE: 'https://api.hlnames.xyz',
 };

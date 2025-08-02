@@ -1,4 +1,6 @@
 import { cn } from "@/client/lib/utils";
+import { useEffect, useState } from "react";
+import { getHLNameByAddress } from "@/client/services/hyperliquid-name-api";
 
 export const AccountIcon = ({
   icon,
@@ -36,17 +38,34 @@ export const AccountIcon = ({
 export const AccountName = ({
   name,
   className,
+  address,
 }: {
   name?: string;
   className?: string;
+  address?: string;
 }) => {
   if (!name) return null;
 
   const truncatedName = name.length > 20 ? `${name.substring(0, 10)}...` : name;
+  const [hlName, setHlName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (address) {
+      getHLNameByAddress(address).then((hlName) => {
+        setHlName(hlName);
+      });
+    }
+  }, [address]);
 
   return (
-    <p className={cn("text-base font-medium truncate", className)} title={name}>
-      {truncatedName}
-    </p>
+    <div className="flex flex-col items-start">
+      <p
+        className={cn("text-base font-medium truncate", className)}
+        title={name}
+      >
+        {truncatedName}
+      </p>
+      {hlName && <p className="text-xs text-white/50">{hlName}</p>}
+    </div>
   );
 };
