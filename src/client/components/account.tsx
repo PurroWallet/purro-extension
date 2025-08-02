@@ -1,4 +1,6 @@
+import { accountHandler } from "@/background/handlers/account-handler";
 import { cn } from "@/client/lib/utils";
+import { useEffect, useMemo, useState } from "react";
 
 export const AccountIcon = ({
   icon,
@@ -36,17 +38,34 @@ export const AccountIcon = ({
 export const AccountName = ({
   name,
   className,
+  address,
 }: {
   name?: string;
   className?: string;
+  address?: string;
 }) => {
   if (!name) return null;
 
   const truncatedName = name.length > 20 ? `${name.substring(0, 10)}...` : name;
+  const [hlName, setHlName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (address) {
+      accountHandler.getHLNameByAddress("0xF26F5551E96aE5162509B25925fFfa7F07B2D652").then((hlName) => {
+        setHlName(hlName);
+      });
+    }
+  }, [address]);
 
   return (
-    <p className={cn("text-base font-medium truncate", className)} title={name}>
-      {truncatedName}
-    </p>
+    <div className="flex flex-col items-start">
+      <p
+        className={cn("text-base font-medium truncate", className)}
+        title={name}
+      >
+        {truncatedName}
+      </p>
+      {hlName && <p className="text-xs text-white/50">{hlName}</p>}
+    </div>
   );
 };

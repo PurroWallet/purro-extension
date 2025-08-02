@@ -7,6 +7,7 @@ import { authHandler } from "./auth-handler";
 import { authValidator } from "../utils/auth-validator";
 import { ethers } from "ethers";
 import { CreateWalletData, ImportSeedPhraseData } from "../types/message-data";
+import { HL_NAME_API_ENDPOINTS } from "../constants/endpoints";
 
 export const accountHandler = {
     // Check methods
@@ -795,6 +796,21 @@ export const accountHandler = {
                 return chainWallet?.address?.toLowerCase() === normalizedAddress;
             });
         });
+    },
+
+    async getHLNameByAddress(address: string): Promise<string | null> {
+        const endpoint = HL_NAME_API_ENDPOINTS.RESOLVE_NAME(address);
+        const response = await fetch(endpoint, { headers: { 'X-API-Key': STORAGE_KEYS.HL_NAME_API_KEY } });
+        const data = await response.json();
+        return data.primaryName;
+    },
+
+    async getHLNameByDomain(domain: string): Promise<string | null> {
+        const endpoint = HL_NAME_API_ENDPOINTS.RESOLVE_ADDRESS(domain);
+        const response = await fetch(endpoint, { headers: { 'X-API-Key': STORAGE_KEYS.HL_NAME_API_KEY } });
+        const data = await response.json();
+        return data.address;
     }
+
 
 };
