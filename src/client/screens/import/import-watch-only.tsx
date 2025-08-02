@@ -6,6 +6,7 @@ import useWallet from "@/client/hooks/use-wallet";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import { ChainType } from "@/background/types/account";
 import { evmWalletKeyUtils } from "@/background/utils/keys";
+import { getAddressByDomain } from "@/client/services/hyperliquid-name-api";
 
 const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
   const { address, chain, accountName, setAddress, setAccountName } =
@@ -48,7 +49,13 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
       return;
     }
 
-    const isValidAddress = validateAddress(address, chain);
+    const addressFromDomain = await getAddressByDomain(address);
+    const isValidDomain = addressFromDomain !== null;
+
+    const isValidAddress = isValidDomain
+      ? validateAddress(addressFromDomain, chain)
+      : validateAddress(address, chain);
+
     if (!isValidAddress) {
       setError(`Invalid address format for selected chain`);
       return;
@@ -86,7 +93,11 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
         finalChain = chain as ChainType;
       }
 
-      await importWatchOnlyWallet(address, finalChain, finalAccountName);
+      await importWatchOnlyWallet(
+        isValidDomain ? addressFromDomain : address,
+        finalChain,
+        finalAccountName
+      );
       onNext();
     } catch (err) {
       const errorMessage =
@@ -109,7 +120,8 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
             {chain === "ethereum" && "Enter your Ethereum wallet address"}
             {chain === "solana" && "Enter your Solana wallet address"}
             {chain === "sui" && "Enter your Sui wallet address"}
-            {chain === "hyperevm" && "Enter your Hyperliquid wallet address"}
+            {chain === "hyperevm" &&
+              "Enter your Hyperliquid wallet address or Hyperliquid Name"}
             {chain === "base" && "Enter your Base wallet address"}
             {chain === "arbitrum" && "Enter your Arbitrum wallet address"}
           </p>
@@ -123,7 +135,7 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
               setAddress(e.target.value);
               setError(null);
             }}
-            placeholder="Enter wallet address"
+            placeholder="Enter wallet address or Hyperliquid Name"
             className="w-full px-4 py-3 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color-light)] bg-[var(--card-color)] text-white placeholder-gray-400 text-base font-mono"
           />
 
