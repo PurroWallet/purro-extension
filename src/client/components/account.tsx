@@ -1,6 +1,6 @@
-import { accountHandler } from "@/background/handlers/account-handler";
 import { cn } from "@/client/lib/utils";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { getHLNameByAddress } from "@/client/services/hyperliquid-name-api";
 
 export const AccountIcon = ({
   icon,
@@ -51,7 +51,7 @@ export const AccountName = ({
 
   useEffect(() => {
     if (address) {
-      accountHandler.getHLNameByAddress("0xF26F5551E96aE5162509B25925fFfa7F07B2D652").then((hlName) => {
+      getHLNameByAddress(address).then((hlName) => {
         setHlName(hlName);
       });
     }

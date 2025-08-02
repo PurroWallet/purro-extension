@@ -6,6 +6,8 @@ import useDialogStore from "@/client/hooks/use-dialog-store";
 import HistoryDetailDialog from "./history-detail-dialog";
 import { HyperScanTokenTransfersItems } from "@/client/types/hyperscan-api";
 import useHyperscan from "@/client/hooks/use-hyperscan";
+import { useEffect, useMemo, useState } from "react";
+import { getHLNameByAddress } from "@/client/services/hyperliquid-name-api";
 
 const History = () => {
   const { getActiveAccountWalletObject } = useWalletStore();
@@ -13,6 +15,48 @@ const History = () => {
   const { useTokenTransfers } = useHyperscan();
   const { isLoading, data: transactions } = useTokenTransfers("both");
   const { openDialog } = useDialogStore();
+  const [hlNames, setHlNames] = useState<Record<string, string | null>[]>([]);
+
+  const listAddresses: string[] =
+    useMemo(() => {
+      return transactions?.items
+        .map((item) => {
+          if (item.from.hash !== activeAccount?.eip155?.address) {
+            return item.from.hash;
+          }
+          if (item.to.hash !== activeAccount?.eip155?.address) {
+            return item.to.hash;
+          }
+          return null;
+        })
+        .filter((address) => address !== null)
+        .filter((address, index, self) => self.indexOf(address) === index);
+    }, [transactions, activeAccount]) || [];
+
+  useEffect(() => {
+    const fetchHlNames = async () => {
+      if (transactions) {
+        // Add the active account address to the list of addresses
+        if (activeAccount?.eip155?.address) {
+          listAddresses.push(activeAccount?.eip155?.address);
+        }
+
+        const hlNames = await Promise.all(
+          listAddresses.map(async (address) => {
+            const hlName = await getHLNameByAddress(address);
+
+            return {
+              [address]: hlName || null,
+            };
+          })
+        );
+
+        setHlNames(hlNames);
+      }
+    };
+
+    fetchHlNames();
+  }, [transactions, activeAccount]);
 
   // Function to format large numbers in a compact way
   const formatTokenAmount = (amount: number): string => {
@@ -40,7 +84,9 @@ const History = () => {
   };
 
   const handleOpenDialog = (transaction: HyperScanTokenTransfersItems) => {
-    openDialog(<HistoryDetailDialog transaction={transaction} />);
+    openDialog(
+      <HistoryDetailDialog transaction={transaction} hlNames={hlNames} />
+    );
   };
 
   return (
@@ -170,8 +216,18 @@ const History = () => {
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {isSend ? "To" : "From"}
-                  {isReceive && ` ${truncateAddress(item.from.hash)}`}
-                  {isSend && ` ${truncateAddress(item.to.hash)}`}
+                  {isReceive &&
+                    ` ${
+                      hlNames.find((hlName) => hlName[item.from.hash])?.[
+                        item.from.hash
+                      ] || truncateAddress(item.from.hash)
+                    }`}
+                  {isSend &&
+                    ` ${
+                      hlNames.find((hlName) => hlName[item.to.hash])?.[
+                        item.to.hash
+                      ] || truncateAddress(item.to.hash)
+                    }`}
                 </p>
               </div>
             </div>
