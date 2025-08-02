@@ -12,7 +12,7 @@ export const getHLNameByAddress = async (
   return data.primaryName;
 };
 
-export const getHLNameByDomain = async (
+export const getAddressByDomain = async (
   domain: string
 ): Promise<string | null> => {
   const endpoint = `${ENDPOINTS.HL_NAME_API_BASE}/resolve/address/${domain}`;
@@ -20,5 +20,11 @@ export const getHLNameByDomain = async (
     headers: { "X-API-Key": STORAGE_KEYS.HL_NAME_API_KEY },
   });
   const data = await response.json();
+  if (
+    data.address === "0x0000000000000000000000000000000000000000" ||
+    data.error
+  ) {
+    return null;
+  }
   return data.address;
 };
