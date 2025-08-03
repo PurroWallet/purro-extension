@@ -36,7 +36,7 @@ export default defineConfig({
                 'purro-icon': resolve(__dirname, 'src/background/utils/purro-icon.ts'),
             },
             // Configure external dependencies and specific resolutions
-            external: [],
+            external: ['hyperliquid'],
             // Handle CommonJS packages properly
             plugins: [],
             output: {
