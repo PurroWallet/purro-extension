@@ -21,6 +21,7 @@ import {
   X,
   CircleAlert,
   CircleCheck,
+  Loader2,
 } from "lucide-react";
 import { getNetworkIcon } from "@/utils/network-icons";
 import useWalletStore from "@/client/hooks/use-wallet-store";
@@ -267,6 +268,7 @@ export const SendOnEVM = () => {
   const [addressFromDomain, setAddressFromDomain] = useState<string | null>(
     null
   );
+  const [isLoadingDomain, setIsLoadingDomain] = useState(false);
 
   const activeAccountId = activeAccount?.id;
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
@@ -521,24 +523,37 @@ export const SendOnEVM = () => {
   const handleBackFromConfirm = () => {
     setStep("send");
     setGasEstimate(null);
-    setAddressFromDomain(null);
-    setIsValidDomain(false);
   };
+
+  const isDomainFormatted = useMemo(() => {
+    return (
+      debouncedRecipientAddress.length >= 0 &&
+      !!debouncedRecipientAddress.match(/^[a-zA-Z0-9-]+\.hl$/)
+    );
+  }, [debouncedRecipientAddress]);
 
   useEffect(() => {
     const checkDomain = async () => {
-      const addressResponse = await getAddressByDomain(
-        debouncedRecipientAddress
-      );
+      if (!isDomainFormatted) return;
+      setIsLoadingDomain(true);
+      try {
+        const addressResponse = await getAddressByDomain(
+          debouncedRecipientAddress
+        );
 
-      const isValidDomain = addressResponse !== null;
-      setIsValidDomain(isValidDomain);
-      if (isValidDomain) {
-        setAddressFromDomain(addressResponse);
+        const isValidDomain = addressResponse !== null;
+        setIsValidDomain(isValidDomain);
+        if (isValidDomain) {
+          setAddressFromDomain(addressResponse);
+        }
+      } catch (error) {
+        console.error("Failed to check domain:", error);
+      } finally {
+        setIsLoadingDomain(false);
       }
     };
     checkDomain();
-  }, [debouncedRecipientAddress]);
+  }, [debouncedRecipientAddress, isDomainFormatted]);
 
   const isValidAddress = useMemo(() => {
     return (
@@ -547,13 +562,6 @@ export const SendOnEVM = () => {
       isValidDomain
     );
   }, [debouncedRecipientAddress, isValidDomain]);
-
-  const isDomainFormatted = useMemo(() => {
-    return (
-      debouncedRecipientAddress.length >= 0 &&
-      !!debouncedRecipientAddress.match(/^[a-zA-Z0-9-]+\.hl$/)
-    );
-  }, [debouncedRecipientAddress]);
 
   const renderTokenSelection = () => (
     <DialogWrapper>
@@ -632,19 +640,31 @@ export const SendOnEVM = () => {
                   <p>Please enter a valid address starting with 0x</p>
                 </div>
               )}
-              {recipientAddress && isDomainFormatted && !isValidDomain && (
-                <div className="text-muted-foreground text-xs rounded-full bg-red-500/10 px-4 py-2 flex items-center">
-                  <CircleAlert className="size-4 mr-2" />{" "}
-                  <p>Invalid Hyperliquid Name</p>
-                </div>
-              )}
-              {recipientAddress && isValidDomain && isDomainFormatted && (
-                <div className="text-muted-foreground text-xs rounded-full bg-green-500/10 px-4 py-2 flex items-center">
-                  <CircleCheck className="size-4 mr-2" />{" "}
-                  <p>
-                    Valid destination: {addressFromDomain?.slice(0, 6)}...
-                    {addressFromDomain?.slice(-4)}
-                  </p>
+              {recipientAddress &&
+                isDomainFormatted &&
+                !isValidDomain &&
+                !isLoadingDomain && (
+                  <div className="text-muted-foreground text-xs rounded-full bg-red-500/10 px-4 py-2 flex items-center">
+                    <CircleAlert className="size-4 mr-2" />{" "}
+                    <p>Invalid Hyperliquid Name</p>
+                  </div>
+                )}
+              {recipientAddress &&
+                isValidDomain &&
+                isDomainFormatted &&
+                !isLoadingDomain && (
+                  <div className="text-muted-foreground text-xs rounded-full bg-green-500/10 px-4 py-2 flex items-center">
+                    <CircleCheck className="size-4 mr-2" />{" "}
+                    <p>
+                      Valid destination: {addressFromDomain?.slice(0, 6)}...
+                      {addressFromDomain?.slice(-4)}
+                    </p>
+                  </div>
+                )}
+              {isLoadingDomain && isDomainFormatted && (
+                <div className="text-muted-foreground text-xs rounded-full bg-gray-500/10 px-4 py-2 flex items-center">
+                  <Loader2 className="size-4 mr-2 animate-spin" />{" "}
+                  <p>Loading domain...</p>
                 </div>
               )}
             </div>
