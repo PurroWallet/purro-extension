@@ -35,6 +35,10 @@ export default defineConfig({
                 injectedProviderBundle: resolve(__dirname, 'src/background/providers/injected-provider-bundle.ts'),
                 'purro-icon': resolve(__dirname, 'src/background/utils/purro-icon.ts'),
             },
+            // Configure external dependencies and specific resolutions
+            external: [],
+            // Handle CommonJS packages properly
+            plugins: [],
             output: {
                 entryFileNames: (chunkInfo) => {
                     // Ensure background and content scripts are properly named
@@ -74,13 +78,22 @@ export default defineConfig({
         global: 'globalThis',
     },
     optimizeDeps: {
-        include: ['buffer', 'process', 'ethers', '@solana/web3.js', '@mysten/sui', "bs58"]
+        include: ['buffer', 'process', 'ethers', '@solana/web3.js', '@mysten/sui', "bs58", "ws"],
+        // Force pre-bundling of hyperliquid to avoid CommonJS issues
+        force: true,
+        esbuildOptions: {
+            // Ensure CommonJS compatibility
+            target: 'es2022',
+            format: 'esm'
+        }
     },
     resolve: {
         alias: {
             '@': resolve(__dirname, 'src'),
             buffer: 'buffer',
             process: 'process',
-        }
+        },
+        // Ensure browser-friendly resolution
+        conditions: ['browser', 'module', 'import', 'default']
     }
 })
