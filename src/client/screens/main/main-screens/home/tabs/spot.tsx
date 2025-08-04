@@ -134,11 +134,23 @@ interface SpotItemProps {
   symbol: string;
   balance: number;
   value: number;
+  onClick?: () => void;
+  className?: string;
 }
 
-const SpotItem = ({ name, symbol, balance, value }: SpotItemProps) => {
+export const SpotItem = ({
+  name,
+  symbol,
+  balance,
+  value,
+  onClick,
+  className,
+}: SpotItemProps) => {
   return (
-    <div className="bg-[var(--card-color)] rounded-lg p-3 flex items-center gap-3">
+    <div
+      className={`bg-[var(--card-color)] rounded-lg p-3 flex items-center gap-3 ${className}`}
+      onClick={onClick}
+    >
       <div className="relative flex-shrink-0">
         <div className="size-12 flex items-center justify-center rounded-full bg-[var(--primary-color)]/10 overflow-hidden">
           <img

@@ -153,6 +153,9 @@ export class MessageHandler {
                 case 'HYPERLIQUID_TRANSFER_BETWEEN_SPOT_AND_PERP':
                     result = await hyperliquidHandler.transferBetweenSpotAndPerp(data);
                     break;
+                case 'HYPERLIQUID_SEND_TOKEN':
+                    result = await hyperliquidHandler.sendToken(data);
+                    break;
 
                 default:
                     throw new Error(`Unknown message type: ${type}`);

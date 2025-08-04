@@ -136,6 +136,40 @@ class HyperliquidHandler {
       };
     }
   }
+
+  async sendToken(data: {
+    destination: string;
+    amount: string;
+    tokenName: string;
+    tokenId: string;
+  }): Promise<MessageResponse> {
+    try {
+      const hyperliquid = await this.hyperliquidTestnet;
+      if (!hyperliquid) {
+        return {
+          success: false,
+          error: "Hyperliquid not initialized",
+        };
+      }
+
+      const transferResult = await hyperliquid.exchange.spotTransfer(
+        data.destination,
+        data.amount,
+        `${data.tokenName}:${data.tokenId}`
+      );
+
+      return {
+        success: true,
+        data: transferResult,
+      };
+    } catch (error) {
+      console.error("[Purro] ❌ Failed to send token:", error);
+      return {
+        success: false,
+        error: "Failed to send token",
+      };
+    }
+  }
 }
 
 // Export singleton instance

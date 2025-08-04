@@ -7,140 +7,489 @@ import {
 import { DialogHeader } from "@/client/components/ui";
 import useSendTokenStore from "@/client/hooks/use-send-token-store";
 import useWalletStore from "@/client/hooks/use-wallet-store";
-import { calculateGasFeeInETH } from "@/client/lib/utils";
 import { sendMessage } from "@/client/utils/extension-message-utils";
-import {
-  convertToWeiHex,
-  formatCurrency,
-  hexToNumber,
-} from "@/client/utils/formatters";
+import { convertToWeiHex } from "@/client/utils/formatters";
 import { useEffect, useState } from "react";
+import useDialogStore from "@/client/hooks/use-dialog-store";
+import { 
+  ArrowLeft, 
+  Send, 
+  CheckCircle, 
+  AlertTriangle, 
+  X 
+} from "lucide-react";
+import { getNetworkIcon } from "@/utils/network-icons";
 
-// Helper function to send messages to extension
+// Helper function to get chain ID from chain name
+const getChainId = (chain: string): number => {
+  switch (chain) {
+    case "ethereum":
+      return 1;
+    case "base":
+      return 8453;
+    case "arbitrum":
+      return 42161;
+    case "hyperevm":
+      return 999;
+    default:
+      return 1;
+  }
+};
+
+// Helper function to get explorer URL for transaction
+const getExplorerUrl = (chain: string, txHash: string): string => {
+  if (txHash === "Processing..." || !txHash) return "";
+
+  switch (chain) {
+    case "ethereum":
+      return `https://etherscan.io/tx/${txHash}`;
+    case "base":
+      return `https://basescan.org/tx/${txHash}`;
+    case "arbitrum":
+      return `https://arbiscan.io/tx/${txHash}`;
+    case "hyperevm":
+      return `https://purrsec.com/tx/${txHash}`;
+    default:
+      return `https://etherscan.io/tx/${txHash}`;
+  }
+};
+
+// Real gas estimation function using the app's RPC infrastructure
+const estimateGas = async (
+  token: any,
+  amount: string,
+  recipient: string,
+  senderAddress: string
+) => {
+  try {
+    console.log("🔍 Estimating gas for transaction:", {
+      token: token.symbol,
+      amount,
+      recipient,
+      senderAddress,
+      chain: token.chain,
+    });
+
+    // Prepare transaction object
+    let txObject: any;
+
+    if (
+      token.symbol === "ETH" ||
+      token.symbol === "HYPE" ||
+      token.contractAddress === "native" ||
+      token.contractAddress === "NATIVE"
+    ) {
+      // Native token transfer (ETH, HYPE)
+      txObject = {
+        from: senderAddress,
+        to: recipient,
+        value: convertToWeiHex(amount), // Convert to wei hex
+      };
+    } else {
+      // ERC-20 token transfer
+      const transferMethodId = "0xa9059cbb";
+      const paddedRecipient = recipient.slice(2).padStart(64, "0");
+      const paddedAmount = Math.floor(
+        parseFloat(amount) * Math.pow(10, token.decimals || 18)
+      )
+        .toString(16)
+        .padStart(64, "0");
+
+      txObject = {
+        from: senderAddress,
+        to: token.contractAddress,
+        data: transferMethodId + paddedRecipient + paddedAmount,
+      };
+    }
+
+    console.log("📝 Transaction object:", txObject);
+
+    // Get gas estimate
+    const gasEstimateResponse = await sendMessage("EVM_ESTIMATE_GAS", {
+      txObject,
+    });
+
+    // Get current gas price
+    const gasPriceResponse = await sendMessage("EVM_GET_GAS_PRICE");
+
+    console.log("⛽ Gas estimation response:", gasEstimateResponse);
+    console.log("💰 Gas price response:", gasPriceResponse);
+
+    const gasLimit = parseInt(gasEstimateResponse.gasEstimate, 16);
+    const gasPrice = parseInt(gasPriceResponse.gasPrice, 16);
+
+    // Calculate gas cost in ETH
+    const gasCostWei = gasLimit * gasPrice;
+    const gasCostEth = gasCostWei / 1e18;
+
+    let nativeTokenPrice = 3000; // Default fallback
+
+    if (token.chain === "hyperevm") {
+      nativeTokenPrice = token.symbol === "HYPE" ? token.usdPrice || 30 : 30;
+    } else {
+      nativeTokenPrice =
+        token.chain === "ethereum" ? token.usdPrice || 3000 : 3000;
+    }
+
+    const gasCostUsd = gasCostEth * nativeTokenPrice;
+    const totalCostUsd = parseFloat(amount) + gasCostUsd;
+
+    console.log("✅ Gas estimation successful:", {
+      gasLimit,
+      gasPrice,
+      gasCostEth,
+      gasCostUsd,
+      totalCostUsd,
+    });
+
+    return {
+      gasLimit: gasLimit.toString(),
+      gasPrice: Math.round(gasPrice / 1e9).toString(), // Convert to gwei
+      gasCostEth: gasCostEth.toFixed(6),
+      gasCostUsd: gasCostUsd.toFixed(2),
+      totalCostUsd: totalCostUsd.toFixed(2),
+    };
+  } catch (error) {
+    console.error("❌ Gas estimation failed:", error);
+
+    // Fallback to estimated values if RPC fails
+    const fallbackGasLimit = token.symbol === "ETH" ? "21000" : "65000";
+    const fallbackGasPrice = "20"; // 20 gwei
+    const fallbackGasCostEth =
+      (parseInt(fallbackGasLimit) * parseInt(fallbackGasPrice)) / 1e9;
+    const fallbackGasCostUsd = fallbackGasCostEth * 3000;
+
+    console.warn("⚠️ Using fallback gas estimation");
+
+    return {
+      gasLimit: fallbackGasLimit,
+      gasPrice: fallbackGasPrice,
+      gasCostEth: fallbackGasCostEth.toFixed(6),
+      gasCostUsd: fallbackGasCostUsd.toFixed(2),
+      totalCostUsd: (parseFloat(amount) + fallbackGasCostUsd).toFixed(2),
+    };
+  }
+};
 
 const ConfirmSend = () => {
   const { setStep, recipient, amount, token } = useSendTokenStore();
-  const [isSending, setIsSending] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [isError, setIsError] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const { getActiveAccountWalletObject } = useWalletStore();
-  const activeAccountWalletObject = getActiveAccountWalletObject();
-  const [estimatedGas, setEstimatedGas] = useState<any>(0);
+  const { closeDialog } = useDialogStore();
+  const { activeAccount, getActiveAccountWalletObject } = useWalletStore();
+  const [gasEstimate, setGasEstimate] = useState<any>(null);
+  const [isEstimatingGas, setIsEstimatingGas] = useState(false);
+
+  const activeAccountId = activeAccount?.id;
+  const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
 
   useEffect(() => {
-    const getGasPrice = async () => {
-      setIsLoading(true);
-      const gasPriceResponse = await sendMessage("EVM_GET_GAS_PRICE");
-      console.log("💰 Gas price response:", gasPriceResponse);
-      const gasPriceWei = hexToNumber(gasPriceResponse.gasPrice);
-      const gasPriceGwei = gasPriceWei / 1e9; // Convert from wei to gwei
-
-      if (token?.isNative) {
-        const txObject = {
-          from:
-            activeAccountWalletObject?.eip155?.address ||
-            activeAccountWalletObject?.sui?.address ||
-            "",
-          to: recipient,
-          value: convertToWeiHex(amount),
-        };
-
-        const gasEstimateResponse = await sendMessage("EVM_ESTIMATE_GAS", {
-          txObject,
-        });
-
-        const gas = hexToNumber(gasEstimateResponse.gasEstimate);
-
-        const gasFee = calculateGasFeeInETH(gas, gasPriceGwei);
-        setEstimatedGas(gasFee);
-        setIsLoading(false);
-      } else {
+    const performGasEstimation = async () => {
+      if (token && amount && recipient && activeAccountAddress) {
+        setIsEstimatingGas(true);
+        try {
+          const estimate = await estimateGas(
+            token,
+            amount,
+            recipient,
+            activeAccountAddress
+          );
+          setGasEstimate(estimate);
+        } catch (error) {
+          console.error("Failed to estimate gas:", error);
+        } finally {
+          setIsEstimatingGas(false);
+        }
       }
     };
-    getGasPrice();
-  }, []);
 
-  const handleSendNativeToken = async () => {};
+    performGasEstimation();
+  }, [token, amount, recipient, activeAccountAddress]);
 
-  const handleSendErc20Token = async () => {};
+  const handleConfirmSend = async () => {
+    if (
+      token &&
+      recipient &&
+      amount &&
+      gasEstimate &&
+      activeAccountAddress
+    ) {
+      setIsEstimatingGas(true); // Reuse loading state for sending
 
-  const handleSend = async () => {
-    setIsSending(true);
-    if (!token) return;
+      try {
+        console.log("🚀 Starting transaction send process...");
 
-    try {
-      if (token?.isNative) {
-        await handleSendNativeToken();
-      } else {
-        await handleSendErc20Token();
+        // Build the transaction object
+        let transactionData: any;
+
+        if (
+          token.symbol === "ETH" ||
+          token.symbol === "HYPE" ||
+          token.contractAddress === "native" ||
+          token.contractAddress === "NATIVE"
+        ) {
+          // Native token transfer (ETH, HYPE)
+          transactionData = {
+            type: "eth_sendTransaction",
+            to: recipient,
+            value: `0x${Math.floor(parseFloat(amount) * 1e18).toString(16)}`,
+            gas: `0x${parseInt(gasEstimate.gasLimit).toString(16)}`,
+            gasPrice: `0x${Math.floor(
+              parseInt(gasEstimate.gasPrice) * 1e9
+            ).toString(16)}`, // Convert gwei to wei
+            chainId: getChainId(token.chain),
+          };
+        } else {
+          // ERC-20 token transfer
+          const transferMethodId = "0xa9059cbb";
+          const paddedRecipient = recipient.slice(2).padStart(64, "0");
+          const paddedAmount = Math.floor(
+            parseFloat(amount) * Math.pow(10, token.decimals || 18)
+          )
+            .toString(16)
+            .padStart(64, "0");
+
+          transactionData = {
+            type: "eth_sendTransaction",
+            to: token.contractAddress,
+            value: "0x0", // No ETH value for ERC-20 transfers
+            data: transferMethodId + paddedRecipient + paddedAmount,
+            gas: `0x${parseInt(gasEstimate.gasLimit).toString(16)}`,
+            gasPrice: `0x${Math.floor(
+              parseInt(gasEstimate.gasPrice) * 1e9
+            ).toString(16)}`, // Convert gwei to wei
+            chainId: getChainId(token.chain),
+          };
+        }
+
+        console.log("📝 Transaction data prepared:", transactionData);
+
+        // Send transaction through the EVM handler
+        const result = await sendMessage("EVM_SEND_TRANSACTION", {
+          accountId: activeAccountId,
+          transactionData,
+        });
+
+        console.log("✅ Transaction sent successfully:", result);
+
+        // Show success message
+        const txHash = result.transactionHash || "Processing...";
+        const explorerUrl = getExplorerUrl(token.chain, txHash);
+
+        alert(
+          `🎉 Transaction sent successfully!\n\n` +
+            `Sent: ${amount} ${token.symbol}\n` +
+            `To: ${recipient.slice(0, 6)}...${recipient.slice(-4)}\n` +
+            `Gas Fee: ${gasEstimate.gasCostEth} ETH (≈$${gasEstimate.gasCostUsd})\n\n` +
+            `Transaction Hash: ${txHash}\n\n` +
+            `Your transaction is being processed on the ${token.chain} network.\n` +
+            (explorerUrl ? `\nView on Explorer: ${explorerUrl}` : "")
+        );
+
+        closeDialog();
+      } catch (error) {
+        console.error("❌ Transaction failed:", error);
+
+        let errorMessage = "Transaction failed. Please try again.";
+        if (error instanceof Error) {
+          if (error.message.includes("insufficient funds")) {
+            errorMessage =
+              "Insufficient funds for this transaction including gas fees.";
+          } else if (error.message.includes("gas")) {
+            errorMessage =
+              "Gas estimation failed. The transaction may fail or gas price may have changed.";
+          } else if (error.message.includes("nonce")) {
+            errorMessage = "Transaction nonce error. Please try again.";
+          } else if (error.message.includes("rejected")) {
+            errorMessage = "Transaction was rejected.";
+          } else {
+            errorMessage = `Transaction failed: ${error.message}`;
+          }
+        }
+
+        alert(`❌ ${errorMessage}`);
+      } finally {
+        setIsEstimatingGas(false);
       }
-    } catch (error) {
-      console.error("Transaction error:", error);
-    } finally {
-      setIsSending(false);
     }
+  };
+
+  const handleBackFromConfirm = () => {
+    setStep("send");
   };
 
   return (
     <DialogWrapper>
-      <DialogHeader title="Confirm Send" onClose={() => setStep("send")} />
+      <DialogHeader
+        title="Confirm Transaction"
+        onClose={handleBackFromConfirm}
+        icon={<ArrowLeft className="size-4 text-white" />}
+        rightContent={
+          <button
+            onClick={closeDialog}
+            className="size-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+          >
+            <X className="size-4 text-white" />
+          </button>
+        }
+      />
       <DialogContent>
-        <div className="bg-[var(--card-color)] rounded-lg w-full">
-          <div className="flex items-center gap-3 pl-4 w-full border-b border-white/10">
-            <div className="flex-grow py-4 pr-4">
-              <p className="text-base font-medium w-full text-left">
-                Recipient Address
-              </p>
-              <p className="text-base text-gray-400 text-left break-all w-full">
-                {recipient}
+        {token && (
+          <div className="space-y-6">
+            {/* Transaction Summary */}
+            <div className="bg-[var(--card-color)] rounded-lg p-4 border border-white/10">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                <CheckCircle className="size-5 mr-2 text-green-500" />
+                Transaction Summary
+              </h3>
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Token</span>
+                  <div className="flex items-center">
+                    <div className="flex items-center justify-center size-6 bg-[var(--card-color)] rounded-full mr-2">
+                      <p className="text-white text-xs font-bold">
+                        {token.symbol.charAt(0).toUpperCase()}
+                      </p>
+                    </div>
+                    <span className="text-white font-medium">
+                      {token.symbol}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Amount</span>
+                  <div className="text-right">
+                    <div className="text-white font-medium">
+                      {amount} {token.symbol}
+                    </div>
+                    <div className="text-gray-400 text-sm">
+                      ≈ ${((parseFloat(amount) || 0) * (token.usdPrice || 0)).toFixed(2)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">To</span>
+                  <span className="text-white font-mono text-sm">
+                    {recipient.slice(0, 6)}...{recipient.slice(-4)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-400">Network</span>
+                  <div className="flex items-center">
+                    <img
+                      src={getNetworkIcon(token.chain)}
+                      alt={token.chain}
+                      className="size-5 rounded-full mr-2"
+                    />
+                    <span className="text-white capitalize">
+                      {token.chain}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Gas Fee Details */}
+            {isEstimatingGas ? (
+              <div className="bg-[var(--card-color)] rounded-lg p-4 border border-white/10">
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
+                  <span className="text-white">Estimating gas fees...</span>
+                </div>
+              </div>
+            ) : gasEstimate ? (
+              <div className="bg-[var(--card-color)] rounded-lg p-4 border border-white/10">
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
+                  <AlertTriangle className="size-5 mr-2 text-yellow-500" />
+                  Gas Fee Estimation
+                </h3>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Gas Limit</span>
+                    <span className="text-white">{gasEstimate.gasLimit}</span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Gas Price</span>
+                    <span className="text-white">
+                      {gasEstimate.gasPrice} gwei
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">Gas Fee</span>
+                    <div className="text-right">
+                      <div className="text-white font-medium">
+                        {gasEstimate.gasCostEth} {token.chain === "hyperevm" ? "HYPE" : "ETH"}
+                      </div>
+                      <div className="text-gray-400 text-sm">
+                        ≈ ${gasEstimate.gasCostUsd}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-white/10 pt-3 mt-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400 font-medium">
+                        Total Cost
+                      </span>
+                      <div className="text-right">
+                        <div className="text-white font-semibold text-lg">
+                          ${gasEstimate.totalCostUsd}
+                        </div>
+                        <div className="text-gray-400 text-sm">
+                          Token + Gas Fee
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                <p className="text-red-400 text-sm">
+                  ⚠️ Failed to estimate gas fees. Please try again.
+                </p>
+              </div>
+            )}
+
+            {/* Warning */}
+            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+              <p className="text-yellow-400 text-sm">
+                ⚠️ Please double-check all transaction details. This action
+                cannot be undone.
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3 pl-4 w-full border-b border-white/10">
-            <div className="flex-grow flex items-center gap-3 py-4 pr-4">
-              <p className="text-base font-medium w-fit text-left">Amount</p>
-              <p className="text-base text-gray-400 text-right flex-1">
-                {formatCurrency(Number(amount), 4, "")} {token?.symbol}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 pl-4 w-full border-b border-white/10">
-            <div className="flex-grow flex items-center gap-3 py-4 pr-4">
-              <p className="text-base font-medium w-fit text-left">Network</p>
-              <p className="text-base text-gray-400 text-right flex-1">
-                {token?.chainName}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 pl-4 w-full">
-            <div className="flex-grow flex items-center gap-3 py-4 pr-4">
-              <p className="text-base font-medium w-fit text-left">
-                Estimated Gas
-              </p>
-              <p className="text-base text-gray-400 text-right flex-1">
-                {isLoading
-                  ? "Calculating..."
-                  : `~ ${estimatedGas.toFixed(10)} ${
-                      token?.chain === "hyperevm" ? "HYPE" : "ETH"
-                    }`}
-              </p>
-            </div>
-          </div>
-        </div>
+        )}
       </DialogContent>
-      <DialogFooter className="flex-col">
-        <p className="text-sm text-gray-300 text-center">
-          Please make sure information is correct before sending. Blockchain
-          transaction cannot be reversed.
-        </p>
+      <DialogFooter>
         <Button
-          className="w-full"
-          disabled={
-            !token || !recipient || !amount || Number(amount) <= 0 || isLoading
-          }
+          onClick={handleBackFromConfirm}
+          className="flex-1 bg-gray-600 hover:bg-gray-700"
         >
-          Send
+          <ArrowLeft className="size-4 mr-2" />
+          Back
+        </Button>
+        <Button
+          onClick={handleConfirmSend}
+          className="flex-1 bg-green-600 hover:bg-green-700"
+          disabled={isEstimatingGas || !gasEstimate}
+        >
+          {isEstimatingGas ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Sending Transaction...
+            </>
+          ) : (
+            <>
+              <Send className="size-4 mr-2" />
+              Confirm Send
+            </>
+          )}
         </Button>
       </DialogFooter>
     </DialogWrapper>
