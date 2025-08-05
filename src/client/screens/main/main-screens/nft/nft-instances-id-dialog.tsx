@@ -7,6 +7,9 @@ import {
 import { NFTImage } from "@/client/components/nft-image";
 import { HyperScanNftInstancesItem } from "@/client/types/hyperscan-api";
 import { ArrowLeft } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getHLNameByAddress } from "@/client/services/hyperliquid-name-api";
+import useWalletStore from "@/client/hooks/use-wallet-store";
 
 const NftInstancesIdDialog = ({
   nftInstance,
@@ -15,6 +18,35 @@ const NftInstancesIdDialog = ({
   nftInstance: HyperScanNftInstancesItem;
   onBack: () => void;
 }) => {
+  const { getActiveAccountWalletObject } = useWalletStore();
+  const activeAccountWallet = getActiveAccountWalletObject();
+
+  const isHlName =
+    nftInstance.token.address === "0x1d9d87eBc14e71490bB87f1C39F65BDB979f3cb7";
+
+  const [hlName, setHlName] = useState<string | null>(null);
+  const [hlNameLoading, setHlNameLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchHLName = async () => {
+      if (activeAccountWallet) {
+        setHlNameLoading(true);
+        try {
+          const hlName = await getHLNameByAddress(
+            activeAccountWallet.eip155?.address || ""
+          );
+          setHlName(hlName);
+          console.log(hlName);
+        } catch (error) {
+          console.error("Error getting HL name:", error);
+        } finally {
+          setHlNameLoading(false);
+        }
+      }
+    };
+    fetchHLName();
+  }, []);
+
   return (
     <DialogWrapper>
       <DialogHeader
@@ -78,6 +110,17 @@ const NftInstancesIdDialog = ({
                 Hyperliquid
               </p>
             </div>
+            {isHlName && hlName && !hlNameLoading && (
+              <a
+                href={`https://app.hlnames.xyz/profile/${hlName}`}
+                target="_blank"
+                className="w-full flex items-center justify-center bg-[var(--card-color)]/80 hover:bg-[var(--card-color)]/60 transition-colors duration-200 cursor-pointer p-3 gap-2"
+              >
+                <p className="text-base text-center font-semibold text-[var(--primary-color-light)]">
+                  See on Hyperliquid Names
+                </p>
+              </a>
+            )}
           </div>
           {nftInstance.metadata?.attributes?.length > 0 && (
             <div>
