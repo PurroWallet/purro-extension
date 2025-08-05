@@ -282,7 +282,9 @@ const SendToken = () => {
                     const fallbackDiv = document.createElement("div");
                     fallbackDiv.className =
                       "size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-lg border border-[var(--primary-color)]/20";
-                    fallbackDiv.textContent = token.coin.charAt(0).toUpperCase();
+                    fallbackDiv.textContent = token.coin
+                      .charAt(0)
+                      .toUpperCase();
                     parent.insertBefore(fallbackDiv, e.currentTarget);
                   }
                 }}
@@ -445,7 +447,7 @@ const SendToken = () => {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder={inputMode === "token" ? "0.0" : "0.00"}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 pr-12 text-base transition-colors duration-200 ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 pr-12 text-base transition-colors duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                     amount && !isValidAmount
                       ? "border-red-500 focus:ring-red-500"
                       : "border-white/10 focus:ring-[var(--primary-color-light)]"

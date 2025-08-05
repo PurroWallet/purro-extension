@@ -2,11 +2,11 @@ import { create } from "zustand";
 import { UserBalance } from "../types/hyperliquid-api";
 
 interface SendTokenHLState {
-  step: "select" | "send" | "confirm";
+  step: "select" | "send" | "confirm" | "success";
   token: UserBalance | null;
   amount: string;
   recipient: string;
-  setStep: (step: "select" | "send" | "confirm") => void;
+  setStep: (step: "select" | "send" | "confirm" | "success") => void;
   setToken: (token: UserBalance | null) => void;
   setAmount: (amount: string) => void;
   setRecipient: (recipient: string) => void;

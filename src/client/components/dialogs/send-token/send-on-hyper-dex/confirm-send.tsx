@@ -23,9 +23,6 @@ const ConfirmSend = () => {
     recipient,
     amount,
     token,
-    setRecipient,
-    setAmount,
-    setToken,
   } = useSendTokenHLStore();
   const { refetchSpot } = useHlPortfolioData();
   const { closeDialog } = useDialogStore();
@@ -77,11 +74,8 @@ const ConfirmSend = () => {
         const isSuccess = result.success;
 
         if (isSuccess) {
-          setRecipient("");
-          setAmount("");
-          setToken(null);
           refetchSpot();
-          closeDialog();
+          setStep("success");
         } else {
           alert(result.error);
         }
@@ -226,7 +220,7 @@ const ConfirmSend = () => {
       <DialogFooter>
         <Button
           onClick={handleBackFromConfirm}
-          className="flex-1 bg-gray-600 hover:bg-gray-700"
+          className="flex-1 bg-gray-600 hover:bg-gray-700 text-white"
         >
           <ArrowLeft className="size-4 mr-2" />
           Back
