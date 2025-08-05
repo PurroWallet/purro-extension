@@ -4,6 +4,10 @@ import react from '@vitejs/plugin-react'
 import { copyFileSync } from 'fs'
 import { resolve } from 'path'
 
+// Constants for easy customization
+const EXTERNAL_DEPENDENCIES: string[] = []
+const OPTIMIZE_DEPENDENCIES = ['buffer', 'process', 'ethers', '@solana/web3.js', '@mysten/sui', "bs58", "ws"]
+
 export default defineConfig({
     plugins: [
         tailwindcss(),
@@ -36,7 +40,7 @@ export default defineConfig({
                 'purro-icon': resolve(__dirname, 'src/background/utils/purro-icon.ts'),
             },
             // Configure external dependencies and specific resolutions
-            external: ['hyperliquid'],
+            external: EXTERNAL_DEPENDENCIES,
             // Handle CommonJS packages properly
             plugins: [],
             output: {
@@ -78,7 +82,7 @@ export default defineConfig({
         global: 'globalThis',
     },
     optimizeDeps: {
-        include: ['buffer', 'process', 'ethers', '@solana/web3.js', '@mysten/sui', "bs58", "ws"],
+        include: OPTIMIZE_DEPENDENCIES,
         // Force pre-bundling of hyperliquid to avoid CommonJS issues
         force: true,
         esbuildOptions: {
@@ -92,6 +96,7 @@ export default defineConfig({
             '@': resolve(__dirname, 'src'),
             buffer: 'buffer',
             process: 'process',
+            hyperliquid: resolve(__dirname, 'node_modules/hyperliquid/dist/index.mjs')
         },
         // Ensure browser-friendly resolution
         conditions: ['browser', 'module', 'import', 'default']
