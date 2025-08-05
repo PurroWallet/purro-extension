@@ -7,7 +7,11 @@ class HyperliquidHandler {
   private hyperliquid: Hyperliquid | null = null;
   private hyperliquidTestnet: Hyperliquid | null = null;
 
-  async init() {
+  constructor() {
+    this.initialize();
+  }
+
+  private async initialize() {
     this.hyperliquid = await this.getHyperliquid();
     this.hyperliquidTestnet = await this.getHyperliquidTestnet();
   }
@@ -144,7 +148,8 @@ class HyperliquidHandler {
     tokenId: string;
   }): Promise<MessageResponse> {
     try {
-      const hyperliquid = await this.hyperliquidTestnet;
+      const hyperliquid = this.hyperliquidTestnet;
+      console.log("hyperliquid", hyperliquid);
       if (!hyperliquid) {
         return {
           success: false,

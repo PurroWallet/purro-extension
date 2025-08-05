@@ -1,6 +1,5 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { fetchSpotAssetsContext, fetchUserSpotBalance, fetchUserPerpsBalance } from "../services/hyperliquid-api";
-import { fetchSpotTokenDetails } from "../services/hyperliquid-api";
 import { fetchTokenPrices } from "../services/gecko-terminal-api";
 import { fetchHyperEvmERC20Tokens } from "../services/hyperscan-api";
 import QueryKeys from "../utils/query-keys";

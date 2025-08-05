@@ -21,35 +21,35 @@ const WalletTabsSpot = () => {
   const indexer = useMemo(() => {
     if (
       !isHyperliquidDexEnabled ||
-      !spotData?.contextData ||
-      !Array.isArray(spotData.contextData) ||
-      spotData.contextData.length < 2
+      !spotData?.context ||
+      !Array.isArray(spotData.context) ||
+      spotData.context.length < 2
     ) {
       return null;
     }
     try {
       return new HyperLiquidSpotDataIndexer(
-        spotData.contextData as HyperliquidApiSpotAssetContext
+        spotData.context as HyperliquidApiSpotAssetContext
       );
     } catch (error) {
       console.error("Error creating SpotDataIndexer:", error);
       return null;
     }
-  }, [isHyperliquidDexEnabled, spotData?.contextData]);
+  }, [isHyperliquidDexEnabled, spotData?.context]);
 
   // Process user balances only when both data sources are available
   const userBalances = useMemo(() => {
-    if (!isHyperliquidDexEnabled || !indexer || !spotData?.balanceData) {
+    if (!isHyperliquidDexEnabled || !indexer || !spotData?.balances) {
       return [];
     }
     // Get user balances and sort by market value from highest to lowest
-    const balances = indexer.processUserBalances(spotData.balanceData);
+    const balances = spotData.balances;
     return balances.sort((a, b) => {
       const valueA = a.marketValue || 0;
       const valueB = b.marketValue || 0;
       return valueB - valueA; // Sort descending (highest to lowest)
     });
-  }, [isHyperliquidDexEnabled, indexer, spotData?.balanceData]);
+  }, [isHyperliquidDexEnabled, indexer, spotData?.balances]);
 
   // Calculate portfolio value using the indexer
   const portfolioValue = useMemo(() => {
