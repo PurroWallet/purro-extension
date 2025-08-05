@@ -1,6 +1,14 @@
 import { SpotTokenDetails } from '@/client/types/hyperliquid-api';
 import { ENDPOINTS } from './endpoints';
 
+// Constants for easy customization
+const ADDRESS_VALIDATION_REGEX = /^0x[a-fA-F0-9]{40}$/;
+
+// Helper function to validate address
+const isValidAddress = (address: string): boolean => {
+    return !!address && ADDRESS_VALIDATION_REGEX.test(address);
+};
+
 export const fetchSpotAssetsContext = async () => {
     const response = await fetch(`${ENDPOINTS.HYPERLIQUID_L1}/info`, {
         method: 'POST',
@@ -20,6 +28,10 @@ export const fetchSpotAssetsContext = async () => {
 };
 
 export const fetchUserSpotBalance = async (address: string) => {
+    if (!isValidAddress(address)) {
+        throw new Error(`Invalid address format: ${address}`);
+    }
+
     const response = await fetch(`${ENDPOINTS.HYPERLIQUID_L1}/info`, {
         method: 'POST',
         headers: {
@@ -39,6 +51,10 @@ export const fetchUserSpotBalance = async (address: string) => {
 };
 
 export const fetchUserPerpsBalance = async (address: string) => {
+    if (!isValidAddress(address)) {
+        throw new Error(`Invalid address format: ${address}`);
+    }
+
     const response = await fetch(`${ENDPOINTS.HYPERLIQUID_L1}/info`, {
         method: 'POST',
         headers: {
@@ -59,6 +75,10 @@ export const fetchUserPerpsBalance = async (address: string) => {
 };
 
 export const fetchSpotTokenDetails = async (tokenId: string): Promise<SpotTokenDetails> => {
+    if (!tokenId || tokenId.trim() === '') {
+        throw new Error('Token ID is required');
+    }
+
     const response = await fetch(`${ENDPOINTS.HYPERLIQUID_L1}/info`, {
         method: 'POST',
         headers: {

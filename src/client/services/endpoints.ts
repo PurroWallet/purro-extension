@@ -1,6 +1,6 @@
 export const ENDPOINTS = {
-    HYPERLIQUID_L1: 'https://api.hyperliquid-testnet.xyz',
-    // HYPERLIQUID_L1: 'https://api.hyperliquid.xyz',
+    HYPERLIQUID_L1: 'https://api.hyperliquid.xyz',
+    // HYPERLIQUID_L1: 'https://api.hyperliquid-testnet.xyz',
     HYPEREVM_MAINNET: 'https://www.hyperscan.com/api/v2',
     GECKO_TERMINAL: 'https://api.geckoterminal.com/api/v2',
     ALCHEMY_ETH_MAINNET: 'https://eth-mainnet.g.alchemy.com/v2/pQZCrFA4q__RcYkvhoPOHUivAjmSIgyF',
