@@ -13,13 +13,24 @@ import useSendTokenHLStore from "@/client/hooks/use-send-token-HL-store";
 import { useEffect, useState } from "react";
 import { getAddressByDomain } from "@/client/services/hyperliquid-name-api";
 import { getSpotTokenImage } from "@/client/utils/icons";
+import { useHlPortfolioData } from "@/client/hooks/use-hyperliquid-portfolio";
 
 // Real gas estimation function using the app's RPC infrastructure
 
 const ConfirmSend = () => {
-  const { setStep, recipient, amount, token } = useSendTokenHLStore();
+  const {
+    setStep,
+    recipient,
+    amount,
+    token,
+    setRecipient,
+    setAmount,
+    setToken,
+  } = useSendTokenHLStore();
+  const { refetchSpot } = useHlPortfolioData();
   const { closeDialog } = useDialogStore();
   const [recipientAddress, setRecipientAddress] = useState<string>(recipient);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const resolveRecipientAddress = async () => {
@@ -49,6 +60,7 @@ const ConfirmSend = () => {
   const handleConfirmSend = async () => {
     if (token && recipient && amount) {
       try {
+        setIsLoading(true);
         console.log("🚀 Starting transaction send process...");
 
         // Send transaction through the Hyperliquid handler
@@ -59,21 +71,20 @@ const ConfirmSend = () => {
           tokenId: token.tokenInfo?.tokenId,
         });
 
-        console.log("✅ Transaction sent successfully:", result);
+        console.log("result", result);
 
         // Show success message
-        const txHash = result.transactionHash || "Processing...";
+        const isSuccess = result.success;
 
-        alert(
-          `🎉 Transaction sent successfully!\n\n` +
-            `Sent: ${amount} ${token.coin}\n` +
-            `To: ${recipientAddress.slice(0, 6)}...${recipientAddress.slice(
-              -4
-            )}\n` +
-            `Transaction Hash: ${txHash}\n\n`
-        );
-
-        closeDialog();
+        if (isSuccess) {
+          setRecipient("");
+          setAmount("");
+          setToken(null);
+          refetchSpot();
+          closeDialog();
+        } else {
+          alert(result.error);
+        }
       } catch (error) {
         console.error("❌ Transaction failed:", error);
 
@@ -95,6 +106,8 @@ const ConfirmSend = () => {
         }
 
         alert(`❌ ${errorMessage}`);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -220,13 +233,11 @@ const ConfirmSend = () => {
         </Button>
         <Button
           onClick={handleConfirmSend}
-          className="flex-1 bg-green-600 hover:bg-green-700"
+          className="flex-1"
+          disabled={isLoading}
         >
-          {false ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Sending Transaction...
-            </>
+          {isLoading ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
           ) : (
             <>
               <Send className="size-4 mr-2" />

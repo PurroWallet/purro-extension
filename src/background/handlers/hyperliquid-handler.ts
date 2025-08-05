@@ -3,20 +3,8 @@ import { storageHandler } from "./storage-handler";
 import { accountHandler } from "./account-handler";
 import { authHandler } from "./auth-handler";
 
-class HyperliquidHandler {
-  private hyperliquid: Hyperliquid | null = null;
-  private hyperliquidTestnet: Hyperliquid | null = null;
-
-  constructor() {
-    this.initialize();
-  }
-
-  private async initialize() {
-    this.hyperliquid = await this.getHyperliquid();
-    this.hyperliquidTestnet = await this.getHyperliquidTestnet();
-  }
-
-  private async getHyperliquid(): Promise<Hyperliquid | null> {
+export const hyperliquidHandler = {
+  async getHyperliquid(): Promise<Hyperliquid | null> {
     try {
       const activeAccount = await storageHandler.getActiveAccount();
       if (!activeAccount) {
@@ -46,7 +34,7 @@ class HyperliquidHandler {
       }
 
       const hyperliquid = new Hyperliquid({
-        enableWs: true, // boolean (OPTIONAL) - Enable/disable WebSocket functionality, defaults to true
+        enableWs: false, // boolean (OPTIONAL) - Enable/disable WebSocket functionality, defaults to true
         privateKey,
         testnet: false,
       });
@@ -56,13 +44,13 @@ class HyperliquidHandler {
       console.error("[Purro] ❌ Failed to get Hyperliquid:", error);
       return null;
     }
-  }
+  },
 
   /**
    * Gets a configured Hyperliquid instance for testnet
    * @returns Promise<Hyperliquid | null> - Configured Hyperliquid testnet instance or null if failed
    */
-  private async getHyperliquidTestnet(): Promise<Hyperliquid | null> {
+  async getHyperliquidTestnet(): Promise<Hyperliquid | null> {
     try {
       const activeAccount = await storageHandler.getActiveAccount();
       if (!activeAccount) {
@@ -94,7 +82,7 @@ class HyperliquidHandler {
       }
 
       const hyperliquid = new Hyperliquid({
-        enableWs: true,
+        enableWs: false,
         privateKey,
         testnet: true, // Enable testnet mode
       });
@@ -104,14 +92,14 @@ class HyperliquidHandler {
       console.error("[Purro] ❌ Failed to get Hyperliquid testnet:", error);
       return null;
     }
-  }
+  },
 
   async transferBetweenSpotAndPerp(data: {
     amount: number;
     fromSpot: boolean;
   }): Promise<MessageResponse> {
     try {
-      const hyperliquid = await this.hyperliquid;
+      const hyperliquid = await this.getHyperliquid();
       if (!hyperliquid) {
         return {
           success: false,
@@ -139,7 +127,7 @@ class HyperliquidHandler {
         error: "Failed to transfer between spot and perp",
       };
     }
-  }
+  },
 
   async sendToken(data: {
     destination: string;
@@ -148,8 +136,8 @@ class HyperliquidHandler {
     tokenId: string;
   }): Promise<MessageResponse> {
     try {
-      const hyperliquid = this.hyperliquidTestnet;
-      console.log("hyperliquid", hyperliquid);
+      const hyperliquid = await this.getHyperliquidTestnet();
+
       if (!hyperliquid) {
         return {
           success: false,
@@ -159,8 +147,8 @@ class HyperliquidHandler {
 
       const transferResult = await hyperliquid.exchange.spotTransfer(
         data.destination,
-        data.amount,
-        `${data.tokenName}:${data.tokenId}`
+        `${data.tokenName}:${data.tokenId}`,
+        data.amount
       );
 
       return {
@@ -174,8 +162,5 @@ class HyperliquidHandler {
         error: "Failed to send token",
       };
     }
-  }
-}
-
-// Export singleton instance
-export const hyperliquidHandler = new HyperliquidHandler();
+  },
+};
