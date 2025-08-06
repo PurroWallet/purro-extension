@@ -148,6 +148,12 @@ export class MessageHandler {
                 case 'ETH_REJECT_SIGN':
                     result = await evmHandler.handleRejectSign(data);
                     break;
+                case 'EVM_SEND_TRANSACTION':
+                    result = await evmHandler.handleSendTransaction(data, sender);
+                    break;
+                case 'EVM_ESTIMATE_GAS':
+                    result = await evmHandler.estimateTransactionGas(data.transaction, data.chainId);
+                    break;
 
                 // Hyperliquid DEX
                 case 'HYPERLIQUID_TRANSFER_BETWEEN_SPOT_AND_PERP':

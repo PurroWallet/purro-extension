@@ -11,28 +11,27 @@ import { sendMessage } from "@/client/utils/extension-message-utils";
 import { convertToWeiHex } from "@/client/utils/formatters";
 import { useEffect, useState } from "react";
 import useDialogStore from "@/client/hooks/use-dialog-store";
-import { 
-  ArrowLeft, 
-  Send, 
-  CheckCircle, 
-  AlertTriangle, 
-  X 
-} from "lucide-react";
+import { ArrowLeft, Send, CheckCircle, AlertTriangle, X } from "lucide-react";
 import { getNetworkIcon } from "@/utils/network-icons";
+import { getAddressByDomain } from "@/client/services/hyperliquid-name-api";
+import {
+  NativeToken,
+  useNativeBalance,
+} from "@/client/hooks/use-native-balance";
 
 // Helper function to get chain ID from chain name
-const getChainId = (chain: string): number => {
+const getChainId = (chain: string): string => {
   switch (chain) {
     case "ethereum":
-      return 1;
+      return "0x1";
     case "base":
-      return 8453;
+      return "0x2105";
     case "arbitrum":
-      return 42161;
+      return "0xa4b1";
     case "hyperevm":
-      return 999;
+      return "0x3e7";
     default:
-      return 1;
+      return "0x1";
   }
 };
 
@@ -59,7 +58,8 @@ const estimateGas = async (
   token: any,
   amount: string,
   recipient: string,
-  senderAddress: string
+  senderAddress: string,
+  nativeTokens: NativeToken[]
 ) => {
   try {
     console.log("🔍 Estimating gas for transaction:", {
@@ -72,7 +72,6 @@ const estimateGas = async (
 
     // Prepare transaction object
     let txObject: any;
-
     if (
       token.symbol === "ETH" ||
       token.symbol === "HYPE" ||
@@ -94,7 +93,6 @@ const estimateGas = async (
       )
         .toString(16)
         .padStart(64, "0");
-
       txObject = {
         from: senderAddress,
         to: token.contractAddress,
@@ -102,41 +100,66 @@ const estimateGas = async (
       };
     }
 
-    console.log("📝 Transaction object:", txObject);
+    console.log("📝 Transaction object:", txObject, getChainId(token.chain));
 
     // Get gas estimate
     const gasEstimateResponse = await sendMessage("EVM_ESTIMATE_GAS", {
-      txObject,
+      transaction: txObject,
+      chainId: getChainId(token.chain),
     });
 
-    // Get current gas price
-    const gasPriceResponse = await sendMessage("EVM_GET_GAS_PRICE");
-
     console.log("⛽ Gas estimation response:", gasEstimateResponse);
-    console.log("💰 Gas price response:", gasPriceResponse);
 
-    const gasLimit = parseInt(gasEstimateResponse.gasEstimate, 16);
-    const gasPrice = parseInt(gasPriceResponse.gasPrice, 16);
+    const gasLimit = parseInt(gasEstimateResponse.data.gas, 16);
+
+    // Handle both legacy and EIP-1559 transactions
+    let effectiveGasPrice: number;
+    let gasPriceGwei: number;
+
+    if (gasEstimateResponse.data.gasPrice) {
+      // Legacy transaction (type 0x0)
+      effectiveGasPrice = parseInt(gasEstimateResponse.data.gasPrice, 16);
+      gasPriceGwei = Math.round(effectiveGasPrice / 1e9);
+      console.log("📊 Using legacy gas pricing");
+    } else if (gasEstimateResponse.data.maxFeePerGas) {
+      // EIP-1559 transaction (type 0x2)
+      effectiveGasPrice = parseInt(gasEstimateResponse.data.maxFeePerGas, 16);
+      gasPriceGwei = Math.round(effectiveGasPrice / 1e9);
+      console.log("📊 Using EIP-1559 gas pricing");
+
+      // Log additional EIP-1559 info if available
+      if (gasEstimateResponse.data.maxPriorityFeePerGas) {
+        const priorityFeeGwei = Math.round(
+          parseInt(gasEstimateResponse.data.maxPriorityFeePerGas, 16) / 1e9
+        );
+        console.log(`💡 Priority fee: ${priorityFeeGwei} Gwei`);
+      }
+    } else {
+      // Fallback if neither is available
+      console.warn("⚠️ No gas price data in response, using fallback");
+      effectiveGasPrice = 20e9; // 20 Gwei fallback
+      gasPriceGwei = 20;
+    }
 
     // Calculate gas cost in ETH
-    const gasCostWei = gasLimit * gasPrice;
+    const gasCostWei = gasLimit * effectiveGasPrice;
     const gasCostEth = gasCostWei / 1e18;
 
     let nativeTokenPrice = 3000; // Default fallback
 
-    if (token.chain === "hyperevm") {
-      nativeTokenPrice = token.symbol === "HYPE" ? token.usdPrice || 30 : 30;
-    } else {
-      nativeTokenPrice =
-        token.chain === "ethereum" ? token.usdPrice || 3000 : 3000;
-    }
+    const nativeToken = nativeTokens.find(
+      (t: NativeToken) => t.chain === token.chain
+    );
+    nativeTokenPrice = nativeToken?.usdPrice || 3000;
 
     const gasCostUsd = gasCostEth * nativeTokenPrice;
-    const totalCostUsd = parseFloat(amount) + gasCostUsd;
+    const tokenTotalCostUsd = parseFloat(amount) * (token.usdPrice || 0);
+    const totalCostUsd = tokenTotalCostUsd + gasCostUsd;
 
     console.log("✅ Gas estimation successful:", {
       gasLimit,
-      gasPrice,
+      effectiveGasPrice,
+      gasPriceGwei,
       gasCostEth,
       gasCostUsd,
       totalCostUsd,
@@ -144,10 +167,13 @@ const estimateGas = async (
 
     return {
       gasLimit: gasLimit.toString(),
-      gasPrice: Math.round(gasPrice / 1e9).toString(), // Convert to gwei
-      gasCostEth: gasCostEth.toFixed(6),
-      gasCostUsd: gasCostUsd.toFixed(2),
-      totalCostUsd: totalCostUsd.toFixed(2),
+      gasPrice: gasPriceGwei.toString(), // Always return in Gwei
+      gasCostEth: gasCostEth.toFixed(8),
+      gasCostUsd: gasCostUsd.toFixed(6),
+      totalCostUsd: totalCostUsd.toFixed(6),
+      // Optional: include transaction type info
+      transactionType: gasEstimateResponse.data.type || "unknown",
+      isEIP1559: !!gasEstimateResponse.data.maxFeePerGas,
     };
   } catch (error) {
     console.error("❌ Gas estimation failed:", error);
@@ -160,13 +186,16 @@ const estimateGas = async (
     const fallbackGasCostUsd = fallbackGasCostEth * 3000;
 
     console.warn("⚠️ Using fallback gas estimation");
-
+    const tokenTotalCostUsd = parseFloat(amount) * (token.usdPrice || 0);
+    console.log("🔍 Token total cost USD:", tokenTotalCostUsd);
     return {
       gasLimit: fallbackGasLimit,
       gasPrice: fallbackGasPrice,
-      gasCostEth: fallbackGasCostEth.toFixed(6),
-      gasCostUsd: fallbackGasCostUsd.toFixed(2),
-      totalCostUsd: (parseFloat(amount) + fallbackGasCostUsd).toFixed(2),
+      gasCostEth: fallbackGasCostEth.toFixed(8),
+      gasCostUsd: fallbackGasCostUsd.toFixed(6),
+      totalCostUsd: (tokenTotalCostUsd + fallbackGasCostUsd).toFixed(6),
+      transactionType: "fallback",
+      isEIP1559: false,
     };
   }
 };
@@ -177,20 +206,41 @@ const ConfirmSend = () => {
   const { activeAccount, getActiveAccountWalletObject } = useWalletStore();
   const [gasEstimate, setGasEstimate] = useState<any>(null);
   const [isEstimatingGas, setIsEstimatingGas] = useState(false);
+  const [addressDomain, setAddressDomain] = useState<string | null>(null);
+  const { nativeTokens } = useNativeBalance();
 
   const activeAccountId = activeAccount?.id;
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
+
+  const isHLName = recipient.match(/^[a-zA-Z0-9]+\.hl$/);
+
+  useEffect(() => {
+    const checkDomain = async () => {
+      const domain = await getAddressByDomain(recipient);
+      setAddressDomain(domain);
+    };
+
+    if (recipient && isHLName) {
+      checkDomain();
+    }
+  }, [recipient]);
 
   useEffect(() => {
     const performGasEstimation = async () => {
       if (token && amount && recipient && activeAccountAddress) {
         setIsEstimatingGas(true);
+        if (isHLName && !addressDomain) {
+          setIsEstimatingGas(false);
+          return;
+        }
+
         try {
           const estimate = await estimateGas(
             token,
             amount,
-            recipient,
-            activeAccountAddress
+            addressDomain || recipient,
+            activeAccountAddress,
+            nativeTokens
           );
           setGasEstimate(estimate);
         } catch (error) {
@@ -202,20 +252,22 @@ const ConfirmSend = () => {
     };
 
     performGasEstimation();
-  }, [token, amount, recipient, activeAccountAddress]);
+  }, [token, amount, recipient, activeAccountAddress, addressDomain]);
 
   const handleConfirmSend = async () => {
-    if (
-      token &&
-      recipient &&
-      amount &&
-      gasEstimate &&
-      activeAccountAddress
-    ) {
-      setIsEstimatingGas(true); // Reuse loading state for sending
+    if (token && recipient && amount && gasEstimate && activeAccountAddress) {
+      setIsEstimatingGas(true);
 
       try {
         console.log("🚀 Starting transaction send process...");
+
+        // Validate domain resolution for HL names
+        if (isHLName && !addressDomain) {
+          throw new Error("Failed to resolve HyperLiquid domain name");
+        }
+
+        const finalRecipient = addressDomain || recipient;
+        console.log("📍 Final recipient:", finalRecipient);
 
         // Build the transaction object
         let transactionData: any;
@@ -227,10 +279,13 @@ const ConfirmSend = () => {
           token.contractAddress === "NATIVE"
         ) {
           // Native token transfer (ETH, HYPE)
+          // Use BigInt to avoid precision issues
+          const valueInWei = BigInt(Math.floor(parseFloat(amount) * 1e18));
+
           transactionData = {
             type: "eth_sendTransaction",
-            to: recipient,
-            value: `0x${Math.floor(parseFloat(amount) * 1e18).toString(16)}`,
+            to: finalRecipient,
+            value: `0x${valueInWei.toString(16)}`,
             gas: `0x${parseInt(gasEstimate.gasLimit).toString(16)}`,
             gasPrice: `0x${Math.floor(
               parseInt(gasEstimate.gasPrice) * 1e9
@@ -240,10 +295,16 @@ const ConfirmSend = () => {
         } else {
           // ERC-20 token transfer
           const transferMethodId = "0xa9059cbb";
-          const paddedRecipient = recipient.slice(2).padStart(64, "0");
-          const paddedAmount = Math.floor(
-            parseFloat(amount) * Math.pow(10, token.decimals || 18)
-          )
+
+          // FIXED: Use finalRecipient instead of recipient
+          const paddedRecipient = finalRecipient.slice(2).padStart(64, "0");
+
+          // Use BigInt for amount calculation to avoid precision issues
+          const tokenDecimals = token.decimals || 18;
+          const amountInTokenUnits = BigInt(
+            Math.floor(parseFloat(amount) * Math.pow(10, tokenDecimals))
+          );
+          const paddedAmount = amountInTokenUnits
             .toString(16)
             .padStart(64, "0");
 
@@ -264,8 +325,7 @@ const ConfirmSend = () => {
 
         // Send transaction through the EVM handler
         const result = await sendMessage("EVM_SEND_TRANSACTION", {
-          accountId: activeAccountId,
-          transactionData,
+          transaction: transactionData,
         });
 
         console.log("✅ Transaction sent successfully:", result);
@@ -277,7 +337,9 @@ const ConfirmSend = () => {
         alert(
           `🎉 Transaction sent successfully!\n\n` +
             `Sent: ${amount} ${token.symbol}\n` +
-            `To: ${recipient.slice(0, 6)}...${recipient.slice(-4)}\n` +
+            `To: ${finalRecipient.slice(0, 6)}...${finalRecipient.slice(
+              -4
+            )}\n` +
             `Gas Fee: ${gasEstimate.gasCostEth} ETH (≈$${gasEstimate.gasCostUsd})\n\n` +
             `Transaction Hash: ${txHash}\n\n` +
             `Your transaction is being processed on the ${token.chain} network.\n` +
@@ -290,7 +352,10 @@ const ConfirmSend = () => {
 
         let errorMessage = "Transaction failed. Please try again.";
         if (error instanceof Error) {
-          if (error.message.includes("insufficient funds")) {
+          if (error.message.includes("Failed to resolve")) {
+            errorMessage =
+              "Failed to resolve HyperLiquid domain name. Please check the address.";
+          } else if (error.message.includes("insufficient funds")) {
             errorMessage =
               "Insufficient funds for this transaction including gas fees.";
           } else if (error.message.includes("gas")) {
@@ -363,7 +428,10 @@ const ConfirmSend = () => {
                       {amount} {token.symbol}
                     </div>
                     <div className="text-gray-400 text-sm">
-                      ≈ ${((parseFloat(amount) || 0) * (token.usdPrice || 0)).toFixed(2)}
+                      ≈ $
+                      {(
+                        (parseFloat(amount) || 0) * (token.usdPrice || 0)
+                      ).toFixed(2)}
                     </div>
                   </div>
                 </div>
@@ -371,7 +439,14 @@ const ConfirmSend = () => {
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">To</span>
                   <span className="text-white font-mono text-sm">
-                    {recipient.slice(0, 6)}...{recipient.slice(-4)}
+                    {addressDomain
+                      ? addressDomain.slice(0, 6) +
+                        "..." +
+                        addressDomain.slice(-4)
+                      : recipient.slice(0, 6) +
+                        "..." +
+                        recipient.slice(-4)}{" "}
+                    ({isHLName && recipient})
                   </span>
                 </div>
 
@@ -383,9 +458,7 @@ const ConfirmSend = () => {
                       alt={token.chain}
                       className="size-5 rounded-full mr-2"
                     />
-                    <span className="text-white capitalize">
-                      {token.chain}
-                    </span>
+                    <span className="text-white capitalize">{token.chain}</span>
                   </div>
                 </div>
               </div>
@@ -423,7 +496,8 @@ const ConfirmSend = () => {
                     <span className="text-gray-400">Gas Fee</span>
                     <div className="text-right">
                       <div className="text-white font-medium">
-                        {gasEstimate.gasCostEth} {token.chain === "hyperevm" ? "HYPE" : "ETH"}
+                        {gasEstimate.gasCostEth}{" "}
+                        {token.chain === "hyperevm" ? "HYPE" : "ETH"}
                       </div>
                       <div className="text-gray-400 text-sm">
                         ≈ ${gasEstimate.gasCostUsd}

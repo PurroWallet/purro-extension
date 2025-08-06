@@ -17,6 +17,8 @@ const WalletTabsSpot = () => {
     fetchEvm: false,
   });
 
+  console.log(spotData);
+
   // Create indexer only when dataContext is available
   const indexer = useMemo(() => {
     if (

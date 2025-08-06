@@ -136,7 +136,7 @@ export const hyperliquidHandler = {
     tokenId: string;
   }): Promise<MessageResponse> {
     try {
-      const hyperliquid = await this.getHyperliquidTestnet();
+      const hyperliquid = await this.getHyperliquid();
 
       if (!hyperliquid) {
         return {
