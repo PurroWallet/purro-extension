@@ -193,6 +193,7 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
                     contractAddress: token.contractAddress,
                     decimals: token.decimals || 18,
                     isNative: false, // Alchemy ERC-20 tokens are not native
+                    icon_url: token.logo,
                 });
             });
         }

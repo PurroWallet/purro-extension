@@ -10,10 +10,13 @@ import { getSpotTokenImage } from "@/client/utils/icons";
 import { Button } from "@/client/components/ui";
 import { DepositHyperDexDrawer } from "@/client/components/drawers";
 import useDrawerStore from "@/client/hooks/use-drawer-store";
+import useWalletStore from "@/client/hooks/use-wallet-store";
 
 const WalletTabsSpot = () => {
   const { isHyperliquidDexEnabled } = useNetworkSettingsStore();
   const { openDrawer } = useDrawerStore();
+  const { activeAccount } = useWalletStore();
+  const isWatchOnly = activeAccount?.source === "watchOnly";
 
   const { spotData, isSpotLoading, spotError } = useHlPortfolioData({
     fetchSpot: isHyperliquidDexEnabled, // Only fetch if Hyperliquid DEX is enabled
@@ -100,15 +103,17 @@ const WalletTabsSpot = () => {
             <div className="text-muted-foreground text-sm">Spot Balance</div>
             <div className="font-semibold text-lg flex items-center gap-2">
               <p>{formatCurrency(portfolioValue)}</p>{" "}
-              <Button
-                variant="secondary"
-                className="text-xs p-0 text-[var(--primary-color-light)]"
-                onClick={() => {
-                  openDrawer(<DepositHyperDexDrawer />);
-                }}
-              >
-                Deposit
-              </Button>
+              {!isWatchOnly && (
+                <Button
+                  variant="secondary"
+                  className="text-xs p-0 text-[var(--primary-color-light)]"
+                  onClick={() => {
+                    openDrawer(<DepositHyperDexDrawer />);
+                  }}
+                >
+                  Deposit
+                </Button>
+              )}
             </div>
           </div>
           <div className="bg-[var(--card-color)] rounded-lg p-3">

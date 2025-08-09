@@ -9,14 +9,15 @@ import {
 import useSendTokenStore from "@/client/hooks/use-send-token-store";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import { formatCurrency } from "@/client/utils/formatters";
-import { 
-  ArrowLeft, 
-  Send, 
-  DollarSign, 
-  Coins, 
-  CircleAlert, 
-  CircleCheck, 
-  Loader2 
+import {
+  ArrowLeft,
+  Send,
+  DollarSign,
+  Coins,
+  CircleAlert,
+  CircleCheck,
+  Loader2,
+  BookText,
 } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
@@ -101,7 +102,9 @@ const SendToken = () => {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isValidDomain, setIsValidDomain] = useState<boolean>(false);
   const debouncedRecipientAddress = useDebounce(recipient, 500);
-  const [addressFromDomain, setAddressFromDomain] = useState<string | null>(null);
+  const [addressFromDomain, setAddressFromDomain] = useState<string | null>(
+    null
+  );
   const [isLoadingDomain, setIsLoadingDomain] = useState(false);
 
   const onBack = () => {
@@ -109,36 +112,32 @@ const SendToken = () => {
   };
 
   // Calculate converted amounts
-  const { isValidAmount, conversionAmount } =
-    useMemo(() => {
-      if (!token || !amount || isNaN(parseFloat(amount))) {
-        return {
-          isValidAmount: false,
-          conversionAmount: "0",
-        };
-      }
+  const { isValidAmount, conversionAmount } = useMemo(() => {
+    if (!token || !amount || isNaN(parseFloat(amount))) {
+      return {
+        isValidAmount: false,
+        conversionAmount: "0",
+      };
+    }
 
-      const numAmount = parseFloat(amount);
-      const tokenPrice = token.usdPrice || 0;
+    const numAmount = parseFloat(amount);
+    const tokenPrice = token.usdPrice || 0;
 
-      if (inputMode === "token") {
-        const usdVal =
-          tokenPrice > 0 ? (numAmount * tokenPrice).toFixed(2) : "0";
-        return {
-          isValidAmount:
-            numAmount > 0 && numAmount <= token.balanceFormatted,
-          conversionAmount: formatConversionNumber(usdVal, "usd"),
-        };
-      } else {
-        const tokenVal =
-          tokenPrice > 0 ? (numAmount / tokenPrice).toFixed(8) : "0";
-        return {
-          isValidAmount:
-            numAmount > 0 && numAmount <= (token.usdValue || 0),
-          conversionAmount: formatConversionNumber(tokenVal, "token"),
-        };
-      }
-    }, [amount, inputMode, token]);
+    if (inputMode === "token") {
+      const usdVal = tokenPrice > 0 ? (numAmount * tokenPrice).toFixed(2) : "0";
+      return {
+        isValidAmount: numAmount > 0 && numAmount <= token.balanceFormatted,
+        conversionAmount: formatConversionNumber(usdVal, "usd"),
+      };
+    } else {
+      const tokenVal =
+        tokenPrice > 0 ? (numAmount / tokenPrice).toFixed(8) : "0";
+      return {
+        isValidAmount: numAmount > 0 && numAmount <= (token.usdValue || 0),
+        conversionAmount: formatConversionNumber(tokenVal, "token"),
+      };
+    }
+  }, [amount, inputMode, token]);
 
   // Domain validation logic
   const isDomainFormatted = useMemo(() => {
@@ -304,10 +303,12 @@ const SendToken = () => {
                 />
                 <button
                   ref={buttonRef}
-                  onClick={() => setIsAddressDropdownOpen(!isAddressDropdownOpen)}
+                  onClick={() =>
+                    setIsAddressDropdownOpen(!isAddressDropdownOpen)
+                  }
                   className="absolute right-2 top-1/2 -translate-y-1/2 size-8 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center cursor-pointer"
                 >
-                  📖
+                  <BookText className="size-4" />
                 </button>
 
                 {/* Address Dropdown */}
@@ -343,14 +344,19 @@ const SendToken = () => {
                                 className="w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors last:rounded-b-lg whitespace-nowrap cursor-pointer"
                               >
                                 <div className="size-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                                  <AccountIcon icon={account.icon} alt="Account" />
+                                  <AccountIcon
+                                    icon={account.icon}
+                                    alt="Account"
+                                  />
                                 </div>
                                 <div className="flex-1 text-left">
                                   <p className="text-sm font-medium text-[var(--text-color)]">
                                     {account.name}
                                   </p>
                                   <p className="text-xs text-[var(--text-color)]/60">
-                                    {truncateAddress(wallet?.eip155?.address || "")}
+                                    {truncateAddress(
+                                      wallet?.eip155?.address || ""
+                                    )}
                                   </p>
                                 </div>
                               </button>
@@ -367,24 +373,32 @@ const SendToken = () => {
               {recipient && !isValidAddress && !isDomainFormatted && (
                 <div className="text-muted-foreground text-xs rounded-full bg-red-500/10 px-4 py-2 flex items-center">
                   <CircleAlert className="size-4 mr-2" />
-                  <p>Please enter a valid address starting with 0x or .hl domain</p>
-                </div>
-              )}
-              {recipient && isDomainFormatted && !isValidDomain && !isLoadingDomain && (
-                <div className="text-muted-foreground text-xs rounded-full bg-red-500/10 px-4 py-2 flex items-center">
-                  <CircleAlert className="size-4 mr-2" />
-                  <p>Invalid Hyperliquid Name</p>
-                </div>
-              )}
-              {recipient && isValidDomain && isDomainFormatted && !isLoadingDomain && (
-                <div className="text-muted-foreground text-xs rounded-full bg-green-500/10 px-4 py-2 flex items-center">
-                  <CircleCheck className="size-4 mr-2" />
                   <p>
-                    Valid destination: {addressFromDomain?.slice(0, 6)}...
-                    {addressFromDomain?.slice(-4)}
+                    Please enter a valid address starting with 0x or .hl domain
                   </p>
                 </div>
               )}
+              {recipient &&
+                isDomainFormatted &&
+                !isValidDomain &&
+                !isLoadingDomain && (
+                  <div className="text-muted-foreground text-xs rounded-full bg-red-500/10 px-4 py-2 flex items-center">
+                    <CircleAlert className="size-4 mr-2" />
+                    <p>Invalid Hyperliquid Name</p>
+                  </div>
+                )}
+              {recipient &&
+                isValidDomain &&
+                isDomainFormatted &&
+                !isLoadingDomain && (
+                  <div className="text-muted-foreground text-xs rounded-full bg-green-500/10 px-4 py-2 flex items-center">
+                    <CircleCheck className="size-4 mr-2" />
+                    <p>
+                      Valid destination: {addressFromDomain?.slice(0, 6)}...
+                      {addressFromDomain?.slice(-4)}
+                    </p>
+                  </div>
+                )}
               {isLoadingDomain && isDomainFormatted && (
                 <div className="text-muted-foreground text-xs rounded-full bg-gray-500/10 px-4 py-2 flex items-center">
                   <Loader2 className="size-4 mr-2 animate-spin" />
