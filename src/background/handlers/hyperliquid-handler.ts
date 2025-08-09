@@ -99,7 +99,7 @@ export const hyperliquidHandler = {
     fromSpot: boolean;
   }): Promise<MessageResponse> {
     try {
-      const hyperliquid = await this.getHyperliquid();
+      const hyperliquid = await this.getHyperliquidTestnet();
       if (!hyperliquid) {
         return {
           success: false,

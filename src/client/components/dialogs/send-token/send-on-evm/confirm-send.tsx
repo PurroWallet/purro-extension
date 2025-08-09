@@ -203,13 +203,12 @@ const estimateGas = async (
 const ConfirmSend = () => {
   const { setStep, recipient, amount, token } = useSendTokenStore();
   const { closeDialog } = useDialogStore();
-  const { activeAccount, getActiveAccountWalletObject } = useWalletStore();
+  const { getActiveAccountWalletObject } = useWalletStore();
   const [gasEstimate, setGasEstimate] = useState<any>(null);
   const [isEstimatingGas, setIsEstimatingGas] = useState(false);
   const [addressDomain, setAddressDomain] = useState<string | null>(null);
   const { nativeTokens } = useNativeBalance();
 
-  const activeAccountId = activeAccount?.id;
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
 
   const isHLName = recipient.match(/^[a-zA-Z0-9]+\.hl$/);
