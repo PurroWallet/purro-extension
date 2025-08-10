@@ -17,7 +17,7 @@ const MainHeader = ({
   onHistoryToggle,
 }: {
   className?: string;
-  currentScreen: "home" | "explore" | "nft" | "history";
+  currentScreen: "home" | "explore" | "nft" | "history" | "swap";
   onNftNetworkToggle?: () => void;
   onHistoryToggle?: () => void;
   isNftNetworkVisible: boolean;

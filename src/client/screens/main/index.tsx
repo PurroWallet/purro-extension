@@ -9,11 +9,12 @@ import MainHeader, {
   NftNetworkNotification,
 } from "./main-header";
 import { cn } from "@/client/lib/utils";
-import { Clock, HomeIcon, ImageIcon } from "lucide-react";
+import { ArrowUpDownIcon, Clock, HomeIcon, ImageIcon } from "lucide-react";
 import AccountSheet from "@/client/components/account-sheet/account-sheet";
 import Home from "./main-screens/home";
 import Nft from "./main-screens/nft";
 import History from "./main-screens/history";
+import Swap from "./main-screens/swap";
 
 const queryClient = new QueryClient();
 
@@ -33,7 +34,7 @@ const Main = () => {
 
 export const MainContent = () => {
   const [mainScreen, setMainScreen] = useState<
-    "home" | "explore" | "nft" | "history"
+    "home" | "explore" | "nft" | "history" | "swap"
   >("home");
   const [isNftNetworkVisible, setIsNftNetworkVisible] = useState(false);
   const [isHistoryVisible, setIsHistoryVisible] = useState(false);
@@ -61,12 +62,13 @@ export const MainContent = () => {
       )}
       <div className="flex-1 overflow-y-auto">
         {mainScreen === "home" && <Home />}
+        {mainScreen === "swap" && <Swap />}
         {/* {mainScreen === "explore" && <Explore />} */}
         {mainScreen === "history" && <History />}
         {mainScreen === "nft" && <Nft />}
       </div>
 
-      <div className="grid grid-cols-3 w-full border-t border-white/10">
+      <div className="grid grid-cols-4 w-full border-t border-white/10">
         <MainScreenTabButton
           isActive={mainScreen === "home"}
           onClick={() => setMainScreen("home")}
@@ -74,6 +76,17 @@ export const MainContent = () => {
             <HomeIcon
               className={cn(
                 mainScreen === "home" && "text-[var(--primary-color-light)]"
+              )}
+            />
+          }
+        />
+        <MainScreenTabButton
+          isActive={mainScreen === "swap"}
+          onClick={() => setMainScreen("swap")}
+          icon={
+            <ArrowUpDownIcon
+              className={cn(
+                mainScreen === "swap" && "text-[var(--primary-color-light)]"
               )}
             />
           }
