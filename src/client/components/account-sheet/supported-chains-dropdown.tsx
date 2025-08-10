@@ -43,7 +43,6 @@ const SupportedChainsDropdown = ({
     "0xa4b1": "arbitrum",
     "0x2105": "base",
     "0x3e7": "hyperevm",
-    "0x3e6": "hyperevm", // testnet maps to same slug
   } as const;
 
   const handleChainSelect = (chainId: string) => {
