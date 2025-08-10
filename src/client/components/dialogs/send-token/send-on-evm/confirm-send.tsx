@@ -11,13 +11,29 @@ import { sendMessage } from "@/client/utils/extension-message-utils";
 import { convertToWeiHex } from "@/client/utils/formatters";
 import { useEffect, useState } from "react";
 import useDialogStore from "@/client/hooks/use-dialog-store";
-import { ArrowLeft, Send, CheckCircle, AlertTriangle, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Send,
+  CheckCircle,
+  AlertTriangle,
+  X,
+  CircleAlert,
+} from "lucide-react";
 import { getNetworkIcon } from "@/utils/network-icons";
 import { getAddressByDomain } from "@/client/services/hyperliquid-name-api";
 import {
   NativeToken,
   useNativeBalance,
 } from "@/client/hooks/use-native-balance";
+import { getTokenLogo } from "@/client/utils/icons";
+
+type GasEstimate = {
+  gasLimit: string;
+  gasPrice: string;
+  gasCostEth: string;
+  gasCostUsd: string;
+  totalCostUsd: string;
+};
 
 // Helper function to get chain ID from chain name
 const getChainId = (chain: string): string => {
@@ -204,14 +220,15 @@ const ConfirmSend = () => {
   const { setStep, recipient, amount, token } = useSendTokenStore();
   const { closeDialog } = useDialogStore();
   const { getActiveAccountWalletObject } = useWalletStore();
-  const [gasEstimate, setGasEstimate] = useState<any>(null);
-  const [isEstimatingGas, setIsEstimatingGas] = useState(false);
+  const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
+  const [isEstimatingGas, setIsEstimatingGas] = useState(true);
   const [addressDomain, setAddressDomain] = useState<string | null>(null);
   const { nativeTokens } = useNativeBalance();
+  const [isHaveEnoughGasFee, setIsHaveEnoughGasFee] = useState(true);
 
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
-
   const isHLName = recipient.match(/^[a-zA-Z0-9]+\.hl$/);
+  const tokenLogoSrc = token?.icon_url || getTokenLogo(token?.symbol || "");
 
   useEffect(() => {
     const checkDomain = async () => {
@@ -252,6 +269,19 @@ const ConfirmSend = () => {
 
     performGasEstimation();
   }, [token, amount, recipient, activeAccountAddress, addressDomain]);
+
+  useEffect(() => {
+    if (gasEstimate && token) {
+      const nativeToken = nativeTokens.find(
+        (t: NativeToken) => t.chain === token.chain
+      );
+
+      const gasCostEth = parseFloat(gasEstimate.gasCostEth);
+      const nativeTokenBalance = parseFloat(nativeToken?.balance || "0");
+
+      setIsHaveEnoughGasFee(gasCostEth <= nativeTokenBalance * 0.9);
+    }
+  }, [gasEstimate, token]);
 
   const handleConfirmSend = async () => {
     if (token && recipient && amount && gasEstimate && activeAccountAddress) {
@@ -410,9 +440,17 @@ const ConfirmSend = () => {
                   <span className="text-gray-400">Token</span>
                   <div className="flex items-center">
                     <div className="flex items-center justify-center size-6 bg-[var(--card-color)] rounded-full mr-2">
-                      <p className="text-white text-xs font-bold">
-                        {token.symbol.charAt(0).toUpperCase()}
-                      </p>
+                      {tokenLogoSrc ? (
+                        <img
+                          src={tokenLogoSrc}
+                          alt={token.symbol}
+                          className="size-6 rounded-full object-cover p-1"
+                        />
+                      ) : (
+                        <p className="text-white text-xs font-bold">
+                          {token.symbol.charAt(0).toUpperCase()}
+                        </p>
+                      )}
                     </div>
                     <span className="text-white font-medium">
                       {token.symbol}
@@ -445,7 +483,7 @@ const ConfirmSend = () => {
                       : recipient.slice(0, 6) +
                         "..." +
                         recipient.slice(-4)}{" "}
-                    ({isHLName && recipient})
+                    {isHLName && `(${recipient})`}
                   </span>
                 </div>
 
@@ -472,9 +510,23 @@ const ConfirmSend = () => {
                 </div>
               </div>
             ) : gasEstimate ? (
-              <div className="bg-[var(--card-color)] rounded-lg p-4 border border-white/10">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                  <AlertTriangle className="size-5 mr-2 text-yellow-500" />
+              <div
+                className={` rounded-lg p-4 border ${
+                  !isHaveEnoughGasFee
+                    ? "border-red-500/20 bg-red-500/10"
+                    : "border-white/10 bg-[var(--card-color)]"
+                }`}
+              >
+                <h3
+                  className={`text-lg font-semibold mb-4 flex items-center ${
+                    !isHaveEnoughGasFee ? "text-red-500" : "text-white"
+                  }`}
+                >
+                  <AlertTriangle
+                    className={`size-5 mr-2 ${
+                      !isHaveEnoughGasFee ? "text-red-500" : "text-yellow-500"
+                    }`}
+                  />
                   Gas Fee Estimation
                 </h3>
 
@@ -529,13 +581,27 @@ const ConfirmSend = () => {
               </div>
             )}
 
-            {/* Warning */}
-            <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
-              <p className="text-yellow-400 text-sm">
-                ⚠️ Please double-check all transaction details. This action
-                cannot be undone.
-              </p>
-            </div>
+            {!isHaveEnoughGasFee ? (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                <p className="text-red-400 text-sm flex items-center text-nowrap">
+                  <CircleAlert className="size-4 mr-2" />
+                  Don't have enough gas fee. Available:{" "}
+                  {parseFloat(
+                    nativeTokens.find(
+                      (t: NativeToken) => t.chain === token.chain
+                    )?.balance || "0"
+                  ).toFixed(2)}{" "}
+                  {token.chain === "hyperevm" ? " HYPE" : " ETH"}
+                </p>
+              </div>
+            ) : (
+              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+                <p className="text-yellow-400 text-sm">
+                  ⚠️ Please double-check all transaction details. This action
+                  cannot be undone.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </DialogContent>
@@ -550,17 +616,17 @@ const ConfirmSend = () => {
         <Button
           onClick={handleConfirmSend}
           className="flex-1 bg-green-600 hover:bg-green-700"
-          disabled={isEstimatingGas || !gasEstimate}
+          disabled={isEstimatingGas || !gasEstimate || !isHaveEnoughGasFee}
         >
           {isEstimatingGas ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Sending Transaction...
+              Sending...
             </>
           ) : (
             <>
               <Send className="size-4 mr-2" />
-              Confirm Send
+              Confirm
             </>
           )}
         </Button>

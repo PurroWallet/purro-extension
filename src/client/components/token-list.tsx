@@ -128,8 +128,6 @@ const TokenList = ({
     );
   }
 
-  console.log(tokens);
-
   return (
     <div className={`space-y-2 ${className}`}>
       {tokens.map((token, index) => (

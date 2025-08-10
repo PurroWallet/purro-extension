@@ -988,7 +988,7 @@ export const evmHandler = {
             }
 
             // Validate value if provided
-            if (transaction.value) {
+            if (transaction.value && !transaction.data) {
                 try {
                     ethers.parseEther(transaction.value);
                 } catch (error) {
