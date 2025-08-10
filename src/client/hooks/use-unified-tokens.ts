@@ -199,6 +199,17 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
 
         // Sort by USD value (highest to lowest), mixing native and non-native tokens
         return unifiedTokens.sort((a, b) => {
+            // Priority: Always show HYPE (Hyperliquid native) at the top
+            const isHype = (t: UnifiedToken) =>
+                (t.symbol && t.symbol.toUpperCase() === "HYPE") ||
+                (t.chain === "hyperevm" && t.isNative);
+
+            const aIsHype = isHype(a);
+            const bIsHype = isHype(b);
+            if (aIsHype !== bIsHype) {
+                return aIsHype ? -1 : 1;
+            }
+
             // Sort by USD value first (highest to lowest)
             if (a.usdValue && b.usdValue) {
                 return b.usdValue - a.usdValue;
