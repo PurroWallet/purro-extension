@@ -43,16 +43,16 @@ export const supportedEVMChains: { [key: string]: ChainInfo } = {
         isTestnet: false,
         logo: hyperliquidLogo
     },
-    "0x3e6": {
-        chainId: '0x3e6',
-        chainIdNumber: 998,
-        chainName: 'HyperEVM Testnet',
-        nativeCurrency: { name: 'Hyperliquid', symbol: 'HYPE', decimals: 18 },
-        rpcUrls: ['https://rpc.hyperliquid-testnet.xyz/evm'],
-        blockExplorerUrls: ['https://testnet.purrsec.com'],
-        isTestnet: true,
-        logo: hyperliquidLogo
-    }
+    // "0x3e6": {
+    //     chainId: '0x3e6',
+    //     chainIdNumber: 998,
+    //     chainName: 'HyperEVM Testnet',
+    //     nativeCurrency: { name: 'Hyperliquid', symbol: 'HYPE', decimals: 18 },
+    //     rpcUrls: ['https://rpc.hyperliquid-testnet.xyz/evm'],
+    //     blockExplorerUrls: ['https://testnet.purrsec.com'],
+    //     isTestnet: true,
+    //     logo: hyperliquidLogo
+    // }
 };
 
 

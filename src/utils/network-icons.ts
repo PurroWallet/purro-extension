@@ -4,6 +4,7 @@ import { hyperliquidLogo, arbitrumLogo, baseLogo, ethereumLogo } from "@/assets/
 export const NETWORK_ICONS = {
     hyperliquid: hyperliquidLogo,
     hyperevm: hyperliquidLogo,
+    "hyperevm-testnet": hyperliquidLogo,
     ethereum: ethereumLogo,
     base: baseLogo,
     arbitrum: arbitrumLogo,

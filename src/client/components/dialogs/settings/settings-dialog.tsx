@@ -6,7 +6,7 @@ import ChangePassword from "./change-password";
 import DeleteSeedPhrase from "./delete-seedphrare";
 import ResetWallet from "./reset-wallet";
 import ActiveNetwork from "./active-network";
-import TokenCacheManagement from "./token-cache-management";
+import DeveloperMode from "./developer-mode";
 
 const SettingsDialog = () => {
   const [screen, setScreen] = useState<
@@ -18,6 +18,7 @@ const SettingsDialog = () => {
     | "reset-wallet"
     | "active-network"
     | "token-cache-management"
+    | "developer-mode"
   >("main");
 
   return (
@@ -30,7 +31,7 @@ const SettingsDialog = () => {
           onDeleteSeedPhrase={() => setScreen("delete-seedphrase")}
           onResetWallet={() => setScreen("reset-wallet")}
           onActiveNetwork={() => setScreen("active-network")}
-          onTokenCacheManagement={() => setScreen("token-cache-management")}
+          onDeveloperMode={() => setScreen("developer-mode")}
         />
       )}
       {screen === "connected-dapps" && (
@@ -51,9 +52,9 @@ const SettingsDialog = () => {
       {screen === "active-network" && (
         <ActiveNetwork onBack={() => setScreen("main")} />
       )}
-      {/* {screen === "token-cache-management" && (
-        <TokenCacheManagement onBack={() => setScreen("main")} />
-      )} */}
+      {screen === "developer-mode" && (
+        <DeveloperMode onBack={() => setScreen("main")} />
+      )}
     </>
   );
 };

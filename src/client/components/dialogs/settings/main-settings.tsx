@@ -10,7 +10,7 @@ import {
   RotateCcwKey,
   TimerReset,
   XIcon,
-  Database,
+  SquareDashedBottomCode,
 } from "lucide-react";
 import {
   DialogContent,
@@ -31,7 +31,7 @@ interface MainSettingsProps {
   onDeleteSeedPhrase: () => void;
   onResetWallet: () => void;
   onActiveNetwork: () => void;
-  onTokenCacheManagement: () => void;
+  onDeveloperMode: () => void;
 }
 
 const MainSettings = ({
@@ -41,7 +41,7 @@ const MainSettings = ({
   onDeleteSeedPhrase,
   onResetWallet,
   onActiveNetwork,
-  onTokenCacheManagement,
+  onDeveloperMode,
 }: MainSettingsProps) => {
   const { closeDialog } = useDialogStore();
 
@@ -69,9 +69,9 @@ const MainSettings = ({
                 arrowLeft: true,
               },
               {
-                icon: Database,
-                label: "Token Cache",
-                onClick: onTokenCacheManagement,
+                icon: SquareDashedBottomCode,
+                label: "Developer Mode",
+                onClick: onDeveloperMode,
                 arrowLeft: true,
               },
             ]}

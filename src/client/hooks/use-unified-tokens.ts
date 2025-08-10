@@ -4,6 +4,8 @@ import { useNativeBalance, NativeToken } from "./use-native-balance";
 import useNetworkSettingsStore from "@/client/hooks/use-network-store";
 import { UnifiedToken } from "../components/token-list";
 import { useAlchemyTokens } from "./use-alchemy-tokens";
+import useDevModeStore from "./use-dev-mode";
+import { useUnifiedTokensTestnet } from "./use-unified-tokens-testnet";
 
 export interface EvmToken {
     token: {
@@ -57,17 +59,19 @@ export interface UseUnifiedTokensResult {
 }
 
 export const useUnifiedTokens = (): UseUnifiedTokensResult => {
+    const { isDevMode } = useDevModeStore();
+
+    // Always call all hooks in the same order
+    const testnetResult = useUnifiedTokensTestnet();
     const { isNetworkActive } = useNetworkSettingsStore();
     const isHyperliquidActive = isNetworkActive("hyperevm");
 
-    // Fetch Hyperliquid EVM tokens only if Hyperliquid network is active
     const { evmData, isEvmLoading, evmError, evmValue } = useHlPortfolioData({
         fetchSpot: false,
         fetchPerps: false,
-        fetchEvm: isHyperliquidActive,
+        fetchEvm: isHyperliquidActive && !isDevMode,
     });
 
-    // Fetch tokens from Ethereum, Base, Arbitrum with pricing
     const {
         allTokens: alchemyTokens,
         totalTokensCount: alchemyTokenCount,
@@ -76,7 +80,6 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
         hasError: hasAlchemyError,
     } = useAlchemyTokens();
 
-    // Fetch native tokens
     const {
         nativeTokens,
         totalTokensCount: nativeTokensCount,
@@ -85,42 +88,21 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
         hasError: hasNativeError,
     } = useNativeBalance();
 
-    // Debug logging
-    console.log('🔍 useUnifiedTokens - Native Tokens Debug:', {
-        nativeTokensCount,
-        nativeTokensLength: nativeTokens?.length || 0,
-        nativeTotalValue,
-        isNativeLoading,
-        hasNativeError,
-        nativeTokens: nativeTokens?.map(t => ({
-            chain: t.chain,
-            symbol: t.symbol,
-            balance: t.balanceFormatted
-        })) || []
-    });
-
-    // Safely access token prices data for Hyperliquid
     const tokenPricesData: TokenPricesData = evmData?.tokenPricesData || {};
 
-    // Calculate individual values
     const hyperliquidValue = isEvmLoading || !isHyperliquidActive ? 0 : evmValue || 0;
     const safeAlchemyTotalValue = alchemyTotalValue || 0;
     const safeNativeTotalValue = nativeTotalValue || 0;
 
-    // Calculate total balance
     const totalBalance = hyperliquidValue + safeAlchemyTotalValue + safeNativeTotalValue;
 
-    // Calculate individual token counts
     const hyperliquidTokenCount = isHyperliquidActive ? evmData?.tokensData?.items?.length || 0 : 0;
     const totalTokenCount = hyperliquidTokenCount + alchemyTokenCount + nativeTokensCount;
 
-    // Unify all tokens from all chains and sort by USD value
     const allUnifiedTokens = useMemo(() => {
         const unifiedTokens: UnifiedToken[] = [];
 
-        // Add native tokens first (they will be sorted by value later)
         if (nativeTokens && Array.isArray(nativeTokens)) {
-            console.log('🔍 Adding Native Tokens to Unified List:', nativeTokens.length);
             nativeTokens.forEach((nativeToken: NativeToken) => {
                 unifiedTokens.push({
                     chain: nativeToken.chain,
@@ -136,155 +118,87 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
                     isNative: true,
                 });
             });
-        } else {
-            console.log('🔍 No Native Tokens to Add:', { nativeTokens, isArray: Array.isArray(nativeTokens) });
         }
 
-        // Add Hyperliquid tokens only if Hyperliquid network is active
         if (isHyperliquidActive && evmData?.tokensData?.items) {
-            evmData.tokensData.items.forEach((item: EvmToken) => {
-                // Add null checks for token properties
-                if (!item?.token?.symbol || !item?.token?.address || !item?.value) {
-                    return; // Skip invalid tokens
-                }
-
-                const balanceFormatted =
-                    parseFloat(item.value) /
-                    Math.pow(10, parseFloat(item.token.decimals || "18"));
-                const tokenAddress = item.token.address.toLowerCase();
-                const usdPrice = tokenPricesData[tokenAddress]
-                    ? parseFloat(tokenPricesData[tokenAddress])
-                    : 0;
-                const usdValue = balanceFormatted * usdPrice;
+            evmData.tokensData.items.forEach((item: any) => {
+                const priceStr = tokenPricesData[item.token.address];
+                const price = priceStr ? parseFloat(priceStr) : 0;
+                const balance = parseFloat(item.value) / Math.pow(10, parseInt(item.token.decimals));
+                const usdValue = balance * price;
 
                 unifiedTokens.push({
                     chain: "hyperevm",
-                    chainName: "HyperEVM",
-                    symbol: item.token.symbol || "UNKNOWN",
-                    name: item.token.name || "Unknown Token",
+                    chainName: "Hyperliquid EVM",
+                    symbol: item.token.symbol,
+                    name: item.token.name,
                     balance: item.value,
-                    balanceFormatted,
+                    balanceFormatted: balance,
                     usdValue,
-                    usdPrice: usdPrice > 0 ? usdPrice : undefined,
+                    usdPrice: price,
                     contractAddress: item.token.address,
-                    decimals: parseInt(item.token.decimals || "18"),
-                    isNative: false, // HyperEVM ERC-20 tokens are not native
+                    decimals: parseInt(item.token.decimals),
+                    isNative: item.token.isNative,
+                    icon_url: item.token.icon_url || undefined,
                 });
             });
         }
 
-        // Add Alchemy tokens (Ethereum, Base, Arbitrum)
         if (alchemyTokens && Array.isArray(alchemyTokens)) {
-            alchemyTokens.forEach((token) => {
-                // Add null checks for token properties
-                if (!token?.symbol || !token?.contractAddress) {
-                    return; // Skip invalid tokens
-                }
-
-                unifiedTokens.push({
-                    chain: token.chain || "ethereum",
-                    chainName: token.chainName || "Unknown Chain",
-                    symbol: token.symbol || "UNKNOWN",
-                    name: token.name || "Unknown Token",
-                    balance: token.balance || "0",
-                    balanceFormatted: token.balanceFormatted || 0,
-                    usdValue: token.usdValue || 0,
-                    usdPrice: token.usdPrice,
-                    contractAddress: token.contractAddress,
-                    decimals: token.decimals || 18,
-                    isNative: false, // Alchemy ERC-20 tokens are not native
-                    icon_url: token.logo,
-                });
+            alchemyTokens.forEach((token: any) => {
+                unifiedTokens.push(token);
             });
         }
 
-        // Sort by USD value (highest to lowest), mixing native and non-native tokens
-        return unifiedTokens.sort((a, b) => {
-            // Priority: Always show HYPE (Hyperliquid native) at the top
-            const isHype = (t: UnifiedToken) =>
-                (t.symbol && t.symbol.toUpperCase() === "HYPE") ||
-                (t.chain === "hyperevm" && t.isNative);
+        // Sort by USD value (highest first)
+        return unifiedTokens.sort((a, b) => (b.usdValue || 0) - (a.usdValue || 0));
+    }, [nativeTokens, isHyperliquidActive, evmData?.tokensData?.items, tokenPricesData, alchemyTokens]);
 
-            const aIsHype = isHype(a);
-            const bIsHype = isHype(b);
-            if (aIsHype !== bIsHype) {
-                return aIsHype ? -1 : 1;
-            }
+    // If dev mode, map from testnetResult but keep hooks order intact
+    if (isDevMode) {
+        return {
+            allUnifiedTokens: testnetResult.allUnifiedTokens,
+            totalBalance: testnetResult.totalBalance,
+            totalTokenCount: testnetResult.totalTokenCount,
+            hyperliquidValue: 0,
+            alchemyTotalValue: 0,
+            nativeTotalValue: testnetResult.totalBalance,
+            hyperliquidTokenCount: 0,
+            alchemyTokenCount: 0,
+            nativeTokensCount: testnetResult.totalTokenCount,
+            isLoading: testnetResult.isLoading,
+            isEvmLoading: false,
+            isAlchemyLoading: false,
+            isNativeLoading: testnetResult.isLoading,
+            hasError: testnetResult.hasError,
+            hasCriticalError: testnetResult.hasCriticalError,
+            evmError: null,
+            hasAlchemyError: false,
+            hasNativeError: testnetResult.hasError,
+            isHyperliquidActive: true,
+        };
+    }
 
-            // Sort by USD value first (highest to lowest)
-            if (a.usdValue && b.usdValue) {
-                return b.usdValue - a.usdValue;
-            }
-            if (a.usdValue && !b.usdValue) return -1;
-            if (!a.usdValue && b.usdValue) return 1;
-
-            // If no USD values, sort by chain and symbol with null checks
-            if (a.chain && b.chain && a.chain !== b.chain) {
-                return a.chain.localeCompare(b.chain);
-            }
-
-            // Sort by symbol with null checks
-            if (a.symbol && b.symbol) {
-                return a.symbol.localeCompare(b.symbol);
-            }
-
-            // Fallback: if one has symbol and other doesn't
-            if (a.symbol && !b.symbol) return -1;
-            if (!a.symbol && b.symbol) return 1;
-
-            // Both don't have symbols, maintain order
-            return 0;
-        });
-    }, [
-        evmData?.tokensData?.items,
-        alchemyTokens,
-        nativeTokens,
-        tokenPricesData,
-        isHyperliquidActive,
-    ]);
-
-    // Check if any data is loading
-    const isLoading = isEvmLoading || isAlchemyLoading || isNativeLoading;
-
-    // More nuanced error handling - only show error if all data sources fail
-    const hasError = !!evmError || !!hasAlchemyError || !!hasNativeError;
-    const hasCriticalError =
-        (!!evmError && isHyperliquidActive) ||
-        (!!hasAlchemyError && !!hasNativeError) ||
-        (!!hasAlchemyError && !isHyperliquidActive && !nativeTokens?.length);
-
+    // Non-dev mode result
     return {
-        // Token data
         allUnifiedTokens,
-
-        // Totals
         totalBalance,
         totalTokenCount,
-
-        // Individual totals
         hyperliquidValue,
         alchemyTotalValue: safeAlchemyTotalValue,
         nativeTotalValue: safeNativeTotalValue,
-
-        // Individual counts
         hyperliquidTokenCount,
         alchemyTokenCount,
         nativeTokensCount,
-
-        // Loading states
-        isLoading,
+        isLoading: isEvmLoading || isAlchemyLoading || isNativeLoading,
         isEvmLoading,
         isAlchemyLoading,
         isNativeLoading,
-
-        // Error states
-        hasError,
-        hasCriticalError,
+        hasError: !!(evmError || hasAlchemyError || hasNativeError),
+        hasCriticalError: !!(evmError && totalBalance === 0 && allUnifiedTokens.length === 0),
         evmError,
         hasAlchemyError,
         hasNativeError,
-
-        // Network state
         isHyperliquidActive,
     };
 }; 

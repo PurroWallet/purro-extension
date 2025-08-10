@@ -3,8 +3,10 @@ import { createPortal } from "react-dom";
 import { cn } from "@/client/lib/utils";
 import { motion, AnimatePresence } from "motion/react";
 import { supportedEVMChains } from "@/background/constants/supported-chains";
+import { supportedTestnetChains } from "@/background/constants/supported-testnet-chains";
 import { hyperliquidLogo } from "@/assets/logo";
 import useNetworkSettingsStore from "@/client/hooks/use-network-store";
+import useDevModeStore from "@/client/hooks/use-dev-mode";
 import { ChainTypeClient } from "@/types/wallet";
 
 interface SupportedChainsDropdownProps {
@@ -25,8 +27,9 @@ const SupportedChainsDropdown = ({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // Access active networks from global settings store
+  // Access active networks from global settings store and dev mode
   const { networks } = useNetworkSettingsStore();
+  const { isDevMode } = useDevModeStore();
 
   // Build an array of active network slugs (e.g. 'ethereum', 'base', ...)
   const activeNetworkSlugs = useMemo<ChainTypeClient[]>(
@@ -37,13 +40,15 @@ const SupportedChainsDropdown = ({
     [networks]
   );
 
-  // Mapping between EVM hex chainIds (used by supportedEVMChains) and our internal slugs
+  // Mapping between EVM hex chainIds and our internal slugs
   const CHAIN_ID_TO_SLUG: Record<string, ChainTypeClient> = {
+    // Mainnet chains
     "0x1": "ethereum",
     "0xa4b1": "arbitrum",
     "0x2105": "base",
     "0x3e7": "hyperevm",
-    "0x3e6": "hyperevm", // testnet maps to same slug
+    // Testnet chains
+    "0x3e6": "hyperevm", // HyperEVM Testnet uses same slug as mainnet
   } as const;
 
   const handleChainSelect = (chainId: string) => {
@@ -51,22 +56,25 @@ const SupportedChainsDropdown = ({
     onToggle(); // Close dropdown after selection
   };
 
-  // Filter supported chains based on active network slugs
+  // Filter supported chains based on dev mode and active network slugs
   const displayedChains = useMemo(() => {
-    return Object.values(supportedEVMChains).filter((chain) => {
+    // Choose chain source based on dev mode
+    const chainSource = isDevMode ? supportedTestnetChains : supportedEVMChains;
+
+    return Object.values(chainSource).filter((chain) => {
       const slug = CHAIN_ID_TO_SLUG[chain.chainId];
       return activeNetworkSlugs.includes(slug);
     });
-  }, [activeNetworkSlugs]);
+  }, [activeNetworkSlugs, isDevMode]);
 
-  // Build ordered list of chains for logo row (Hyperliquid first)
-  const logoRowChains = useMemo(() => {
+  // Build ordered list of chains (HyperEVM first)
+  const sortedChains = useMemo(() => {
     const ordered = [...displayedChains];
     ordered.sort((a, b) => {
       const slugA = CHAIN_ID_TO_SLUG[a.chainId];
       const slugB = CHAIN_ID_TO_SLUG[b.chainId];
-      if (slugA === "hyperevm") return -1;
-      if (slugB === "hyperevm") return 1;
+      if (slugA === "hyperevm" && slugB !== "hyperevm") return -1;
+      if (slugB === "hyperevm" && slugA !== "hyperevm") return 1;
       return 0;
     });
     return ordered;
@@ -128,19 +136,16 @@ const SupportedChainsDropdown = ({
         onClick={onToggle}
       >
         <div className="flex items-center -space-x-2">
-          {logoRowChains.length > 0 ? (
-            logoRowChains.map((chain, idx) => {
-              if (chain.chainId === "0x3e7") return null;
-              return (
-                <img
-                  key={chain.chainId}
-                  src={chain.logo}
-                  alt={chain.chainName}
-                  className="size-5 rounded-full"
-                  style={{ zIndex: logoRowChains.length - idx }}
-                />
-              );
-            })
+          {sortedChains.length > 0 ? (
+            sortedChains.map((chain, idx) => (
+              <img
+                key={chain.chainId}
+                src={chain.logo}
+                alt={chain.chainName}
+                className="size-5 rounded-full"
+                style={{ zIndex: sortedChains.length - idx }}
+              />
+            ))
           ) : (
             <img src={hyperliquidLogo} alt="Hyperliquid" className="size-5" />
           )}
@@ -164,9 +169,9 @@ const SupportedChainsDropdown = ({
               }}
             >
               <p className="p-2 text-sm font-medium text-[var(--text-color)] border-b border-white/10">
-                Supported Chains
+                {isDevMode ? "Testnet Chains" : "Supported Chains"}
               </p>
-              {displayedChains.map((chain) => (
+              {sortedChains.map((chain) => (
                 <button
                   key={chain.chainId}
                   onClick={() => handleChainSelect(chain.chainId)}

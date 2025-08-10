@@ -2,13 +2,18 @@ import { formatCurrency } from "@/client/utils/formatters";
 import TabsLoading from "./tabs-loading";
 import TabsError from "./tabs-error";
 import { useState, useEffect } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, PlusIcon } from "lucide-react";
 import { useUnifiedTokens } from "@/client/hooks/use-unified-tokens";
 import TokenList from "@/client/components/token-list";
+import useDevModeStore from "@/client/hooks/use-dev-mode";
+import useDialogStore from "@/client/hooks/use-dialog-store";
+import AddTestnetToken from "@/client/components/dialogs/add-testnet-token";
 
 const WalletTabsEVM = () => {
   // Track performance
   const [loadStartTime, setLoadStartTime] = useState<number | null>(null);
+  const { isDevMode } = useDevModeStore();
+  const { openDialog, closeDialog } = useDialogStore();
 
   // Use the unified tokens hook
   const {
@@ -18,78 +23,28 @@ const WalletTabsEVM = () => {
     isLoading,
     hasError,
     hasCriticalError,
-    evmError,
-    hasAlchemyError,
-    hasNativeError,
     isAlchemyLoading,
     alchemyTokenCount,
   } = useUnifiedTokens();
-
-  // Debug logging
-  console.log("🔍 EVM Tab - useUnifiedTokens Debug:", {
-    totalBalance,
-    totalTokenCount,
-    allUnifiedTokensLength: allUnifiedTokens?.length || 0,
-    isLoading,
-    hasError,
-    hasNativeError,
-    nativeTokensCount: allUnifiedTokens?.filter((t) => t.isNative).length || 0,
-  });
 
   // Track loading performance
   useEffect(() => {
     if (isAlchemyLoading && !loadStartTime) {
       setLoadStartTime(Date.now());
-      console.log("🚀 EVM Tab: Starting token fetch with optimized caching");
     } else if (!isAlchemyLoading && loadStartTime) {
-      const loadTime = Date.now() - loadStartTime;
-      console.log(
-        `✅ EVM Tab: Loaded ${alchemyTokenCount} tokens in ${loadTime}ms (with metadata cache optimization)`
-      );
       setLoadStartTime(null);
     }
   }, [isAlchemyLoading, loadStartTime, alchemyTokenCount]);
-
-  // Log errors for debugging
-  if (evmError) {
-    console.error("EVM Data Error:", evmError);
-  }
-  if (hasAlchemyError) {
-    console.error("Alchemy Data Error:", hasAlchemyError);
-  }
-  if (hasNativeError) {
-    console.error("Native Balance Error:", hasNativeError);
-  }
 
   if (isLoading) return <TabsLoading />;
 
   // Only show error if we have critical errors and no data at all
   if (hasCriticalError && totalBalance === 0 && allUnifiedTokens.length === 0) {
-    // Log detailed error info for debugging
-    console.error("EVM Tab Critical Error Details:", {
-      evmError,
-      hasAlchemyError,
-      hasNativeError,
-      allUnifiedTokensLength: allUnifiedTokens?.length,
-      totalBalance,
-    });
     return <TabsError />;
   }
 
-  // Debug final state before render
-  console.log("🔍 EVM Tab Final State:", {
-    isLoading,
-    hasError,
-    hasCriticalError,
-    totalBalance,
-    totalTokenCount,
-    allUnifiedTokensLength: allUnifiedTokens?.length || 0,
-    showingData: totalBalance > 0 || allUnifiedTokens.length > 0,
-  });
-
   return (
     <div className="space-y-6 p-2">
-      {/* Show simple warning for any errors */}
       {hasError && !isLoading ? (
         <div className="bg-orange-500/10 border border-orange-500/10 rounded-lg p-3 mb-4">
           <div className="flex items-center gap-2">
@@ -127,6 +82,20 @@ const WalletTabsEVM = () => {
           emptyMessage="No tokens found across all supported chains"
         />
       </div>
+
+      {isDevMode && (
+        <div className="w-full flex justify-center">
+          <button
+            className="flex items-center gap-2 cursor-pointer hover:underline p-2 text-sm text-white/80"
+            onClick={() =>
+              openDialog(<AddTestnetToken onClose={() => closeDialog()} />)
+            }
+          >
+            <PlusIcon className="size-5" />
+            <span>Add Testnet Token</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };
