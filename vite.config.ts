@@ -4,6 +4,10 @@ import react from '@vitejs/plugin-react'
 import { copyFileSync } from 'fs'
 import { resolve } from 'path'
 
+// Constants for easy customization
+const EXTERNAL_DEPENDENCIES: string[] = []
+const OPTIMIZE_DEPENDENCIES = ['buffer', 'process', 'ethers', '@solana/web3.js', '@mysten/sui', "bs58", "ws"]
+
 export default defineConfig({
     plugins: [
         tailwindcss(),
@@ -35,6 +39,10 @@ export default defineConfig({
                 injectedProviderBundle: resolve(__dirname, 'src/background/providers/injected-provider-bundle.ts'),
                 'purro-icon': resolve(__dirname, 'src/background/utils/purro-icon.ts'),
             },
+            // Configure external dependencies and specific resolutions
+            external: EXTERNAL_DEPENDENCIES,
+            // Handle CommonJS packages properly
+            plugins: [],
             output: {
                 entryFileNames: (chunkInfo) => {
                     // Ensure background and content scripts are properly named
@@ -74,13 +82,23 @@ export default defineConfig({
         global: 'globalThis',
     },
     optimizeDeps: {
-        include: ['buffer', 'process', 'ethers', '@solana/web3.js', '@mysten/sui', "bs58"]
+        include: OPTIMIZE_DEPENDENCIES,
+        // Force pre-bundling of hyperliquid to avoid CommonJS issues
+        force: true,
+        esbuildOptions: {
+            // Ensure CommonJS compatibility
+            target: 'es2022',
+            format: 'esm'
+        }
     },
     resolve: {
         alias: {
             '@': resolve(__dirname, 'src'),
             buffer: 'buffer',
             process: 'process',
-        }
+            hyperliquid: resolve(__dirname, 'node_modules/hyperliquid/dist/index.mjs')
+        },
+        // Ensure browser-friendly resolution
+        conditions: ['browser', 'module', 'import', 'default']
     }
 })

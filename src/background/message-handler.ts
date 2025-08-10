@@ -5,6 +5,7 @@ import { authHandler } from './handlers/auth-handler';
 import { storageHandler } from './handlers/storage-handler';
 import { evmHandler } from './handlers/evm-handler';
 import { evmRpcHandler } from './handlers/evm-rpc-handler';
+import { hyperliquidHandler } from './handlers/hyperliquid-handler';
 
 export class MessageHandler {
     async handleMessage(message: MessageRequest, sender: chrome.runtime.MessageSender): Promise<MessageResponse> {
@@ -146,6 +147,20 @@ export class MessageHandler {
                     break;
                 case 'ETH_REJECT_SIGN':
                     result = await evmHandler.handleRejectSign(data);
+                    break;
+                case 'EVM_SEND_TRANSACTION':
+                    result = await evmHandler.handleSendTransaction(data, sender);
+                    break;
+                case 'EVM_ESTIMATE_GAS':
+                    result = await evmHandler.estimateTransactionGas(data.transaction, data.chainId);
+                    break;
+
+                // Hyperliquid DEX
+                case 'HYPERLIQUID_TRANSFER_BETWEEN_SPOT_AND_PERP':
+                    result = await hyperliquidHandler.transferBetweenSpotAndPerp(data);
+                    break;
+                case 'HYPERLIQUID_SEND_TOKEN':
+                    result = await hyperliquidHandler.sendToken(data);
                     break;
 
                 default:

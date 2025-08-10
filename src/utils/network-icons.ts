@@ -2,6 +2,7 @@ import { hyperliquidLogo, arbitrumLogo, baseLogo, ethereumLogo } from "@/assets/
 
 // Centralized mapping between our internal chain slug IDs and logo assets
 export const NETWORK_ICONS = {
+    hyperliquid: hyperliquidLogo,
     hyperevm: hyperliquidLogo,
     ethereum: ethereumLogo,
     base: baseLogo,

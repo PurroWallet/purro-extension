@@ -1,17 +1,17 @@
-import { useQueries } from '@tanstack/react-query';
-import { useMemo, useState, useEffect } from 'react';
-import { HyperliquidApiSpotAssetContext } from '@/client/types/hyperliquid-api';
-import { HyperScanTokenBalanceResponse } from '@/client/types/hyperscan-api';
-import { fetchHyperEvmTokenPrices } from '@/client/services/gecko-terminal-api';
-import { fetchUserPerpsBalance } from '@/client/services/hyperliquid-api';
-import { fetchSpotAssetsContext } from '@/client/services/hyperliquid-api';
-import QueryKeys from '@/client/utils/query-keys';
-import { fetchUserSpotBalance } from '@/client/services/hyperliquid-api';
-import { fetchHyperEvmERC20Tokens } from '@/client/services/hyperscan-api';
-import useWalletStore from './use-wallet-store';
-import SpotDataIndexer from '../lib/spot-data-indexer';
+import { useQueries, useQuery } from "@tanstack/react-query";
+import { fetchSpotAssetsContext, fetchUserSpotBalance, fetchUserPerpsBalance } from "../services/hyperliquid-api";
+import { fetchTokenPrices } from "../services/gecko-terminal-api";
+import { fetchHyperEvmERC20Tokens } from "../services/hyperscan-api";
+import QueryKeys from "../utils/query-keys";
+import useWalletStore from "./use-wallet-store";
+import SpotDataIndexer from "../lib/spot-data-indexer";
+import { HyperliquidApiSpotAssetContext } from "../types/hyperliquid-api";
+import { HyperScanTokenBalanceResponse } from "../types/hyperscan-api";
+import { useMemo } from "react";
 
-// Thêm interface cho options
+// Constants for easy customization
+const ADDRESS_VALIDATION_REGEX = /^0x[a-fA-F0-9]{40}$/;
+
 interface PortfolioOptions {
     fetchSpot?: boolean;
     fetchPerps?: boolean;
@@ -30,6 +30,11 @@ export const useHlPortfolioData = (
     const userAddress = activeWallet?.eip155?.address || '';
     const { fetchSpot = true, fetchPerps = true, fetchEvm = true } = options;
 
+    // Helper function to validate address
+    const isValidAddress = (addr: string): boolean => {
+        return !!addr && ADDRESS_VALIDATION_REGEX.test(addr);
+    };
+
     // Xây dựng mảng queries dựa trên options
     const queries = [];
 
@@ -40,6 +45,7 @@ export const useHlPortfolioData = (
                 queryKey: [QueryKeys.SPOT_USER_BALANCE, userAddress],
                 queryFn: () => fetchUserSpotBalance(userAddress),
                 staleTime: 60 * 1000, // 60 seconds
+                enabled: isValidAddress(userAddress),
             },
             {
                 queryKey: [QueryKeys.SPOT_ASSETS],
@@ -55,6 +61,7 @@ export const useHlPortfolioData = (
             queryKey: [QueryKeys.PERPS_USER_BALANCE, userAddress],
             queryFn: () => fetchUserPerpsBalance(userAddress),
             staleTime: 60 * 1000, // 60 seconds
+            enabled: isValidAddress(userAddress),
         });
     }
 
@@ -64,6 +71,7 @@ export const useHlPortfolioData = (
             queryKey: [QueryKeys.HYPER_EVM_ERC20_TOKENS, userAddress],
             queryFn: () => fetchHyperEvmERC20Tokens(userAddress),
             staleTime: 60 * 1000, // 60 seconds
+            enabled: isValidAddress(userAddress),
         });
     }
 
@@ -130,188 +138,99 @@ export const useHlPortfolioData = (
         );
     }, [fetchEvm, evmTokensQuery.data]);
 
-    const tokenPricesQuery = useQueries({
-        queries: [
-            {
-                queryKey: [QueryKeys.HYPER_EVM_TOKEN_PRICES, tokenAddresses],
-                queryFn: () =>
-                    tokenAddresses.length > 0
-                        ? fetchHyperEvmTokenPrices(tokenAddresses)
-                        : Promise.resolve(null),
-                staleTime: 60 * 1000, // 60 seconds
-                enabled: fetchEvm && tokenAddresses.length > 0, // Chỉ run nếu fetchEvm=true và có token addresses
-            },
-        ],
-    })[0];
+    const tokenPricesQuery = useQuery({
+        queryKey: [QueryKeys.HYPER_EVM_TOKEN_PRICES, tokenAddresses],
+        queryFn: () => fetchTokenPrices('hyperevm', tokenAddresses),
+        staleTime: 60 * 1000, // 60 seconds
+        enabled: tokenAddresses.length > 0,
+    });
 
-    // Calculate EVM value
+    // Process token prices data
     const tokenPricesData = useMemo(() => {
-        if (!fetchEvm) return {};
-        // Đảm bảo chỉ trả về data khi đã load xong và có data
-        if (tokenPricesQuery.isLoading || !tokenPricesQuery.data?.data?.attributes?.token_prices) {
-
+        if (!tokenPricesQuery.data?.data?.attributes?.token_prices) {
             return {};
         }
-        return tokenPricesQuery.data.data.attributes.token_prices;
-    }, [fetchEvm, tokenPricesQuery.data, tokenPricesQuery.isLoading]);
+        return tokenPricesQuery.data.data.attributes.token_prices as { [key: string]: string };
+    }, [tokenPricesQuery.data]);
 
+    // Calculate EVM tokens value
     const evmValue = useMemo(() => {
-        // Trả về 0 nếu đang loading hoặc chưa có data
         if (!fetchEvm || !evmTokensQuery.data?.items) return 0;
 
-        // Nếu có tokens nhưng prices đang loading, trả về 0 để tránh flash
-        if (tokenAddresses.length > 0 && tokenPricesQuery.isLoading) return 0;
-
-        // Nếu không có token addresses, có thể có native token
-        if (tokenAddresses.length === 0) return 0;
-
-        const calculatedValue = evmTokensQuery.data.items.reduce(
-            (total: number, item: HyperScanTokenBalanceResponse) => {
-                const value = parseFloat(item.value) / Math.pow(10, parseFloat(item.token.decimals));
-                const tokenAddress = item.token.address.toLowerCase();
-                const price =
-                    tokenPricesData && tokenAddress in tokenPricesData
-                        ? parseFloat(tokenPricesData[tokenAddress])
-                        : 0;
-
-                // Đảm bảo không có NaN
-                const itemValue = (isNaN(value) ? 0 : value) * (isNaN(price) ? 0 : price);
-                return total + (isNaN(itemValue) ? 0 : itemValue);
-            },
-            0
-        );
-
-        // Đảm bảo trả về số hợp lệ
-        return isNaN(calculatedValue) ? 0 : calculatedValue;
-    }, [fetchEvm, evmTokensQuery.data, tokenPricesData, tokenPricesQuery.isLoading, tokenAddresses.length]);
+        return evmTokensQuery.data.items.reduce((total: number, item: HyperScanTokenBalanceResponse) => {
+            const priceStr = tokenPricesData[item.token.address];
+            const price = priceStr ? parseFloat(priceStr) : 0;
+            const balance = parseFloat(item.value) / Math.pow(10, parseInt(item.token.decimals));
+            return total + (balance * price);
+        }, 0);
+    }, [fetchEvm, evmTokensQuery.data, tokenPricesData]);
 
     // Calculate perps value
     const perpsValue = useMemo(() => {
-        if (!fetchPerps) return 0;
+        if (!fetchPerps || !perpsBalanceQuery.data) return 0;
 
+        try {
+            const perpsData = perpsBalanceQuery.data;
+            if (!perpsData || !perpsData.assetPositions) return 0;
 
-
-        if (!perpsBalanceQuery.data?.marginSummary?.accountValue) return 0;
-        return parseFloat(perpsBalanceQuery.data.marginSummary.accountValue);
-    }, [fetchPerps, perpsBalanceQuery.data, perpsBalanceQuery.isLoading, perpsBalanceQuery.error]);
-
-    // Check loading and error states
-    const isSpotLoading = fetchSpot && (spotBalanceQuery.isLoading || spotContextQuery.isLoading);
-    const isPerpsLoading = fetchPerps && perpsBalanceQuery.isLoading;
-    const isEvmLoading =
-        fetchEvm &&
-        (evmTokensQuery.isLoading ||
-            (tokenAddresses.length > 0 && tokenPricesQuery.isLoading));
-
-    // Use state to keep stable value and prevent flash to 0
-    const [stableValue, setStableValue] = useState(0);
-
-    // Calculate total portfolio value
-    const totalValue = useMemo(() => {
-        // Only include values from enabled features
-        const safeSpotValue = fetchSpot && !isNaN(spotValue) ? spotValue : 0;
-        const safePerpsValue = fetchPerps && !isNaN(perpsValue) ? perpsValue : 0;
-        const safeEvmValue = fetchEvm && !isNaN(evmValue) ? evmValue : 0;
-
-        const currentValue = safeSpotValue + safePerpsValue + safeEvmValue;
-
-        return isNaN(currentValue) ? 0 : currentValue;
-    }, [fetchSpot, fetchPerps, fetchEvm, spotValue, perpsValue, evmValue]);
-
-    // Update stable value only when not loading and value is valid
-    // Also reset stable value when features are disabled
-    useEffect(() => {
-        if (!isSpotLoading && !isPerpsLoading && !isEvmLoading && !isNaN(totalValue)) {
-            setStableValue(totalValue);
+            return Object.values(perpsData.assetPositions).reduce((total: number, position: any) => {
+                const notionalUsd = parseFloat(position.notionalUsd || '0');
+                return total + notionalUsd;
+            }, 0);
+        } catch (error) {
+            console.error('Error calculating perps value:', error);
+            return 0;
         }
-        // Reset stable value if all features are disabled
-        if (!fetchSpot && !fetchPerps && !fetchEvm) {
-            setStableValue(0);
-        }
-    }, [totalValue, isSpotLoading, isPerpsLoading, isEvmLoading, fetchSpot, fetchPerps, fetchEvm]);
+    }, [fetchPerps, perpsBalanceQuery.data]);
 
-    // Return stable value if currently loading and we have a previous stable value
-    const displayValue = useMemo(() => {
-        if ((isSpotLoading || isPerpsLoading || isEvmLoading) && stableValue > 0) {
-            return stableValue;
-        }
-        return totalValue;
-    }, [totalValue, stableValue, isSpotLoading, isPerpsLoading, isEvmLoading]);
+    // Calculate total value
+    const totalValue = spotValue + evmValue + perpsValue;
 
-    const spotError = fetchSpot && (spotBalanceQuery.error || spotContextQuery.error);
-    const perpsError = fetchPerps && perpsBalanceQuery.error;
-    const evmError = fetchEvm && (evmTokensQuery.error || tokenPricesQuery.error);
+    // Prepare return data
+    const evmData = {
+        tokensData: evmTokensQuery.data,
+        tokenPricesData,
+    };
 
-    // Combine all data for easy access
     return {
-        // Portfolio values
-        totalValue: displayValue,
-        spotValue: fetchSpot ? spotValue : 0,
-        perpsValue: fetchPerps ? perpsValue : 0,
-        evmValue: fetchEvm ? evmValue : 0,
+        // Individual data
+        spotData: {
+            balances: userSpotBalances,
+            context: spotContextQuery.data,
+        },
+        perpsData: perpsBalanceQuery.data,
+        evmData,
+
+        // Individual values
+        spotValue,
+        evmValue,
+        perpsValue,
+        totalValue,
 
         // Loading states
-        isSpotLoading,
-        isPerpsLoading,
-        isEvmLoading,
-        isLoading: isSpotLoading || isPerpsLoading || isEvmLoading,
+        isSpotLoading: spotBalanceQuery.isLoading || spotContextQuery.isLoading,
+        isPerpsLoading: perpsBalanceQuery.isLoading,
+        isEvmLoading: evmTokensQuery.isLoading,
+        isLoading: spotBalanceQuery.isLoading || spotContextQuery.isLoading || perpsBalanceQuery.isLoading || evmTokensQuery.isLoading,
 
         // Error states
-        spotError,
-        perpsError,
-        evmError,
-        hasError: !!spotError || !!perpsError || !!evmError,
-
-        // Raw data
-        spotData: fetchSpot
-            ? {
-                balanceData: spotBalanceQuery.data,
-                contextData: spotContextQuery.data,
-                userBalances: userSpotBalances,
-                indexer: spotIndexer,
-            }
-            : null,
-        perpsData: fetchPerps ? perpsBalanceQuery.data : null,
-        evmData: fetchEvm
-            ? {
-                tokensData: evmTokensQuery.data,
-                tokenPricesData,
-            }
-            : null,
+        spotError: spotBalanceQuery.error || spotContextQuery.error,
+        perpsError: perpsBalanceQuery.error,
+        evmError: evmTokensQuery.error,
+        hasError: !!(spotBalanceQuery.error || spotContextQuery.error || perpsBalanceQuery.error || evmTokensQuery.error),
 
         // Refetch functions
-        refetchAll: () => {
-            const promises = [];
-            if (fetchSpot) {
-                promises.push(spotBalanceQuery.refetch());
-                promises.push(spotContextQuery.refetch());
-            }
-            if (fetchPerps) {
-                promises.push(perpsBalanceQuery.refetch());
-            }
-            if (fetchEvm) {
-                promises.push(evmTokensQuery.refetch());
-                if (tokenAddresses.length > 0) {
-                    promises.push(tokenPricesQuery.refetch());
-                }
-            }
-            return Promise.all(promises);
-        },
         refetchSpot: () => {
-            if (!fetchSpot) return Promise.resolve();
-            return Promise.all([spotBalanceQuery.refetch(), spotContextQuery.refetch()]);
+            spotBalanceQuery.refetch();
+            spotContextQuery.refetch();
         },
-        refetchPerps: () => {
-            if (!fetchPerps) return Promise.resolve();
-            return perpsBalanceQuery.refetch();
-        },
-        refetchEvm: async () => {
-            if (!fetchEvm) return Promise.resolve();
-            const evmPromise = evmTokensQuery.refetch();
-            if (tokenAddresses.length > 0) {
-                return evmPromise.then(() => tokenPricesQuery.refetch());
-            }
-            return evmPromise;
+        refetchPerps: perpsBalanceQuery.refetch,
+        refetchEvm: evmTokensQuery.refetch,
+        refetchAll: () => {
+            spotBalanceQuery.refetch();
+            spotContextQuery.refetch();
+            perpsBalanceQuery.refetch();
+            evmTokensQuery.refetch();
         },
     };
 };

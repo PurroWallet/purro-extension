@@ -148,7 +148,14 @@ const History = () => {
           </div>
         }
         endMessage={
-          <p style={{ textAlign: "center" }}>
+          <p
+            style={{ textAlign: "center" }}
+            className={
+              !isLoading && transactions && transactions.length === 0
+                ? "hidden"
+                : ""
+            }
+          >
             <b>Yay! You have seen it all</b>
           </p>
         }

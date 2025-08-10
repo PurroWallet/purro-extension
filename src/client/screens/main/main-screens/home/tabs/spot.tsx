@@ -7,9 +7,16 @@ import TabsLoading from "./tabs-loading";
 import TabsError from "./tabs-error";
 import useNetworkSettingsStore from "@/client/hooks/use-network-store";
 import { getSpotTokenImage } from "@/client/utils/icons";
+import { Button } from "@/client/components/ui";
+import { DepositHyperDexDrawer } from "@/client/components/drawers";
+import useDrawerStore from "@/client/hooks/use-drawer-store";
+import useWalletStore from "@/client/hooks/use-wallet-store";
 
 const WalletTabsSpot = () => {
   const { isHyperliquidDexEnabled } = useNetworkSettingsStore();
+  const { openDrawer } = useDrawerStore();
+  const { activeAccount } = useWalletStore();
+  const isWatchOnly = activeAccount?.source === "watchOnly";
 
   const { spotData, isSpotLoading, spotError } = useHlPortfolioData({
     fetchSpot: isHyperliquidDexEnabled, // Only fetch if Hyperliquid DEX is enabled
@@ -21,35 +28,35 @@ const WalletTabsSpot = () => {
   const indexer = useMemo(() => {
     if (
       !isHyperliquidDexEnabled ||
-      !spotData?.contextData ||
-      !Array.isArray(spotData.contextData) ||
-      spotData.contextData.length < 2
+      !spotData?.context ||
+      !Array.isArray(spotData.context) ||
+      spotData.context.length < 2
     ) {
       return null;
     }
     try {
       return new HyperLiquidSpotDataIndexer(
-        spotData.contextData as HyperliquidApiSpotAssetContext
+        spotData.context as HyperliquidApiSpotAssetContext
       );
     } catch (error) {
       console.error("Error creating SpotDataIndexer:", error);
       return null;
     }
-  }, [isHyperliquidDexEnabled, spotData?.contextData]);
+  }, [isHyperliquidDexEnabled, spotData?.context]);
 
   // Process user balances only when both data sources are available
   const userBalances = useMemo(() => {
-    if (!isHyperliquidDexEnabled || !indexer || !spotData?.balanceData) {
+    if (!isHyperliquidDexEnabled || !indexer || !spotData?.balances) {
       return [];
     }
     // Get user balances and sort by market value from highest to lowest
-    const balances = indexer.processUserBalances(spotData.balanceData);
+    const balances = spotData.balances;
     return balances.sort((a, b) => {
       const valueA = a.marketValue || 0;
       const valueB = b.marketValue || 0;
       return valueB - valueA; // Sort descending (highest to lowest)
     });
-  }, [isHyperliquidDexEnabled, indexer, spotData?.balanceData]);
+  }, [isHyperliquidDexEnabled, indexer, spotData?.balances]);
 
   // Calculate portfolio value using the indexer
   const portfolioValue = useMemo(() => {
@@ -94,8 +101,19 @@ const WalletTabsSpot = () => {
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           <div className="bg-[var(--card-color)] rounded-lg p-3">
             <div className="text-muted-foreground text-sm">Spot Balance</div>
-            <div className="font-semibold text-lg">
-              {formatCurrency(portfolioValue)}
+            <div className="font-semibold text-lg flex items-center gap-2">
+              <p>{formatCurrency(portfolioValue)}</p>{" "}
+              {!isWatchOnly && (
+                <Button
+                  variant="secondary"
+                  className="text-xs p-0 text-[var(--primary-color-light)]"
+                  onClick={() => {
+                    openDrawer(<DepositHyperDexDrawer />);
+                  }}
+                >
+                  Deposit
+                </Button>
+              )}
             </div>
           </div>
           <div className="bg-[var(--card-color)] rounded-lg p-3">
@@ -134,11 +152,23 @@ interface SpotItemProps {
   symbol: string;
   balance: number;
   value: number;
+  onClick?: () => void;
+  className?: string;
 }
 
-const SpotItem = ({ name, symbol, balance, value }: SpotItemProps) => {
+export const SpotItem = ({
+  name,
+  symbol,
+  balance,
+  value,
+  onClick,
+  className,
+}: SpotItemProps) => {
   return (
-    <div className="bg-[var(--card-color)] rounded-lg p-3 flex items-center gap-3">
+    <div
+      className={`bg-[var(--card-color)] rounded-lg p-3 flex items-center gap-3 ${className}`}
+      onClick={onClick}
+    >
       <div className="relative flex-shrink-0">
         <div className="size-12 flex items-center justify-center rounded-full bg-[var(--primary-color)]/10 overflow-hidden">
           <img

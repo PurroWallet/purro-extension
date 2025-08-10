@@ -6,7 +6,7 @@ import {
   DialogWrapper,
   Input,
 } from "@/client/components/ui";
-import useSendTokenStore from "@/client/hooks/use-send-token-store";
+import useSendTokenHLStore from "@/client/hooks/use-send-token-HL-store";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import { formatCurrency } from "@/client/utils/formatters";
 import {
@@ -27,7 +27,7 @@ import { AccountIcon } from "@/client/components/account";
 import useDebounce from "@/client/hooks/use-debounce";
 import { getAddressByDomain } from "@/client/services/hyperliquid-name-api";
 import { getNetworkIcon } from "@/utils/network-icons";
-import { getTokenLogo } from "@/client/utils/icons";
+import { getSpotTokenImage } from "@/client/utils/icons";
 
 type InputMode = "token" | "usd";
 
@@ -94,7 +94,7 @@ const formatConversionNumber = (
 
 const SendToken = () => {
   const { token, setStep, recipient, setRecipient, amount, setAmount } =
-    useSendTokenStore();
+    useSendTokenHLStore();
   const { accounts, wallets } = useWalletStore();
   const [inputMode, setInputMode] = useState<InputMode>("token");
   const [isAddressDropdownOpen, setIsAddressDropdownOpen] = useState(false);
@@ -107,8 +107,6 @@ const SendToken = () => {
     null
   );
   const [isLoadingDomain, setIsLoadingDomain] = useState(false);
-
-  const tokenLogoSrc = token?.icon_url || getTokenLogo(token?.symbol || "");
 
   const onBack = () => {
     setStep("select");
@@ -124,19 +122,19 @@ const SendToken = () => {
     }
 
     const numAmount = parseFloat(amount);
-    const tokenPrice = token.usdPrice || 0;
+    const tokenPrice = token.currentPrice || 0;
 
     if (inputMode === "token") {
       const usdVal = tokenPrice > 0 ? (numAmount * tokenPrice).toFixed(2) : "0";
       return {
-        isValidAmount: numAmount > 0 && numAmount <= token.balanceFormatted,
+        isValidAmount: numAmount > 0 && numAmount <= token.total,
         conversionAmount: formatConversionNumber(usdVal, "usd"),
       };
     } else {
       const tokenVal =
         tokenPrice > 0 ? (numAmount / tokenPrice).toFixed(8) : "0";
       return {
-        isValidAmount: numAmount > 0 && numAmount <= (token.usdValue || 0),
+        isValidAmount: numAmount > 0 && numAmount <= (token.marketValue || 0),
         conversionAmount: formatConversionNumber(tokenVal, "token"),
       };
     }
@@ -234,9 +232,9 @@ const SendToken = () => {
     if (!token) return;
 
     if (inputMode === "token") {
-      setAmount(token.balanceFormatted.toString());
+      setAmount(token.total.toString());
     } else {
-      setAmount((token.usdValue || 0).toFixed(2));
+      setAmount((token.marketValue || 0).toFixed(2));
     }
   };
 
@@ -248,7 +246,7 @@ const SendToken = () => {
 
     // Convert current amount to the other mode
     const numAmount = parseFloat(amount);
-    const tokenPrice = token.usdPrice || 0;
+    const tokenPrice = token.marketValue || 0;
 
     if (inputMode === "token" && tokenPrice > 0) {
       setAmount((numAmount * tokenPrice).toFixed(2));
@@ -264,7 +262,7 @@ const SendToken = () => {
   return (
     <DialogWrapper>
       <DialogHeader
-        title={`Send ${token?.symbol || "Token"}`}
+        title={`Send ${token?.coin || "Token"}`}
         onClose={onBack}
         icon={<ArrowLeft className="size-4 text-white" />}
       />
@@ -273,26 +271,31 @@ const SendToken = () => {
           <>
             {/* Token Display */}
             <div className="flex items-center justify-center size-24 bg-[var(--card-color)] rounded-full relative mx-auto mb-6">
-              {tokenLogoSrc ? (
+              <img
+                src={getSpotTokenImage(token.coin)}
+                alt={token.coin}
+                className="size-full rounded-full"
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                  const parent = e.currentTarget.parentElement;
+                  if (parent) {
+                    const fallbackDiv = document.createElement("div");
+                    fallbackDiv.className =
+                      "size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-lg border border-[var(--primary-color)]/20";
+                    fallbackDiv.textContent = token.coin
+                      .charAt(0)
+                      .toUpperCase();
+                    parent.insertBefore(fallbackDiv, e.currentTarget);
+                  }
+                }}
+              />
+              <div className="absolute bottom-0 p-1 right-0 flex items-center justify-center bg-black rounded-full">
                 <img
-                  src={tokenLogoSrc}
-                  alt={token.symbol}
-                  className="size-24 rounded-full object-cover p-1"
+                  src={getNetworkIcon("hyperliquid")}
+                  alt="Hyperliquid"
+                  className="size-6 rounded-full"
                 />
-              ) : (
-                <p className="text-white text-2xl font-bold">
-                  {token.symbol.charAt(0).toUpperCase()}
-                </p>
-              )}
-              {token.chain && (
-                <div className="absolute bottom-0 p-1 right-0 flex items-center justify-center bg-white/90 rounded-full">
-                  <img
-                    src={getNetworkIcon(token.chain)}
-                    alt={token.chain}
-                    className="size-6 rounded-full"
-                  />
-                </div>
-              )}
+              </div>
             </div>
 
             {/* Recipient Address Input */}
@@ -433,7 +436,7 @@ const SendToken = () => {
                   ) : (
                     <Coins className="size-3" />
                   )}
-                  {inputMode === "token" ? "USD" : token.symbol}
+                  {inputMode === "token" ? "USD" : token.coin}
                 </Button>
               </div>
 
@@ -444,7 +447,7 @@ const SendToken = () => {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder={inputMode === "token" ? "0.0" : "0.00"}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 pr-12 text-base transition-colors duration-200 ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 pr-12 text-base transition-colors duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                     amount && !isValidAmount
                       ? "border-red-500 focus:ring-red-500"
                       : "border-white/10 focus:ring-[var(--primary-color-light)]"
@@ -465,16 +468,15 @@ const SendToken = () => {
                 <span>
                   {inputMode === "token"
                     ? `≈ $${conversionAmount}`
-                    : `≈ ${conversionAmount} ${token.symbol}`}
+                    : `≈ ${conversionAmount} ${token.coin}`}
                 </span>
                 <span>
                   Available:{" "}
                   {inputMode === "token"
-                    ? `${formatDisplayNumber(
-                        token.balanceFormatted,
-                        "token"
-                      )} ${token.symbol}`
-                    : formatCurrency(token.usdValue)}
+                    ? `${formatDisplayNumber(token.total, "token")} ${
+                        token.coin
+                      }`
+                    : formatCurrency(token.marketValue)}
                 </span>
               </div>
 
@@ -483,11 +485,11 @@ const SendToken = () => {
                 <p className="text-red-400 text-xs">
                   {inputMode === "token"
                     ? `Insufficient balance. Max: ${formatDisplayNumber(
-                        token.balanceFormatted,
+                        token.total,
                         "token"
-                      )} ${token.symbol}`
+                      )} ${token.coin}`
                     : `Insufficient balance. Max: ${formatCurrency(
-                        token.usdValue
+                        token.marketValue
                       )}`}
                 </p>
               )}

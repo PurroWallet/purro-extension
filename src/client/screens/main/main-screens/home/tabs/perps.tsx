@@ -4,6 +4,9 @@ import TabsLoading from "./tabs-loading";
 import TabsError from "./tabs-error";
 import useNetworkSettingsStore from "@/client/hooks/use-network-store";
 import { Button } from "@/client/components/ui";
+import { DepositHyperDexDrawer } from "@/client/components/drawers/deposit-hyperdex-drawer";
+import useDrawerStore from "@/client/hooks/use-drawer-store";
+import useWalletStore from "@/client/hooks/use-wallet-store";
 
 // Define types for position data
 interface Position {
@@ -35,6 +38,10 @@ interface AssetPosition {
 
 const WalletTabsPerps = () => {
   const { isHyperliquidDexEnabled } = useNetworkSettingsStore();
+  const { openDrawer } = useDrawerStore();
+  const { activeAccount } = useWalletStore();
+
+  const isWatchOnly = activeAccount?.source === "watchOnly";
 
   const { perpsData, isPerpsLoading, perpsError } = useHlPortfolioData({
     fetchSpot: false,
@@ -87,9 +94,20 @@ const WalletTabsPerps = () => {
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
           <div className="bg-[var(--card-color)] rounded-lg p-3">
             <div className="text-muted-foreground text-sm">Account Value</div>
-            <div className="font-semibold text-lg">
+            <div className="font-semibold text-lg flex items-center gap-2">
               {formatCurrency(
                 parseFloat(perpsData?.marginSummary?.accountValue || "0")
+              )}
+              {!isWatchOnly && (
+                <Button
+                  variant="secondary"
+                  className="text-xs p-0 text-[var(--primary-color-light)]"
+                  onClick={() => {
+                    openDrawer(<DepositHyperDexDrawer />);
+                  }}
+                >
+                  Deposit
+                </Button>
               )}
             </div>
           </div>

@@ -988,7 +988,7 @@ export const evmHandler = {
             }
 
             // Validate value if provided
-            if (transaction.value) {
+            if (transaction.value && !transaction.data) {
                 try {
                     ethers.parseEther(transaction.value);
                 } catch (error) {
@@ -1171,7 +1171,11 @@ export const evmHandler = {
             // Send transaction - convert transaction to ethers format
             const ethersTransaction = {
                 to: transaction.to,
-                value: transaction.value ? ethers.parseEther(transaction.value) : undefined,
+                value: transaction.value ? (
+                    transaction.value.startsWith('0x') 
+                        ? BigInt(transaction.value) 
+                        : ethers.parseEther(transaction.value)
+                ) : undefined,
                 data: transaction.data,
                 gasLimit: transaction.gas ? BigInt(transaction.gas) : undefined,
                 gasPrice: transaction.gasPrice ? BigInt(transaction.gasPrice) : undefined,
@@ -1278,7 +1282,7 @@ export const evmHandler = {
         }
     },
 
-    async estimateTransactionGas(transaction: TransactionRequest, chainId: string): Promise<void> {
+    async estimateTransactionGas(transaction: TransactionRequest, chainId: string): Promise<MessageResponse> {
         const chainInfo = supportedEVMChains[chainId];
         if (!chainInfo) {
             throw new Error('Unsupported chain for gas estimation');
@@ -1292,9 +1296,15 @@ export const evmHandler = {
                 const gasLimit = await provider.estimateGas({
                     to: transaction.to,
                     from: transaction.from,
-                    value: transaction.value ? ethers.parseEther(transaction.value) : undefined,
+                    value: transaction.value ? (
+                        transaction.value.startsWith('0x') 
+                            ? BigInt(transaction.value) 
+                            : ethers.parseEther(transaction.value)
+                    ) : undefined,
                     data: transaction.data
                 });
+
+                console.log("🔍 Gas limit:", gasLimit);
 
                 // Add buffer to gas limit
                 const bufferedGasLimit = Math.floor(Number(gasLimit) * GAS_LIMIT_BUFFER);
@@ -1324,9 +1334,17 @@ export const evmHandler = {
                 }
             }
 
+            return {
+                success: true,
+                data: transaction
+            };
+
         } catch (error) {
             console.error('Gas estimation failed:', error);
-            throw error;
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to estimate gas',
+            };
         }
     },
 
