@@ -39,7 +39,7 @@ const Home = () => {
       <div className={cn("text-center h-48", isWatchOnly && "h-fit")}>
         <div
           className={cn(
-            "bg-[var(--primary-color)] h-36 relative pt-4",
+            "bg-[var(--primary-color)] h-32 relative pt-4",
             isWatchOnly && "h-fit pb-4"
           )}
         >
