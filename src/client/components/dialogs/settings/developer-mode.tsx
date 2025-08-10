@@ -7,7 +7,7 @@ const DeveloperMode = ({ onBack }: { onBack: () => void }) => {
   const { isDevMode, isChanging, setIsDevMode } = useDevModeStore();
 
   const handleToggle = useCallback(() => {
-    if (isChanging) return; // Prevent double clicks
+    if (isChanging) return;
     setIsDevMode(!isDevMode);
   }, [isDevMode, setIsDevMode, isChanging]);
 
@@ -28,9 +28,6 @@ const DeveloperMode = ({ onBack }: { onBack: () => void }) => {
           This mode is only available for developers and should not be enabled
           by default.
         </p>
-        {isChanging && (
-          <p className="text-xs text-white/40 mt-2">Switching mode...</p>
-        )}
       </DialogContent>
     </DialogWrapper>
   );
