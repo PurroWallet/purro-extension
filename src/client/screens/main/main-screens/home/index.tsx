@@ -5,7 +5,7 @@ import WalletTabs from "./tabs";
 import SendIcon from "@/assets/icon-component/send-icon";
 import { useOptimizedPortfolio } from "@/client/hooks/use-optimized-portfolio";
 import { formatCurrency } from "@/client/utils/formatters";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { cn } from "@/client/lib/utils";
 import useDrawerStore from "@/client/hooks/use-drawer-store";
 import {
@@ -15,12 +15,26 @@ import {
   SendDrawer,
 } from "@/client/components/drawers";
 import useWalletStore from "@/client/hooks/use-wallet-store";
+import useDevModeStore from "@/client/hooks/use-dev-mode";
+import { useUnifiedTokens } from "@/client/hooks/use-unified-tokens";
 
 const Home = () => {
   const { totalBalance, isLoading } = useOptimizedPortfolio();
   const [displayValue, setDisplayValue] = useState(0);
   const { activeAccount } = useWalletStore();
   const { openDrawer } = useDrawerStore();
+  const { isDevMode } = useDevModeStore();
+
+  // In dev mode, get testnet tokens to show raw HYPE balance
+  const { allUnifiedTokens, isLoading: isTestnetLoading } = useUnifiedTokens();
+
+  // Compute HYPE native balance on testnet
+  const testnetHypeBalance = useMemo(() => {
+    if (!isDevMode) return 0;
+    return (allUnifiedTokens || [])
+      .filter((t) => t.chain === "hyperevm-testnet" && t.isNative)
+      .reduce((sum, t) => sum + (t.balanceFormatted || 0), 0);
+  }, [isDevMode, allUnifiedTokens]);
 
   // Update display value only when not loading
   useEffect(() => {
@@ -30,7 +44,7 @@ const Home = () => {
   }, [totalBalance, isLoading]);
 
   // Use stable display value if loading and we have a previous value
-  const finalValue =
+  const finalUsdValue =
     isLoading && displayValue > 0 ? displayValue : totalBalance;
   const isWatchOnly = activeAccount?.source === "watchOnly";
 
@@ -43,8 +57,16 @@ const Home = () => {
             isWatchOnly && "h-fit pb-4"
           )}
         >
-          <h1 className="text-5xl font-bold text-center">
-            {formatCurrency(finalValue)}
+          <h1 className={cn("text-5xl font-bold text-center")}>
+            {isDevMode && (
+              <>
+                {testnetHypeBalance.toLocaleString(undefined, {
+                  maximumFractionDigits: 6,
+                })}
+                <span className="pl-2 text-2xl">HYPE</span>
+              </>
+            )}
+            {!isDevMode && formatCurrency(finalUsdValue)}
           </h1>
           {isWatchOnly && (
             <div className="flex items-center justify-center mt-2">

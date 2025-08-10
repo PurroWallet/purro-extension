@@ -1,4 +1,4 @@
-export type ChainType = "hyperevm" | "ethereum" | "base" | "arbitrum";
+export type ChainType = "hyperevm" | "ethereum" | "base" | "arbitrum" | "hyperevm-testnet";
 
 export type SupportedChain = {
     name: string;

@@ -1,9 +1,16 @@
+import { useCallback } from "react";
 import { DialogContent, DialogHeader, DialogWrapper } from "../../ui/dialog";
 import { Switch } from "../../ui/switch";
 import useDevModeStore from "@/client/hooks/use-dev-mode";
 
 const DeveloperMode = ({ onBack }: { onBack: () => void }) => {
-  const { isDevMode, setIsDevMode } = useDevModeStore();
+  const { isDevMode, isChanging, setIsDevMode } = useDevModeStore();
+
+  const handleToggle = useCallback(() => {
+    if (isChanging) return; // Prevent double clicks
+    setIsDevMode(!isDevMode);
+  }, [isDevMode, setIsDevMode, isChanging]);
+
   return (
     <DialogWrapper>
       <DialogHeader title="Developer Mode" onClose={onBack} />
@@ -12,9 +19,8 @@ const DeveloperMode = ({ onBack }: { onBack: () => void }) => {
           <p className="text-base text-white/80">Enable developer mode</p>
           <Switch
             checked={isDevMode}
-            onCheckedChange={() => {
-              setIsDevMode(!isDevMode);
-            }}
+            onCheckedChange={handleToggle}
+            disabled={isChanging}
           />
         </div>
         <p className="text-sm text-white/50 mt-2">
@@ -22,6 +28,9 @@ const DeveloperMode = ({ onBack }: { onBack: () => void }) => {
           This mode is only available for developers and should not be enabled
           by default.
         </p>
+        {isChanging && (
+          <p className="text-xs text-white/40 mt-2">Switching mode...</p>
+        )}
       </DialogContent>
     </DialogWrapper>
   );

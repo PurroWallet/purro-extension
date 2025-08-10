@@ -5,6 +5,7 @@ import useNetworkSettingsStore from '@/client/hooks/use-network-store';
 import { sendMessage } from '../utils/extension-message-utils';
 import useWalletStore from './use-wallet-store';
 import { ChainType } from '../types/wallet';
+import useDevModeStore from './use-dev-mode';
 
 export interface NativeToken {
     chain: ChainType;
@@ -145,6 +146,7 @@ class NativeBalanceCircuitBreaker {
 export const useNativeBalance = () => {
     const { getActiveAccountWalletObject } = useWalletStore();
     const { isNetworkActive } = useNetworkSettingsStore();
+    const { isDevMode } = useDevModeStore();
     const activeWallet = getActiveAccountWalletObject();
     const userAddress = activeWallet?.eip155?.address || '';
     const circuitBreaker = NativeBalanceCircuitBreaker.getInstance();
@@ -156,33 +158,61 @@ export const useNativeBalance = () => {
     const isHyperliquidActive = isNetworkActive('hyperevm');
 
     // Debug logging
-    console.log('🔍 useNativeBalance Debug:', {
-        userAddress,
-        isEthereumActive,
-        isBaseActive,
-        isArbitrumActive,
-        isHyperliquidActive,
-        activeWallet: !!activeWallet,
-    });
+    // console.log('🔍 useNativeBalance Debug:', {
+    //     userAddress,
+    //     isEthereumActive,
+    //     isBaseActive,
+    //     isArbitrumActive,
+    //     isHyperliquidActive,
+    //     activeWallet: !!activeWallet,
+    //     isDevMode,
+    // });
 
     // Build queries only for active networks
+    const activeChains = useMemo(() => [
+        { chain: 'ethereum' as const, isActive: isEthereumActive && !isDevMode },
+        { chain: 'base' as const, isActive: isBaseActive && !isDevMode },
+        { chain: 'arbitrum' as const, isActive: isArbitrumActive && !isDevMode },
+        { chain: 'hyperevm' as const, isActive: isHyperliquidActive && !isDevMode },
+    ], [isEthereumActive, isBaseActive, isArbitrumActive, isHyperliquidActive, isDevMode]);
+
     const balanceQueries = useMemo(() => {
         const queries: any[] = [];
 
-        if (isEthereumActive) {
+        activeChains.forEach(({ chain, isActive }) => {
+            if (!isActive) return;
+
+            // Map chain to chainId and queryKey
+            const getChainConfig = (chainName: string) => {
+                switch (chainName) {
+                    case 'ethereum':
+                        return { chainId: '1', queryKey: QueryKeys.ETHEREUM_NATIVE_BALANCE };
+                    case 'base':
+                        return { chainId: '8453', queryKey: QueryKeys.BASE_NATIVE_BALANCE };
+                    case 'arbitrum':
+                        return { chainId: '42161', queryKey: QueryKeys.ARBITRUM_NATIVE_BALANCE };
+                    case 'hyperevm':
+                        return { chainId: '999', queryKey: QueryKeys.HYPEREVM_NATIVE_BALANCE };
+                    default:
+                        return { chainId: '1', queryKey: QueryKeys.ETHEREUM_NATIVE_BALANCE };
+                }
+            };
+
+            const { chainId, queryKey } = getChainConfig(chain);
+
             queries.push({
-                queryKey: [QueryKeys.ETHEREUM_NATIVE_BALANCE, userAddress],
+                queryKey: [queryKey, userAddress],
                 queryFn: async () => {
-                    if (circuitBreaker.isBlocked('ethereum')) {
-                        throw new Error('Circuit breaker: Ethereum native balance calls blocked');
+                    if (circuitBreaker.isBlocked(chain)) {
+                        throw new Error(`Circuit breaker: ${chain} native balance calls blocked`);
                     }
 
                     try {
-                        const result = await getEvmBalance(userAddress, '1');
-                        circuitBreaker.recordSuccess('ethereum');
+                        const result = await getEvmBalance(userAddress, chainId);
+                        circuitBreaker.recordSuccess(chain);
                         return result;
                     } catch (error) {
-                        circuitBreaker.recordFailure('ethereum');
+                        circuitBreaker.recordFailure(chain);
                         throw error;
                     }
                 },
@@ -192,114 +222,38 @@ export const useNativeBalance = () => {
                 retry: 2, // Limit retries to prevent loops
                 retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 5000), // Exponential backoff
             });
-        }
-
-        if (isBaseActive) {
-            queries.push({
-                queryKey: [QueryKeys.BASE_NATIVE_BALANCE, userAddress],
-                queryFn: async () => {
-                    if (circuitBreaker.isBlocked('base')) {
-                        throw new Error('Circuit breaker: Base native balance calls blocked');
-                    }
-
-                    try {
-                        const result = await getEvmBalance(userAddress, '8453');
-                        circuitBreaker.recordSuccess('base');
-                        return result;
-                    } catch (error) {
-                        circuitBreaker.recordFailure('base');
-                        throw error;
-                    }
-                },
-                staleTime: 30 * 1000,
-                gcTime: 5 * 60 * 1000,
-                enabled: !!userAddress,
-                retry: 2,
-                retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 5000),
-            });
-        }
-
-        if (isArbitrumActive) {
-            queries.push({
-                queryKey: [QueryKeys.ARBITRUM_NATIVE_BALANCE, userAddress],
-                queryFn: async () => {
-                    if (circuitBreaker.isBlocked('arbitrum')) {
-                        throw new Error('Circuit breaker: Arbitrum native balance calls blocked');
-                    }
-
-                    try {
-                        const result = await getEvmBalance(userAddress, '42161');
-                        circuitBreaker.recordSuccess('arbitrum');
-                        return result;
-                    } catch (error) {
-                        circuitBreaker.recordFailure('arbitrum');
-                        throw error;
-                    }
-                },
-                staleTime: 30 * 1000,
-                gcTime: 5 * 60 * 1000,
-                enabled: !!userAddress,
-                retry: 2,
-                retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 5000),
-            });
-        }
-
-        if (isHyperliquidActive) {
-            queries.push({
-                queryKey: [QueryKeys.HYPEREVM_NATIVE_BALANCE, userAddress],
-                queryFn: async () => {
-                    if (circuitBreaker.isBlocked('hyperevm')) {
-                        throw new Error('Circuit breaker: HyperEVM native balance calls blocked');
-                    }
-
-                    try {
-                        const result = await getEvmBalance(userAddress, '999');
-                        circuitBreaker.recordSuccess('hyperevm');
-                        return result;
-                    } catch (error) {
-                        circuitBreaker.recordFailure('hyperevm');
-                        throw error;
-                    }
-                },
-                staleTime: 30 * 1000,
-                gcTime: 5 * 60 * 1000,
-                enabled: !!userAddress,
-                retry: 2,
-                retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 5000),
-            });
-        }
+        });
 
         return queries;
-    }, [isEthereumActive, isBaseActive, isArbitrumActive, isHyperliquidActive, userAddress]);
+    }, [activeChains, userAddress]);
 
     // Fetch native token balances
     const balanceResults = useQueries({
         queries: balanceQueries as any,
     });
 
-    // Fetch prices
+    // Fetch prices - disabled in dev mode
     const pricesQuery = useQuery({
         queryKey: [QueryKeys.NATIVE_TOKEN_PRICES],
         queryFn: fetchNativeTokenPrices,
         staleTime: 60 * 1000, // 1 minute
-        enabled: balanceQueries.length > 0,
+        enabled: balanceQueries.length > 0 && !isDevMode,
     });
 
     // Process results
     const processedTokens = useMemo(() => {
         const tokens: NativeToken[] = [];
-        const activeChains = [
-            { chain: 'ethereum' as const, isActive: isEthereumActive },
-            { chain: 'base' as const, isActive: isBaseActive },
-            { chain: 'arbitrum' as const, isActive: isArbitrumActive },
-            { chain: 'hyperevm' as const, isActive: isHyperliquidActive },
-        ];
 
-        console.log('🔍 Processing Native Tokens:', {
-            totalQueries: balanceQueries.length,
-            totalResults: balanceResults.length,
-            activeChains: activeChains.filter(c => c.isActive).map(c => c.chain),
-        });
+        // Add safeguard for undefined balanceResults
+        if (!balanceResults || !Array.isArray(balanceResults)) {
+            return tokens;
+        }
+
+        // console.log('🔍 Processing Native Tokens:', {
+        //     totalQueries: balanceQueries.length,
+        //     totalResults: balanceResults.length,
+        //     activeChains: activeChains.filter(c => c.isActive).map(c => c.chain),
+        // });
 
         let resultIndex = 0;
 
@@ -313,13 +267,13 @@ export const useNativeBalance = () => {
             const messageResponse = result?.data as any;
             const hasValidBalance = messageResponse?.success && messageResponse?.data?.balance;
 
-            console.log(`🔍 Processing ${chain}:`, {
-                resultIndex: resultIndex - 1,
-                hasValidBalance,
-                success: messageResponse?.success,
-                balance: messageResponse?.data?.balance,
-                chainId: messageResponse?.data?.chainId
-            });
+            // console.log(`🔍 Processing ${chain}:`, {
+            //     resultIndex: resultIndex - 1,
+            //     hasValidBalance,
+            //     success: messageResponse?.success,
+            //     balance: messageResponse?.data?.balance,
+            //     chainId: messageResponse?.data?.chainId
+            // });
 
             if (hasValidBalance) {
                 const tokenInfo = getNativeTokenInfo(chain);
@@ -361,18 +315,18 @@ export const useNativeBalance = () => {
             return a.chain.localeCompare(b.chain);
         });
 
-        console.log('🎯 Final Native Tokens:', {
-            totalTokens: sortedTokens.length,
-            tokens: sortedTokens.map(t => ({
-                chain: t.chain,
-                balance: t.balanceFormatted,
-                symbol: t.symbol,
-                usdValue: t.usdValue
-            }))
-        });
+        // console.log('🎯 Final Native Tokens:', {
+        //     totalTokens: sortedTokens.length,
+        //     tokens: sortedTokens.map(t => ({
+        //         chain: t.chain,
+        //         balance: t.balanceFormatted,
+        //         symbol: t.symbol,
+        //         usdValue: t.usdValue
+        //     }))
+        // });
 
         return sortedTokens;
-    }, [balanceResults, pricesQuery.data, isEthereumActive, isBaseActive, isArbitrumActive, isHyperliquidActive]);
+    }, [balanceResults, pricesQuery.data, activeChains]);
 
     // Calculate totals
     const totalUsdValue = useMemo(() => {

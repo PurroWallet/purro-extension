@@ -9,6 +9,7 @@ import QueryKeys from '@/client/utils/query-keys';
 import useNetworkSettingsStore from '@/client/hooks/use-network-store';
 import useWalletStore from './use-wallet-store';
 import { fetchArbitrumTokensOptimized, fetchBaseTokensOptimized, fetchEthereumTokensOptimized } from '../services/alchemy-api';
+import useDevModeStore from './use-dev-mode';
 
 export interface AlchemyTokenWithChain {
     chain: 'ethereum' | 'base' | 'arbitrum';
@@ -27,6 +28,7 @@ export interface AlchemyTokenWithChain {
 export const useAlchemyTokens = () => {
     const { getActiveAccountWalletObject } = useWalletStore();
     const { isNetworkActive } = useNetworkSettingsStore();
+    const { isDevMode } = useDevModeStore();
     const activeWallet = getActiveAccountWalletObject();
     const userAddress = activeWallet?.eip155?.address || '';
 
@@ -37,6 +39,11 @@ export const useAlchemyTokens = () => {
 
     // Build queries only for active networks - using optimized functions
     const chainQueries = useMemo(() => {
+        // If dev mode is enabled, return empty queries to disable all mainnet calls
+        if (isDevMode) {
+            return [];
+        }
+
         const queries = [];
 
         if (isEthereumActive) {
@@ -70,7 +77,7 @@ export const useAlchemyTokens = () => {
         }
 
         return queries;
-    }, [isEthereumActive, isBaseActive, isArbitrumActive, userAddress]);
+    }, [isEthereumActive, isBaseActive, isArbitrumActive, userAddress, isDevMode]);
 
     // Fetch tokens from active chains only
     const chainResults = useQueries({
@@ -79,6 +86,16 @@ export const useAlchemyTokens = () => {
 
     // Combine results into the expected format
     const allEvmTokensQuery = useMemo(() => {
+        // Add safeguard for undefined chainResults
+        if (!chainResults || !Array.isArray(chainResults)) {
+            return {
+                data: [],
+                isLoading: false,
+                error: null,
+                refetch: () => { }
+            };
+        }
+
         const isLoading = chainResults.some(result => result.isLoading);
         const error = chainResults.find(result => result.error)?.error;
 
@@ -115,6 +132,11 @@ export const useAlchemyTokens = () => {
 
     // Build price queries only for active networks
     const priceQueriesConfig = useMemo(() => {
+        // If dev mode is enabled, return empty queries to disable all mainnet price calls
+        if (isDevMode) {
+            return [];
+        }
+
         const queries = [];
 
         if (isEthereumActive) {
@@ -154,7 +176,7 @@ export const useAlchemyTokens = () => {
         }
 
         return queries;
-    }, [isEthereumActive, isBaseActive, isArbitrumActive, tokenAddressesByChain]);
+    }, [isEthereumActive, isBaseActive, isArbitrumActive, tokenAddressesByChain, isDevMode]);
 
     // Fetch prices for active chains only
     const priceQueries = useQueries({

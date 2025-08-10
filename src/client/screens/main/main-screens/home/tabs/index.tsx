@@ -2,12 +2,15 @@ import { useState, useRef, useEffect } from "react";
 import Spot from "./spot";
 import Perps from "./perps";
 import Evm from "./evm";
-import { Settings2 } from "lucide-react";
+import { Settings2, SquareDashedBottomCode } from "lucide-react";
 import useNetworkSettingsStore from "@/client/hooks/use-network-store";
 import DropdownSettings from "./dropdown-settings";
 import useHomeTabsStore from "@/client/hooks/use-home-tabs-store";
+import useDevModeStore from "@/client/hooks/use-dev-mode";
 
 const WalletTabs = () => {
+  const { isDevMode } = useDevModeStore();
+
   const { activeTab, setActiveTab } = useHomeTabsStore();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -30,7 +33,7 @@ const WalletTabs = () => {
       }
     };
 
-    if (!isHyperliquidDexEnabled) {
+    if (!isHyperliquidDexEnabled && isDevMode) {
       setActiveTab("evm");
     }
 
@@ -52,10 +55,13 @@ const WalletTabs = () => {
             }`}
             onClick={() => setActiveTab("evm")}
           >
-            EVM
+            EVM{" "}
+            {isDevMode && (
+              <span className="text-xs text-muted-foreground">Testnet</span>
+            )}
           </button>
 
-          {isHyperliquidDexEnabled && (
+          {isHyperliquidDexEnabled && !isDevMode && (
             <button
               className={`px-4 py-2 text-sm font-medium ${
                 activeTab === "spot"
@@ -67,7 +73,7 @@ const WalletTabs = () => {
               Spot
             </button>
           )}
-          {isHyperliquidDexEnabled && (
+          {isHyperliquidDexEnabled && !isDevMode && (
             <button
               className={`px-4 py-2 text-sm font-medium ${
                 activeTab === "perpetuals"
@@ -81,13 +87,19 @@ const WalletTabs = () => {
           )}
 
           {/* Settings Dropdown Button */}
-          <button
-            ref={buttonRef}
-            className="absolute top-1 right-2 z-10 transition-colors cursor-pointer size-8 flex items-center justify-center rounded-full hover:bg-white/10"
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          >
-            <Settings2 className="size-5" />
-          </button>
+          {!isDevMode ? (
+            <button
+              ref={buttonRef}
+              className="absolute top-1 right-2 z-10 transition-colors cursor-pointer size-8 flex items-center justify-center rounded-full hover:bg-white/10"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            >
+              <Settings2 className="size-5" />
+            </button>
+          ) : (
+            <div className="absolute top-1 right-2 z-10 transition-colors cursor-pointer h-8 flex items-center justify-center rounded-full gap-2">
+              <SquareDashedBottomCode className="size-5" /> Dev Mode
+            </div>
+          )}
 
           {/* Dropdown Menu */}
           {isDropdownOpen && (
