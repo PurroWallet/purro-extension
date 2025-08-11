@@ -14,16 +14,13 @@ import { useEffect, useState } from "react";
 import { getAddressByDomain } from "@/client/services/hyperliquid-name-api";
 import { getSpotTokenImage } from "@/client/utils/icons";
 import { useHlPortfolioData } from "@/client/hooks/use-hyperliquid-portfolio";
+import useDevModeStore from "@/client/hooks/use-dev-mode";
 
 // Real gas estimation function using the app's RPC infrastructure
 
 const ConfirmSend = () => {
-  const {
-    setStep,
-    recipient,
-    amount,
-    token,
-  } = useSendTokenHLStore();
+  const { isDevMode } = useDevModeStore();
+  const { setStep, recipient, amount, token } = useSendTokenHLStore();
   const { refetchSpot } = useHlPortfolioData();
   const { closeDialog } = useDialogStore();
   const [recipientAddress, setRecipientAddress] = useState<string>(recipient);
@@ -66,9 +63,8 @@ const ConfirmSend = () => {
           amount,
           tokenName: token.tokenInfo?.name,
           tokenId: token.tokenInfo?.tokenId,
+          isDevMode: isDevMode,
         });
-
-        console.log("result", result);
 
         // Show success message
         const isSuccess = result.success;

@@ -97,9 +97,12 @@ export const hyperliquidHandler = {
   async transferBetweenSpotAndPerp(data: {
     amount: number;
     fromSpot: boolean;
+    isDevMode: boolean;
   }): Promise<MessageResponse> {
     try {
-      const hyperliquid = await this.getHyperliquidTestnet();
+      const hyperliquid = data.isDevMode
+        ? await this.getHyperliquidTestnet()
+        : await this.getHyperliquid();
       if (!hyperliquid) {
         return {
           success: false,
@@ -134,9 +137,12 @@ export const hyperliquidHandler = {
     amount: string;
     tokenName: string;
     tokenId: string;
+    isDevMode: boolean;
   }): Promise<MessageResponse> {
     try {
-      const hyperliquid = await this.getHyperliquid();
+      const hyperliquid = data.isDevMode
+        ? await this.getHyperliquidTestnet()
+        : await this.getHyperliquid();
 
       if (!hyperliquid) {
         return {

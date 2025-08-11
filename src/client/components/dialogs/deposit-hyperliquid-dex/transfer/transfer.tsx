@@ -12,8 +12,10 @@ import { useMemo, useState } from "react";
 import { useHlPortfolioData } from "@/client/hooks/use-hyperliquid-portfolio";
 import { formatCurrency } from "@/client/utils/formatters";
 import { sendMessage } from "@/client/utils/extension-message-utils";
+import useDevModeStore from "@/client/hooks/use-dev-mode";
 
 const Transfer = () => {
+  const { isDevMode } = useDevModeStore();
   const { setStep, isFromSpot, amount, setIsFromSpot, setAmount } =
     useDepositTransferStore();
   const { closeDialog } = useDialogStore();
@@ -73,6 +75,7 @@ const Transfer = () => {
         {
           amount,
           fromSpot: isFromSpot,
+          isDevMode: isDevMode,
         }
       );
 
