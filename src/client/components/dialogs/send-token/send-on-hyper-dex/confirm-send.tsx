@@ -8,7 +8,7 @@ import { DialogHeader } from "@/client/components/ui";
 import { Menu } from "@/client/components/ui/menu";
 import { sendMessage } from "@/client/utils/extension-message-utils";
 import useDialogStore from "@/client/hooks/use-dialog-store";
-import { ArrowLeft, Send, CheckCircle, X } from "lucide-react";
+import { ArrowLeft, Send, X } from "lucide-react";
 import useSendTokenHLStore from "@/client/hooks/use-send-token-HL-store";
 import { useEffect, useState } from "react";
 import { getAddressByDomain } from "@/client/services/hyperliquid-name-api";

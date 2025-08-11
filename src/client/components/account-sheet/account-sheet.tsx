@@ -3,7 +3,6 @@ import { cn } from "@/client/lib/utils";
 import useAccountSheetStore from "@/client/hooks/use-account-sheet-store";
 import { useState } from "react";
 import SupportedChainsDropdown from "./supported-chains-dropdown";
-// import SettingsDialog from "../dialogs/settings/settings-dialog";
 import AccountList from "./account-list";
 import useDialogStore from "@/client/hooks/use-dialog-store";
 import useWallet from "@/client/hooks/use-wallet";
