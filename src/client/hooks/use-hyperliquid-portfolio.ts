@@ -7,7 +7,8 @@ import useWalletStore from "./use-wallet-store";
 import SpotDataIndexer from "../lib/spot-data-indexer";
 import { HyperliquidApiSpotAssetContext } from "../types/hyperliquid-api";
 import { HyperScanTokenBalanceResponse } from "../types/hyperscan-api";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import useDevModeStore from "./use-dev-mode";
 
 // Constants for easy customization
 const ADDRESS_VALIDATION_REGEX = /^0x[a-fA-F0-9]{40}$/;
@@ -29,6 +30,7 @@ export const useHlPortfolioData = (
     const activeWallet = getActiveAccountWalletObject();
     const userAddress = activeWallet?.eip155?.address || '';
     const { fetchSpot = true, fetchPerps = true, fetchEvm = true } = options;
+    const { isDevMode } = useDevModeStore();
 
     // Helper function to validate address
     const isValidAddress = (addr: string): boolean => {
@@ -43,13 +45,13 @@ export const useHlPortfolioData = (
         queries.push(
             {
                 queryKey: [QueryKeys.SPOT_USER_BALANCE, userAddress],
-                queryFn: () => fetchUserSpotBalance(userAddress),
+                queryFn: () => fetchUserSpotBalance(userAddress, isDevMode),
                 staleTime: 60 * 1000, // 60 seconds
                 enabled: isValidAddress(userAddress),
             },
             {
                 queryKey: [QueryKeys.SPOT_ASSETS],
-                queryFn: () => fetchSpotAssetsContext(),
+                queryFn: () => fetchSpotAssetsContext(isDevMode),
                 staleTime: 60 * 1000, // 60 seconds
             }
         );
@@ -59,7 +61,7 @@ export const useHlPortfolioData = (
     if (fetchPerps) {
         queries.push({
             queryKey: [QueryKeys.PERPS_USER_BALANCE, userAddress],
-            queryFn: () => fetchUserPerpsBalance(userAddress),
+            queryFn: () => fetchUserPerpsBalance(userAddress, isDevMode),
             staleTime: 60 * 1000, // 60 seconds
             enabled: isValidAddress(userAddress),
         });
@@ -69,7 +71,7 @@ export const useHlPortfolioData = (
     if (fetchEvm) {
         queries.push({
             queryKey: [QueryKeys.HYPER_EVM_ERC20_TOKENS, userAddress],
-            queryFn: () => fetchHyperEvmERC20Tokens(userAddress),
+            queryFn: () => fetchHyperEvmERC20Tokens(userAddress, isDevMode),
             staleTime: 60 * 1000, // 60 seconds
             enabled: isValidAddress(userAddress),
         });
@@ -191,6 +193,15 @@ export const useHlPortfolioData = (
         tokensData: evmTokensQuery.data,
         tokenPricesData,
     };
+
+    useEffect(() => {
+        (async () => {
+            spotBalanceQuery.refetch();
+            spotContextQuery.refetch();
+            perpsBalanceQuery.refetch();
+            evmTokensQuery.refetch();
+        })();
+    }, [isDevMode]);
 
     return {
         // Individual data

@@ -61,7 +61,7 @@ const WalletTabs = () => {
             )}
           </button>
 
-          {isHyperliquidDexEnabled && !isDevMode && (
+          {isHyperliquidDexEnabled && (
             <button
               className={`px-4 py-2 text-sm font-medium ${
                 activeTab === "spot"
@@ -73,7 +73,7 @@ const WalletTabs = () => {
               Spot
             </button>
           )}
-          {isHyperliquidDexEnabled && !isDevMode && (
+          {isHyperliquidDexEnabled && (
             <button
               className={`px-4 py-2 text-sm font-medium ${
                 activeTab === "perpetuals"
