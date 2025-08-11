@@ -154,6 +154,9 @@ export class MessageHandler {
                 case 'EVM_ESTIMATE_GAS':
                     result = await evmHandler.estimateTransactionGas(data.transaction, data.chainId);
                     break;
+                case 'EVM_SEND_TOKEN':
+                    result = await evmHandler.handleSendToken(data);
+                    break;
 
                 // Hyperliquid DEX
                 case 'HYPERLIQUID_TRANSFER_BETWEEN_SPOT_AND_PERP':

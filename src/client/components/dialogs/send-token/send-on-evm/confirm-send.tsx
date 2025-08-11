@@ -228,7 +228,7 @@ const ConfirmSend = () => {
 
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
   const isHLName = recipient.match(/^[a-zA-Z0-9]+\.hl$/);
-  const tokenLogoSrc = token?.icon_url || getTokenLogo(token?.symbol || "");
+  const tokenLogoSrc = token?.logo || getTokenLogo(token?.symbol || "");
 
   useEffect(() => {
     const checkDomain = async () => {
@@ -353,14 +353,14 @@ const ConfirmSend = () => {
         console.log("📝 Transaction data prepared:", transactionData);
 
         // Send transaction through the EVM handler
-        const result = await sendMessage("EVM_SEND_TRANSACTION", {
+        const result = await sendMessage("EVM_SEND_TOKEN", {
           transaction: transactionData,
         });
 
         console.log("✅ Transaction sent successfully:", result);
 
         // Show success message
-        const txHash = result.transactionHash || "Processing...";
+        const txHash = result.data || "Processing...";
         const explorerUrl = getExplorerUrl(token.chain, txHash);
 
         alert(
@@ -617,6 +617,7 @@ const ConfirmSend = () => {
           onClick={handleConfirmSend}
           className="flex-1 bg-green-600 hover:bg-green-700"
           disabled={isEstimatingGas || !gasEstimate || !isHaveEnoughGasFee}
+          // disabled={isEstimatingGas || !gasEstimate}
         >
           {isEstimatingGas ? (
             <>

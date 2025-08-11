@@ -108,7 +108,7 @@ const SendToken = () => {
   );
   const [isLoadingDomain, setIsLoadingDomain] = useState(false);
 
-  const tokenLogoSrc = token?.icon_url || getTokenLogo(token?.symbol || "");
+  const tokenLogoSrc = token?.logo || getTokenLogo(token?.symbol || "");
 
   const onBack = () => {
     setStep("select");

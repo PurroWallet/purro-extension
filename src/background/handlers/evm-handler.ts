@@ -1348,6 +1348,150 @@ export const evmHandler = {
         }
     },
 
+    async handleSendToken(data: { transaction: TransactionRequest }): Promise<MessageResponse>{
+        console.log('[Purro] 🔄 Starting handleSendTransaction process...', data.transaction);
+
+        try {
+            const { transaction } = data;
+
+            // Validate transaction data
+            if (!transaction.to) {
+                return {
+                    success: false,
+                    error: TRANSACTION_ERRORS.INVALID_TO_ADDRESS.message,
+                    code: TRANSACTION_ERRORS.INVALID_TO_ADDRESS.code
+                };
+            }
+
+            // Validate value if provided
+            if (transaction.value && !transaction.data) {
+                try {
+                    ethers.parseEther(transaction.value);
+                } catch (error) {
+                    return {
+                        success: false,
+                        error: TRANSACTION_ERRORS.INVALID_VALUE.message,
+                        code: TRANSACTION_ERRORS.INVALID_VALUE.code
+                    };
+                }
+            }
+
+            // Check wallet state
+            const { hasWallet } = await storageHandler.getWalletState();
+            if (!hasWallet) {
+                return {
+                    success: false,
+                    error: 'No wallet found',
+                    code: 4001
+                };
+            }
+
+            // Get active account
+            const activeAccount = await storageHandler.getActiveAccount();
+            if (!activeAccount) {
+                return {
+                    success: false,
+                    error: 'No active account found',
+                    code: 4001
+                };
+            }
+
+            // Get wallet for the active account
+            const wallet = await storageHandler.getWalletById(activeAccount.id);
+            if (!wallet || !wallet.eip155) {
+                return {
+                    success: false,
+                    error: 'EVM wallet not found for active account',
+                    code: 4001
+                };
+            }
+
+            // Set from address
+            const transactionWithFrom = {
+                ...transaction,
+                from: wallet.eip155.address
+            };
+
+            // Get current chain ID
+            const result = await chrome.storage.local.get(STORAGE_KEYS.CURRENT_CHAIN_ID);
+            const chainId = result[STORAGE_KEYS.CURRENT_CHAIN_ID] || '0x1';
+            transactionWithFrom.chainId = chainId;
+
+            const chainInfo = supportedEVMChains[chainId];
+
+            // Estimate gas if not provided
+            try {
+                await this.estimateTransactionGas(transactionWithFrom, chainId);
+            } catch (error) {
+                console.error('[Purro] ❌ Gas estimation failed:', error);
+                return {
+                    success: false,
+                    error: TRANSACTION_ERRORS.GAS_ESTIMATION_FAILED.message,
+                    code: TRANSACTION_ERRORS.GAS_ESTIMATION_FAILED.code
+                };
+            }
+
+            let privateKey: string;
+            try {
+                console.log("[Purro] 🔄 Retrieving private key...");
+                privateKey = await accountHandler.getPrivateKeyByAccountId(
+                  activeAccount.id
+                );
+                console.log("[Purro] ✅ Private key retrieved successfully");
+            } catch (error) {
+                console.error("[Purro] ❌ Failed to retrieve private key:", error);
+        
+                // Check if it's a session issue
+                const session = await authHandler.getSession();
+                if (!session) {
+                  console.error("[Purro] ❌ Session not found or expired");
+                  return {
+                    success: false,
+                    error: 'Session not found or expired',
+                    code: 4001
+                  };
+                }
+        
+                // Generic private key error
+                return {
+                    success: false,
+                    error: 'Failed to retrieve private key',
+                    code: 4001
+                  };
+            }
+
+            const signerWallet = new ethers.Wallet(privateKey);
+            const provider = new ethers.JsonRpcProvider(chainInfo.rpcUrls[0]);
+            const connectedWallet = signerWallet.connect(provider);
+
+            const tx = await connectedWallet.sendTransaction({
+                to: transaction.to,
+                value: transaction.value ? (
+                    transaction.value.startsWith('0x') 
+                        ? BigInt(transaction.value) 
+                        : ethers.parseEther(transaction.value)
+                ) : undefined,
+                data: transaction.data,
+            });
+            console.log('[Purro] ✅ Transaction sent:', tx.hash);
+
+            return {
+                success: true,
+                data: tx.hash,
+            };
+
+        } catch (error) {
+            console.error('[Purro] ❌ Error in handleSendToken:', error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to send transaction',
+                code: 4001
+            };
+        }
+    },
+
+    
+
     // Helper methods
     async closeExistingConnectPopups(): Promise<void> {
         try {
