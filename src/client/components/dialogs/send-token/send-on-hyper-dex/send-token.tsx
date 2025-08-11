@@ -28,6 +28,7 @@ import useDebounce from "@/client/hooks/use-debounce";
 import { getAddressByDomain } from "@/client/services/hyperliquid-name-api";
 import { getNetworkIcon } from "@/utils/network-icons";
 import { getSpotTokenImage } from "@/client/utils/icons";
+import { evmWalletKeyUtils } from "@/background/utils/keys";
 
 type InputMode = "token" | "usd";
 
@@ -140,17 +141,30 @@ const SendToken = () => {
     }
   }, [amount, inputMode, token]);
 
-  // Domain validation logic
+  // Address validation logic
   const isDomainFormatted = useMemo(() => {
     return (
-      debouncedRecipientAddress.length >= 0 &&
+      debouncedRecipientAddress.length > 0 &&
       !!debouncedRecipientAddress.match(/^[a-zA-Z0-9-]+\.hl$/)
     );
   }, [debouncedRecipientAddress]);
 
+  const isValidEthereumAddress = useMemo(() => {
+    return (
+      debouncedRecipientAddress.length > 0 &&
+      evmWalletKeyUtils.isValidAddress(debouncedRecipientAddress)
+    );
+  }, [debouncedRecipientAddress]);
+
+  // Domain validation effect
   useEffect(() => {
     const checkDomain = async () => {
-      if (!isDomainFormatted) return;
+      if (!isDomainFormatted) {
+        setIsValidDomain(false);
+        setAddressFromDomain(null);
+        return;
+      }
+
       setIsLoadingDomain(true);
       try {
         const addressResponse = await getAddressByDomain(
@@ -161,9 +175,13 @@ const SendToken = () => {
         setIsValidDomain(isValidDomain);
         if (isValidDomain) {
           setAddressFromDomain(addressResponse);
+        } else {
+          setAddressFromDomain(null);
         }
       } catch (error) {
         console.error("Failed to check domain:", error);
+        setIsValidDomain(false);
+        setAddressFromDomain(null);
       } finally {
         setIsLoadingDomain(false);
       }
@@ -171,13 +189,10 @@ const SendToken = () => {
     checkDomain();
   }, [debouncedRecipientAddress, isDomainFormatted]);
 
+  // Combined address validation
   const isValidAddress = useMemo(() => {
-    return (
-      (debouncedRecipientAddress.length > 0 &&
-        debouncedRecipientAddress.startsWith("0x")) ||
-      isValidDomain
-    );
-  }, [debouncedRecipientAddress, isValidDomain]);
+    return isValidEthereumAddress || isValidDomain;
+  }, [isValidEthereumAddress, isValidDomain]);
 
   // Calculate dropdown position when opened
   useEffect(() => {
@@ -384,14 +399,26 @@ const SendToken = () => {
               </div>
 
               {/* Validation Messages */}
-              {recipient && !isValidAddress && !isDomainFormatted && (
-                <div className="text-muted-foreground text-xs rounded-full bg-red-500/10 px-4 py-2 flex items-center">
-                  <CircleAlert className="size-4 mr-2" />
-                  <p>
-                    Please enter a valid address starting with 0x or .hl domain
-                  </p>
+              {recipient &&
+                !isValidAddress &&
+                !isDomainFormatted &&
+                !isValidEthereumAddress && (
+                  <div className="text-muted-foreground text-xs rounded-full bg-red-500/10 px-4 py-2 flex items-center">
+                    <CircleAlert className="size-4 mr-2" />
+                    <p>
+                      Please enter a valid address (0x...) or Hyperliquid name
+                      (.hl)
+                    </p>
+                  </div>
+                )}
+
+              {recipient && isValidEthereumAddress && !isDomainFormatted && (
+                <div className="text-muted-foreground text-xs rounded-full bg-green-500/10 px-4 py-2 flex items-center">
+                  <CircleCheck className="size-4 mr-2" />
+                  <p>Valid address</p>
                 </div>
               )}
+
               {recipient &&
                 isDomainFormatted &&
                 !isValidDomain &&
@@ -401,22 +428,23 @@ const SendToken = () => {
                     <p>Invalid Hyperliquid Name</p>
                   </div>
                 )}
+
               {recipient &&
                 isValidDomain &&
                 isDomainFormatted &&
                 !isLoadingDomain && (
                   <div className="text-muted-foreground text-xs rounded-full bg-green-500/10 px-4 py-2 flex items-center">
                     <CircleCheck className="size-4 mr-2" />
-                    <p>
-                      Valid destination: {addressFromDomain?.slice(0, 6)}...
-                      {addressFromDomain?.slice(-4)}
+                    <p className="break-all">
+                      Resolves to: {truncateAddress(addressFromDomain || "")}
                     </p>
                   </div>
                 )}
+
               {isLoadingDomain && isDomainFormatted && (
                 <div className="text-muted-foreground text-xs rounded-full bg-gray-500/10 px-4 py-2 flex items-center">
                   <Loader2 className="size-4 mr-2 animate-spin" />
-                  <p>Loading domain...</p>
+                  <p>Resolving domain...</p>
                 </div>
               )}
             </div>
