@@ -1,5 +1,8 @@
 import {
   Button,
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
   DialogContent,
   DialogFooter,
   DialogWrapper,
@@ -18,6 +21,7 @@ import {
   AlertTriangle,
   X,
   CircleAlert,
+  Pen,
 } from "lucide-react";
 import { getNetworkIcon } from "@/utils/network-icons";
 import { getAddressByDomain } from "@/client/services/hyperliquid-name-api";
@@ -26,6 +30,7 @@ import {
   useNativeBalance,
 } from "@/client/hooks/use-native-balance";
 import { getTokenLogo } from "@/client/utils/icons";
+import { ensureTokenDecimals } from "@/client/utils/token-decimals";
 
 type GasEstimate = {
   gasLimit: string;
@@ -48,24 +53,6 @@ const getChainId = (chain: string): string => {
       return "0x3e7";
     default:
       return "0x1";
-  }
-};
-
-// Helper function to get explorer URL for transaction
-const getExplorerUrl = (chain: string, txHash: string): string => {
-  if (txHash === "Processing..." || !txHash) return "";
-
-  switch (chain) {
-    case "ethereum":
-      return `https://etherscan.io/tx/${txHash}`;
-    case "base":
-      return `https://basescan.org/tx/${txHash}`;
-    case "arbitrum":
-      return `https://arbiscan.io/tx/${txHash}`;
-    case "hyperevm":
-      return `https://purrsec.com/tx/${txHash}`;
-    default:
-      return `https://etherscan.io/tx/${txHash}`;
   }
 };
 
@@ -102,10 +89,14 @@ const estimateGas = async (
       };
     } else {
       // ERC-20 token transfer
+      console.log("🔍 Ensuring token decimals for gas estimation...");
+      const tokenDecimals = await ensureTokenDecimals(token);
+      console.log(`✅ Token decimals confirmed: ${tokenDecimals}`);
+      
       const transferMethodId = "0xa9059cbb";
       const paddedRecipient = recipient.slice(2).padStart(64, "0");
       const paddedAmount = Math.floor(
-        parseFloat(amount) * Math.pow(10, token.decimals || 18)
+        parseFloat(amount) * Math.pow(10, tokenDecimals)
       )
         .toString(16)
         .padStart(64, "0");
@@ -126,33 +117,41 @@ const estimateGas = async (
 
     console.log("⛽ Gas estimation response:", gasEstimateResponse);
 
-    const gasLimit = parseInt(gasEstimateResponse.data.gas, 16);
+    // Access the nested data properly (backend wraps response in data field)
+    // First try the direct path, then fallback to nested path
+    const estimateData = gasEstimateResponse.data || gasEstimateResponse.data?.data;
+    console.log("📊 Estimate data:", estimateData);
+    console.log("📊 Full response structure:", gasEstimateResponse);
+
+    const gasLimit = parseInt(estimateData.gas, 16);
 
     // Handle both legacy and EIP-1559 transactions
     let effectiveGasPrice: number;
     let gasPriceGwei: number;
 
-    if (gasEstimateResponse.data.gasPrice) {
+    if (estimateData.gasPrice) {
       // Legacy transaction (type 0x0)
-      effectiveGasPrice = parseInt(gasEstimateResponse.data.gasPrice, 16);
-      gasPriceGwei = Math.round(effectiveGasPrice / 1e9);
-      console.log("📊 Using legacy gas pricing");
-    } else if (gasEstimateResponse.data.maxFeePerGas) {
+      effectiveGasPrice = parseInt(estimateData.gasPrice, 16);
+      console.log("📊 Using legacy gas pricing:", { effectiveGasPrice });
+      gasPriceGwei = effectiveGasPrice / 1e9;
+      console.log("📊 Using legacy gas pricing:", { effectiveGasPrice, gasPriceGwei });
+    } else if (estimateData.maxFeePerGas) {
       // EIP-1559 transaction (type 0x2)
-      effectiveGasPrice = parseInt(gasEstimateResponse.data.maxFeePerGas, 16);
-      gasPriceGwei = Math.round(effectiveGasPrice / 1e9);
-      console.log("📊 Using EIP-1559 gas pricing");
+      effectiveGasPrice = parseInt(estimateData.maxFeePerGas, 16);
+      gasPriceGwei = effectiveGasPrice / 1e9;
+      console.log("📊 Using EIP-1559 gas pricing:", { effectiveGasPrice, gasPriceGwei });
 
       // Log additional EIP-1559 info if available
-      if (gasEstimateResponse.data.maxPriorityFeePerGas) {
+      if (estimateData.maxPriorityFeePerGas) {
         const priorityFeeGwei = Math.round(
-          parseInt(gasEstimateResponse.data.maxPriorityFeePerGas, 16) / 1e9
+          parseInt(estimateData.maxPriorityFeePerGas, 16) / 1e9
         );
         console.log(`💡 Priority fee: ${priorityFeeGwei} Gwei`);
       }
     } else {
       // Fallback if neither is available
       console.warn("⚠️ No gas price data in response, using fallback");
+      console.log("📊 Available keys in estimateData:", Object.keys(estimateData));
       effectiveGasPrice = 20e9; // 20 Gwei fallback
       gasPriceGwei = 20;
     }
@@ -175,10 +174,17 @@ const estimateGas = async (
     console.log("✅ Gas estimation successful:", {
       gasLimit,
       effectiveGasPrice,
+      effectiveGasPriceGwei: effectiveGasPrice / 1e9,
       gasPriceGwei,
       gasCostEth,
       gasCostUsd,
       totalCostUsd,
+      calculationCheck: {
+        manualGasCostWei: gasLimit * effectiveGasPrice,
+        manualGasCostEth: (gasLimit * effectiveGasPrice) / 1e18,
+        returnedGasCostEth: gasCostEth,
+        pricesMatch: Math.abs(((gasLimit * effectiveGasPrice) / 1e18) - gasCostEth) < 0.000001,
+      }
     });
 
     return {
@@ -188,8 +194,8 @@ const estimateGas = async (
       gasCostUsd: gasCostUsd.toFixed(6),
       totalCostUsd: totalCostUsd.toFixed(6),
       // Optional: include transaction type info
-      transactionType: gasEstimateResponse.data.type || "unknown",
-      isEIP1559: !!gasEstimateResponse.data.maxFeePerGas,
+      transactionType: estimateData.type || "unknown",
+      isEIP1559: !!estimateData.maxFeePerGas,
     };
   } catch (error) {
     console.error("❌ Gas estimation failed:", error);
@@ -198,7 +204,7 @@ const estimateGas = async (
     const fallbackGasLimit = token.symbol === "ETH" ? "21000" : "65000";
     const fallbackGasPrice = "20"; // 20 gwei
     const fallbackGasCostEth =
-      (parseInt(fallbackGasLimit) * parseInt(fallbackGasPrice)) / 1e9;
+      (parseInt(fallbackGasLimit) * parseInt(fallbackGasPrice) * 1e9) / 1e18; // Convert gwei to ETH
     const fallbackGasCostUsd = fallbackGasCostEth * 3000;
 
     console.warn("⚠️ Using fallback gas estimation");
@@ -216,8 +222,174 @@ const estimateGas = async (
   }
 };
 
+type GasPriority = "slow" | "standard" | "fast" | "rapid";
+
+const GasFeeSelection = ({
+  gasEstimate,
+  setGasEstimate,
+  gasPriority,
+  setGasPriority,
+  token,
+  nativeTokens,
+  amount,
+}: {
+  gasEstimate: GasEstimate;
+  setGasEstimate: (gasEstimate: GasEstimate) => void;
+  gasPriority: GasPriority;
+  setGasPriority: (gasPriority: GasPriority) => void;
+  token: any;
+  nativeTokens: NativeToken[];
+  amount: string;
+}) => {
+  const [gasOptions, setGasOptions] = useState<{
+    [key in GasPriority]: {
+      gasPrice: string;
+      time: string;
+      gasCostEth: string;
+      gasCostUsd: string;
+      totalCostUsd: string;
+    };
+  }>({
+    slow: { gasPrice: "", time: "~30s", gasCostEth: "", gasCostUsd: "", totalCostUsd: "" },
+    standard: { gasPrice: "", time: "~15s", gasCostEth: "", gasCostUsd: "", totalCostUsd: "" },
+    fast: { gasPrice: "", time: "~10s", gasCostEth: "", gasCostUsd: "", totalCostUsd: "" },
+    rapid: { gasPrice: "", time: "~5s", gasCostEth: "", gasCostUsd: "", totalCostUsd: "" },
+  });
+
+  function getOptimalGasPrice(priority: GasPriority, baseGasPrice: number) {
+    // For Arbitrum and other L2s, use smaller multipliers since gas prices are already optimized
+    const isL2 = token.chain === "arbitrum" || token.chain === "base" || token.chain === "hyperevm";
+    
+    const multipliers = isL2 ? {
+      slow: 0.95,
+      standard: 1.0,
+      fast: 1.05,
+      rapid: 1.1,
+    } : {
+      slow: 0.8,
+      standard: 1.0,
+      fast: 1.2,
+      rapid: 1.5,
+    };
+
+    return baseGasPrice * multipliers[priority];
+  }
+
+  function calculateGasCosts(gasPriceGwei: number) {
+    const gasLimit = parseInt(gasEstimate.gasLimit);
+    const gasCostWei = gasLimit * (gasPriceGwei * 1e9);
+    const gasCostEth = gasCostWei / 1e18;
+
+    let nativeTokenPrice = 3000; // Default fallback
+    const nativeToken = nativeTokens.find((t: NativeToken) => t.chain === token.chain);
+    nativeTokenPrice = nativeToken?.usdPrice || 3000;
+
+    const gasCostUsd = gasCostEth * nativeTokenPrice;
+    
+    // Calculate token cost directly to avoid circular dependency
+    const tokenAmount = parseFloat(amount || "0");
+    const tokenPrice = token?.usdPrice || 0;
+    const tokenTotalCostUsd = tokenAmount * tokenPrice;
+    const totalCostUsd = tokenTotalCostUsd + gasCostUsd;
+
+    return {
+      gasCostEth: gasCostEth.toFixed(8),
+      gasCostUsd: gasCostUsd.toFixed(6),
+      totalCostUsd: totalCostUsd.toFixed(6),
+    };
+  }
+
+  useEffect(() => {
+    if (gasEstimate) {
+      const baseGasPrice = parseFloat(gasEstimate.gasPrice); // Use parseFloat for decimal gas prices
+
+      const newGasOptions = {} as typeof gasOptions;
+
+      (Object.keys(gasOptions) as GasPriority[]).forEach((priority) => {
+        const adjustedGasPrice = getOptimalGasPrice(priority, baseGasPrice);
+        const costs = calculateGasCosts(adjustedGasPrice);
+
+        newGasOptions[priority] = {
+          gasPrice: adjustedGasPrice.toString(),
+          time: gasOptions[priority].time,
+          ...costs,
+        };
+      });
+
+      setGasOptions(newGasOptions);
+    }
+  }, [gasEstimate, token, nativeTokens]); // Added missing dependencies
+
+  const handlePrioritySelect = (priority: GasPriority) => {
+    setGasPriority(priority);
+    const selectedOption = gasOptions[priority];
+    
+    // Update the gas estimate with the new values
+    setGasEstimate({
+      ...gasEstimate,
+      gasPrice: selectedOption.gasPrice,
+      gasCostEth: selectedOption.gasCostEth,
+      gasCostUsd: selectedOption.gasCostUsd,
+      totalCostUsd: selectedOption.totalCostUsd,
+    });
+  };
+
+  return (
+    <div className="mt-4 space-y-2 w-full">
+      {(Object.entries(gasOptions) as [GasPriority, typeof gasOptions[GasPriority]][]).map(
+        ([priority, option]) => (
+          <div
+            key={priority}
+            onClick={() => handlePrioritySelect(priority)}
+            className={`p-3 rounded-lg border cursor-pointer transition-all ${
+              gasPriority === priority
+                ? "border-[var(--primary-color)] bg-[var(--primary-color)]/10"
+                : "border-white/10 hover:border-white/20 bg-[var(--card-color)]"
+            }`}
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-3">
+                <div
+                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                    gasPriority === priority
+                      ? "border-[var(--primary-color)] bg-[var(--primary-color)]"
+                      : "border-gray-400"
+                  }`}
+                >
+                  {gasPriority === priority && (
+                    <div className="w-2 h-2 rounded-full bg-white"></div>
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-white font-medium capitalize">
+                      {priority}
+                    </span>
+                    <span className="text-gray-400 text-sm">{option.time}</span>
+                  </div>
+                  <div className="text-gray-400 text-xs">
+                    {(parseFloat(option.gasPrice)).toFixed(4)} gwei
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-white font-medium">
+                  {option.gasCostEth} {token.chain === "hyperevm" ? "HYPE" : "ETH"}
+                </div>
+                <div className="text-gray-400 text-sm">
+                  ≈ ${option.gasCostUsd}
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      )}
+    </div>
+  );
+};
+
 const ConfirmSend = () => {
-  const { setStep, recipient, amount, token } = useSendTokenStore();
+  const { setStep, recipient, amount, token, setTransactionHash } = useSendTokenStore();
   const { closeDialog } = useDialogStore();
   const { getActiveAccountWalletObject } = useWalletStore();
   const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
@@ -225,10 +397,14 @@ const ConfirmSend = () => {
   const [addressDomain, setAddressDomain] = useState<string | null>(null);
   const { nativeTokens } = useNativeBalance();
   const [isHaveEnoughGasFee, setIsHaveEnoughGasFee] = useState(true);
+  const [gasPriority, setGasPriority] = useState<GasPriority>("standard");
+  const [gasRefreshCounter, setGasRefreshCounter] = useState(0);
+  const [lastGasUpdate, setLastGasUpdate] = useState<number>(Date.now());
+  const [refreshCountdown, setRefreshCountdown] = useState<number>(30);
 
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
   const isHLName = recipient.match(/^[a-zA-Z0-9]+\.hl$/);
-  const tokenLogoSrc = token?.icon_url || getTokenLogo(token?.symbol || "");
+  const tokenLogoSrc = token?.logo || getTokenLogo(token?.symbol || "");
 
   useEffect(() => {
     const checkDomain = async () => {
@@ -268,7 +444,7 @@ const ConfirmSend = () => {
     };
 
     performGasEstimation();
-  }, [token, amount, recipient, activeAccountAddress, addressDomain]);
+  }, [token, amount, recipient, activeAccountAddress, addressDomain, gasRefreshCounter]);
 
   useEffect(() => {
     if (gasEstimate && token) {
@@ -277,18 +453,59 @@ const ConfirmSend = () => {
       );
 
       const gasCostEth = parseFloat(gasEstimate.gasCostEth);
-      const nativeTokenBalance = parseFloat(nativeToken?.balance || "0");
+      const nativeTokenBalance = nativeToken?.balance ? parseFloat(BigInt(nativeToken.balance).toString()) / 1e18 : 0;
 
       setIsHaveEnoughGasFee(gasCostEth <= nativeTokenBalance * 0.9);
     }
-  }, [gasEstimate, token]);
+  }, [gasEstimate, token, nativeTokens]);
+
+  // Auto refresh gas estimate every 30 seconds
+  useEffect(() => {
+    if (!token || !amount || !recipient || !activeAccountAddress) return;
+    
+    const GAS_REFRESH_INTERVAL = 30000; // 30 seconds
+    
+    const refreshInterval = setInterval(() => {
+      const timeSinceLastUpdate = Date.now() - lastGasUpdate;
+      
+      // Only refresh if enough time has passed and we're not currently estimating
+      if (timeSinceLastUpdate >= GAS_REFRESH_INTERVAL && !isEstimatingGas) {
+        console.log("🔄 Auto-refreshing gas estimate...");
+        setGasRefreshCounter(prev => prev + 1);
+        setLastGasUpdate(Date.now());
+      }
+    }, GAS_REFRESH_INTERVAL);
+
+    return () => clearInterval(refreshInterval);
+  }, [token, amount, recipient, activeAccountAddress, lastGasUpdate, isEstimatingGas]);
+
+  // Update lastGasUpdate when gas estimation completes
+  useEffect(() => {
+    if (gasEstimate && !isEstimatingGas) {
+      setLastGasUpdate(Date.now());
+      setRefreshCountdown(30);
+    }
+  }, [gasEstimate, isEstimatingGas]);
+
+  // Update countdown timer every second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const timeSinceUpdate = Math.floor((Date.now() - lastGasUpdate) / 1000);
+      const newCountdown = Math.max(0, 30 - timeSinceUpdate);
+      setRefreshCountdown(newCountdown);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [lastGasUpdate]);
 
   const handleConfirmSend = async () => {
     if (token && recipient && amount && gasEstimate && activeAccountAddress) {
       setIsEstimatingGas(true);
 
+
+
       try {
-        console.log("🚀 Starting transaction send process...");
+
 
         // Validate domain resolution for HL names
         if (isHLName && !addressDomain) {
@@ -296,10 +513,28 @@ const ConfirmSend = () => {
         }
 
         const finalRecipient = addressDomain || recipient;
-        console.log("📍 Final recipient:", finalRecipient);
 
         // Build the transaction object
         let transactionData: any;
+
+        // Calculate gas price in wei (from gwei)
+        let gasPriceGwei = parseFloat(gasEstimate.gasPrice);
+        
+        // Fallback if gas price is 0 or invalid
+        if (!gasPriceGwei || gasPriceGwei <= 0) {
+          console.warn("⚠️ Invalid gas price, using fallback of 20 gwei");
+          gasPriceGwei = 20;
+        }
+
+        // Add safety buffer to gas price (10% extra) to account for network changes
+        const isL2 = token.chain === "arbitrum" || token.chain === "base" || token.chain === "hyperevm";
+        const bufferMultiplier = isL2 ? 1.1 : 1.2; // Smaller buffer for L2s
+        gasPriceGwei = Math.ceil(gasPriceGwei * bufferMultiplier * 1000) / 1000; // Round to 3 decimals
+        
+        const gasPriceWei = Math.floor(gasPriceGwei * 1e9);
+        const gasPriceHex = `0x${gasPriceWei.toString(16)}`;
+
+
 
         if (
           token.symbol === "ETH" ||
@@ -309,73 +544,105 @@ const ConfirmSend = () => {
         ) {
           // Native token transfer (ETH, HYPE)
           // Use BigInt to avoid precision issues
-          const valueInWei = BigInt(Math.floor(parseFloat(amount) * 1e18));
+          const amountFloat = parseFloat(amount);
+          const valueInWei = BigInt(Math.floor(amountFloat * 1e18));
+
+
+
+          // Check if user has enough native token balance
+          const nativeToken = nativeTokens.find((t: NativeToken) => t.chain === token.chain);
+          const nativeBalance = nativeToken?.balance ? parseFloat(BigInt(nativeToken.balance).toString()) / 1e18 : 0;
+
+          if (nativeBalance < amountFloat) {
+            throw new Error(
+              `Insufficient ${token.symbol} balance. You have ${nativeBalance.toFixed(6)} ${token.symbol} but trying to send ${amountFloat} ${token.symbol}`
+            );
+          }
 
           transactionData = {
             type: "eth_sendTransaction",
+            from: activeAccountAddress,
             to: finalRecipient,
             value: `0x${valueInWei.toString(16)}`,
             gas: `0x${parseInt(gasEstimate.gasLimit).toString(16)}`,
-            gasPrice: `0x${Math.floor(
-              parseInt(gasEstimate.gasPrice) * 1e9
-            ).toString(16)}`, // Convert gwei to wei
+            gasPrice: gasPriceHex,
             chainId: getChainId(token.chain),
           };
         } else {
           // ERC-20 token transfer
+          console.log("🔍 Ensuring token decimals for transaction...");
+          const tokenDecimals = await ensureTokenDecimals(token);
+          console.log(`✅ Using ${tokenDecimals} decimals for transaction`);
+          
           const transferMethodId = "0xa9059cbb";
 
           // FIXED: Use finalRecipient instead of recipient
           const paddedRecipient = finalRecipient.slice(2).padStart(64, "0");
 
           // Use BigInt for amount calculation to avoid precision issues
-          const tokenDecimals = token.decimals || 18;
+          const amountFloat = parseFloat(amount);
           const amountInTokenUnits = BigInt(
-            Math.floor(parseFloat(amount) * Math.pow(10, tokenDecimals))
+            Math.floor(amountFloat * Math.pow(10, tokenDecimals))
           );
           const paddedAmount = amountInTokenUnits
             .toString(16)
             .padStart(64, "0");
 
+
+
+          // Check if user has enough token balance
+          // token.balance is in hex format (wei units), need to convert to decimal
+          const tokenBalanceWei = token.balance ? BigInt(token.balance) : BigInt(0);
+          const tokenBalance = parseFloat(tokenBalanceWei.toString()) / Math.pow(10, tokenDecimals);
+          
+
+
+          if (tokenBalance < amountFloat) {
+            throw new Error(
+              `Insufficient ${token.symbol} balance. You have ${tokenBalance.toFixed(6)} ${token.symbol} but trying to send ${amountFloat} ${token.symbol}`
+            );
+          }
+
+          // Check if user has enough ETH for gas fees
+          const nativeToken = nativeTokens.find((t: NativeToken) => t.chain === token.chain);
+          const ethBalance = nativeToken?.balance ? parseFloat(BigInt(nativeToken.balance).toString()) / 1e18 : 0;
+          
+          // Calculate gas cost using the actual gas price we're going to use
+          const actualGasCostEth = (parseInt(gasEstimate.gasLimit) * gasPriceWei) / 1e18;
+
+          if (ethBalance < actualGasCostEth) {
+            throw new Error(
+              `Insufficient ${token.chain === "hyperevm" ? "HYPE" : "ETH"} for gas fees. You have ${ethBalance.toFixed(6)} ${token.chain === "hyperevm" ? "HYPE" : "ETH"} but need ${actualGasCostEth.toFixed(6)} ${token.chain === "hyperevm" ? "HYPE" : "ETH"} for gas fees`
+            );
+          }
+
           transactionData = {
             type: "eth_sendTransaction",
+            from: activeAccountAddress,
             to: token.contractAddress,
             value: "0x0", // No ETH value for ERC-20 transfers
             data: transferMethodId + paddedRecipient + paddedAmount,
             gas: `0x${parseInt(gasEstimate.gasLimit).toString(16)}`,
-            gasPrice: `0x${Math.floor(
-              parseInt(gasEstimate.gasPrice) * 1e9
-            ).toString(16)}`, // Convert gwei to wei
+            gasPrice: gasPriceHex,
             chainId: getChainId(token.chain),
           };
+
+
         }
 
-        console.log("📝 Transaction data prepared:", transactionData);
+
 
         // Send transaction through the EVM handler
-        const result = await sendMessage("EVM_SEND_TRANSACTION", {
+        const result = await sendMessage("EVM_SEND_TOKEN", {
           transaction: transactionData,
         });
 
         console.log("✅ Transaction sent successfully:", result);
 
-        // Show success message
-        const txHash = result.transactionHash || "Processing...";
-        const explorerUrl = getExplorerUrl(token.chain, txHash);
-
-        alert(
-          `🎉 Transaction sent successfully!\n\n` +
-            `Sent: ${amount} ${token.symbol}\n` +
-            `To: ${finalRecipient.slice(0, 6)}...${finalRecipient.slice(
-              -4
-            )}\n` +
-            `Gas Fee: ${gasEstimate.gasCostEth} ETH (≈$${gasEstimate.gasCostUsd})\n\n` +
-            `Transaction Hash: ${txHash}\n\n` +
-            `Your transaction is being processed on the ${token.chain} network.\n` +
-            (explorerUrl ? `\nView on Explorer: ${explorerUrl}` : "")
-        );
-
-        closeDialog();
+        // Store transaction hash and navigate to success page
+        const txHash = result.data || "Processing...";
+        setTransactionHash(txHash);
+        setStep("success");
       } catch (error) {
         console.error("❌ Transaction failed:", error);
 
@@ -518,16 +785,28 @@ const ConfirmSend = () => {
                 }`}
               >
                 <h3
-                  className={`text-lg font-semibold mb-4 flex items-center ${
+                  className={`text-lg font-semibold mb-4 flex items-center justify-between ${
                     !isHaveEnoughGasFee ? "text-red-500" : "text-white"
                   }`}
                 >
-                  <AlertTriangle
-                    className={`size-5 mr-2 ${
-                      !isHaveEnoughGasFee ? "text-red-500" : "text-yellow-500"
-                    }`}
-                  />
-                  Gas Fee Estimation
+                  <div className="flex items-center">
+                    <AlertTriangle
+                      className={`size-5 mr-2 ${
+                        !isHaveEnoughGasFee ? "text-red-500" : "text-yellow-500"
+                      }`}
+                    />
+                    Gas Fee Estimation
+                  </div>
+                  <div className="text-xs text-gray-400 flex items-center">
+                    {refreshCountdown > 0 
+                      ? `Refresh in ${refreshCountdown}s`
+                      : "Auto-refreshing..."}
+                    <div className={`ml-1 size-2 rounded-full ${
+                      refreshCountdown <= 5 
+                        ? "bg-yellow-500 animate-pulse" 
+                        : "bg-green-500 animate-pulse"
+                    }`}></div>
+                  </div>
                 </h3>
 
                 <div className="space-y-3">
@@ -543,7 +822,7 @@ const ConfirmSend = () => {
                     </span>
                   </div>
 
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-start">
                     <span className="text-gray-400">Gas Fee</span>
                     <div className="text-right">
                       <div className="text-white font-medium">
@@ -555,6 +834,29 @@ const ConfirmSend = () => {
                       </div>
                     </div>
                   </div>
+
+                  <Collapsible className="flex flex-col justify-between items-center w-full">
+                    <CollapsibleTrigger className="w-full py-0">
+                      <span className="text-gray-400 text-xs font-medium">Speed</span>
+                      <Button className="text-white flex items-center hover:cursor-pointer hover:underline bg-transparent hover:bg-transparent p-0">
+                        <p className="text-white text-sm font-medium">
+                          {gasPriority}
+                        </p>
+                        <Pen className="size-3 text-white ml-1" />
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="w-full">
+                      <GasFeeSelection
+                        gasEstimate={gasEstimate}
+                        setGasEstimate={setGasEstimate}
+                        gasPriority={gasPriority}
+                        setGasPriority={setGasPriority}
+                        token={token}
+                        nativeTokens={nativeTokens}
+                        amount={amount}
+                      />
+                    </CollapsibleContent>
+                  </Collapsible>
 
                   <div className="border-t border-white/10 pt-3 mt-3">
                     <div className="flex justify-between items-center">
@@ -617,6 +919,7 @@ const ConfirmSend = () => {
           onClick={handleConfirmSend}
           className="flex-1 bg-green-600 hover:bg-green-700"
           disabled={isEstimatingGas || !gasEstimate || !isHaveEnoughGasFee}
+          // disabled={isEstimatingGas || !gasEstimate}
         >
           {isEstimatingGas ? (
             <>

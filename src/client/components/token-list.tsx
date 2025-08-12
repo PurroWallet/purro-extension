@@ -16,7 +16,7 @@ interface UnifiedToken {
   contractAddress: string;
   decimals: number;
   isNative?: boolean;
-  icon_url?: string;
+  logo?: string;
 }
 
 interface TokenListProps {
@@ -39,7 +39,7 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
   const safeBalanceFormatted = token.balanceFormatted || 0;
   const safeValue = token.usdValue || 0;
 
-  const tokenLogoSrc = token.icon_url || getTokenLogo(safeSymbol);
+  const tokenLogoSrc = token.logo || getTokenLogo(safeSymbol);
   const networkIconSrc = getNetworkIcon(token.chain as ChainType);
 
   const [tokenImageError, setTokenImageError] = useState(!tokenLogoSrc);
