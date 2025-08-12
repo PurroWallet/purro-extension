@@ -5,14 +5,13 @@ import {
   DialogWrapper,
 } from "@/client/components/ui";
 import { DialogHeader } from "@/client/components/ui";
+import { Menu } from "@/client/components/ui/menu";
 import { sendMessage } from "@/client/utils/extension-message-utils";
 import useDialogStore from "@/client/hooks/use-dialog-store";
-import { ArrowLeft, Send, CheckCircle, X } from "lucide-react";
-import { getNetworkIcon } from "@/utils/network-icons";
+import { ArrowLeft, Send, X } from "lucide-react";
 import useSendTokenHLStore from "@/client/hooks/use-send-token-HL-store";
 import { useEffect, useState } from "react";
 import { getAddressByDomain } from "@/client/services/hyperliquid-name-api";
-import { getSpotTokenImage } from "@/client/utils/icons";
 import { useHlPortfolioData } from "@/client/hooks/use-hyperliquid-portfolio";
 import useDevModeStore from "@/client/hooks/use-dev-mode";
 
@@ -125,82 +124,26 @@ const ConfirmSend = () => {
         {token && (
           <div className="space-y-6">
             {/* Transaction Summary */}
-            <div className="bg-[var(--card-color)] rounded-lg p-4 border border-white/10">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                <CheckCircle className="size-5 mr-2 text-green-500" />
-                Transaction Summary
-              </h3>
-
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Token</span>
-                  <div className="flex items-center">
-                    <div className="flex items-center justify-center size-6 bg-[var(--card-color)] rounded-full mr-2">
-                      <img
-                        src={getSpotTokenImage(token.coin)}
-                        alt={token.coin}
-                        className="size-full rounded-full"
-                        onError={(e) => {
-                          e.currentTarget.style.display = "none";
-                          const parent = e.currentTarget.parentElement;
-                          if (parent) {
-                            const fallbackDiv = document.createElement("div");
-                            fallbackDiv.className =
-                              "size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-lg border border-[var(--primary-color)]/20";
-                            fallbackDiv.textContent = token.coin
-                              .charAt(0)
-                              .toUpperCase();
-                            parent.insertBefore(fallbackDiv, e.currentTarget);
-                          }
-                        }}
-                      />
-                    </div>
-                    <span className="text-white font-medium">{token.coin}</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Amount</span>
-                  <div className="text-right">
-                    <div className="text-white font-medium">
-                      {amount} {token.coin}
-                    </div>
-                    <div className="text-gray-400 text-sm">
-                      ≈ $
-                      {(
-                        (parseFloat(amount) || 0) * (token.currentPrice || 0)
-                      ).toFixed(2)}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">To</span>
-                  <span className="text-white font-mono text-sm">
-                    {recipientAddress.slice(0, 6)}...
-                    {recipientAddress.slice(-4)}{" "}
-                    {recipient.endsWith(".hl") && (
-                      <span className="text-gray-400 text-xs">
-                        ({recipient})
-                      </span>
-                    )}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Network</span>
-                  <div className="flex items-center">
-                    <img
-                      src={getNetworkIcon("hyperliquid")}
-                      alt="Hyperliquid"
-                      className="size-5 rounded-full mr-2"
-                    />
-                    <span className="text-white capitalize">
-                      Hyperliquid DEX
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <div className="space-y-4">
+              <Menu
+                items={[
+                  {
+                    label: "Amount",
+                    description: `${amount} ${token.coin}`,
+                  },
+                  {
+                    label: "To",
+                    isLongDescription: true,
+                    description: `${recipientAddress}${
+                      recipient.endsWith(".hl") ? ` (${recipient})` : ""
+                    }`,
+                  },
+                  {
+                    label: "Network",
+                    description: "Hyperliquid DEX",
+                  },
+                ]}
+              />
             </div>
 
             {/* Warning */}
