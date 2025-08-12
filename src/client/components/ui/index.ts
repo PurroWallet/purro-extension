@@ -12,3 +12,8 @@ export { Drawer } from "./drawer";
 export { Switch } from "./switch";
 export { HoldButton } from "./hold-button";
 export { Pagination } from "./pagination";
+export { 
+    Collapsible, 
+    CollapsibleTrigger, 
+    CollapsibleContent 
+} from "./collapsiable";

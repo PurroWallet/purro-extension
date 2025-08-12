@@ -70,6 +70,7 @@ const DialogFooter = ({
 
 const DialogWrapper = ({
   children,
+  className,
 }: {
   children: React.ReactNode;
   className?: string;
@@ -77,7 +78,7 @@ const DialogWrapper = ({
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        className="flex flex-col h-full"
+        className={cn("flex flex-col h-full", className)}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}

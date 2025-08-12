@@ -1304,7 +1304,7 @@ export const evmHandler = {
                     data: transaction.data
                 });
 
-                console.log("🔍 Gas limit:", gasLimit);
+
 
                 // Add buffer to gas limit
                 const bufferedGasLimit = Math.floor(Number(gasLimit) * GAS_LIMIT_BUFFER);
@@ -1316,23 +1316,31 @@ export const evmHandler = {
                 try {
                     // Try to get EIP-1559 fees first
                     const feeData = await provider.getFeeData();
+
+                    
                     if (feeData.maxFeePerGas && feeData.maxPriorityFeePerGas) {
                         transaction.maxFeePerGas = `0x${feeData.maxFeePerGas.toString(16)}`;
                         transaction.maxPriorityFeePerGas = `0x${feeData.maxPriorityFeePerGas.toString(16)}`;
                         transaction.type = '0x2'; // EIP-1559 transaction
-                    } else if (feeData.gasPrice) {
-                        transaction.gasPrice = `0x${feeData.gasPrice.toString(16)}`;
-                        transaction.type = '0x0'; // Legacy transaction
+
                     }
-                } catch (error) {
-                    console.warn('Failed to get fee data, using legacy gas price');
-                    const feeData = await provider.getFeeData();
+                    
                     if (feeData.gasPrice) {
                         transaction.gasPrice = `0x${feeData.gasPrice.toString(16)}`;
                         transaction.type = '0x0'; // Legacy transaction
+
                     }
+                } catch (error) {
+                    console.warn('Failed to get fee data, using fallback gas price:', error);
+                    // Use a reasonable fallback gas price (20 gwei)
+                    const fallbackGasPrice = BigInt(20 * 1e9); // 20 gwei in wei
+                    transaction.gasPrice = `0x${fallbackGasPrice.toString(16)}`;
+                    transaction.type = '0x0'; // Legacy transaction
+
                 }
             }
+
+
 
             return {
                 success: true,
@@ -1412,12 +1420,24 @@ export const evmHandler = {
                 from: wallet.eip155.address
             };
 
-            // Get current chain ID
-            const result = await chrome.storage.local.get(STORAGE_KEYS.CURRENT_CHAIN_ID);
-            const chainId = result[STORAGE_KEYS.CURRENT_CHAIN_ID] || '0x1';
+            // Use chainId from transaction if provided, otherwise get from storage
+            let chainId: string = transaction.chainId || '';
+            if (!chainId) {
+                const result = await chrome.storage.local.get(STORAGE_KEYS.CURRENT_CHAIN_ID);
+                chainId = result[STORAGE_KEYS.CURRENT_CHAIN_ID] || '0x1';
+            }
             transactionWithFrom.chainId = chainId;
 
+            console.log('[Purro] 🔗 Using chain ID:', chainId);
             const chainInfo = supportedEVMChains[chainId];
+
+            if (!chainInfo) {
+                return {
+                    success: false,
+                    error: `Unsupported chain: ${chainId}`,
+                    code: 4001
+                };
+            }
 
             // Estimate gas if not provided
             try {
@@ -1464,7 +1484,8 @@ export const evmHandler = {
             const provider = new ethers.JsonRpcProvider(chainInfo.rpcUrls[0]);
             const connectedWallet = signerWallet.connect(provider);
 
-            const tx = await connectedWallet.sendTransaction({
+            // Prepare transaction with all parameters from frontend
+            const txParams: any = {
                 to: transaction.to,
                 value: transaction.value ? (
                     transaction.value.startsWith('0x') 
@@ -1472,7 +1493,23 @@ export const evmHandler = {
                         : ethers.parseEther(transaction.value)
                 ) : undefined,
                 data: transaction.data,
-            });
+            };
+
+            // Include gas parameters if provided (to avoid re-estimation)
+            if (transaction.gas) {
+                txParams.gasLimit = transaction.gas;
+            }
+            if (transaction.gasPrice) {
+                txParams.gasPrice = transaction.gasPrice;
+            }
+            if (transaction.maxFeePerGas) {
+                txParams.maxFeePerGas = transaction.maxFeePerGas;
+            }
+            if (transaction.maxPriorityFeePerGas) {
+                txParams.maxPriorityFeePerGas = transaction.maxPriorityFeePerGas;
+            }
+
+            const tx = await connectedWallet.sendTransaction(txParams);
             console.log('[Purro] ✅ Transaction sent:', tx.hash);
 
             return {
