@@ -11,6 +11,7 @@ export const Input = ({
   placeholder,
   className,
   hasError = false,
+  disabled = false,
 }: {
   type: "text";
   value: string;
@@ -19,6 +20,7 @@ export const Input = ({
   placeholder?: string;
   className?: string;
   hasError?: boolean;
+  disabled?: boolean;
 }) => {
   return (
     <motion.input
@@ -27,6 +29,7 @@ export const Input = ({
       onChange={onChange}
       onKeyDown={onKeyDown}
       placeholder={placeholder}
+      disabled={disabled}
       className={cn(
         "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 text-base transition-colors duration-200",
         hasError
