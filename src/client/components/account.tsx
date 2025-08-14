@@ -44,9 +44,6 @@ export const AccountName = ({
   className?: string;
   address?: string;
 }) => {
-  if (!name) return null;
-
-  const truncatedName = name.length > 20 ? `${name.substring(0, 10)}...` : name;
   const [hlName, setHlName] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(!!address);
 
@@ -70,6 +67,10 @@ export const AccountName = ({
     };
   }, [address]);
 
+  // Early return after hooks
+  if (!name) return null;
+
+  const truncatedName = name.length > 20 ? `${name.substring(0, 10)}...` : name;
   // Nếu có hlName thì thay thế tên wallet
   const displayName = hlName || truncatedName;
 

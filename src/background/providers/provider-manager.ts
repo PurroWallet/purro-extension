@@ -402,7 +402,7 @@ export class PurroProviderManager implements PurroProvider {
 
         return this.accounts;
       }
-    } catch (error) {
+    } catch {
       // Silent fail
     }
 
@@ -473,7 +473,7 @@ export class PurroProviderManager implements PurroProvider {
     try {
       const state = await this.sendMessage('GET_WALLET_STATE');
       return !state.isLocked;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

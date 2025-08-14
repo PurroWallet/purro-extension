@@ -71,15 +71,15 @@ const MainEditAccount = ({
     };
   }, [accountAddress]);
 
-  if (account?.source === 'seedPhrase') {
-    useEffect(() => {
+  useEffect(() => {
+    if (account?.source === 'seedPhrase') {
       const fetchSeedPhrase = async () => {
         const seedPhrase = await getSeedPhraseById(account?.seedPhraseId || '');
         setSeedPhrase(seedPhrase);
       };
       fetchSeedPhrase();
-    }, [account?.seedPhraseId]);
-  }
+    }
+  }, [account?.seedPhraseId, account?.source, getSeedPhraseById]);
 
   return (
     <>

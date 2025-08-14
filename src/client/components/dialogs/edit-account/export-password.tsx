@@ -52,7 +52,7 @@ const ExportPassword = ({
 
       // If we reach here, password is correct
       onConfirm(password);
-    } catch (error) {
+    } catch {
       // Password is incorrect
       setHasError(true);
       setPassword(''); // Clear password field on error

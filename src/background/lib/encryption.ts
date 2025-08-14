@@ -121,7 +121,7 @@ const validateEncryptionData = (data: DataEncryption): void => {
     base64ToArrayBuffer(data.nonce);
     base64ToArrayBuffer(data.encrypted);
     base64ToArrayBuffer(data.digest);
-  } catch (error) {
+  } catch {
     throw new Error('Invalid base64 encoding in encryption data');
   }
 };
@@ -500,7 +500,7 @@ export const encryption = {
         const aBuffer = new TextEncoder().encode(a);
         const bBuffer = new TextEncoder().encode(b);
         return (crypto.subtle as any).timingSafeEqual(aBuffer, bBuffer);
-      } catch (error) {
+      } catch {
         // Fallback to manual implementation
       }
     }

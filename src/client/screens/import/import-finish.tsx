@@ -56,7 +56,7 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
             }
             break;
 
-          case 'seed':
+          case 'seed': {
             if (!mnemonic || !mnemonic.trim()) {
               throw new Error('No seed phrase provided for import');
             }
@@ -71,8 +71,9 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
               name: finalAccountName,
             });
             break;
+          }
 
-          case 'privateKey':
+          case 'privateKey': {
             if (!privateKey || !privateKey.trim() || !chain) {
               throw new Error('Private key and chain are required for import');
             }
@@ -95,6 +96,7 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
               chain: chainType,
             });
             break;
+          }
 
           case 'watchOnly':
             break;

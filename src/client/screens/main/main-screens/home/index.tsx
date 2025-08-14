@@ -6,6 +6,7 @@ import SendIcon from '@/assets/icon-component/send-icon';
 import { useOptimizedPortfolio } from '@/client/hooks/use-optimized-portfolio';
 import { formatCurrency } from '@/client/utils/formatters';
 import { useState, useEffect, useMemo } from 'react';
+import type { ReactNode } from 'react';
 import { cn } from '@/client/lib/utils';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
 import {
@@ -133,8 +134,8 @@ const Button = ({
   icon,
   onClick,
 }: {
-  children: React.ReactNode;
-  icon: React.ReactNode;
+  children: ReactNode;
+  icon: ReactNode;
   onClick: () => void;
 }) => {
   return (

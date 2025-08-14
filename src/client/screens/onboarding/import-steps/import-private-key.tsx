@@ -142,7 +142,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
                 if (inputValue.trim()) {
                   try {
                     let isValid = false;
-                    // @ts-ignore: Variable is assigned but not read in this scope
+                    // @ts-expect-error: Variable is assigned but not read in this scope
                     let walletAddress = '';
 
                     // EVM chains (Ethereum, Hyperliquid, Base, Arbitrum) all use the same validation
