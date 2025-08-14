@@ -1,13 +1,13 @@
-import { formatCurrency } from "@/client/utils/formatters";
-import TabsLoading from "./tabs-loading";
-import TabsError from "./tabs-error";
-import { useState, useEffect } from "react";
-import { AlertTriangle, PlusIcon } from "lucide-react";
-import { useUnifiedTokens } from "@/client/hooks/use-unified-tokens";
-import TokenList from "@/client/components/token-list";
-import useDevModeStore from "@/client/hooks/use-dev-mode";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import AddTestnetToken from "@/client/components/dialogs/add-testnet-token";
+import { formatCurrency } from '@/client/utils/formatters';
+import TabsLoading from './tabs-loading';
+import TabsError from './tabs-error';
+import { useState, useEffect } from 'react';
+import { AlertTriangle, PlusIcon } from 'lucide-react';
+import { useUnifiedTokens } from '@/client/hooks/use-unified-tokens';
+import TokenList from '@/client/components/token-list';
+import useDevModeStore from '@/client/hooks/use-dev-mode';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import AddTestnetToken from '@/client/components/dialogs/add-testnet-token';
 
 const WalletTabsEVM = () => {
   // Track performance

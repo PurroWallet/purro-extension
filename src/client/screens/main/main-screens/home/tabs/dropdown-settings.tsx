@@ -1,6 +1,6 @@
-import { useRef } from "react";
-import hyperliquidLogo from "@/assets/logo/hl-mint-logo.png";
-import { Switch } from "@/client/components/ui";
+import { useRef } from 'react';
+import hyperliquidLogo from '@/assets/logo/hl-mint-logo.png';
+import { Switch } from '@/client/components/ui';
 
 const DropdownSettings = ({
   isHyperliquidDexEnabled,

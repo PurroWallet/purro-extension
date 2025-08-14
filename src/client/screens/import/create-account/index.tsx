@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
-import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
-import useWallet from "@/client/hooks/use-wallet";
-import ShowGeneratedSeedPhrase from "./show-generated-seed-phrase";
-import NoSeedPhraseFound from "./no-seed-phrase-found";
-import CreateFromExistingSeed from "./create-from-existing-seed";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import { generateMnemonic } from "@/client/lib/utils";
-import LoadingDisplay from "@/client/components/display/loading-display";
-import { SeedPhraseWithId } from "@/types";
+import { useState, useEffect } from 'react';
+import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
+import useWallet from '@/client/hooks/use-wallet';
+import ShowGeneratedSeedPhrase from './show-generated-seed-phrase';
+import NoSeedPhraseFound from './no-seed-phrase-found';
+import CreateFromExistingSeed from './create-from-existing-seed';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import { generateMnemonic } from '@/client/lib/utils';
+import LoadingDisplay from '@/client/components/display/loading-display';
+import { SeedPhraseWithId } from '@/types';
 
 const CreateAccount = ({ onNext }: { onNext: () => void }) => {
   const { accountName, setAccountName, setMnemonic } = useCreateWalletStore();
@@ -15,8 +15,8 @@ const CreateAccount = ({ onNext }: { onNext: () => void }) => {
   const { createWallet, getAllSeedPhrases } = useWallet();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCreatingWallet, setIsCreatingWallet] = useState(false);
-  const [error, setError] = useState<string>("");
-  const [generatedSeedPhrase, setGeneratedSeedPhrase] = useState<string>("");
+  const [error, setError] = useState<string>('');
+  const [generatedSeedPhrase, setGeneratedSeedPhrase] = useState<string>('');
   const [showSeedPhrase, setShowSeedPhrase] = useState(false);
   const [seedPhrases, setSeedPhrases] = useState<SeedPhraseWithId[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,7 @@ const CreateAccount = ({ onNext }: { onNext: () => void }) => {
         const seedPhrases = await getAllSeedPhrases();
         setSeedPhrases(seedPhrases);
       } catch (error) {
-        console.error("Error fetching seed phrases:", error);
+        console.error('Error fetching seed phrases:', error);
       } finally {
         setLoading(false);
       }
@@ -44,11 +44,11 @@ const CreateAccount = ({ onNext }: { onNext: () => void }) => {
   const handleGenerateSeedPhrase = async () => {
     try {
       setIsGenerating(true);
-      setError("");
+      setError('');
 
       const mnemonic = generateMnemonic();
       if (!mnemonic) {
-        throw new Error("Failed to generate mnemonic");
+        throw new Error('Failed to generate mnemonic');
       }
 
       setGeneratedSeedPhrase(mnemonic);
@@ -62,9 +62,9 @@ const CreateAccount = ({ onNext }: { onNext: () => void }) => {
 
       setShowSeedPhrase(true);
     } catch (err) {
-      console.error("❌ Failed to generate seed phrase:", err);
+      console.error('❌ Failed to generate seed phrase:', err);
       setError(
-        err instanceof Error ? err.message : "Failed to generate seed phrase"
+        err instanceof Error ? err.message : 'Failed to generate seed phrase'
       );
     } finally {
       setIsGenerating(false);
@@ -74,26 +74,26 @@ const CreateAccount = ({ onNext }: { onNext: () => void }) => {
   const handleCreateNewWallet = async () => {
     try {
       setIsCreatingWallet(true);
-      setError("");
+      setError('');
 
       await createWallet({
         mnemonic: generatedSeedPhrase,
       });
 
       // Clear states on success
-      setGeneratedSeedPhrase("");
+      setGeneratedSeedPhrase('');
       setShowSeedPhrase(false);
-      setError("");
+      setError('');
 
       onNext();
     } catch (err) {
-      console.error("❌ Failed to create new wallet:", err);
-      console.error("❌ Error details:", {
-        message: err instanceof Error ? err.message : "Unknown error",
-        stack: err instanceof Error ? err.stack : "No stack trace",
+      console.error('❌ Failed to create new wallet:', err);
+      console.error('❌ Error details:', {
+        message: err instanceof Error ? err.message : 'Unknown error',
+        stack: err instanceof Error ? err.stack : 'No stack trace',
       });
       setError(
-        err instanceof Error ? err.message : "Failed to create new wallet"
+        err instanceof Error ? err.message : 'Failed to create new wallet'
       );
     } finally {
       setIsCreatingWallet(false);

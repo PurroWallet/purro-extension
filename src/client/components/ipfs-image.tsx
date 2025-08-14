@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { fetchWithFallback } from "@/client/lib/ipfs";
+import React, { useState, useEffect } from 'react';
+import { fetchWithFallback } from '@/client/lib/ipfs';
 
 interface IpfsImageProps {
   cid: string;
@@ -67,14 +67,14 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
   placeholder,
   onLoad,
   onError,
-  alt = "IPFS Image",
+  alt = 'IPFS Image',
 }) => {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!cid || cid.trim() === "") {
+    if (!cid || cid.trim() === '') {
       setLoading(false);
       setImageUri(null);
       // Don't set error, just show fallback or placeholder
@@ -86,11 +86,11 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
         setLoading(true);
         setError(null);
 
-        console.log("Loading image with CID:", cid);
+        console.log('Loading image with CID:', cid);
 
         // Check if it's a data URI first (base64 encoded image)
         if (isDataUri(cid)) {
-          console.log("Using data URI directly:", cid.substring(0, 50) + "...");
+          console.log('Using data URI directly:', cid.substring(0, 50) + '...');
           setImageUri(cid);
           onLoad?.();
           return;
@@ -98,7 +98,7 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
 
         // Check if it's a regular HTTP URL
         if (isHttpUrl(cid)) {
-          console.log("Using HTTP URL directly:", cid);
+          console.log('Using HTTP URL directly:', cid);
           setImageUri(cid);
           onLoad?.();
           return;
@@ -106,10 +106,10 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
 
         // Check if it's an IPFS URL
         if (isIpfsUrl(cid)) {
-          console.log("Processing IPFS URL:", cid);
+          console.log('Processing IPFS URL:', cid);
           // Extract CID from URL if needed
           const actualCid = extractCidFromUrl(cid);
-          console.log("Extracted CID:", actualCid);
+          console.log('Extracted CID:', actualCid);
 
           const response = await fetchWithFallback(actualCid);
 
@@ -121,8 +121,8 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
           const blob = await response.blob();
 
           // Check if blob is actually an image
-          if (!blob.type.startsWith("image/")) {
-            console.warn("Blob is not an image type:", blob.type);
+          if (!blob.type.startsWith('image/')) {
+            console.warn('Blob is not an image type:', blob.type);
           }
 
           const uri = URL.createObjectURL(blob);
@@ -130,7 +130,7 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
           onLoad?.();
         } else {
           // If it's neither HTTP nor IPFS, try to use it as a direct CID
-          console.log("Treating as direct CID:", cid);
+          console.log('Treating as direct CID:', cid);
           const response = await fetchWithFallback(cid);
           const blob = await response.blob();
           const uri = URL.createObjectURL(blob);
@@ -138,9 +138,9 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
           onLoad?.();
         }
       } catch (err) {
-        console.error("Failed to load image:", err, "CID:", cid);
+        console.error('Failed to load image:', err, 'CID:', cid);
         const error =
-          err instanceof Error ? err : new Error("Failed to load image");
+          err instanceof Error ? err : new Error('Failed to load image');
         setError(error);
         onError?.(error);
       } finally {
@@ -152,7 +152,7 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
 
     // Cleanup object URL on unmount (only for blob URLs)
     return () => {
-      if (imageUri && imageUri.startsWith("blob:")) {
+      if (imageUri && imageUri.startsWith('blob:')) {
         URL.revokeObjectURL(imageUri);
       }
     };
@@ -162,7 +162,7 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
     return (
       <div
         className={`flex items-center justify-center bg-gray-100 ${
-          className || ""
+          className || ''
         }`}
         style={style}
       >
@@ -186,7 +186,7 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
           style={style}
           onLoad={onLoad}
           onError={(_e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-            console.error("Fallback image also failed to load:", fallbackSrc);
+            console.error('Fallback image also failed to load:', fallbackSrc);
             // Don't set error again to prevent infinite loop
             // Just let the fallback image show as broken
           }}
@@ -197,7 +197,7 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
     return (
       <div
         className={`flex items-center justify-center bg-card text-muted-foreground ${
-          className || ""
+          className || ''
         }`}
         style={style}
       >
@@ -219,7 +219,7 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
           style={style}
           onLoad={onLoad}
           onError={(_e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-            console.error("Fallback image failed to load:", fallbackSrc);
+            console.error('Fallback image failed to load:', fallbackSrc);
           }}
         />
       );
@@ -228,7 +228,7 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
     return (
       <div
         className={`flex items-center justify-center bg-card text-muted-foreground ${
-          className || ""
+          className || ''
         }`}
         style={style}
       >
@@ -248,8 +248,8 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
       style={style}
       onLoad={onLoad}
       onError={(_e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-        console.error("Image failed to render:", imageUri);
-        const error = new Error("Image failed to load");
+        console.error('Image failed to render:', imageUri);
+        const error = new Error('Image failed to load');
         setError(error);
         onError?.(error);
       }}

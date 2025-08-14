@@ -8,9 +8,9 @@ export const fetchTrendingPools = async (networkId: Network, page: number) => {
   const response = await fetch(
     `${ENDPOINTS.GECKO_TERMINAL}/networks/${networkId}/trending_pools?page=${page}&duration=24h`,
     {
-      method: "GET",
+      method: 'GET',
       headers: {
-        Accept: "application/json;version=20230302",
+        Accept: 'application/json;version=20230302',
       },
     }
   );
@@ -26,14 +26,14 @@ export const fetchTopPoolsByDex = async (
   networkId: Network,
   dex: string,
   page: number,
-  sort: "h24_tx_count_desc" | "h24_volume_usd_desc"
+  sort: 'h24_tx_count_desc' | 'h24_volume_usd_desc'
 ) => {
   const response = await fetch(
     `${ENDPOINTS.GECKO_TERMINAL}/networks/${networkId}/dexes/${dex}/pools?page=${page}&sort=${sort}`,
     {
-      method: "GET",
+      method: 'GET',
       headers: {
-        Accept: "application/json;version=20230302",
+        Accept: 'application/json;version=20230302',
       },
     }
   );
@@ -60,15 +60,11 @@ export const fetchTokenPrices = async (
   // If we have 30 or fewer addresses, make a single request
   if (addresses.length <= BATCH_SIZE) {
     const response = await fetch(
-      `${
-        ENDPOINTS.GECKO_TERMINAL
-      }/simple/networks/${network}/token_price/${addresses.join(
-        ","
-      )}?include_24hr_price_change=true`,
+      `${ENDPOINTS.GECKO_TERMINAL}/simple/networks/${network}/token_price/${addresses.join(',')}?include_24hr_price_change=true`,
       {
-        method: "GET",
+        method: 'GET',
         headers: {
-          Accept: "application/json;version=20230302",
+          Accept: 'application/json;version=20230302',
         },
       }
     );
@@ -87,15 +83,13 @@ export const fetchTokenPrices = async (
   }
 
   // Make all batch requests in parallel
-  const batchPromises = batches.map(async (batch) => {
+  const batchPromises = batches.map(async batch => {
     const response = await fetch(
-      `${
-        ENDPOINTS.GECKO_TERMINAL
-      }/simple/networks/${network}/token_price/${batch.join(",")}`,
+      `${ENDPOINTS.GECKO_TERMINAL}/simple/networks/${network}/token_price/${batch.join(',')}`,
       {
-        method: "GET",
+        method: 'GET',
         headers: {
-          Accept: "application/json;version=20230302",
+          Accept: 'application/json;version=20230302',
         },
       }
     );
@@ -117,7 +111,7 @@ export const fetchTokenPrices = async (
   const mergedPriceChange = {};
   const mergedTotalReserve = {};
 
-  batchResults.forEach((result) => {
+  batchResults.forEach(result => {
     if (result?.data?.attributes) {
       Object.assign(
         mergedTokenPrices,
@@ -142,8 +136,8 @@ export const fetchTokenPrices = async (
   // Return in the same format as the original API
   return {
     data: {
-      id: "batched-token-prices",
-      type: "token_price",
+      id: 'batched-token-prices',
+      type: 'token_price',
       attributes: {
         token_prices: mergedTokenPrices,
         market_cap_usd: mergedMarketCap,
@@ -157,19 +151,19 @@ export const fetchTokenPrices = async (
 
 // Specific functions for each network (backward compatibility)
 export const fetchHyperEvmTokenPrices = async (addresses: string[]) => {
-  return fetchTokenPrices("hyperevm", addresses);
+  return fetchTokenPrices('hyperevm', addresses);
 };
 
 export const fetchEthereumTokenPrices = async (addresses: string[]) => {
-  return fetchTokenPrices("eth", addresses);
+  return fetchTokenPrices('eth', addresses);
 };
 
 export const fetchBaseTokenPrices = async (addresses: string[]) => {
-  return fetchTokenPrices("base", addresses);
+  return fetchTokenPrices('base', addresses);
 };
 
 export const fetchArbitrumTokenPrices = async (addresses: string[]) => {
-  return fetchTokenPrices("arbitrum", addresses);
+  return fetchTokenPrices('arbitrum', addresses);
 };
 
 export const fetchPoolTokenInfo = async (
@@ -179,9 +173,9 @@ export const fetchPoolTokenInfo = async (
   const response = await fetch(
     `${ENDPOINTS.GECKO_TERMINAL}/networks/${networkId}/pools/${poolAddress}/info`,
     {
-      method: "GET",
+      method: 'GET',
       headers: {
-        Accept: "application/json;version=20230302",
+        Accept: 'application/json;version=20230302',
       },
     }
   );
@@ -200,9 +194,9 @@ export const fetchTopPoolsForAToken = async (
   const response = await fetch(
     `${ENDPOINTS.GECKO_TERMINAL}/networks/${networkId}/tokens/${tokenAddress}/pools`,
     {
-      method: "GET",
+      method: 'GET',
       headers: {
-        Accept: "application/json;version=20230302",
+        Accept: 'application/json;version=20230302',
       },
     }
   );
@@ -221,9 +215,9 @@ export const fetchTokenImage = async (
   const response = await fetch(
     `${ENDPOINTS.GECKO_TERMINAL}/networks/${networkId}/tokens/${tokenAddress}?include=image_url`,
     {
-      method: "GET",
+      method: 'GET',
       headers: {
-        Accept: "application/json;version=20230302",
+        Accept: 'application/json;version=20230302',
       },
     }
   );

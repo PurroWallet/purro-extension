@@ -1,7 +1,7 @@
-import { cn } from "@/client/lib/utils";
-import React, { useState } from "react";
-import { motion } from "motion/react";
-import { Eye, EyeOff, ArrowLeftRight } from "lucide-react";
+import { cn } from '@/client/lib/utils';
+import React, { useState } from 'react';
+import { motion } from 'motion/react';
+import { Eye, EyeOff, ArrowLeftRight } from 'lucide-react';
 
 export const Input = ({
   type,
@@ -13,7 +13,7 @@ export const Input = ({
   hasError = false,
   disabled = false,
 }: {
-  type: "text";
+  type: 'text';
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -31,10 +31,10 @@ export const Input = ({
       placeholder={placeholder}
       disabled={disabled}
       className={cn(
-        "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 text-base transition-colors duration-200",
+        'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 text-base transition-colors duration-200',
         hasError
-          ? "border-red-500 focus:ring-red-500"
-          : "border-white/10 focus:ring-[var(--primary-color-light)]",
+          ? 'border-red-500 focus:ring-red-500'
+          : 'border-white/10 focus:ring-[var(--primary-color-light)]',
         className
       )}
       animate={
@@ -46,7 +46,7 @@ export const Input = ({
       }
       transition={{
         duration: 0.5,
-        ease: "easeInOut",
+        ease: 'easeInOut',
       }}
     />
   );
@@ -56,7 +56,7 @@ export const InputPassword = ({
   value,
   onChange,
   onKeyDown,
-  placeholder = "Password",
+  placeholder = 'Password',
   className,
   hasError = false,
   showToggle = true,
@@ -78,17 +78,17 @@ export const InputPassword = ({
   return (
     <div className="relative w-full">
       <motion.input
-        type={showPassword ? "text" : "password"}
+        type={showPassword ? 'text' : 'password'}
         value={value}
         onChange={onChange}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         className={cn(
-          "w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 text-base transition-colors duration-200",
-          showToggle ? "pr-12" : "pr-4",
+          'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 text-base transition-colors duration-200',
+          showToggle ? 'pr-12' : 'pr-4',
           hasError
-            ? "border-red-500 focus:ring-red-500"
-            : "border-white/10 focus:ring-[var(--primary-color-light)]",
+            ? 'border-red-500 focus:ring-red-500'
+            : 'border-white/10 focus:ring-[var(--primary-color-light)]',
           className
         )}
         animate={
@@ -100,7 +100,7 @@ export const InputPassword = ({
         }
         transition={{
           duration: 0.5,
-          ease: "easeInOut",
+          ease: 'easeInOut',
         }}
       />
 
@@ -126,10 +126,10 @@ export const InputCurrency = ({
   value,
   onChange,
   onKeyDown,
-  placeholder = "0.00",
+  placeholder = '0.00',
   className,
   hasError = false,
-  currency = "USD",
+  currency = 'USD',
   decimals = 2,
   maxValue,
   onMaxClick,
@@ -151,20 +151,20 @@ export const InputCurrency = ({
 
   const formatValue = (val: string) => {
     // Convert comma to dot for decimal separator
-    let cleanValue = val.replace(/,/g, ".");
+    let cleanValue = val.replace(/,/g, '.');
 
     // Remove all non-numeric characters except decimal point
-    cleanValue = cleanValue.replace(/[^\d.]/g, "");
+    cleanValue = cleanValue.replace(/[^\d.]/g, '');
 
     // Ensure only one decimal point
-    const parts = cleanValue.split(".");
+    const parts = cleanValue.split('.');
     if (parts.length > 2) {
-      return parts[0] + "." + parts.slice(1).join("");
+      return parts[0] + '.' + parts.slice(1).join('');
     }
 
     // Limit decimal places
     if (parts[1] && parts[1].length > decimals) {
-      return parts[0] + "." + parts[1].substring(0, decimals);
+      return parts[0] + '.' + parts[1].substring(0, decimals);
     }
 
     return cleanValue;
@@ -179,23 +179,23 @@ export const InputCurrency = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     // Allow: backspace, delete, tab, escape, enter, decimal point (both . and ,), arrow keys
     const allowedKeys = [
-      "Backspace",
-      "Delete",
-      "Tab",
-      "Escape",
-      "Enter",
-      ".",
-      ",",
-      "ArrowLeft",
-      "ArrowRight",
-      "ArrowUp",
-      "ArrowDown",
-      "Home",
-      "End",
+      'Backspace',
+      'Delete',
+      'Tab',
+      'Escape',
+      'Enter',
+      '.',
+      ',',
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowUp',
+      'ArrowDown',
+      'Home',
+      'End',
     ];
 
     // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
-    if (e.ctrlKey && ["a", "c", "v", "x"].includes(e.key.toLowerCase())) {
+    if (e.ctrlKey && ['a', 'c', 'v', 'x'].includes(e.key.toLowerCase())) {
       return;
     }
 
@@ -227,7 +227,7 @@ export const InputCurrency = ({
       return value; // Return original value if not a valid number
     }
 
-    return numValue.toLocaleString("en-US", {
+    return numValue.toLocaleString('en-US', {
       minimumFractionDigits: 0,
       maximumFractionDigits: decimals,
     });
@@ -255,17 +255,17 @@ export const InputCurrency = ({
         onBlur={() => setFocused(false)}
         placeholder={placeholder}
         className={cn(
-          "w-full pl-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 text-base transition-colors duration-200",
+          'w-full pl-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 text-base transition-colors duration-200',
           onMaxClick && onSwitchCurrency
-            ? "pr-32"
+            ? 'pr-32'
             : onMaxClick
-            ? "pr-24"
-            : onSwitchCurrency
-            ? "pr-20"
-            : "pr-16",
+              ? 'pr-24'
+              : onSwitchCurrency
+                ? 'pr-20'
+                : 'pr-16',
           hasError
-            ? "border-red-500 focus:ring-red-500"
-            : "border-white/10 focus:ring-[var(--primary-color-light)]",
+            ? 'border-red-500 focus:ring-red-500'
+            : 'border-white/10 focus:ring-[var(--primary-color-light)]',
           className
         )}
         animate={
@@ -277,7 +277,7 @@ export const InputCurrency = ({
         }
         transition={{
           duration: 0.5,
-          ease: "easeInOut",
+          ease: 'easeInOut',
         }}
       />
 

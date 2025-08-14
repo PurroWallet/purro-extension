@@ -1,68 +1,71 @@
 {
-    "name": "Purro (Beta)",
-    "description": "The Purr-fect Web3 Wallet",
-    "version": "0.3.4",
-    "manifest_version": 3,
-    "action": {
-        "default_popup": "html/main.html",
-        "default_icon": {
-            "16": "purro-icon-dark.png",
-            "32": "purro-icon-dark.png",
-            "48": "purro-icon-dark.png",
-            "128": "purro-icon-dark.png"
-        }
-    },
-    "side_panel": {
-        "default_path": "html/sidepanel.html"
-    },
-    "background": {
-        "service_worker": "background.js",
-        "type": "module"
-    },
-    "content_scripts": [
-        {
-            "matches": [
-                "<all_urls>"
-            ],
-            "js": [
-                "contentScript.js"
-            ],
-            "run_at": "document_start",
-            "type": "module"
-        }
-    ],
-    "web_accessible_resources": [
-        {
-            "resources": [
-                "html/onboarding.html",
-                "html/import.html",
-                "html/main.html",
-                "html/connect.html",
-                "html/sign.html",
-                "html/transaction.html",
-                "injectedProviderBundle.js",
-                "purro-icon.js"
-            ],
-            "matches": [
-                "<all_urls>"
-            ]
-        }
-    ],
-    "icons": {
-        "16": "purro-icon-dark.png",
-        "32": "purro-icon-dark.png",
-        "48": "purro-icon-dark.png",
-        "128": "purro-icon-dark.png"
-    },
-    "permissions": [
-        "storage",
-        "activeTab",
-        "tabs",
-        "sidePanel",
-        "alarms",
-        "offscreen"
-    ],
-    "host_permissions": [
-        "https://*/*"
-    ]
+  "name": "Purro (Beta)",
+  "description": "The Purr-fect Web3 Wallet",
+  "version": "0.3.7",
+  "manifest_version": 3,
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; frame-src 'none';"
+  },
+  "action": {
+    "default_popup": "html/main.html",
+    "default_icon": {
+      "16": "purro-icon-dark.png",
+      "32": "purro-icon-dark.png",
+      "48": "purro-icon-dark.png",
+      "128": "purro-icon-dark.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "html/sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "contentScript.js"
+      ],
+      "run_at": "document_start",
+      "type": "module"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "html/onboarding.html",
+        "html/import.html",
+        "html/main.html",
+        "html/connect.html",
+        "html/sign.html",
+        "html/transaction.html",
+        "injectedProviderBundle.js",
+        "purro-icon.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "icons": {
+    "16": "purro-icon-dark.png",
+    "32": "purro-icon-dark.png",
+    "48": "purro-icon-dark.png",
+    "128": "purro-icon-dark.png"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "tabs",
+    "sidePanel",
+    "alarms",
+    "offscreen"
+  ],
+  "host_permissions": [
+    "https://*/*"
+  ]
 }

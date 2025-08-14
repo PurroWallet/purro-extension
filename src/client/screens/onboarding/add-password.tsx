@@ -1,7 +1,7 @@
-import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
-import usePassword from "@/client/hooks/use-password";
-import { Button } from "@/client/components/ui";
-import { Eye, EyeOff, Check, X } from "lucide-react";
+import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
+import usePassword from '@/client/hooks/use-password';
+import { Button } from '@/client/components/ui';
+import { Eye, EyeOff, Check, X } from 'lucide-react';
 
 const AddPassword = ({ onNext }: { onNext: () => void }) => {
   const { setPassword: setStorePassword } = useCreateWalletStore();
@@ -27,14 +27,14 @@ const AddPassword = ({ onNext }: { onNext: () => void }) => {
 
   const getStrengthColor = (strength: string) => {
     switch (strength) {
-      case "weak":
-        return "bg-red-500";
-      case "medium":
-        return "bg-yellow-500";
-      case "strong":
-        return "bg-green-500";
+      case 'weak':
+        return 'bg-red-500';
+      case 'medium':
+        return 'bg-yellow-500';
+      case 'strong':
+        return 'bg-green-500';
       default:
-        return "bg-gray-300";
+        return 'bg-gray-300';
     }
   };
 
@@ -55,9 +55,9 @@ const AddPassword = ({ onNext }: { onNext: () => void }) => {
             <div className="space-y-2">
               <div className="relative">
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={e => setPassword(e.target.value)}
                   placeholder="Enter your password"
                   className="w-full px-4 py-3 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color-light)] bg-[var(--card-color)] text-white placeholder-gray-400 pr-12 text-base"
                 />
@@ -81,11 +81,11 @@ const AddPassword = ({ onNext }: { onNext: () => void }) => {
                     <span className="text-gray-400">Password Strength</span>
                     <span
                       className={`font-medium ${
-                        validation.strength === "weak"
-                          ? "text-red-400"
-                          : validation.strength === "medium"
-                          ? "text-yellow-400"
-                          : "text-green-400"
+                        validation.strength === 'weak'
+                          ? 'text-red-400'
+                          : validation.strength === 'medium'
+                            ? 'text-yellow-400'
+                            : 'text-green-400'
                       }`}
                     >
                       {validation.strength.toUpperCase()}
@@ -107,9 +107,9 @@ const AddPassword = ({ onNext }: { onNext: () => void }) => {
             <div className="space-y-2">
               <div className="relative">
                 <input
-                  type={showConfirmPassword ? "text" : "password"}
+                  type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={e => setConfirmPassword(e.target.value)}
                   placeholder="Confirm your password"
                   className="w-full px-4 py-3 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color-light)] bg-[var(--card-color)] text-white placeholder-gray-400 pr-12 text-base"
                 />

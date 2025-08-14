@@ -1,31 +1,31 @@
-import { Hyperliquid } from "hyperliquid";
-import { storageHandler } from "./storage-handler";
-import { accountHandler } from "./account-handler";
-import { authHandler } from "./auth-handler";
+import { Hyperliquid } from 'hyperliquid';
+import { storageHandler } from './storage-handler';
+import { accountHandler } from './account-handler';
+import { authHandler } from './auth-handler';
 
 export const hyperliquidHandler = {
   async getHyperliquid(): Promise<Hyperliquid | null> {
     try {
       const activeAccount = await storageHandler.getActiveAccount();
       if (!activeAccount) {
-        console.error("[Purro] ❌ No active account found");
+        console.error('[Purro] ❌ No active account found');
         return null;
       }
 
       let privateKey: string;
       try {
-        console.log("[Purro] 🔄 Retrieving private key...");
+        console.log('[Purro] 🔄 Retrieving private key...');
         privateKey = await accountHandler.getPrivateKeyByAccountId(
           activeAccount.id
         );
-        console.log("[Purro] ✅ Private key retrieved successfully");
+        console.log('[Purro] ✅ Private key retrieved successfully');
       } catch (error) {
-        console.error("[Purro] ❌ Failed to retrieve private key:", error);
+        console.error('[Purro] ❌ Failed to retrieve private key:', error);
 
         // Check if it's a session issue
         const session = await authHandler.getSession();
         if (!session) {
-          console.error("[Purro] ❌ Session not found or expired");
+          console.error('[Purro] ❌ Session not found or expired');
           return null;
         }
 
@@ -41,7 +41,7 @@ export const hyperliquidHandler = {
 
       return hyperliquid;
     } catch (error) {
-      console.error("[Purro] ❌ Failed to get Hyperliquid:", error);
+      console.error('[Purro] ❌ Failed to get Hyperliquid:', error);
       return null;
     }
   },
@@ -54,26 +54,26 @@ export const hyperliquidHandler = {
     try {
       const activeAccount = await storageHandler.getActiveAccount();
       if (!activeAccount) {
-        console.error("[Purro] ❌ No active account found");
+        console.error('[Purro] ❌ No active account found');
         return null;
       }
 
       let privateKey: string;
       try {
-        console.log("[Purro] 🔄 Retrieving private key for testnet...");
+        console.log('[Purro] 🔄 Retrieving private key for testnet...');
         privateKey = await accountHandler.getPrivateKeyByAccountId(
           activeAccount.id
         );
         console.log(
-          "[Purro] ✅ Private key retrieved successfully for testnet"
+          '[Purro] ✅ Private key retrieved successfully for testnet'
         );
       } catch (error) {
-        console.error("[Purro] ❌ Failed to retrieve private key:", error);
+        console.error('[Purro] ❌ Failed to retrieve private key:', error);
 
         // Check if it's a session issue
         const session = await authHandler.getSession();
         if (!session) {
-          console.error("[Purro] ❌ Session not found or expired");
+          console.error('[Purro] ❌ Session not found or expired');
           return null;
         }
 
@@ -89,7 +89,7 @@ export const hyperliquidHandler = {
 
       return hyperliquid;
     } catch (error) {
-      console.error("[Purro] ❌ Failed to get Hyperliquid testnet:", error);
+      console.error('[Purro] ❌ Failed to get Hyperliquid testnet:', error);
       return null;
     }
   },
@@ -106,7 +106,7 @@ export const hyperliquidHandler = {
       if (!hyperliquid) {
         return {
           success: false,
-          error: "Hyperliquid not initialized",
+          error: 'Hyperliquid not initialized',
         };
       }
 
@@ -122,12 +122,12 @@ export const hyperliquidHandler = {
       };
     } catch (error) {
       console.error(
-        "[Purro] ❌ Failed to transfer between spot and perp:",
+        '[Purro] ❌ Failed to transfer between spot and perp:',
         error
       );
       return {
         success: false,
-        error: "Failed to transfer between spot and perp",
+        error: 'Failed to transfer between spot and perp',
       };
     }
   },
@@ -147,7 +147,7 @@ export const hyperliquidHandler = {
       if (!hyperliquid) {
         return {
           success: false,
-          error: "Hyperliquid not initialized",
+          error: 'Hyperliquid not initialized',
         };
       }
 
@@ -162,10 +162,10 @@ export const hyperliquidHandler = {
         data: transferResult,
       };
     } catch (error) {
-      console.error("[Purro] ❌ Failed to send token:", error);
+      console.error('[Purro] ❌ Failed to send token:', error);
       return {
         success: false,
-        error: "Failed to send token",
+        error: 'Failed to send token',
       };
     }
   },

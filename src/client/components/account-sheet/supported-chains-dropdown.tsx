@@ -1,13 +1,13 @@
-import { useState, useEffect, useRef, useMemo } from "react";
-import { createPortal } from "react-dom";
-import { cn } from "@/client/lib/utils";
-import { motion, AnimatePresence } from "motion/react";
-import { supportedEVMChains } from "@/background/constants/supported-chains";
-import { supportedTestnetChains } from "@/background/constants/supported-testnet-chains";
-import { hyperliquidLogo } from "@/assets/logo";
-import useNetworkSettingsStore from "@/client/hooks/use-network-store";
-import useDevModeStore from "@/client/hooks/use-dev-mode";
-import { ChainTypeClient } from "@/types/wallet";
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { cn } from '@/client/lib/utils';
+import { motion, AnimatePresence } from 'motion/react';
+import { supportedEVMChains } from '@/background/constants/supported-chains';
+import { supportedTestnetChains } from '@/background/constants/supported-testnet-chains';
+import { hyperliquidLogo } from '@/assets/logo';
+import useNetworkSettingsStore from '@/client/hooks/use-network-store';
+import useDevModeStore from '@/client/hooks/use-dev-mode';
+import { ChainTypeClient } from '@/types/wallet';
 
 interface SupportedChainsDropdownProps {
   isOpen: boolean;
@@ -21,8 +21,8 @@ const SupportedChainsDropdown = ({
   className,
 }: SupportedChainsDropdownProps) => {
   // Currently selected chainId (hex string) – default to Ethereum Mainnet (value unused, only setter kept)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [, setSelectedChain] = useState<string>("0x1");
+   
+  const [, setSelectedChain] = useState<string>('0x1');
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -35,20 +35,20 @@ const SupportedChainsDropdown = ({
   const activeNetworkSlugs = useMemo<ChainTypeClient[]>(
     () =>
       Object.values(networks)
-        .filter((n) => n.isActive)
-        .map((n) => n.id),
+        .filter(n => n.isActive)
+        .map(n => n.id),
     [networks]
   );
 
   // Mapping between EVM hex chainIds and our internal slugs
   const CHAIN_ID_TO_SLUG: Record<string, ChainTypeClient> = {
     // Mainnet chains
-    "0x1": "ethereum",
-    "0xa4b1": "arbitrum",
-    "0x2105": "base",
-    "0x3e7": "hyperevm",
+    '0x1': 'ethereum',
+    '0xa4b1': 'arbitrum',
+    '0x2105': 'base',
+    '0x3e7': 'hyperevm',
     // Testnet chains
-    "0x3e6": "hyperevm", // HyperEVM Testnet uses same slug as mainnet
+    '0x3e6': 'hyperevm', // HyperEVM Testnet uses same slug as mainnet
   } as const;
 
   const handleChainSelect = (chainId: string) => {
@@ -61,7 +61,7 @@ const SupportedChainsDropdown = ({
     // Choose chain source based on dev mode
     const chainSource = isDevMode ? supportedTestnetChains : supportedEVMChains;
 
-    return Object.values(chainSource).filter((chain) => {
+    return Object.values(chainSource).filter(chain => {
       const slug = CHAIN_ID_TO_SLUG[chain.chainId];
       return activeNetworkSlugs.includes(slug);
     });
@@ -73,8 +73,8 @@ const SupportedChainsDropdown = ({
     ordered.sort((a, b) => {
       const slugA = CHAIN_ID_TO_SLUG[a.chainId];
       const slugB = CHAIN_ID_TO_SLUG[b.chainId];
-      if (slugA === "hyperevm" && slugB !== "hyperevm") return -1;
-      if (slugB === "hyperevm" && slugA !== "hyperevm") return 1;
+      if (slugA === 'hyperevm' && slugB !== 'hyperevm') return -1;
+      if (slugB === 'hyperevm' && slugA !== 'hyperevm') return 1;
       return 0;
     });
     return ordered;
@@ -118,9 +118,9 @@ const SupportedChainsDropdown = ({
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isOpen, onToggle]);
 
@@ -130,7 +130,7 @@ const SupportedChainsDropdown = ({
       <button
         ref={buttonRef}
         className={cn(
-          "h-8 px-2 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center cursor-pointer",
+          'h-8 px-2 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center cursor-pointer',
           className
         )}
         onClick={onToggle}
@@ -161,7 +161,7 @@ const SupportedChainsDropdown = ({
               initial={{ opacity: 0, scale: 0.95, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -10 }}
-              transition={{ duration: 0.15, ease: "easeOut" }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
               className="fixed bg-[var(--background-color)] border border-white/10 rounded-lg shadow-lg max-h-60 overflow-y-auto min-w-[280px] w-max z-[9999]"
               style={{
                 top: `${dropdownPosition.top}px`,
@@ -169,9 +169,9 @@ const SupportedChainsDropdown = ({
               }}
             >
               <p className="p-2 text-sm font-medium text-[var(--text-color)] border-b border-white/10">
-                {isDevMode ? "Testnet Chains" : "Supported Chains"}
+                {isDevMode ? 'Testnet Chains' : 'Supported Chains'}
               </p>
-              {sortedChains.map((chain) => (
+              {sortedChains.map(chain => (
                 <button
                   key={chain.chainId}
                   onClick={() => handleChainSelect(chain.chainId)}

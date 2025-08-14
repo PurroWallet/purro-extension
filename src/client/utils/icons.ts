@@ -12,7 +12,7 @@ export const NETWORK_ICONS: Record<ChainType, string> = {
   ethereum: ethereumLogo,
   base: baseLogo,
   arbitrum: arbitrumLogo,
-  "hyperevm-testnet": hyperliquidLogo,
+  'hyperevm-testnet': hyperliquidLogo,
 };
 
 export const getNetworkIcon = (networkId: ChainType): string => {
@@ -25,13 +25,13 @@ export const getTokenLogo = async (
   tokenAddress?: string
 ): Promise<string | null> => {
   switch (symbol.toLowerCase()) {
-    case "eth":
+    case 'eth':
       return ethereumLogo;
-    case "weth":
+    case 'weth':
       return ethereumLogo;
-    case "usdc":
+    case 'usdc':
       return usdcLogo;
-    case "hype":
+    case 'hype':
       return hyperliquidLogo;
     default: {
       if (networkId && tokenAddress) {
@@ -76,15 +76,15 @@ export const getTokenLogoFromAddress = async (
 };
 
 export function getSpotTokenImage(token: string) {
-  if (token === "USDC") {
+  if (token === 'USDC') {
     return usdcLogo;
   }
 
-  if (token.includes("USD")) {
+  if (token.includes('USD')) {
     return `https://app.hyperliquid.xyz/coins/${token}_USDC.svg`;
   }
 
-  if (token.startsWith("U")) {
+  if (token.startsWith('U')) {
     const tokenFormat = token.slice(1);
     return `https://app.hyperliquid.xyz/coins/${tokenFormat}_USDC.svg`;
   }

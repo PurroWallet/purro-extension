@@ -1,23 +1,23 @@
-import { useState } from "react";
-import PrivateKeyWarning from "./private-key-warning";
-import ExportPassword from "../export-password";
-import PrivateKeyList from "./private-key-list";
-import useWallet from "@/client/hooks/use-wallet";
-import useEditAccountStore from "@/client/hooks/use-edit-account-store";
-import PrivateKeyDisplay from "./private-key-display";
+import { useState } from 'react';
+import PrivateKeyWarning from './private-key-warning';
+import ExportPassword from '../export-password';
+import PrivateKeyList from './private-key-list';
+import useWallet from '@/client/hooks/use-wallet';
+import useEditAccountStore from '@/client/hooks/use-edit-account-store';
+import PrivateKeyDisplay from './private-key-display';
 import {
   Button,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogWrapper,
-} from "@/client/components/ui";
-import { ChainType } from "@/background/types/account";
+} from '@/client/components/ui';
+import { ChainType } from '@/background/types/account';
 
 const ShowPrivateKey = ({ onBack }: { onBack: () => void }) => {
   const [steps, setSteps] = useState<
-    "list-keys" | "warning" | "password" | "show"
-  >("warning");
+    'list-keys' | 'warning' | 'password' | 'show'
+  >('warning');
   const [password, setPassword] = useState<string | null>(null);
   const [privateKey, setPrivateKey] = useState<string | null>(null);
   const { exportPrivateKey } = useWallet();
@@ -29,11 +29,11 @@ const ShowPrivateKey = ({ onBack }: { onBack: () => void }) => {
 
   const handlePasswordConfirm = async (password: string) => {
     setPassword(password);
-    setSteps("list-keys");
+    setSteps('list-keys');
   };
 
   const handleChooseChain = async (chainStorageKey: string) => {
-    setSteps("show");
+    setSteps('show');
 
     if (!chainStorageKey || !password) {
       return;
@@ -53,32 +53,32 @@ const ShowPrivateKey = ({ onBack }: { onBack: () => void }) => {
 
   return (
     <>
-      {steps === "warning" && (
+      {steps === 'warning' && (
         <PrivateKeyWarning
           onBack={onBack}
           onConfirm={() => {
-            setSteps("password");
+            setSteps('password');
           }}
         />
       )}
-      {steps === "password" && (
+      {steps === 'password' && (
         <ExportPassword
           onBack={onBack}
           description="Enter your password to export your private key."
-          onConfirm={(password) => {
+          onConfirm={password => {
             handlePasswordConfirm(password);
           }}
         />
       )}
-      {steps === "list-keys" && (
+      {steps === 'list-keys' && (
         <PrivateKeyList onBack={onBack} onChooseChain={handleChooseChain} />
       )}
-      {steps === "show" && privateKey && (
+      {steps === 'show' && privateKey && (
         <DialogWrapper>
           <DialogHeader
             title="Your Private Key"
             onClose={() => {
-              setSteps("list-keys");
+              setSteps('list-keys');
             }}
           />
           <DialogContent>

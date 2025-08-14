@@ -1,22 +1,23 @@
-import ShuffleIcon from "@/assets/icon-component/shuffle-icon";
-import SwapVertIcon from "@/assets/icon-component/swap-vert-icon";
-import { CircleFadingPlus, EyeIcon } from "lucide-react";
-import WalletTabs from "./tabs";
-import SendIcon from "@/assets/icon-component/send-icon";
-import { useOptimizedPortfolio } from "@/client/hooks/use-optimized-portfolio";
-import { formatCurrency } from "@/client/utils/formatters";
-import { useState, useEffect, useMemo } from "react";
-import { cn } from "@/client/lib/utils";
-import useDrawerStore from "@/client/hooks/use-drawer-store";
+import ShuffleIcon from '@/assets/icon-component/shuffle-icon';
+import SwapVertIcon from '@/assets/icon-component/swap-vert-icon';
+import { CircleFadingPlus, EyeIcon } from 'lucide-react';
+import WalletTabs from './tabs';
+import SendIcon from '@/assets/icon-component/send-icon';
+import { useOptimizedPortfolio } from '@/client/hooks/use-optimized-portfolio';
+import { formatCurrency } from '@/client/utils/formatters';
+import { useState, useEffect, useMemo } from 'react';
+import type { ReactNode } from 'react';
+import { cn } from '@/client/lib/utils';
+import useDrawerStore from '@/client/hooks/use-drawer-store';
 import {
   ReceiveChooseDrawer,
   SwapDrawer,
   BridgeDrawer,
   SendDrawer,
-} from "@/client/components/drawers";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import useDevModeStore from "@/client/hooks/use-dev-mode";
-import { useUnifiedTokens } from "@/client/hooks/use-unified-tokens";
+} from '@/client/components/drawers';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import useDevModeStore from '@/client/hooks/use-dev-mode';
+import { useUnifiedTokens } from '@/client/hooks/use-unified-tokens';
 
 const Home = () => {
   const { totalBalance, isLoading } = useOptimizedPortfolio();
@@ -26,13 +27,13 @@ const Home = () => {
   const { isDevMode } = useDevModeStore();
 
   // In dev mode, get testnet tokens to show raw HYPE balance
-  const { allUnifiedTokens, isLoading: isTestnetLoading } = useUnifiedTokens();
+  const { allUnifiedTokens } = useUnifiedTokens();
 
   // Compute HYPE native balance on testnet
   const testnetHypeBalance = useMemo(() => {
     if (!isDevMode) return 0;
     return (allUnifiedTokens || [])
-      .filter((t) => t.chain === "hyperevm-testnet" && t.isNative)
+      .filter(t => t.chain === 'hyperevm-testnet' && t.isNative)
       .reduce((sum, t) => sum + (t.balanceFormatted || 0), 0);
   }, [isDevMode, allUnifiedTokens]);
 
@@ -46,18 +47,18 @@ const Home = () => {
   // Use stable display value if loading and we have a previous value
   const finalUsdValue =
     isLoading && displayValue > 0 ? displayValue : totalBalance;
-  const isWatchOnly = activeAccount?.source === "watchOnly";
+  const isWatchOnly = activeAccount?.source === 'watchOnly';
 
   return (
     <div>
-      <div className={cn("text-center h-48", isWatchOnly && "h-fit")}>
+      <div className={cn('text-center h-48', isWatchOnly && 'h-fit')}>
         <div
           className={cn(
-            "bg-[var(--primary-color)] h-32 relative pt-4",
-            isWatchOnly && "h-fit pb-4"
+            'bg-[var(--primary-color)] h-32 relative pt-4',
+            isWatchOnly && 'h-fit pb-4'
           )}
         >
-          <h1 className={cn("text-5xl font-bold text-center")}>
+          <h1 className={cn('text-5xl font-bold text-center')}>
             {isDevMode && (
               <>
                 {testnetHypeBalance.toLocaleString(undefined, {
@@ -133,8 +134,8 @@ const Button = ({
   icon,
   onClick,
 }: {
-  children: React.ReactNode;
-  icon: React.ReactNode;
+  children: ReactNode;
+  icon: ReactNode;
   onClick: () => void;
 }) => {
   return (

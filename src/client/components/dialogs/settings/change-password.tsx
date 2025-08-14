@@ -5,47 +5,47 @@ import {
   DialogWrapper,
   Button,
   InputPassword,
-} from "@/client/components/ui";
-import { useState } from "react";
-import useWallet from "@/client/hooks/use-wallet";
+} from '@/client/components/ui';
+import React, { useState } from 'react';
+import useWallet from '@/client/hooks/use-wallet';
 
 const ChangePassword = ({ onBack }: { onBack: () => void }) => {
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const { changePassword } = useWallet();
 
   const validatePasswords = () => {
     if (!currentPassword) {
-      setError("Current password is required");
+      setError('Current password is required');
       return false;
     }
 
     if (!newPassword) {
-      setError("New password is required");
+      setError('New password is required');
       return false;
     }
 
     if (newPassword.length < 8) {
-      setError("New password must be at least 8 characters long");
+      setError('New password must be at least 8 characters long');
       return false;
     }
 
     if (newPassword === currentPassword) {
-      setError("New password must be different from current password");
+      setError('New password must be different from current password');
       return false;
     }
 
     if (!confirmPassword) {
-      setError("Please confirm your new password");
+      setError('Please confirm your new password');
       return false;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("New passwords do not match");
+      setError('New passwords do not match');
       return false;
     }
 
@@ -53,8 +53,8 @@ const ChangePassword = ({ onBack }: { onBack: () => void }) => {
   };
 
   const handleChangePassword = async () => {
-    setError("");
-    setSuccess("");
+    setError('');
+    setSuccess('');
 
     if (!validatePasswords()) {
       return;
@@ -63,12 +63,12 @@ const ChangePassword = ({ onBack }: { onBack: () => void }) => {
     try {
       setLoading(true);
       await changePassword(currentPassword, newPassword);
-      setSuccess("Password changed successfully!");
+      setSuccess('Password changed successfully!');
 
       // Clear form after success
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
 
       // Auto close after 2 seconds
       setTimeout(() => {
@@ -76,7 +76,7 @@ const ChangePassword = ({ onBack }: { onBack: () => void }) => {
       }, 2000);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to change password"
+        err instanceof Error ? err.message : 'Failed to change password'
       );
     } finally {
       setLoading(false);
@@ -84,7 +84,7 @@ const ChangePassword = ({ onBack }: { onBack: () => void }) => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       handleChangePassword();
     }
   };
@@ -148,7 +148,7 @@ const ChangePassword = ({ onBack }: { onBack: () => void }) => {
           }
           className="w-full"
         >
-          {loading ? "Changing..." : "Change Password"}
+          {loading ? 'Changing...' : 'Change Password'}
         </Button>
       </DialogFooter>
     </DialogWrapper>

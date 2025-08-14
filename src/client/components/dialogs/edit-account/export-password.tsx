@@ -1,13 +1,13 @@
-import useWallet from "@/client/hooks/use-wallet";
-import { useState } from "react";
-import { DialogFooter } from "../../ui/dialog";
+import useWallet from '@/client/hooks/use-wallet';
+import React, { useState } from 'react';
+import { DialogFooter } from '../../ui/dialog';
 import {
   Button,
   DialogContent,
   DialogHeader,
   DialogWrapper,
   InputPassword,
-} from "../../ui";
+} from '../../ui';
 
 const ExportPassword = ({
   onBack,
@@ -18,7 +18,7 @@ const ExportPassword = ({
   onConfirm: (password: string) => void;
   description: string;
 }) => {
-  const [password, setPassword] = useState<string>("");
+  const [password, setPassword] = useState<string>('');
   const [hasError, setHasError] = useState<boolean>(false);
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
   const { unlockWallet } = useWallet();
@@ -31,7 +31,7 @@ const ExportPassword = ({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       handleVerifyPassword();
     }
   };
@@ -52,10 +52,10 @@ const ExportPassword = ({
 
       // If we reach here, password is correct
       onConfirm(password);
-    } catch (error) {
+    } catch {
       // Password is incorrect
       setHasError(true);
-      setPassword(""); // Clear password field on error
+      setPassword(''); // Clear password field on error
     } finally {
       setIsVerifying(false);
     }

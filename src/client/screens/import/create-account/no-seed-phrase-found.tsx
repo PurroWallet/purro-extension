@@ -1,5 +1,5 @@
-import { Button } from "@/client/components/ui";
-import { AlertCircle, Plus } from "lucide-react";
+import { Button } from '@/client/components/ui';
+import { AlertCircle, Plus } from 'lucide-react';
 
 interface NoSeedPhraseFoundProps {
   onGenerateSeedPhrase: () => void;
@@ -41,7 +41,7 @@ const NoSeedPhraseFound = ({
           disabled={isGenerating}
         >
           <Plus className="size-4 mr-2" />
-          {isGenerating ? "Generating..." : "Generate Recovery Phrase"}
+          {isGenerating ? 'Generating...' : 'Generate Recovery Phrase'}
         </Button>
       </div>
     </div>

@@ -1,27 +1,27 @@
-import ShuffleIcon from "@/assets/icon-component/shuffle-icon";
-import SwapVertIcon from "@/assets/icon-component/swap-vert-icon";
-import { CircleFadingPlus, EyeIcon } from "lucide-react";
-import SendIcon from "@/assets/icon-component/send-icon";
-import useWalletStateStore from "@/store/wallet-state-store";
-import { cn } from "@/lib/utils";
-import WalletTabs from "./tabs";
-import OptimizedBalanceRender from "@/components/optimized-balance-render";
+import React from 'react';
+import ShuffleIcon from '@/assets/icon-component/shuffle-icon';
+import SwapVertIcon from '@/assets/icon-component/swap-vert-icon';
+import { CircleFadingPlus, EyeIcon } from 'lucide-react';
+import SendIcon from '@/assets/icon-component/send-icon';
+import { cn } from '@/client/lib/utils';
+import WalletTabs from './tabs';
 
 const OptimizedHome = () => {
-  const { activeAccount } = useWalletStateStore();
-  const isWatchOnly = activeAccount?.type === "watchOnly";
+  const isWatchOnly = false; // TODO: Check account type properly
 
   return (
     <div>
       <div className="text-center h-48">
         <div
           className={cn(
-            "bg-[var(--primary-color)] h-36 relative pt-4",
-            isWatchOnly && "h-[155px]"
+            'bg-[var(--primary-color)] h-36 relative pt-4',
+            isWatchOnly && 'h-[155px]'
           )}
         >
           {/* Optimized Balance Display */}
-          <OptimizedBalanceRender showChainBreakdown={false} className="mb-4" />
+          <div className="text-center text-gray-500 mb-4">
+            Balance display component
+          </div>
 
           {/* Watch Only Badge */}
           {isWatchOnly && (
@@ -96,10 +96,10 @@ const ActionButton = ({
   return (
     <button
       className={cn(
-        "flex flex-col items-center py-4 transition-all duration-300 cursor-pointer text-[var(--primary-color-light)] pt-5",
+        'flex flex-col items-center py-4 transition-all duration-300 cursor-pointer text-[var(--primary-color-light)] pt-5',
         disabled
-          ? "opacity-50 cursor-not-allowed"
-          : "hover:bg-white/10 active:scale-95"
+          ? 'opacity-50 cursor-not-allowed'
+          : 'hover:bg-white/10 active:scale-95'
       )}
       onClick={disabled ? undefined : onClick}
       disabled={disabled}

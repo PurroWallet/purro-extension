@@ -1,12 +1,12 @@
-import { Button } from "@/client/components/ui";
-import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
-import { X } from "lucide-react";
-import { useState } from "react";
-import useWallet from "@/client/hooks/use-wallet";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import { ChainType } from "@/background/types/account";
-import { evmWalletKeyUtils } from "@/background/utils/keys";
-import { getAddressByDomain } from "@/client/services/hyperliquid-name-api";
+import { Button } from '@/client/components/ui';
+import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
+import { X } from 'lucide-react';
+import { useState } from 'react';
+import useWallet from '@/client/hooks/use-wallet';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import { ChainType } from '@/background/types/account';
+import { evmWalletKeyUtils } from '@/background/utils/keys';
+import { getAddressByDomain } from '@/client/services/hyperliquid-name-api';
 
 const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
   const { address, chain, accountName, setAddress, setAccountName } =
@@ -21,14 +21,14 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
     }
     try {
       switch (blockchain) {
-        case "ethereum":
-        case "hyperevm":
-        case "base":
-        case "arbitrum":
+        case 'ethereum':
+        case 'hyperevm':
+        case 'base':
+        case 'arbitrum':
           return evmWalletKeyUtils.isValidAddress(address);
-        case "solana":
+        case 'solana':
           return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
-        case "sui":
+        case 'sui':
           return /^0x[a-fA-F0-9]{64}$/.test(address);
         default:
           return false;
@@ -40,12 +40,12 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
 
   const handleImport = async () => {
     if (!address) {
-      setError("Address is required");
+      setError('Address is required');
       return;
     }
 
     if (!chain) {
-      setError("Please select a chain");
+      setError('Please select a chain');
       return;
     }
 
@@ -64,7 +64,7 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
     const finalAccountName = accountName || `Account ${accounts.length + 1}`;
 
     if (!finalAccountName || !finalAccountName.trim()) {
-      setError("Account name is required");
+      setError('Account name is required');
       return;
     }
 
@@ -72,23 +72,23 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
       const addressExists = await checkWatchOnlyAddressExists(address);
 
       if (addressExists) {
-        setError("This address is already imported as watch-only");
+        setError('This address is already imported as watch-only');
         return;
       }
     } catch (err) {
-      setError("Failed to validate address");
+      setError('Failed to validate address');
       return;
     }
 
     try {
       let finalChain: ChainType;
       if (
-        chain === "hyperevm" ||
-        chain === "base" ||
-        chain === "arbitrum" ||
-        chain === "ethereum"
+        chain === 'hyperevm' ||
+        chain === 'base' ||
+        chain === 'arbitrum' ||
+        chain === 'ethereum'
       ) {
-        finalChain = "eip155";
+        finalChain = 'eip155';
       } else {
         finalChain = chain as ChainType;
       }
@@ -103,7 +103,7 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
       const errorMessage =
         err instanceof Error
           ? err.message
-          : "Failed to import watch-only wallet";
+          : 'Failed to import watch-only wallet';
       setError(errorMessage);
     }
   };
@@ -116,22 +116,22 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
             Import Watch-Only Wallet
           </h1>
           <p className="text-base text-gray-500 text-center">
-            {chain == null && "Select the chain"}
-            {chain === "ethereum" && "Enter your Ethereum wallet address"}
-            {chain === "solana" && "Enter your Solana wallet address"}
-            {chain === "sui" && "Enter your Sui wallet address"}
-            {chain === "hyperevm" &&
-              "Enter your Hyperliquid wallet address or Hyperliquid Name"}
-            {chain === "base" && "Enter your Base wallet address"}
-            {chain === "arbitrum" && "Enter your Arbitrum wallet address"}
+            {chain == null && 'Select the chain'}
+            {chain === 'ethereum' && 'Enter your Ethereum wallet address'}
+            {chain === 'solana' && 'Enter your Solana wallet address'}
+            {chain === 'sui' && 'Enter your Sui wallet address'}
+            {chain === 'hyperevm' &&
+              'Enter your Hyperliquid wallet address or Hyperliquid Name'}
+            {chain === 'base' && 'Enter your Base wallet address'}
+            {chain === 'arbitrum' && 'Enter your Arbitrum wallet address'}
           </p>
         </div>
 
         <div className="flex flex-col gap-2">
           <input
             type="text"
-            value={address || ""}
-            onChange={(e) => {
+            value={address || ''}
+            onChange={e => {
               setAddress(e.target.value);
               setError(null);
             }}
@@ -142,8 +142,8 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
           <input
             type="text"
             placeholder={`Account ${accounts.length + 1}`}
-            value={accountName ?? ""}
-            onChange={(e) => setAccountName(e.target.value)}
+            value={accountName ?? ''}
+            onChange={e => setAccountName(e.target.value)}
             className="w-full px-4 py-3 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color-light)] bg-[var(--card-color)] text-white placeholder-gray-400 text-base"
           />
 

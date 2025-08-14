@@ -1,6 +1,6 @@
-import { cn } from "@/client/lib/utils";
-import { useEffect, useState } from "react";
-import { getHLNameByAddress } from "@/client/services/hyperliquid-name-api";
+import { cn } from '@/client/lib/utils';
+import { useEffect, useState } from 'react';
+import { getHLNameByAddress } from '@/client/services/hyperliquid-name-api';
 
 export const AccountIcon = ({
   icon,
@@ -15,17 +15,17 @@ export const AccountIcon = ({
 
   // Kiểm tra xem icon có phải là URL không (bắt đầu bằng http/https hoặc data:)
   const isUrl =
-    icon.startsWith("http") ||
-    icon.startsWith("https") ||
-    icon.startsWith("data:");
+    icon.startsWith('http') ||
+    icon.startsWith('https') ||
+    icon.startsWith('data:');
 
   if (isUrl) {
-    return <img src={icon} alt={alt} className={cn("size-6", className)} />;
+    return <img src={icon} alt={alt} className={cn('size-6', className)} />;
   } else {
     return (
       <span
         className={cn(
-          "text-lg w-8 text-center flex items-center justify-center",
+          'text-lg w-8 text-center flex items-center justify-center',
           className
         )}
       >
@@ -44,9 +44,6 @@ export const AccountName = ({
   className?: string;
   address?: string;
 }) => {
-  if (!name) return null;
-
-  const truncatedName = name.length > 20 ? `${name.substring(0, 10)}...` : name;
   const [hlName, setHlName] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(!!address);
 
@@ -55,7 +52,7 @@ export const AccountName = ({
     if (address) {
       setLoading(true);
       getHLNameByAddress(address)
-        .then((hlName) => {
+        .then(hlName => {
           if (isMounted) setHlName(hlName);
         })
         .finally(() => {
@@ -70,6 +67,10 @@ export const AccountName = ({
     };
   }, [address]);
 
+  // Early return after hooks
+  if (!name) return null;
+
+  const truncatedName = name.length > 20 ? `${name.substring(0, 10)}...` : name;
   // Nếu có hlName thì thay thế tên wallet
   const displayName = hlName || truncatedName;
 
@@ -78,13 +79,13 @@ export const AccountName = ({
       {loading ? (
         <div
           className={cn(
-            "h-6 w-24 bg-white/10 rounded-full animate-pulse",
+            'h-6 w-24 bg-white/10 rounded-full animate-pulse',
             className
           )}
         />
       ) : (
         <p
-          className={cn("text-base font-medium truncate", className)}
+          className={cn('text-base font-medium truncate', className)}
           title={hlName ? hlName : name}
         >
           {displayName}

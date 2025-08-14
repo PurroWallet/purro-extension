@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
-import SeedPhraseRender from "@/client/components/render/seed-phrase-render";
-import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
-import { Button } from "@/client/components/ui";
-import { ErrorDisplay } from "@/client/components/display";
-import { generateMnemonic } from "@/client/lib/utils";
+import { useEffect, useState } from 'react';
+import SeedPhraseRender from '@/client/components/render/seed-phrase-render';
+import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
+import { Button } from '@/client/components/ui';
+import { ErrorDisplay } from '@/client/components/display';
+import { generateMnemonic } from '@/client/lib/utils';
 
 const CreateWallet = ({ onNext }: { onNext: () => void }) => {
   const { mnemonic, setMnemonic } = useCreateWalletStore();
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     const handleGenerateSeedPhrase = async () => {
@@ -16,7 +16,7 @@ const CreateWallet = ({ onNext }: { onNext: () => void }) => {
         if (mnemonic) {
           setMnemonic(mnemonic);
         } else {
-          setError("Failed to generate mnemonic");
+          setError('Failed to generate mnemonic');
         }
       } catch (error) {
         setError(error as string);

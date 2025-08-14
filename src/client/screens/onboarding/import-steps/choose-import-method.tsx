@@ -1,6 +1,6 @@
-import { Button } from "@/client/components/ui";
-import { ChevronRight, ListOrdered, KeyRound } from "lucide-react";
-import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
+import { Button } from '@/client/components/ui';
+import { ChevronRight, ListOrdered, KeyRound } from 'lucide-react';
+import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
 
 const ChooseImportMethod = ({
   onSeedPhrase,
@@ -12,12 +12,12 @@ const ChooseImportMethod = ({
   const { setImportType } = useCreateWalletStore();
 
   const handleSeedPhrase = () => {
-    setImportType("seed");
+    setImportType('seed');
     onSeedPhrase();
   };
 
   const handlePrivateKey = () => {
-    setImportType("privateKey");
+    setImportType('privateKey');
     onPrivateKey();
   };
 

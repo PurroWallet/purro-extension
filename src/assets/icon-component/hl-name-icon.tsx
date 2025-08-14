@@ -1,4 +1,4 @@
-import { cn } from "@/client/lib/utils";
+import { cn } from '@/client/lib/utils';
 
 // You can customize the SVG size here
 const HL_NAME_ICON_SIZE = 500;

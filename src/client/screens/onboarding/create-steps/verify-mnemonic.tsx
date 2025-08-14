@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
-import { Button, Input } from "@/client/components/ui";
-import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
-import { cn } from "@/client/lib/utils";
+import { useState, useEffect, useMemo } from 'react';
+import { Button, Input } from '@/client/components/ui';
+import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
+import { cn } from '@/client/lib/utils';
 
 interface VerifyMnemonicProps {
   onNext: () => void;
@@ -9,7 +9,7 @@ interface VerifyMnemonicProps {
 
 const VerifyMnemonic = ({ onNext }: VerifyMnemonicProps) => {
   const { mnemonic } = useCreateWalletStore();
-  const [userInputs, setUserInputs] = useState<string[]>(["", "", ""]);
+  const [userInputs, setUserInputs] = useState<string[]>(['', '', '']);
   const [verificationStatus, setVerificationStatus] = useState<boolean[]>([
     false,
     false,
@@ -24,11 +24,14 @@ const VerifyMnemonic = ({ onNext }: VerifyMnemonicProps) => {
   // Tạo 3 vị trí ngẫu nhiên từ mnemonic
   const randomPositions = useMemo(() => {
     if (!mnemonic) return [];
-    const words = mnemonic.split(" ");
+    const words = mnemonic.split(' ');
     const positions: number[] = [];
 
     while (positions.length < 3) {
-      const randomIndex = Math.floor(Math.random() * words.length);
+      const randomIndex = Math.floor(
+        crypto.getRandomValues(new Uint32Array(1))[0] /
+          (0xffffffff / words.length)
+      );
       if (!positions.includes(randomIndex)) {
         positions.push(randomIndex);
       }
@@ -40,13 +43,13 @@ const VerifyMnemonic = ({ onNext }: VerifyMnemonicProps) => {
   // Lấy các từ tại vị trí ngẫu nhiên
   const targetWords = useMemo(() => {
     if (!mnemonic) return [];
-    const words = mnemonic.split(" ");
-    return randomPositions.map((pos) => words[pos]);
+    const words = mnemonic.split(' ');
+    return randomPositions.map(pos => words[pos]);
   }, [mnemonic, randomPositions]);
 
   // Kiểm tra xem tất cả các từ đã được verify chưa
   const isAllVerified = useMemo(() => {
-    return verificationStatus.every((status) => status);
+    return verificationStatus.every(status => status);
   }, [verificationStatus]);
 
   // Xử lý thay đổi input với real-time verification
@@ -70,17 +73,17 @@ const VerifyMnemonic = ({ onNext }: VerifyMnemonicProps) => {
 
   // Reset khi mnemonic thay đổi
   useEffect(() => {
-    setUserInputs(["", "", ""]);
+    setUserInputs(['', '', '']);
     setVerificationStatus([false, false, false]);
     setHasInteracted([false, false, false]);
   }, [mnemonic]);
 
   // Xác định trạng thái hiển thị cho từng input
   const getInputStatus = (index: number) => {
-    if (!hasInteracted[index] || userInputs[index] === "") {
-      return "default"; // Chưa tương tác hoặc rỗng
+    if (!hasInteracted[index] || userInputs[index] === '') {
+      return 'default'; // Chưa tương tác hoặc rỗng
     }
-    return verificationStatus[index] ? "success" : "error";
+    return verificationStatus[index] ? 'success' : 'error';
   };
 
   if (!mnemonic) {
@@ -114,14 +117,14 @@ const VerifyMnemonic = ({ onNext }: VerifyMnemonicProps) => {
                   <Input
                     type="text"
                     value={userInputs[index]}
-                    onChange={(e) => handleInputChange(index, e.target.value)}
+                    onChange={e => handleInputChange(index, e.target.value)}
                     placeholder={`Enter word #${position + 1}`}
-                    hasError={status === "error"}
+                    hasError={status === 'error'}
                     className={cn(
-                      status === "success" &&
-                        "border-green-500/50 focus:border-green-500",
-                      status === "error" &&
-                        "border-red-500/50 focus:border-red-500"
+                      status === 'success' &&
+                        'border-green-500/50 focus:border-green-500',
+                      status === 'error' &&
+                        'border-red-500/50 focus:border-red-500'
                     )}
                   />
                 </div>

@@ -2,9 +2,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogWrapper,
-} from "@/client/components/ui";
-import { X } from "lucide-react";
-import useDialogStore from "@/client/hooks/use-dialog-store";
+} from '@/client/components/ui';
+import { X } from 'lucide-react';
+import useDialogStore from '@/client/hooks/use-dialog-store';
 
 const DepositChain = () => {
   const { closeDialog } = useDialogStore();

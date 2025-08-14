@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 export const truncateAddress = (address: string) => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -7,19 +7,19 @@ export const truncateAddress = (address: string) => {
 export const formatTime = (seconds: number) => {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
-  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
 export const getTimeColor = (timeLeft: number) => {
-  if (timeLeft <= 60) return "text-red-400"; // Last minute - red
-  if (timeLeft <= 300) return "text-yellow-400"; // Last 5 minutes - yellow
-  return "text-white/60"; // Normal - gray
+  if (timeLeft <= 60) return 'text-red-400'; // Last minute - red
+  if (timeLeft <= 300) return 'text-yellow-400'; // Last 5 minutes - yellow
+  return 'text-white/60'; // Normal - gray
 };
 
 export function formatCurrency(
   value: number | undefined,
   decimals = 2,
-  currency = "$",
+  currency = '$',
   isNegative = true
 ): string {
   if (value === undefined || isNaN(value)) {
@@ -28,16 +28,16 @@ export function formatCurrency(
 
   // Use absolute value for formatting to avoid double negative signs
   const absValue = Math.abs(value);
-  const formattedValue = absValue.toLocaleString("en-US", {
+  const formattedValue = absValue.toLocaleString('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
 
   if (value < 0) {
-    return `${isNegative ? "-" : ""}${currency}${formattedValue}`;
+    return `${isNegative ? '-' : ''}${currency}${formattedValue}`;
   }
 
-  if(currency !== "$") return `${formattedValue} ${currency}`
+  if (currency !== '$') return `${formattedValue} ${currency}`;
 
   return `${currency}${formattedValue}`;
 }
@@ -57,7 +57,7 @@ export const formatBigAmount = (value: string): string => {
 
 export const convertToWeiHex = (amount: string) => {
   const weiValue = ethers.parseEther(amount.toString());
-  return "0x" + weiValue.toString(16);
+  return '0x' + weiValue.toString(16);
 };
 
 export const hexToNumber = (hexValue: string) => {

@@ -1,16 +1,16 @@
-import { AccountIcon, AccountName } from "@/client/components/account";
-import AccountSheet from "@/client/components/account-sheet/account-sheet";
-import { LoadingDisplay, LockDisplay } from "@/client/components/display";
-import { Dialog, DialogFooter } from "@/client/components/ui";
-import { Button } from "@/client/components/ui/button";
-import useAccountSheetStore from "@/client/hooks/use-account-sheet-store";
-import useInit from "@/client/hooks/use-init";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import { sendMessage } from "@/client/utils/extension-message-utils";
-import { formatTime, getTimeColor } from "@/client/utils/formatters";
-import { Check, Clock, Globe, Shield, X } from "lucide-react";
-import { useEffect, useState } from "react";
-import { createRoot } from "react-dom/client";
+import { AccountIcon, AccountName } from '@/client/components/account';
+import AccountSheet from '@/client/components/account-sheet/account-sheet';
+import { LoadingDisplay, LockDisplay } from '@/client/components/display';
+import { Dialog, DialogFooter } from '@/client/components/ui';
+import { Button } from '@/client/components/ui/button';
+import useAccountSheetStore from '@/client/hooks/use-account-sheet-store';
+import useInit from '@/client/hooks/use-init';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import { sendMessage } from '@/client/utils/extension-message-utils';
+import { formatTime, getTimeColor } from '@/client/utils/formatters';
+import { Check, Clock, Globe, Shield, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { createRoot } from 'react-dom/client';
 
 export interface ConnectionRequest {
   origin: string;
@@ -22,10 +22,10 @@ const approveConnection = (
   origin: string,
   accountId: string,
   favicon?: string
-) => sendMessage("ETH_APPROVE_CONNECTION", { origin, accountId, favicon });
+) => sendMessage('ETH_APPROVE_CONNECTION', { origin, accountId, favicon });
 
 const rejectConnection = (origin: string) =>
-  sendMessage("ETH_REJECT_CONNECTION", { origin });
+  sendMessage('ETH_REJECT_CONNECTION', { origin });
 
 export const ConnectScreen = () => {
   useInit();
@@ -40,8 +40,8 @@ export const ConnectScreen = () => {
   useEffect(() => {
     // Get connection request from URL params
     const urlParams = new URLSearchParams(window.location.search);
-    const origin = urlParams.get("origin");
-    const favicon = urlParams.get("favicon");
+    const origin = urlParams.get('origin');
+    const favicon = urlParams.get('favicon');
 
     if (origin) {
       setConnectionRequest({
@@ -56,7 +56,7 @@ export const ConnectScreen = () => {
     if (!connectionRequest) return;
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
+      setTimeLeft(prev => {
         if (prev <= 1) {
           // Auto-close when timeout
           window.close();
@@ -75,9 +75,9 @@ export const ConnectScreen = () => {
     setLoading(true);
     try {
       console.log(
-        "🔄 Approving connection for:",
+        '🔄 Approving connection for:',
         connectionRequest.origin,
-        "with account:",
+        'with account:',
         activeAccount.id
       );
 
@@ -88,15 +88,15 @@ export const ConnectScreen = () => {
         connectionRequest.favicon
       );
 
-      console.log("✅ Approval result:", result);
+      console.log('✅ Approval result:', result);
 
       // Small delay to ensure message is processed
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Close popup
       window.close();
     } catch (error) {
-      console.error("❌ Error approving connection:", error);
+      console.error('❌ Error approving connection:', error);
       // Don't close popup on error so user can retry
     } finally {
       setLoading(false);
@@ -113,7 +113,7 @@ export const ConnectScreen = () => {
       // Close popup
       window.close();
     } catch (error) {
-      console.error("Error rejecting connection:", error);
+      console.error('Error rejecting connection:', error);
     }
   };
 
@@ -150,8 +150,8 @@ export const ConnectScreen = () => {
               src={connectionRequest.favicon}
               alt="Site favicon"
               className="size-8 rounded"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
+              onError={e => {
+                (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
           ) : (
@@ -252,7 +252,7 @@ export const ConnectScreen = () => {
   );
 };
 
-const container = document.getElementById("root");
+const container = document.getElementById('root');
 if (container) {
   const root = createRoot(container);
   root.render(<ConnectScreen />);

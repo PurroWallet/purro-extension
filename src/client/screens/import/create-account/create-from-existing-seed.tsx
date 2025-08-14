@@ -1,8 +1,8 @@
-import { Button } from "@/client/components/ui";
-import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
-import { useEffect, useState, useRef } from "react";
-import { ChevronDown } from "lucide-react";
-import { SeedPhraseWithId } from "@/types";
+import { Button } from '@/client/components/ui';
+import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
+import { useEffect, useState, useRef } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { SeedPhraseWithId } from '@/types';
 
 interface CreateFromExistingSeedProps {
   onNext: () => void;
@@ -35,9 +35,9 @@ const CreateFromExistingSeed = ({
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
@@ -49,7 +49,7 @@ const CreateFromExistingSeed = ({
   }, [seedPhrases, selectedSeedPhraseId, setSelectedSeedPhraseId]);
 
   const selectedSeedPhrase = seedPhrases.find(
-    (sp) => sp.id === selectedSeedPhraseId
+    sp => sp.id === selectedSeedPhraseId
   );
 
   const canProceed = selectedSeedPhraseId && accountName && accountName.trim();
@@ -81,7 +81,7 @@ const CreateFromExistingSeed = ({
                   )}
                   <ChevronDown
                     className={`size-4 transition-transform ${
-                      isDropdownOpen ? "rotate-180" : ""
+                      isDropdownOpen ? 'rotate-180' : ''
                     }`}
                   />
                 </div>
@@ -89,7 +89,7 @@ const CreateFromExistingSeed = ({
 
               {isDropdownOpen && (
                 <div className="absolute top-full right-0 mt-1 bg-[var(--card-color)] border border-white/10 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto w-fit">
-                  {seedPhrases.map((seedPhrase) => (
+                  {seedPhrases.map(seedPhrase => (
                     <button
                       key={seedPhrase.id}
                       onClick={() => {
@@ -98,8 +98,8 @@ const CreateFromExistingSeed = ({
                       }}
                       className={`w-full flex items-center justify-end gap-3 py-3 px-10 hover:bg-white/5 transition-colors first:rounded-t-lg last:rounded-b-lg text-right cursor-pointer ${
                         selectedSeedPhraseId === seedPhrase.id
-                          ? "bg-white/10"
-                          : ""
+                          ? 'bg-white/10'
+                          : ''
                       }`}
                     >
                       <span className="text-white text-right text-base font-medium">
@@ -126,8 +126,8 @@ const CreateFromExistingSeed = ({
         <input
           type="text"
           placeholder={`Account ${accountsLength + 1}`}
-          value={accountName ?? ""}
-          onChange={(e) => setAccountName(e.target.value)}
+          value={accountName ?? ''}
+          onChange={e => setAccountName(e.target.value)}
           className="w-full px-4 py-3 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color-light)] bg-[var(--card-color)] text-white placeholder-gray-400 text-base"
         />
       </div>

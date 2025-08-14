@@ -1,7 +1,7 @@
-import { useCallback } from "react";
-import { DialogContent, DialogHeader, DialogWrapper } from "../../ui/dialog";
-import { Switch } from "../../ui/switch";
-import useDevModeStore from "@/client/hooks/use-dev-mode";
+import { useCallback } from 'react';
+import { DialogContent, DialogHeader, DialogWrapper } from '../../ui/dialog';
+import { Switch } from '../../ui/switch';
+import useDevModeStore from '@/client/hooks/use-dev-mode';
 
 const DeveloperMode = ({ onBack }: { onBack: () => void }) => {
   const { isDevMode, isChanging, setIsDevMode } = useDevModeStore();

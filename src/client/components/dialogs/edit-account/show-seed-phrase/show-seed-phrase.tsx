@@ -1,21 +1,21 @@
-import { useState } from "react";
-import SeedPhraseWarning from "./seed-phrase-warning";
-import ExportPassword from "../export-password";
+import { useState } from 'react';
+import SeedPhraseWarning from './seed-phrase-warning';
+import ExportPassword from '../export-password';
 import {
   Button,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogWrapper,
-} from "@/client/components/ui";
-import useWallet from "@/client/hooks/use-wallet";
-import useEditAccountStore from "@/client/hooks/use-edit-account-store";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import SeedPhraseRender from "@/client/components/render/seed-phrase-render";
+} from '@/client/components/ui';
+import useWallet from '@/client/hooks/use-wallet';
+import useEditAccountStore from '@/client/hooks/use-edit-account-store';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import SeedPhraseRender from '@/client/components/render/seed-phrase-render';
 
 const ShowSeedPhrase = ({ onBack }: { onBack: () => void }) => {
-  const [steps, setSteps] = useState<"password" | "warning" | "show">(
-    "warning"
+  const [steps, setSteps] = useState<'password' | 'warning' | 'show'>(
+    'warning'
   );
   const [exportedSeedPhrase, setExportedSeedPhrase] = useState<string | null>(
     null
@@ -23,19 +23,19 @@ const ShowSeedPhrase = ({ onBack }: { onBack: () => void }) => {
   const { exportSeedPhrase } = useWallet();
   const { selectedAccountId } = useEditAccountStore();
   const { accounts } = useWalletStore();
-  const account = accounts.find((account) => account.id === selectedAccountId);
+  const account = accounts.find(account => account.id === selectedAccountId);
 
   const handlePasswordConfirm = async (password: string) => {
     try {
       if (!account?.seedPhraseId) {
-        throw new Error("Seed phrase not found");
+        throw new Error('Seed phrase not found');
       }
       const exportedSeedPhrase = await exportSeedPhrase(
         account.seedPhraseId,
         password
       );
       setExportedSeedPhrase(exportedSeedPhrase);
-      setSteps("show");
+      setSteps('show');
     } catch (error) {
       console.error(error);
     }
@@ -43,24 +43,24 @@ const ShowSeedPhrase = ({ onBack }: { onBack: () => void }) => {
 
   return (
     <>
-      {steps === "warning" && (
+      {steps === 'warning' && (
         <SeedPhraseWarning
           onBack={onBack}
           onConfirm={() => {
-            setSteps("password");
+            setSteps('password');
           }}
         />
       )}
-      {steps === "password" && (
+      {steps === 'password' && (
         <ExportPassword
           onBack={onBack}
           description="Enter your password to export your seed phrase."
-          onConfirm={(password) => {
+          onConfirm={password => {
             handlePasswordConfirm(password);
           }}
         />
       )}
-      {steps === "show" && (
+      {steps === 'show' && (
         <DialogWrapper>
           <DialogHeader title="Recovery Phrase" onClose={onBack} />
           <DialogContent>

@@ -4,7 +4,7 @@ import {
   DialogHeader,
   DialogWrapper,
   HoldButton,
-} from "@/client/components/ui";
+} from '@/client/components/ui';
 
 const SeedPhraseWarning = ({
   onConfirm,

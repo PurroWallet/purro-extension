@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
-import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
-import ErorrDisplay from "@/client/components/display/error-display";
-import LoadingDisplay from "@/client/components/display/loading-display";
-import { Button } from "@/client/components/ui";
-import logo from "@/assets/icon.png";
-import { openSidePanel } from "@/client/lib/utils";
-import useWallet from "@/client/hooks/use-wallet";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import { ChainType } from "@/background/types/account";
+import { useEffect, useState } from 'react';
+import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
+import ErorrDisplay from '@/client/components/display/error-display';
+import LoadingDisplay from '@/client/components/display/loading-display';
+import { Button } from '@/client/components/ui';
+import logo from '@/assets/icon.png';
+import { openSidePanel } from '@/client/lib/utils';
+import useWallet from '@/client/hooks/use-wallet';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import { ChainType } from '@/background/types/account';
 
 const ImportFinish = ({ onBack }: { onBack: () => void }) => {
   const { importSeedPhrase, importPrivateKey, createAccountFromSeedPhrase } =
@@ -24,7 +24,7 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
   } = useCreateWalletStore();
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
   const [hasExecuted, setHasExecuted] = useState<boolean>(false);
 
   useEffect(() => {
@@ -36,12 +36,12 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
 
       setHasExecuted(true);
       setIsLoading(true);
-      setError(""); // Clear any previous errors
+      setError(''); // Clear any previous errors
       setIsSuccess(false); // Clear any previous success state
 
       try {
         switch (importType) {
-          case "create-account":
+          case 'create-account':
             // Check if this is a new wallet creation (no selectedSeedPhraseId)
             // or account creation from existing seed phrase
             if (!selectedSeedPhraseId) {
@@ -56,9 +56,9 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
             }
             break;
 
-          case "seed":
+          case 'seed': {
             if (!mnemonic || !mnemonic.trim()) {
-              throw new Error("No seed phrase provided for import");
+              throw new Error('No seed phrase provided for import');
             }
             const finalAccountName =
               accountName || `Account ${accounts.length + 1}`;
@@ -71,19 +71,20 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
               name: finalAccountName,
             });
             break;
+          }
 
-          case "privateKey":
+          case 'privateKey': {
             if (!privateKey || !privateKey.trim() || !chain) {
-              throw new Error("Private key and chain are required for import");
+              throw new Error('Private key and chain are required for import');
             }
             let chainType: ChainType;
             if (
-              chain === "hyperevm" ||
-              chain === "base" ||
-              chain === "arbitrum" ||
-              chain === "ethereum"
+              chain === 'hyperevm' ||
+              chain === 'base' ||
+              chain === 'arbitrum' ||
+              chain === 'ethereum'
             ) {
-              chainType = "eip155";
+              chainType = 'eip155';
             } else {
               chainType = chain;
             }
@@ -95,14 +96,15 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
               chain: chainType,
             });
             break;
+          }
 
-          case "watchOnly":
+          case 'watchOnly':
             break;
 
           default:
-            console.error("❌ ImportFinish: Invalid import type:", importType);
+            console.error('❌ ImportFinish: Invalid import type:', importType);
             throw new Error(
-              "Invalid import type. Please select a valid import method."
+              'Invalid import type. Please select a valid import method.'
             );
         }
 
@@ -111,7 +113,7 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
           reset();
         } catch (resetError) {
           console.error(
-            "⚠️ ImportFinish: Reset error (non-critical):",
+            '⚠️ ImportFinish: Reset error (non-critical):',
             resetError
           );
           // Don't throw here, just log the error
@@ -119,10 +121,10 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
 
         setIsSuccess(true);
       } catch (error) {
-        console.error("❌ ImportFinish: Error occurred:", error);
-        console.error("❌ ImportFinish: Error details:", {
+        console.error('❌ ImportFinish: Error occurred:', error);
+        console.error('❌ ImportFinish: Error details:', {
           message: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : "No stack trace",
+          stack: error instanceof Error ? error.stack : 'No stack trace',
         });
         setError(error instanceof Error ? error.message : String(error));
         setIsSuccess(false); // Ensure success is false on error
@@ -143,30 +145,30 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
   // Get content based on import type
   const getSuccessContent = () => {
     switch (importType) {
-      case "create-account":
+      case 'create-account':
         return {
-          title: "Account Created!",
-          description: "Your new account has been created successfully.",
+          title: 'Account Created!',
+          description: 'Your new account has been created successfully.',
         };
-      case "seed":
+      case 'seed':
         return {
-          title: "Recovery Phrase Imported!",
-          description: "Your wallet has been imported successfully.",
+          title: 'Recovery Phrase Imported!',
+          description: 'Your wallet has been imported successfully.',
         };
-      case "privateKey":
+      case 'privateKey':
         return {
-          title: "Private Key Imported!",
-          description: "Your account has been imported successfully.",
+          title: 'Private Key Imported!',
+          description: 'Your account has been imported successfully.',
         };
-      case "watchOnly":
+      case 'watchOnly':
         return {
-          title: "Watch-Only Wallet Imported!",
-          description: "Your watch-only wallet has been imported successfully.",
+          title: 'Watch-Only Wallet Imported!',
+          description: 'Your watch-only wallet has been imported successfully.',
         };
       default:
         return {
-          title: "Success!",
-          description: "Operation completed successfully.",
+          title: 'Success!',
+          description: 'Operation completed successfully.',
         };
     }
   };

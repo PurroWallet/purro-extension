@@ -2,15 +2,15 @@ import {
   DialogContent,
   DialogHeader,
   DialogWrapper,
-} from "@/client/components/ui/dialog";
-import { Switch } from "@/client/components/ui/switch";
-import { cn } from "@/client/lib/utils";
+} from '@/client/components/ui/dialog';
+import { Switch } from '@/client/components/ui/switch';
+import { cn } from '@/client/lib/utils';
 import useNetworkSettingsStore, {
   NetworkConfig,
-} from "@/client/hooks/use-network-store";
-import { RefreshCcw, TrendingUp } from "lucide-react";
-import { ChainTypeClient } from "@/types/wallet";
-import { getNetworkIcon } from "@/client/utils/icons";
+} from '@/client/hooks/use-network-store';
+import { RefreshCcw, TrendingUp } from 'lucide-react';
+import { ChainTypeClient } from '@/types/wallet';
+import { getNetworkIcon } from '@/client/utils/icons';
 
 const ActiveNetwork = ({ onBack }: { onBack: () => void }) => {
   const {
@@ -62,7 +62,7 @@ const ActiveNetwork = ({ onBack }: { onBack: () => void }) => {
         </div>
 
         {/* Regular Network Toggles */}
-        {Object.values(networks).map((network) => (
+        {Object.values(networks).map(network => (
           <NetworkToggleItem
             key={network.id}
             network={network}
@@ -90,18 +90,18 @@ const NetworkToggleItem = ({ network, onToggle }: NetworkToggleItemProps) => {
           src={getNetworkIcon(network.id)}
           alt={network.name}
           className="size-8"
-          onError={(e) => {
+          onError={e => {
             console.error(
               `Failed to load icon for ${network.name}:`,
               network.icon
             );
-            console.error("Error:", e);
+            console.error('Error:', e);
           }}
         />
 
         <div>
           <p className="font-medium text-white text-base">{network.name}</p>
-          {network.id === "hyperevm" && (
+          {network.id === 'hyperevm' && (
             <p className="text-xs text-muted-foreground">EVM Tokens Only</p>
           )}
         </div>
@@ -111,7 +111,7 @@ const NetworkToggleItem = ({ network, onToggle }: NetworkToggleItemProps) => {
         checked={network.isActive}
         onCheckedChange={onToggle}
         disabled={isDisabled}
-        className={cn(isDisabled && "opacity-50 cursor-not-allowed")}
+        className={cn(isDisabled && 'opacity-50 cursor-not-allowed')}
       />
     </div>
   );

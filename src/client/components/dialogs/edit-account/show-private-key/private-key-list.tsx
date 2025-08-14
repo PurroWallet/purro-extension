@@ -1,41 +1,41 @@
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import useEditAccountStore from "@/client/hooks/use-edit-account-store";
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import useEditAccountStore from '@/client/hooks/use-edit-account-store';
 import {
   DialogContent,
   DialogHeader,
   DialogWrapper,
-} from "@/client/components/ui";
+} from '@/client/components/ui';
 import {
   ethereumLogo,
   hyperliquidLogo,
   arbitrumLogo,
   baseLogo,
-} from "@/assets/logo";
-import { truncateAddress } from "@/client/utils/formatters";
+} from '@/assets/logo';
+import { truncateAddress } from '@/client/utils/formatters';
 
 // List of chains that share the same private key (EVM-based)
 const SUPPORTED_CHAINS = [
   {
-    storageKey: "eip155",
-    name: "Hyperliquid",
+    storageKey: 'eip155',
+    name: 'Hyperliquid',
     icon: hyperliquidLogo,
     chainId: 0,
   },
   {
-    storageKey: "eip155",
-    name: "Ethereum",
+    storageKey: 'eip155',
+    name: 'Ethereum',
     icon: ethereumLogo,
     chainId: 1,
   },
   {
-    storageKey: "eip155",
-    name: "Arbitrum",
+    storageKey: 'eip155',
+    name: 'Arbitrum',
     icon: arbitrumLogo,
     chainId: 42161,
   },
   {
-    storageKey: "eip155",
-    name: "Base",
+    storageKey: 'eip155',
+    name: 'Base',
     icon: baseLogo,
     chainId: 8453,
   },
@@ -55,7 +55,7 @@ const PrivateKeyList = ({
 
   // Build list of chains compatible with this private key
   const addressList = wallet
-    ? SUPPORTED_CHAINS.flatMap((chain) => {
+    ? SUPPORTED_CHAINS.flatMap(chain => {
         const walletData = wallet[chain.storageKey as keyof typeof wallet] as
           | { address: string }
           | null
@@ -90,7 +90,7 @@ const PrivateKeyList = ({
               <div className="flex items-center space-x-2 flex-1 min-w-0 ">
                 <img
                   src={item.icon}
-                  alt={item.name || "Chain"}
+                  alt={item.name || 'Chain'}
                   className="size-6 flex-shrink-0 object-contain"
                 />
                 <div className="text-left min-w-0 flex-1">

@@ -1,13 +1,20 @@
 {
 	"type": "module",
 	"scripts": {
-		"build": "vite build",
-		"build:watch": "vite build --watch --mode development",
+		"dev": "vite",
+		"build": "tsc && vite build",
+		"preview": "vite preview",
 		"type-check": "tsc --noEmit",
-		"test:encryption": "npx tsx src/background/lib/encryption-test.ts",
-		"test:storage": "npx tsx src/background/handlers/test/storage-handler.test.ts",
-		"test:account": "npx tsx src/background/handlers/test/account-handler.test.ts",
-		"test:handlers": "npx tsx src/background/handlers/test/run-all-tests.ts"
+		"lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+		"lint:fix": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0 --fix",
+		"format": "npx prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+		"format:check": "npx prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+		"test": "tsx src/background/handlers/test/run-all-tests.ts",
+		"test:encryption": "tsx src/background/lib/encryption-test.ts",
+		"test:security": "tsx src/background/handlers/test/security-tests.ts",
+		"security:audit": "pnpm audit --audit-level moderate",
+		"security:audit-fix": "pnpm audit --fix",
+		"security:check": "pnpm run security:audit && pnpm run test:security"
 	},
 	"dependencies": {
 		"@mysten/sui": "^1.30.5",
@@ -33,10 +40,25 @@
 		"zustand": "^5.0.5"
 	},
 	"devDependencies": {
+		"@eslint/js": "^9.18.0",
 		"@types/chrome": "^0.0.326",
 		"@types/react": "^19.1.6",
 		"@types/react-dom": "^19.1.6",
+		"@typescript-eslint/eslint-plugin": "^8.20.0",
+		"@typescript-eslint/parser": "^8.20.0",
 		"@vitejs/plugin-react": "^4.5.1",
+		"eslint": "^9.18.0",
+		"eslint-plugin-react": "^7.37.2",
+		"eslint-plugin-react-hooks": "^5.1.0",
+		"eslint-plugin-react-refresh": "^0.4.16",
+		"globals": "^15.14.0",
+		"prettier": "^3.4.2",
+		"tsx": "^4.20.4",
 		"typescript": "^5.8.3"
+	},
+	"pnpm": {
+		"overrides": {
+			"form-data@>=4.0.0 <4.0.4": ">=4.0.4"
+		}
 	}
 }

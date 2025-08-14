@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
-import { AlertCircle, Check, AlertTriangle } from "lucide-react";
+import React, { useState, useRef, useEffect } from 'react';
+import { AlertCircle, Check, AlertTriangle } from 'lucide-react';
 import {
   validateSeedPhraseDetailed,
   type SeedPhraseValidationResult,
-} from "@/client/lib/utils";
-import useWallet from "@/client/hooks/use-wallet";
+} from '@/client/lib/utils';
+import useWallet from '@/client/hooks/use-wallet';
 
 interface MnemonicInputProps {
   onSeedPhraseChange: (seedPhrase: string) => void;
@@ -16,14 +16,14 @@ interface MnemonicInputProps {
 export const MnemonicInput: React.FC<MnemonicInputProps> = ({
   onSeedPhraseChange,
   onValidationChange,
-  className = "",
+  className = '',
   wordCount = 12,
 }) => {
-  const [words, setWords] = useState<string[]>(Array(wordCount).fill(""));
+  const [words, setWords] = useState<string[]>(Array(wordCount).fill(''));
   const [validation, setValidation] = useState<SeedPhraseValidationResult>({
     isValid: false,
-    message: "",
-    type: "error",
+    message: '',
+    type: 'error',
   });
   const [hasStartedTyping, setHasStartedTyping] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -40,7 +40,7 @@ export const MnemonicInput: React.FC<MnemonicInputProps> = ({
       setHasStartedTyping(true);
     }
 
-    const seedPhrase = newWords.join(" ").trim();
+    const seedPhrase = newWords.join(' ').trim();
     let validationResult = validateSeedPhraseDetailed(seedPhrase, wordCount);
 
     // If the basic validation passes, check if seed phrase already exists
@@ -50,12 +50,12 @@ export const MnemonicInput: React.FC<MnemonicInputProps> = ({
         if (exists) {
           validationResult = {
             isValid: false,
-            message: "This seed phrase is already imported",
-            type: "warning",
+            message: 'This seed phrase is already imported',
+            type: 'warning',
           };
         }
       } catch (error) {
-        console.error("Error checking seed phrase existence:", error);
+        console.error('Error checking seed phrase existence:', error);
         // Don't override the validation if check fails, just log the error
       }
     }
@@ -72,11 +72,11 @@ export const MnemonicInput: React.FC<MnemonicInputProps> = ({
 
   // Handle key down for navigation
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !words[index] && index > 0) {
+    if (e.key === 'Backspace' && !words[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
-    } else if (e.key === "Enter" && index < wordCount - 1) {
+    } else if (e.key === 'Enter' && index < wordCount - 1) {
       inputRefs.current[index + 1]?.focus();
-    } else if (e.key === " " && index < wordCount - 1) {
+    } else if (e.key === ' ' && index < wordCount - 1) {
       e.preventDefault();
       inputRefs.current[index + 1]?.focus();
     }
@@ -85,7 +85,7 @@ export const MnemonicInput: React.FC<MnemonicInputProps> = ({
   // Handle paste
   const handlePaste = async (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pastedText = e.clipboardData.getData("text");
+    const pastedText = e.clipboardData.getData('text');
     const pastedWords = pastedText.trim().split(/\s+/).slice(0, wordCount);
 
     // Mark that user has started typing
@@ -93,7 +93,7 @@ export const MnemonicInput: React.FC<MnemonicInputProps> = ({
       setHasStartedTyping(true);
     }
 
-    const newWords = Array(wordCount).fill("");
+    const newWords = Array(wordCount).fill('');
     pastedWords.forEach((word, index) => {
       if (index < wordCount) {
         newWords[index] = word.toLowerCase();
@@ -101,7 +101,7 @@ export const MnemonicInput: React.FC<MnemonicInputProps> = ({
     });
 
     setWords(newWords);
-    const seedPhrase = newWords.join(" ").trim();
+    const seedPhrase = newWords.join(' ').trim();
     let validationResult = validateSeedPhraseDetailed(seedPhrase, wordCount);
 
     // If the basic validation passes, check if seed phrase already exists
@@ -111,12 +111,12 @@ export const MnemonicInput: React.FC<MnemonicInputProps> = ({
         if (exists) {
           validationResult = {
             isValid: false,
-            message: "This seed phrase is already imported",
-            type: "warning",
+            message: 'This seed phrase is already imported',
+            type: 'warning',
           };
         }
       } catch (error) {
-        console.error("Error checking seed phrase existence:", error);
+        console.error('Error checking seed phrase existence:', error);
         // Don't override the validation if check fails, just log the error
       }
     }
@@ -126,7 +126,7 @@ export const MnemonicInput: React.FC<MnemonicInputProps> = ({
     onValidationChange?.(validationResult.isValid);
 
     // Focus the next empty input or the last filled one
-    const nextEmptyIndex = newWords.findIndex((word) => !word);
+    const nextEmptyIndex = newWords.findIndex(word => !word);
     const focusIndex =
       nextEmptyIndex !== -1
         ? nextEmptyIndex
@@ -137,7 +137,7 @@ export const MnemonicInput: React.FC<MnemonicInputProps> = ({
   // Update validation when wordCount changes
   useEffect(() => {
     const updateValidation = async () => {
-      const seedPhrase = words.join(" ").trim();
+      const seedPhrase = words.join(' ').trim();
       let validationResult = validateSeedPhraseDetailed(seedPhrase, wordCount);
 
       // If the basic validation passes, check if seed phrase already exists
@@ -147,12 +147,12 @@ export const MnemonicInput: React.FC<MnemonicInputProps> = ({
           if (exists) {
             validationResult = {
               isValid: false,
-              message: "This seed phrase is already imported",
-              type: "warning",
+              message: 'This seed phrase is already imported',
+              type: 'warning',
             };
           }
         } catch (error) {
-          console.error("Error checking seed phrase existence:", error);
+          console.error('Error checking seed phrase existence:', error);
           // Don't override the validation if check fails, just log the error
         }
       }
@@ -164,7 +164,7 @@ export const MnemonicInput: React.FC<MnemonicInputProps> = ({
     updateValidation();
 
     // Reset hasStartedTyping when wordCount changes and no words are filled
-    const hasAnyWords = words.some((word) => word.trim());
+    const hasAnyWords = words.some(word => word.trim());
     if (!hasAnyWords) {
       setHasStartedTyping(false);
     }
@@ -172,11 +172,11 @@ export const MnemonicInput: React.FC<MnemonicInputProps> = ({
 
   const getValidationIcon = () => {
     switch (validation.type) {
-      case "success":
+      case 'success':
         return <Check className="size-4 text-green-400" />;
-      case "warning":
+      case 'warning':
         return <AlertTriangle className="size-4 text-yellow-400" />;
-      case "error":
+      case 'error':
       default:
         return <AlertCircle className="size-4 text-red-400" />;
     }
@@ -184,13 +184,13 @@ export const MnemonicInput: React.FC<MnemonicInputProps> = ({
 
   const getValidationColor = () => {
     switch (validation.type) {
-      case "success":
-        return "text-green-400";
-      case "warning":
-        return "text-yellow-400";
-      case "error":
+      case 'success':
+        return 'text-green-400';
+      case 'warning':
+        return 'text-yellow-400';
+      case 'error':
       default:
-        return "text-red-400";
+        return 'text-red-400';
     }
   };
 
@@ -209,13 +209,13 @@ export const MnemonicInput: React.FC<MnemonicInputProps> = ({
               {index + 1}
             </span>
             <input
-              ref={(el) => {
+              ref={el => {
                 inputRefs.current[index] = el;
               }}
               type="text"
               value={words[index]}
-              onChange={(e) => handleWordChange(index, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(index, e)}
+              onChange={e => handleWordChange(index, e.target.value)}
+              onKeyDown={e => handleKeyDown(index, e)}
               onPaste={handlePaste}
               placeholder="word"
               className="flex-1 bg-transparent text-sm font-medium text-white placeholder-gray-500 outline-none min-w-0 w-full"
