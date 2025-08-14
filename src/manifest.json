@@ -1,7 +1,7 @@
 {
     "name": "Purro (Beta)",
     "description": "The Purr-fect Web3 Wallet",
-    "version": "0.3.3",
+    "version": "0.3.4",
     "manifest_version": 3,
     "action": {
         "default_popup": "html/main.html",
@@ -57,11 +57,8 @@
     "permissions": [
         "storage",
         "activeTab",
-        "notifications",
         "tabs",
-        "scripting",
         "sidePanel",
-        "system.display",
         "alarms",
         "offscreen"
     ],
