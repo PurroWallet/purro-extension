@@ -1,3 +1,4 @@
+import React from 'react';
 import { cn } from '@/client/lib/utils';
 
 const Header = ({

@@ -1,5 +1,5 @@
 import { cn } from '@/client/lib/utils';
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface HoldButtonProps {
   onConfirm: () => void;

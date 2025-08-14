@@ -1,4 +1,5 @@
 // Offscreen document management - MEMORY ONLY for maximum security
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let offscreenCreated = false;
 
 export const offscreenManager = {

@@ -1,3 +1,4 @@
+import React from 'react';
 import LockDisplay from '@/client/components/display/lock-display';
 import { Dialog, Drawer } from '@/client/components/ui';
 import useInit from '@/client/hooks/use-init';

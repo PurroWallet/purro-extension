@@ -1,5 +1,5 @@
 import WalletAddressesSimple from './wallet-addresses-simple';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { GripVertical, Settings } from 'lucide-react';
 // import EditAccount from "../dialogs/edit-account/edit-account";
 import { cn } from '@/client/lib/utils';

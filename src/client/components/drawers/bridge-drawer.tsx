@@ -10,7 +10,7 @@ export const BridgeDrawer = () => {
         <a
           href="https://docs.purro.xyz/roadmap"
           target="_blank"
-          className="text-[var(--primary-color-light)]"
+          className="text-[var(--primary-color-light)]" rel="noreferrer"
         >
           roadmap.
         </a>

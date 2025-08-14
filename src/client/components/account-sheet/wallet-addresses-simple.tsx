@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { motion } from 'motion/react';
 import {

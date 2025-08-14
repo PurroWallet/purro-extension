@@ -114,7 +114,7 @@ const NftInstancesIdDialog = ({
               <a
                 href={`https://app.hlnames.xyz/profile/${hlName}`}
                 target="_blank"
-                className="w-full flex items-center justify-center bg-[var(--card-color)]/80 hover:bg-[var(--card-color)]/60 transition-colors duration-200 cursor-pointer p-3 gap-2"
+                className="w-full flex items-center justify-center bg-[var(--card-color)]/80 hover:bg-[var(--card-color)]/60 transition-colors duration-200 cursor-pointer p-3 gap-2" rel="noreferrer"
               >
                 <p className="text-base text-center font-semibold text-[var(--primary-color-light)]">
                   See on Hyperliquid Names

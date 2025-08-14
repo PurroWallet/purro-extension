@@ -1,3 +1,4 @@
+import React from 'react';
 import { cn } from '@/client/lib/utils';
 import { ArrowLeft } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';

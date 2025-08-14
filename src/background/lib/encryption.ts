@@ -24,7 +24,7 @@ const arrayBufferToBase64 = (buffer: ArrayBuffer): string => {
       binary += String.fromCharCode(bytes[i]);
     }
     return btoa(binary);
-  } catch (error) {
+  } catch {
     throw new Error('Failed to encode to base64');
   }
 };
@@ -41,7 +41,7 @@ const base64ToArrayBuffer = (base64: string): Uint8Array => {
         .split('')
         .map(c => c.charCodeAt(0))
     );
-  } catch (error) {
+  } catch {
     throw new Error('Invalid base64 string');
   }
 };

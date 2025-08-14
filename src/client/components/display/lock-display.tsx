@@ -1,7 +1,7 @@
 import useWallet from '@/client/hooks/use-wallet';
 import { cn } from '@/client/lib/utils';
 import Header from '@/client/components/common/header';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import logo from '@/assets/icon.png';
 import useDialogStore from '@/client/hooks/use-dialog-store';
 import useWalletStore from '@/client/hooks/use-wallet-store';

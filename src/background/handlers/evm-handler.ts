@@ -1114,7 +1114,7 @@ export const evmHandler = {
       if (transaction.value && !transaction.data) {
         try {
           ethers.parseEther(transaction.value);
-        } catch (error) {
+        } catch {
           return {
             success: false,
             error: TRANSACTION_ERRORS.INVALID_VALUE.message,
@@ -1548,7 +1548,7 @@ export const evmHandler = {
       if (transaction.value && !transaction.data) {
         try {
           ethers.parseEther(transaction.value);
-        } catch (error) {
+        } catch {
           return {
             success: false,
             error: TRANSACTION_ERRORS.INVALID_VALUE.message,

@@ -25,7 +25,7 @@ export const runSecurityTests = async () => {
     }
 
     // Manually expire the session by setting expiresAt to past
-    const expiredSession = {
+    const _expiredSession = {
       ...initialSession,
       expiresAt: Date.now() - 1000, // 1 second ago
     };

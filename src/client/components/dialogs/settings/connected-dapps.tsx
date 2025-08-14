@@ -58,7 +58,7 @@ const groupSitesByTime = (sites: ConnectedSite[]) => {
 
 const ConnectedDAppsDialog = ({ onBack }: { onBack: () => void }) => {
   const { activeAccount } = useWalletStore();
-  const [connectedSites, setConnectedSites] = useState<ConnectedSite[]>([]);
+  const [connectedSites, _setConnectedSites] = useState<ConnectedSite[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitRemoveAll, setSubmitRemoveAll] = useState(false);
 

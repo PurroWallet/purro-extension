@@ -1,5 +1,5 @@
 import useWallet from '@/client/hooks/use-wallet';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { DialogFooter } from '../../ui/dialog';
 import {
   Button,

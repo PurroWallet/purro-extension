@@ -66,7 +66,7 @@ export const authHandler = {
         await offscreenManager.sendToOffscreen('SET_SESSION', session);
         this.scheduleAutoLock(timeout);
       }
-    } catch (error) {
+    } catch {
       console.warn(
         'Failed to update session timeout - session may have been lost'
       );

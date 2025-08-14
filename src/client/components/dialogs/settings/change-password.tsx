@@ -6,7 +6,7 @@ import {
   Button,
   InputPassword,
 } from '@/client/components/ui';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import useWallet from '@/client/hooks/use-wallet';
 
 const ChangePassword = ({ onBack }: { onBack: () => void }) => {
