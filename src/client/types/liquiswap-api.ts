@@ -76,6 +76,8 @@ export interface Token {
   symbol: string;
   decimals: number;
   transfers24h: number;
+  isERC20Verified: boolean;
+  totalTransfers: number;
 }
 
 export interface FetchTokenResponse {

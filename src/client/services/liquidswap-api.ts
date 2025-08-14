@@ -66,7 +66,8 @@ export const fetchTokens = async (
     }
   );
 
-  return response.json();
+  const data = await response.json();
+  return data;
 };
 
 export const fetchBalances = async (
@@ -89,4 +90,4 @@ export const fetchBalances = async (
   return response.json();
 };
 
-export const getTokenLogo = (tokenSymbol: string) => {};
+export const getTokenLogo = (tokenSymbol: string) => { };
