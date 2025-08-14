@@ -213,13 +213,19 @@ const Swap = () => {
 
         console.log("📊 Full balance response:", balance);
 
+        // Check if balance response has the expected structure
+        if (!balance?.data?.tokens || !Array.isArray(balance.data.tokens)) {
+          console.log("❌ Invalid balance response structure");
+          return;
+        }
+
         const whypeBalance = balance.data.tokens.find(
           (token: any) => token.token === WHYPE_TOKEN_ADDRESS
         );
 
         console.log("🔍 WHYPE balance found:", whypeBalance);
 
-        if (whypeBalance) {
+        if (whypeBalance && whypeBalance.balance !== undefined) {
           // Create a temporary token object to use getTokenBalance function
           const tempToken = {
             balance: whypeBalance.balance,
@@ -248,6 +254,25 @@ const Swap = () => {
           }
         } else {
           console.log("❌ No WHYPE balance found in response");
+
+          // Set default balance of 0 for WHYPE tokens if not found
+          if (tokenOut?.contractAddress === WHYPE_TOKEN_ADDRESS) {
+            console.log("🔄 Setting default WHYPE balance for tokenOut");
+            setTokenOut({
+              ...tokenOut,
+              balance: "0",
+              balanceFormatted: 0,
+              usdValue: 0,
+            });
+          } else if (tokenIn?.contractAddress === WHYPE_TOKEN_ADDRESS) {
+            console.log("🔄 Setting default WHYPE balance for tokenIn");
+            setTokenIn({
+              ...tokenIn,
+              balance: "0",
+              balanceFormatted: 0,
+              usdValue: 0,
+            });
+          }
         }
       } catch (error) {
         console.error("❌ Error fetching WHYPE balance:", error);
@@ -867,11 +892,11 @@ const Swap = () => {
                     ).toFixed(2)}
                   </span>
                   {tokenIn.contractAddress &&
-                    tokenPrices[tokenIn.contractAddress] && (
+                    tokenPrices[tokenIn.contractAddress] &&
+                    tokenPrices[tokenIn.contractAddress].priceChange24h !== undefined && (
                       <span
                         className={`text-xs font-medium ${
-                          tokenPrices[tokenIn.contractAddress.toLowerCase()]
-                            .priceChange24h >= 0
+                          tokenPrices[tokenIn.contractAddress].priceChange24h >= 0
                             ? "text-green-400"
                             : "text-red-400"
                         }`}
@@ -942,18 +967,17 @@ const Swap = () => {
                     ).toFixed(2)}
                   </span>
                   {tokenOut.contractAddress &&
-                    tokenPrices[tokenOut.contractAddress] && (
+                    tokenPrices[tokenOut.contractAddress] &&
+                    tokenPrices[tokenOut.contractAddress].priceChange24h !== undefined && (
                       <span
                         className={`text-xs font-medium ${
-                          tokenPrices[tokenOut.contractAddress.toLowerCase()]
-                            .priceChange24h >= 0
+                          tokenPrices[tokenOut.contractAddress].priceChange24h >= 0
                             ? "text-green-400"
                             : "text-red-400"
                         }`}
                       >
                         {formatPriceChange(
-                          tokenPrices[tokenOut.contractAddress.toLowerCase()]
-                            .priceChange24h
+                          tokenPrices[tokenOut.contractAddress].priceChange24h
                         )}
                       </span>
                     )}

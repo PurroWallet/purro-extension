@@ -550,19 +550,6 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
       excludedSymbol
     );
 
-    console.log("🔍 Token disable check:", {
-      currentToken: token.symbol,
-      currentAddress: token.address,
-      currentIsHype,
-      currentIsWhype,
-      selectedTokenAddress,
-      excludeTokenAddress,
-      selectedIsHype,
-      selectedIsWhype,
-      excludedIsHype,
-      excludedIsWhype,
-    });
-
     // Special handling for HYPE/WHYPE pairs
     // Never disable HYPE or WHYPE when the other is selected (allow wrap/unwrap)
     if (
