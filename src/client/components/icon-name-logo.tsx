@@ -1,4 +1,4 @@
-import IconName from "@/assets/icon-name-dark.png";
+import IconName from "@/assets/Purro_Logotype_White.png";
 import { cn } from "@/client/lib/utils";
 
 const IconNameLogo = ({ className }: { className?: string }) => {
@@ -6,7 +6,7 @@ const IconNameLogo = ({ className }: { className?: string }) => {
     <img
       src={IconName}
       alt="icon-name-logo"
-      className={cn("h-10", className)}
+      className={cn("h-8 object-contain", className)}
     />
   );
 };
