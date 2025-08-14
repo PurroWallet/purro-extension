@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button, Input } from "@/client/components/ui";
 import {
   ArrowUpDown,
@@ -65,9 +65,15 @@ const Swap = () => {
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
 
   // Initialize swap route hook
-  useSwapRoute();
+  const { refetchRoute } = useSwapRoute();
 
   const [swapError, setSwapError] = useState<string | null>(null);
+
+  // Timer state for route refetching
+  const [timeLeft, setTimeLeft] = useState(20);
+  const [isTimerActive, setIsTimerActive] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get token balances with proper decimal handling
   const getTokenBalance = (token: any): number => {
@@ -99,6 +105,59 @@ const Swap = () => {
 
   const tokenInBalance = tokenIn ? getTokenBalance(tokenIn) : 0;
   const tokenOutBalance = tokenOut ? getTokenBalance(tokenOut) : 0;
+
+  // Timer functions
+  const startTimer = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    setTimeLeft(20);
+    setIsTimerActive(true);
+
+    // Update timer every second
+    intervalRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          // Timer finished, refetch route
+          if (tokenIn && tokenOut && (amountIn || amountOut)) {
+            refetchRoute().then(() => {});
+          }
+          return 20; // Reset timer
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const resetTimer = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setTimeLeft(20);
+    setIsTimerActive(false);
+  };
+
+  // Start timer when both tokens are selected and there's an amount, but only after initial route is loaded
+  useEffect(() => {
+    if (tokenIn && tokenOut && (amountIn || amountOut) && !isLoadingRoute && route) {
+      // Only start timer if we have a successful route (not immediately after token/amount changes)
+      startTimer();
+    } else {
+      resetTimer();
+    }
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [tokenIn, tokenOut, amountIn, amountOut, isLoadingRoute, route]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, []);
 
   // Validation
   const inputAmount = parseFloat(amountIn || "0");
@@ -313,7 +372,7 @@ const Swap = () => {
   );
 
   return (
-    <div className="max-w-md mx-auto p-6">
+    <div className="max-w-md mx-auto px-6 py-4">
       <div className="space-y-4 flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -328,8 +387,17 @@ const Swap = () => {
 
         {/* Swap Interface */}
         <div className="relative flex flex-col gap-1">
+          {/* Timer progress bar */}
+          <div
+            className={`h-10 shadow-2xl transition-all duration-1000 ease-linear rounded-xl z-10 absolute top-0 left-0 rotate-180 ${
+              isTimerActive && "shadow-emerald-400 bg-transparent"
+            }`}
+            style={{
+              width: isTimerActive ? `${((20 - timeLeft) / 20) * 100}%` : "0%",
+            }}
+          />
           {/* Token In */}
-          <div className="space-y-2 border border-white/10 rounded-xl p-4 flex flex-col justify-between">
+          <div className="space-y-2 border border-white/10 rounded-xl p-4 flex flex-col justify-between bg-[var(--background-color)] relative z-10">
             <div className="flex items-center justify-between">
               <h1 className="text-gray-400">Sell</h1>
               {tokenIn && (
@@ -391,7 +459,7 @@ const Swap = () => {
             </div>
           </div>
           {/* Switch Button */}
-          <div className="flex justify-center p-1 border border-white/10 bg-[var(--background-color)] w-fit rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="flex justify-center p-1 border border-white/10 bg-[var(--background-color)] w-fit rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
             <div className="h-1 w-14 bg-[var(--background-color)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10" />
             <button
               onClick={switchTokens}
