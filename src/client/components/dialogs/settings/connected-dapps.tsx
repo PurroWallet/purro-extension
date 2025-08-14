@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import {
   DialogContent,
   DialogHeader,
   DialogWrapper,
-} from "@/client/components/ui/dialog";
-import { Globe, Clock, Unplug, X } from "lucide-react";
-import { Button } from "@/client/components/ui";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import { formatDate } from "@/utils/formatters";
+} from '@/client/components/ui/dialog';
+import { Globe, Clock, Unplug, X } from 'lucide-react';
+import { Button } from '@/client/components/ui';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import { formatDate } from '@/utils/formatters';
 
 interface ConnectedSite {
   origin: string;
@@ -30,25 +30,25 @@ const getTimeCategory = (timestamp: number): string => {
   const oneWeek = 7 * oneDay;
   const oneMonth = 30 * oneDay;
   if (diff < oneDay) {
-    return "Today";
+    return 'Today';
   } else if (diff < oneWeek) {
-    return "This week";
+    return 'This week';
   } else if (diff < oneMonth) {
-    return "This month";
+    return 'This month';
   } else {
-    return "Earlier";
+    return 'Earlier';
   }
 };
 
 const groupSitesByTime = (sites: ConnectedSite[]) => {
   const groups: { [key: string]: ConnectedSite[] } = {
     Today: [],
-    "This week": [],
-    "This month": [],
+    'This week': [],
+    'This month': [],
     Earlier: [],
   };
 
-  sites.forEach((site) => {
+  sites.forEach(site => {
     const category = getTimeCategory(site.connectedAt);
     groups[category].push(site);
   });
@@ -79,7 +79,7 @@ const ConnectedDAppsDialog = ({ onBack }: { onBack: () => void }) => {
       // );
       // setConnectedSites(sites);
     } catch (error) {
-      console.error("Failed to load connected sites:", error);
+      console.error('Failed to load connected sites:', error);
     } finally {
       setLoading(false);
     }
@@ -93,7 +93,7 @@ const ConnectedDAppsDialog = ({ onBack }: { onBack: () => void }) => {
       // Reload the list
       await loadConnectedSites();
     } catch (error) {
-      console.error("Failed to disconnect site:", error);
+      console.error('Failed to disconnect site:', error);
     }
   };
 
@@ -106,7 +106,7 @@ const ConnectedDAppsDialog = ({ onBack }: { onBack: () => void }) => {
       await loadConnectedSites();
       setSubmitRemoveAll(false);
     } catch (error) {
-      console.error("Failed to disconnect all sites:", error);
+      console.error('Failed to disconnect all sites:', error);
     }
   };
 
@@ -124,15 +124,15 @@ const ConnectedDAppsDialog = ({ onBack }: { onBack: () => void }) => {
               <X
                 className={`size-4 text-white absolute transition-all duration-300 ${
                   submitRemoveAll
-                    ? "opacity-100 rotate-0 scale-100"
-                    : "opacity-0 rotate-90 scale-75"
+                    ? 'opacity-100 rotate-0 scale-100'
+                    : 'opacity-0 rotate-90 scale-75'
                 }`}
               />
               <Unplug
                 className={`size-4 text-red-400 transition-all duration-300 ${
                   submitRemoveAll
-                    ? "opacity-0 rotate-90 scale-75"
-                    : "opacity-100 rotate-0 scale-100"
+                    ? 'opacity-0 rotate-90 scale-75'
+                    : 'opacity-100 rotate-0 scale-100'
                 }`}
               />
             </div>
@@ -143,8 +143,8 @@ const ConnectedDAppsDialog = ({ onBack }: { onBack: () => void }) => {
         <div
           className={`absolute top-0 right-0 w-full bg-[var(--background-color)] p-4 rounded-b-lg border-b border-white/10 flex items-center justify-between transition-all duration-300 ease-in-out ${
             submitRemoveAll
-              ? "opacity-100 translate-y-0 pointer-events-auto"
-              : "opacity-0 -translate-y-4 pointer-events-none"
+              ? 'opacity-100 translate-y-0 pointer-events-auto'
+              : 'opacity-0 -translate-y-4 pointer-events-none'
           }`}
         >
           <p className="text-base w-full animate-fade-in">
@@ -160,7 +160,7 @@ const ConnectedDAppsDialog = ({ onBack }: { onBack: () => void }) => {
 
         <div
           className={`transition-all duration-300 ${
-            submitRemoveAll ? "mt-20" : "mt-0"
+            submitRemoveAll ? 'mt-20' : 'mt-0'
           }`}
         >
           {loading ? (
@@ -190,7 +190,7 @@ const ConnectedDAppsDialog = ({ onBack }: { onBack: () => void }) => {
                       className="animate-slide-up"
                       style={{
                         animationDelay: `${categoryIndex * 100}ms`,
-                        animationFillMode: "both",
+                        animationFillMode: 'both',
                       }}
                     >
                       <h3 className="text-sm font-medium text-white/60 mb-1">
@@ -205,7 +205,7 @@ const ConnectedDAppsDialog = ({ onBack }: { onBack: () => void }) => {
                               animationDelay: `${
                                 categoryIndex * 100 + siteIndex * 50
                               }ms`,
-                              animationFillMode: "both",
+                              animationFillMode: 'both',
                             }}
                           >
                             <div className="flex items-center justify-between">
@@ -216,19 +216,19 @@ const ConnectedDAppsDialog = ({ onBack }: { onBack: () => void }) => {
                                       src={site.favicon}
                                       alt={getDomainFromOrigin(site.origin)}
                                       className="size-full object-contain transition-transform duration-200 hover:scale-110"
-                                      onError={(e) => {
+                                      onError={e => {
                                         const target =
                                           e.target as HTMLImageElement;
-                                        target.style.display = "none";
+                                        target.style.display = 'none';
                                         target.nextElementSibling?.classList.remove(
-                                          "hidden"
+                                          'hidden'
                                         );
                                       }}
                                     />
                                   ) : null}
                                   <Globe
                                     className={`size-5 text-[var(--primary-color)] transition-transform duration-200 hover:scale-110 ${
-                                      site.favicon ? "hidden" : ""
+                                      site.favicon ? 'hidden' : ''
                                     }`}
                                   />
                                 </div>

@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
-import { NFTImage } from "@/client/components/nft-image";
-import TabsLoading from "../home/tabs/tabs-loading";
-import placeholderNft from "@/assets/placeholder-nft.png";
-import NftInstancesDialog from "./nft-instances-dialog";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import { Pagination } from "@/client/components/ui";
-import { HyperScanNftCollectionsNextPageParams } from "@/client/types/hyperscan-api";
-import useNFTsWithCache from "@/client/hooks/use-nfts-with-cache";
+import { useState, useEffect } from 'react';
+import { NFTImage } from '@/client/components/nft-image';
+import TabsLoading from '../home/tabs/tabs-loading';
+import placeholderNft from '@/assets/placeholder-nft.png';
+import NftInstancesDialog from './nft-instances-dialog';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import { Pagination } from '@/client/components/ui';
+import { HyperScanNftCollectionsNextPageParams } from '@/client/types/hyperscan-api';
+import useNFTsWithCache from '@/client/hooks/use-nfts-with-cache';
 
 const WalletNFTs = () => {
   const { getActiveAccountWalletObject } = useWalletStore();
@@ -35,7 +35,7 @@ const WalletNFTs = () => {
   // Store next page parameters when data changes
   useEffect(() => {
     if (nfts?.next_page_params) {
-      setPageParams((prev) => ({
+      setPageParams(prev => ({
         ...prev,
         [currentPage + 1]: nfts.next_page_params,
       }));
@@ -45,13 +45,13 @@ const WalletNFTs = () => {
   // Handle page navigation
   const goToNextPage = () => {
     if (nfts?.next_page_params) {
-      setCurrentPage((prev) => prev + 1);
+      setCurrentPage(prev => prev + 1);
     }
   };
 
   const goToPrevPage = () => {
     if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
+      setCurrentPage(prev => prev - 1);
     }
   };
 
@@ -68,8 +68,8 @@ const WalletNFTs = () => {
   }
 
   // Debug info (only in development)
-  if (process.env.NODE_ENV === "development") {
-    console.log("NFT data:", {
+  if (process.env.NODE_ENV === 'development') {
+    console.log('NFT data:', {
       totalItems: nfts.items.length,
       sampleItem: nfts.items[0],
       sampleImageUrl: nfts.items[0]?.token_instances[0]?.image_url,
@@ -104,7 +104,7 @@ const WalletNFTs = () => {
                   className="size-full object-contain"
                   tokenName={item.token.name}
                   onError={(error: Error) => {
-                    console.error("NFT image failed to load:", {
+                    console.error('NFT image failed to load:', {
                       tokenName: item.token.name,
                       imageUrl: item.token_instances[0]?.image_url,
                       error: error.message,
@@ -132,7 +132,7 @@ const WalletNFTs = () => {
                   <span className="text-xs text-center">{item.token.name}</span>
                 </div>
                 <div className="absolute bottom-0 right-0 text-white text-left my-1 mx-2 flex items-center justify-right gap-1">
-                  {item.token.type === "ERC-1155" && (
+                  {item.token.type === 'ERC-1155' && (
                     <p className="text-sm font-normal bg-primary/90 px-2 rounded-full">
                       {item.amount}
                     </p>

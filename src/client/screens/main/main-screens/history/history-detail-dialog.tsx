@@ -3,14 +3,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogWrapper,
-} from "@/client/components/ui";
-import { Button } from "@/client/components/ui";
-import { HyperScanTokenTransfersItems } from "@/client/types/hyperscan-api";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import { ArrowUp } from "lucide-react";
-import { ArrowDown } from "lucide-react";
-import { truncateAddress } from "@/client/utils/formatters";
+} from '@/client/components/ui';
+import { Button } from '@/client/components/ui';
+import { HyperScanTokenTransfersItems } from '@/client/types/hyperscan-api';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import { ArrowUp } from 'lucide-react';
+import { ArrowDown } from 'lucide-react';
+import { truncateAddress } from '@/client/utils/formatters';
 
 const HistoryDetailDialog = ({
   transaction,
@@ -28,22 +28,22 @@ const HistoryDetailDialog = ({
 
   const isReceive = toAddress === userAddress;
   const isSend = fromAddress === userAddress;
-  const isTokenMinting = transaction.type.includes("token_minting");
-  const isTokenBurning = transaction.type.includes("token_burning");
-  const isTokenTransfer = transaction.type.includes("token_transfer");
+  const isTokenMinting = transaction.type.includes('token_minting');
+  const isTokenBurning = transaction.type.includes('token_burning');
+  const isTokenTransfer = transaction.type.includes('token_transfer');
 
   const formatTokenAmount = (amount: number): string => {
     const absAmount = Math.abs(amount);
 
     // For very large numbers, use scientific notation or compact format
     if (absAmount >= 1e12) {
-      return (amount / 1e12).toFixed(2) + "T";
+      return (amount / 1e12).toFixed(2) + 'T';
     } else if (absAmount >= 1e9) {
-      return (amount / 1e9).toFixed(2) + "B";
+      return (amount / 1e9).toFixed(2) + 'B';
     } else if (absAmount >= 1e6) {
-      return (amount / 1e6).toFixed(2) + "M";
+      return (amount / 1e6).toFixed(2) + 'M';
     } else if (absAmount >= 1e3) {
-      return (amount / 1e3).toFixed(2) + "K";
+      return (amount / 1e3).toFixed(2) + 'K';
     } else if (absAmount >= 1) {
       return amount.toFixed(4);
     } else if (absAmount >= 0.0001) {
@@ -61,37 +61,37 @@ const HistoryDetailDialog = ({
         <div className="flex flex-col items-center gap-4">
           <h2 className="text-lg font-bold">
             {isSend && !isTokenMinting && !isTokenBurning && !isTokenTransfer
-              ? "Sent"
+              ? 'Sent'
               : isReceive &&
-                !isTokenMinting &&
-                !isTokenBurning &&
-                !isTokenTransfer
-              ? "Received"
-              : isTokenMinting
-              ? "Minted"
-              : isTokenBurning
-              ? "Burned"
-              : "Transferred"}
-            {transaction.token.type === "ERC-20" && " Token"}
-            {transaction.token.type === "ERC-721" && " NFT"}
-            {transaction.token.type === "ERC-1155" && " NFT"}
-            {transaction.token.type === "ERC-404" && " Token"}
+                  !isTokenMinting &&
+                  !isTokenBurning &&
+                  !isTokenTransfer
+                ? 'Received'
+                : isTokenMinting
+                  ? 'Minted'
+                  : isTokenBurning
+                    ? 'Burned'
+                    : 'Transferred'}
+            {transaction.token.type === 'ERC-20' && ' Token'}
+            {transaction.token.type === 'ERC-721' && ' NFT'}
+            {transaction.token.type === 'ERC-1155' && ' NFT'}
+            {transaction.token.type === 'ERC-404' && ' Token'}
           </h2>
           <div className="flex items-center justify-center size-24 rounded-full bg-[var(--primary-color)]/10 relative">
             {transaction.token.icon_url && (
               <img
-                src={transaction.token.icon_url || ""}
+                src={transaction.token.icon_url || ''}
                 alt="logo"
                 className="size-full rounded-full"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
+                onError={e => {
+                  e.currentTarget.style.display = 'none';
                   const parent = e.currentTarget.parentElement;
                   if (parent) {
-                    const fallbackDiv = document.createElement("div");
+                    const fallbackDiv = document.createElement('div');
                     fallbackDiv.className =
-                      "size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-2xl border border-[var(--primary-color)]/20";
+                      'size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-2xl border border-[var(--primary-color)]/20';
                     fallbackDiv.textContent =
-                      transaction.token.symbol?.charAt(0).toUpperCase() || "";
+                      transaction.token.symbol?.charAt(0).toUpperCase() || '';
                     parent.insertBefore(fallbackDiv, e.currentTarget);
                   }
                 }}
@@ -99,7 +99,7 @@ const HistoryDetailDialog = ({
             )}
             {!transaction.token.icon_url && (
               <div className="size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-2xl border border-[var(--primary-color)]/20">
-                {transaction.token.symbol?.charAt(0).toUpperCase() || "?"}
+                {transaction.token.symbol?.charAt(0).toUpperCase() || '?'}
               </div>
             )}
             {isSend && (
@@ -116,7 +116,7 @@ const HistoryDetailDialog = ({
           <div className="rounded-lg overflow-hidden w-full">
             <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
               <p className="text-base text-left font-semibold">
-                {isSend ? "To" : "From"}
+                {isSend ? 'To' : 'From'}
               </p>
               <div className="flex flex-col items-end">
                 <p className="text-sm text-muted-foreground text-right truncate w-full">
@@ -126,7 +126,7 @@ const HistoryDetailDialog = ({
                 </p>
                 <p className="text-xs text-muted-foreground text-right truncate w-full">
                   {
-                    hlNames.find((hlName) =>
+                    hlNames.find(hlName =>
                       isSend
                         ? hlName[transaction.to.hash]
                         : hlName[transaction.from.hash]
@@ -139,12 +139,12 @@ const HistoryDetailDialog = ({
               <p className="text-base text-left font-semibold">Amount</p>
               <p className="text-sm text-muted-foreground text-right truncate w-full">
                 {formatTokenAmount(
-                  Number(transaction.total?.value || "0") /
-                    10 ** Number(transaction.total?.decimals || "0")
-                )}{" "}
+                  Number(transaction.total?.value || '0') /
+                    10 ** Number(transaction.total?.decimals || '0')
+                )}{' '}
                 {transaction.token.symbol && transaction.token.symbol.length > 6
                   ? `${transaction.token.symbol.substring(0, 6)}...`
-                  : transaction.token.symbol || "Unknown"}
+                  : transaction.token.symbol || 'Unknown'}
               </p>
             </div>
             <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">

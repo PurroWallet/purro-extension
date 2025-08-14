@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
-import logo from "@/assets/icon.png";
-import { Button } from "@/client/components/ui/button";
-import { CircleArrowDown, CirclePlus } from "lucide-react";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import { openSidePanel } from "@/client/lib/utils";
-import { LoadingDisplay } from "@/client/components/display";
+import { useEffect, useState } from 'react';
+import logo from '@/assets/icon.png';
+import { Button } from '@/client/components/ui/button';
+import { CircleArrowDown, CirclePlus } from 'lucide-react';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import { openSidePanel } from '@/client/lib/utils';
+import { LoadingDisplay } from '@/client/components/display';
 
 const Welcome = ({
   onCreate,
@@ -54,7 +54,7 @@ const Welcome = ({
                   type="checkbox"
                   id="terms-checkbox"
                   checked={acceptedTerms}
-                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  onChange={e => setAcceptedTerms(e.target.checked)}
                   className="sr-only"
                 />
                 <label
@@ -63,8 +63,8 @@ const Welcome = ({
               size-4 rounded border-2 flex items-center justify-center cursor-pointer transition-all duration-200
               ${
                 acceptedTerms
-                  ? "bg-[var(--primary-color-light)] border-[var(--primary-color-light)]"
-                  : "bg-transparent border-gray-400 hover:border-[var(--primary-color-light)]"
+                  ? 'bg-[var(--primary-color-light)] border-[var(--primary-color-light)]'
+                  : 'bg-transparent border-gray-400 hover:border-[var(--primary-color-light)]'
               }
             `}
                 >
@@ -84,7 +84,7 @@ const Welcome = ({
                 </label>
               </div>
               <div className="text-sm text-gray-500 text-left">
-                I accept the{" "}
+                I accept the{' '}
                 <a
                   href="/terms-of-service"
                   target="_blank"
@@ -92,8 +92,8 @@ const Welcome = ({
                   className="text-[var(--primary-color)] underline"
                 >
                   Terms of Service
-                </a>{" "}
-                and{" "}
+                </a>{' '}
+                and{' '}
                 <a
                   href="/privacy-policy"
                   target="_blank"

@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { Button } from "../../ui/button";
-import { Input } from "../../ui/input";
+import { useState } from 'react';
+import { Button } from '../../ui/button';
+import { Input } from '../../ui/input';
 import useTestnetTokensStore, {
   TestnetToken,
-} from "../../../hooks/use-testnet-tokens-store";
-import useDevModeStore from "../../../hooks/use-dev-mode";
-import { getTestnetTokenMetadata } from "../../../utils/testnet-rpc";
-import { DialogWrapper, DialogHeader, DialogContent } from "../../ui/dialog";
-import { Coins, Plus, Trash2, RefreshCw, AlertCircle } from "lucide-react";
+} from '../../../hooks/use-testnet-tokens-store';
+import useDevModeStore from '../../../hooks/use-dev-mode';
+import { getTestnetTokenMetadata } from '../../../utils/testnet-rpc';
+import { DialogWrapper, DialogHeader, DialogContent } from '../../ui/dialog';
+import { Coins, Plus, Trash2, RefreshCw, AlertCircle } from 'lucide-react';
 
 interface TestnetTokenManagementProps {
   onBack: () => void;
@@ -21,32 +21,32 @@ export const TestnetTokenManagement = ({
     useTestnetTokensStore();
 
   const [newToken, setNewToken] = useState({
-    address: "",
-    name: "",
-    symbol: "",
-    decimals: "18",
-    icon_url: "",
+    address: '',
+    name: '',
+    symbol: '',
+    decimals: '18',
+    icon_url: '',
   });
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
 
   const handleFetchMetadata = async () => {
     if (!newToken.address) {
-      alert("Please enter a token address first");
+      alert('Please enter a token address first');
       return;
     }
 
     setIsLoadingMetadata(true);
     try {
       const metadata = await getTestnetTokenMetadata(newToken.address);
-      setNewToken((prev) => ({
+      setNewToken(prev => ({
         ...prev,
         name: metadata.name,
         symbol: metadata.symbol,
         decimals: metadata.decimals.toString(),
       }));
     } catch (error) {
-      console.error("Failed to fetch token metadata:", error);
-      alert("Failed to fetch token metadata. Please enter manually.");
+      console.error('Failed to fetch token metadata:', error);
+      alert('Failed to fetch token metadata. Please enter manually.');
     } finally {
       setIsLoadingMetadata(false);
     }
@@ -54,7 +54,7 @@ export const TestnetTokenManagement = ({
 
   const handleAddToken = () => {
     if (!newToken.address || !newToken.symbol || !newToken.name) {
-      alert("Please fill in required fields: address, symbol, and name");
+      alert('Please fill in required fields: address, symbol, and name');
       return;
     }
 
@@ -68,11 +68,11 @@ export const TestnetTokenManagement = ({
 
     // Reset form
     setNewToken({
-      address: "",
-      name: "",
-      symbol: "",
-      decimals: "18",
-      icon_url: "",
+      address: '',
+      name: '',
+      symbol: '',
+      decimals: '18',
+      icon_url: '',
     });
   };
 
@@ -126,8 +126,8 @@ export const TestnetTokenManagement = ({
                   type="text"
                   placeholder="Token Contract Address"
                   value={newToken.address}
-                  onChange={(e) =>
-                    setNewToken((prev) => ({
+                  onChange={e =>
+                    setNewToken(prev => ({
                       ...prev,
                       address: e.target.value,
                     }))
@@ -143,7 +143,7 @@ export const TestnetTokenManagement = ({
                   {isLoadingMetadata ? (
                     <RefreshCw className="size-4 animate-spin" />
                   ) : (
-                    "Fetch"
+                    'Fetch'
                   )}
                 </Button>
               </div>
@@ -153,16 +153,16 @@ export const TestnetTokenManagement = ({
                   type="text"
                   placeholder="Token Name"
                   value={newToken.name}
-                  onChange={(e) =>
-                    setNewToken((prev) => ({ ...prev, name: e.target.value }))
+                  onChange={e =>
+                    setNewToken(prev => ({ ...prev, name: e.target.value }))
                   }
                 />
                 <Input
                   type="text"
                   placeholder="Symbol"
                   value={newToken.symbol}
-                  onChange={(e) =>
-                    setNewToken((prev) => ({ ...prev, symbol: e.target.value }))
+                  onChange={e =>
+                    setNewToken(prev => ({ ...prev, symbol: e.target.value }))
                   }
                 />
               </div>
@@ -172,8 +172,8 @@ export const TestnetTokenManagement = ({
                   type="text"
                   placeholder="Decimals"
                   value={newToken.decimals}
-                  onChange={(e) =>
-                    setNewToken((prev) => ({
+                  onChange={e =>
+                    setNewToken(prev => ({
                       ...prev,
                       decimals: e.target.value,
                     }))
@@ -183,8 +183,8 @@ export const TestnetTokenManagement = ({
                   type="text"
                   placeholder="Icon URL (optional)"
                   value={newToken.icon_url}
-                  onChange={(e) =>
-                    setNewToken((prev) => ({
+                  onChange={e =>
+                    setNewToken(prev => ({
                       ...prev,
                       icon_url: e.target.value,
                     }))
@@ -243,7 +243,7 @@ export const TestnetTokenManagement = ({
                         {token.address}
                       </div>
                       <div className="text-sm text-[var(--primary-color)] font-medium">
-                        Balance: {token.balanceFormatted.toFixed(4)}{" "}
+                        Balance: {token.balanceFormatted.toFixed(4)}{' '}
                         {token.symbol}
                       </div>
                     </div>

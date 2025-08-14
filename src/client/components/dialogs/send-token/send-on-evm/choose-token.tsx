@@ -1,16 +1,16 @@
-import { useUnifiedTokens } from "@/client/hooks/use-unified-tokens";
+import { useUnifiedTokens } from '@/client/hooks/use-unified-tokens';
 import {
   Button,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogWrapper,
-} from "@/client/components/ui";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import TokenList from "@/client/components/token-list";
-import { X } from "lucide-react";
-import { UnifiedToken } from "@/client/components/token-list";
-import useSendTokenStore from "@/client/hooks/use-send-token-store";
+} from '@/client/components/ui';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import TokenList from '@/client/components/token-list';
+import { X } from 'lucide-react';
+import { UnifiedToken } from '@/client/components/token-list';
+import useSendTokenStore from '@/client/hooks/use-send-token-store';
 
 const ChooseToken = () => {
   const { allUnifiedTokens, isLoading, hasError } = useUnifiedTokens();
@@ -19,16 +19,16 @@ const ChooseToken = () => {
 
   // Filter only EVM tokens (include all EVM chains)
   const evmTokens = allUnifiedTokens.filter(
-    (token) =>
-      token.chain === "ethereum" ||
-      token.chain === "base" ||
-      token.chain === "arbitrum" ||
-      token.chain === "hyperevm"
+    token =>
+      token.chain === 'ethereum' ||
+      token.chain === 'base' ||
+      token.chain === 'arbitrum' ||
+      token.chain === 'hyperevm'
   );
 
   const handleClick = (token: UnifiedToken) => {
     setToken(token);
-    setStep("send");
+    setStep('send');
   };
 
   return (

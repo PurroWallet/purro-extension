@@ -1,13 +1,13 @@
-import { AccountIcon, AccountName } from "@/client/components/account";
-import AccountSheet from "@/client/components/account-sheet/account-sheet";
-import { LoadingDisplay, LockDisplay } from "@/client/components/display";
-import { Dialog, DialogFooter } from "@/client/components/ui";
-import { Button } from "@/client/components/ui/button";
-import useAccountSheetStore from "@/client/hooks/use-account-sheet-store";
-import useInit from "@/client/hooks/use-init";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import { sendMessage } from "@/client/utils/extension-message-utils";
-import { formatTime, getTimeColor } from "@/client/utils/formatters";
+import { AccountIcon, AccountName } from '@/client/components/account';
+import AccountSheet from '@/client/components/account-sheet/account-sheet';
+import { LoadingDisplay, LockDisplay } from '@/client/components/display';
+import { Dialog, DialogFooter } from '@/client/components/ui';
+import { Button } from '@/client/components/ui/button';
+import useAccountSheetStore from '@/client/hooks/use-account-sheet-store';
+import useInit from '@/client/hooks/use-init';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import { sendMessage } from '@/client/utils/extension-message-utils';
+import { formatTime, getTimeColor } from '@/client/utils/formatters';
 import {
   Check,
   Clock,
@@ -17,9 +17,9 @@ import {
   X,
   AlertTriangle,
   RefreshCw,
-} from "lucide-react";
-import { useEffect, useState } from "react";
-import { createRoot } from "react-dom/client";
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { createRoot } from 'react-dom/client';
 
 export interface SignRequest {
   origin: string;
@@ -41,11 +41,11 @@ const approveSign = async (
   message: string,
   address: string
 ) => {
-  return await sendMessage("ETH_APPROVE_SIGN", { origin, message, address });
+  return await sendMessage('ETH_APPROVE_SIGN', { origin, message, address });
 };
 
 const rejectSign = async (origin: string) => {
-  return await sendMessage("ETH_REJECT_SIGN", { origin });
+  return await sendMessage('ETH_REJECT_SIGN', { origin });
 };
 
 export const SignScreen = () => {
@@ -60,16 +60,16 @@ export const SignScreen = () => {
   const { open: openAccountSheet } = useAccountSheetStore();
 
   // Check if current account is watch-only
-  const isWatchOnlyAccount = activeAccount?.source === "watchOnly";
+  const isWatchOnlyAccount = activeAccount?.source === 'watchOnly';
 
   useEffect(() => {
     // Get sign request from URL params
     const urlParams = new URLSearchParams(window.location.search);
-    const origin = urlParams.get("origin");
-    const favicon = urlParams.get("favicon");
-    const title = urlParams.get("title");
-    const message = urlParams.get("message");
-    const address = urlParams.get("address");
+    const origin = urlParams.get('origin');
+    const favicon = urlParams.get('favicon');
+    const title = urlParams.get('title');
+    const message = urlParams.get('message');
+    const address = urlParams.get('address');
 
     if (origin && message && address) {
       setSignRequest({
@@ -84,7 +84,7 @@ export const SignScreen = () => {
       // Debug: print typed data payload if it is valid JSON
       try {
         const parsed = JSON.parse(decodeURIComponent(message));
-        console.log("[Purro] 🔍 TypedData payload:", parsed);
+        console.log('[Purro] 🔍 TypedData payload:', parsed);
       } catch (_) {
         // Not JSON, ignore
       }
@@ -95,7 +95,7 @@ export const SignScreen = () => {
     if (!signRequest) return;
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
+      setTimeLeft(prev => {
         if (prev <= 1) {
           // Auto-close when timeout
           window.close();
@@ -116,9 +116,9 @@ export const SignScreen = () => {
 
     try {
       console.log(
-        "🔄 Approving sign for:",
+        '🔄 Approving sign for:',
         signRequest.origin,
-        "message:",
+        'message:',
         signRequest.message
       );
 
@@ -129,26 +129,26 @@ export const SignScreen = () => {
         signRequest.address
       );
 
-      console.log("✅ Sign approval result:", result);
+      console.log('✅ Sign approval result:', result);
 
       // Small delay to ensure message is processed
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Close popup
       window.close();
     } catch (error) {
-      console.error("❌ Error approving sign:", error);
+      console.error('❌ Error approving sign:', error);
 
       const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred";
+        error instanceof Error ? error.message : 'Unknown error occurred';
       setError(errorMessage);
 
       // Check if it's a retryable error (session/connection issues)
       const isRetryableError =
-        errorMessage.includes("session") ||
-        errorMessage.includes("unlock") ||
-        errorMessage.includes("storage") ||
-        errorMessage.includes("timeout");
+        errorMessage.includes('session') ||
+        errorMessage.includes('unlock') ||
+        errorMessage.includes('storage') ||
+        errorMessage.includes('timeout');
 
       if (isRetryableError && retryCount < MAX_RETRIES) {
         console.log(
@@ -156,12 +156,15 @@ export const SignScreen = () => {
             retryCount + 1
           }/${MAX_RETRIES}`
         );
-        setRetryCount((prev) => prev + 1);
+        setRetryCount(prev => prev + 1);
 
         // Auto-retry after delay
-        setTimeout(() => {
-          handleApprove();
-        }, RETRY_DELAY * (retryCount + 1)); // Exponential backoff
+        setTimeout(
+          () => {
+            handleApprove();
+          },
+          RETRY_DELAY * (retryCount + 1)
+        ); // Exponential backoff
       }
 
       // Don't close popup on error so user can retry or see error message
@@ -180,7 +183,7 @@ export const SignScreen = () => {
       // Close popup
       window.close();
     } catch (error) {
-      console.error("Error rejecting sign:", error);
+      console.error('Error rejecting sign:', error);
       // Still close popup even on rejection error
       window.close();
     }
@@ -203,7 +206,7 @@ export const SignScreen = () => {
   const domain = new URL(signRequest.origin).hostname;
   const displayMessage =
     signRequest.message.length > 200
-      ? signRequest.message.substring(0, 200) + "..."
+      ? signRequest.message.substring(0, 200) + '...'
       : signRequest.message;
 
   // Watch-Only Overlay Screen
@@ -235,8 +238,8 @@ export const SignScreen = () => {
                 src={signRequest.favicon}
                 alt="Site favicon"
                 className="size-8 rounded"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
+                onError={e => {
+                  (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
             ) : (
@@ -310,8 +313,8 @@ export const SignScreen = () => {
               src={signRequest.favicon}
               alt="Site favicon"
               className="size-8 rounded"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
+              onError={e => {
+                (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
           ) : (
@@ -410,7 +413,7 @@ export const SignScreen = () => {
                 <RefreshCw className="size-4 animate-spin" />
                 {retryCount > 0
                   ? `Retrying... (${retryCount}/${MAX_RETRIES})`
-                  : "Signing..."}
+                  : 'Signing...'}
               </>
             ) : (
               <>
@@ -425,7 +428,7 @@ export const SignScreen = () => {
   );
 };
 
-const container = document.getElementById("root");
+const container = document.getElementById('root');
 if (container) {
   const root = createRoot(container);
   root.render(<SignScreen />);

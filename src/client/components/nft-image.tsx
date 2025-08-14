@@ -1,6 +1,6 @@
-import React from "react";
-import { IpfsImage } from "@/client/components/ipfs-image";
-import placeholderNft from "@/assets/placeholder-nft.png";
+import React from 'react';
+import { IpfsImage } from '@/client/components/ipfs-image';
+import placeholderNft from '@/assets/placeholder-nft.png';
 
 interface NFTImageProps {
   imageUrl?: string | null;
@@ -16,18 +16,18 @@ interface NFTImageProps {
 export const NFTImage: React.FC<NFTImageProps> = ({
   imageUrl,
   alt,
-  className = "",
+  className = '',
   style,
   onLoad,
   onError,
-  tokenName = "NFT",
+  tokenName = 'NFT',
   tokenId,
 }) => {
   // Generate meaningful alt text
-  const imageAlt = alt || `${tokenName}${tokenId ? ` #${tokenId}` : ""}`;
+  const imageAlt = alt || `${tokenName}${tokenId ? ` #${tokenId}` : ''}`;
 
   // If no image URL provided, show placeholder immediately
-  if (!imageUrl || imageUrl.trim() === "") {
+  if (!imageUrl || imageUrl.trim() === '') {
     return (
       <div
         className={`flex items-center justify-center bg-card ${className}`}
@@ -38,9 +38,9 @@ export const NFTImage: React.FC<NFTImageProps> = ({
           alt={imageAlt}
           className="size-full object-contain opacity-75"
           onLoad={onLoad}
-          onError={(_e) => {
-            console.error("Placeholder NFT image failed to load");
-            onError?.(new Error("Placeholder image failed"));
+          onError={_e => {
+            console.error('Placeholder NFT image failed to load');
+            onError?.(new Error('Placeholder image failed'));
           }}
         />
       </div>
@@ -56,8 +56,8 @@ export const NFTImage: React.FC<NFTImageProps> = ({
       style={style}
       fallbackSrc={placeholderNft}
       onLoad={onLoad}
-      onError={(error) => {
-        console.error("NFT image failed to load:", {
+      onError={error => {
+        console.error('NFT image failed to load:', {
           tokenName,
           tokenId,
           imageUrl,

@@ -1,7 +1,7 @@
-import useDrawerStore from "@/client/hooks/use-drawer-store";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import { DepositHyperLiquidDexTransfer } from "../dialogs/deposit-hyperliquid-dex/transfer";
-import DepositChain from "../dialogs/deposit-hyperliquid-dex/deposit-chain";
+import useDrawerStore from '@/client/hooks/use-drawer-store';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import { DepositHyperLiquidDexTransfer } from '../dialogs/deposit-hyperliquid-dex/transfer';
+import DepositChain from '../dialogs/deposit-hyperliquid-dex/deposit-chain';
 
 export const DepositHyperDexDrawer = () => {
   const { openDialog } = useDialogStore();

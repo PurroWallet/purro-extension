@@ -1,5 +1,5 @@
-import { SpotTokenDetails } from "@/client/types/hyperliquid-api";
-import { ENDPOINTS, ENDPOINTS_TESTNET } from "./endpoints";
+import { SpotTokenDetails } from '@/client/types/hyperliquid-api';
+import { ENDPOINTS, ENDPOINTS_TESTNET } from './endpoints';
 
 // Constants for easy customization
 const ADDRESS_VALIDATION_REGEX = /^0x[a-fA-F0-9]{40}$/;
@@ -11,12 +11,12 @@ const isValidAddress = (address: string): boolean => {
 export const fetchSpotAssetsContext = async (isDevMode: boolean = false) => {
   const endpoint = isDevMode ? ENDPOINTS_TESTNET : ENDPOINTS;
   const response = await fetch(`${endpoint.HYPERLIQUID_L1}/info`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      type: "spotMetaAndAssetCtxs",
+      type: 'spotMetaAndAssetCtxs',
     }),
   });
 
@@ -37,12 +37,12 @@ export const fetchUserSpotBalance = async (
   }
 
   const response = await fetch(`${endpoint.HYPERLIQUID_L1}/info`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      type: "spotClearinghouseState",
+      type: 'spotClearinghouseState',
       user: address,
     }),
   });
@@ -64,14 +64,14 @@ export const fetchUserPerpsBalance = async (
   }
 
   const response = await fetch(`${endpoint.HYPERLIQUID_L1}/info`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      type: "clearinghouseState",
+      type: 'clearinghouseState',
       user: address,
-      dex: "",
+      dex: '',
     }),
   });
 
@@ -86,18 +86,18 @@ export const fetchSpotTokenDetails = async (
   tokenId: string,
   isDevMode: boolean = false
 ): Promise<SpotTokenDetails> => {
-  if (!tokenId || tokenId.trim() === "") {
-    throw new Error("Token ID is required");
+  if (!tokenId || tokenId.trim() === '') {
+    throw new Error('Token ID is required');
   }
 
   const endpoint = isDevMode ? ENDPOINTS_TESTNET : ENDPOINTS;
   const response = await fetch(`${endpoint.HYPERLIQUID_L1}/info`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      type: "tokenDetails",
+      type: 'tokenDetails',
       tokenId,
     }),
   });

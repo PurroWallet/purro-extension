@@ -5,10 +5,10 @@ import {
   DialogHeader,
   DialogWrapper,
   Input,
-} from "@/client/components/ui";
-import useSendTokenHLStore from "@/client/hooks/use-send-token-HL-store";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import { formatCurrency } from "@/client/utils/formatters";
+} from '@/client/components/ui';
+import useSendTokenHLStore from '@/client/hooks/use-send-token-HL-store';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import { formatCurrency } from '@/client/utils/formatters';
 import {
   ArrowLeft,
   Send,
@@ -18,43 +18,43 @@ import {
   CircleCheck,
   Loader2,
   BookText,
-} from "lucide-react";
-import { useState, useRef, useEffect, useMemo } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { createPortal } from "react-dom";
-import { truncateAddress } from "@/client/utils/formatters";
-import { AccountIcon } from "@/client/components/account";
-import useDebounce from "@/client/hooks/use-debounce";
-import { getAddressByDomain } from "@/client/services/hyperliquid-name-api";
-import { getNetworkIcon } from "@/utils/network-icons";
-import { getSpotTokenImage } from "@/client/utils/icons";
-import { evmWalletKeyUtils } from "@/background/utils/keys";
+} from 'lucide-react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { createPortal } from 'react-dom';
+import { truncateAddress } from '@/client/utils/formatters';
+import { AccountIcon } from '@/client/components/account';
+import useDebounce from '@/client/hooks/use-debounce';
+import { getAddressByDomain } from '@/client/services/hyperliquid-name-api';
+import { getNetworkIcon } from '@/utils/network-icons';
+import { getSpotTokenImage } from '@/client/utils/icons';
+import { evmWalletKeyUtils } from '@/background/utils/keys';
 
-type InputMode = "token" | "usd";
+type InputMode = 'token' | 'usd';
 
 // Helper function to format numbers for display
 const formatDisplayNumber = (
   value: string | number,
   mode: InputMode
 ): string => {
-  if (!value || value === "0") return "0";
+  if (!value || value === '0') return '0';
 
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(num)) return "0";
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(num)) return '0';
 
-  if (mode === "usd") {
-    return num.toLocaleString("en-US", {
+  if (mode === 'usd') {
+    return num.toLocaleString('en-US', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     });
   } else {
     if (num >= 1000) {
-      return num.toLocaleString("en-US", {
+      return num.toLocaleString('en-US', {
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
       });
     } else if (num >= 1) {
-      return num.toLocaleString("en-US", {
+      return num.toLocaleString('en-US', {
         minimumFractionDigits: 0,
         maximumFractionDigits: 6,
       });
@@ -70,19 +70,19 @@ const formatConversionNumber = (
   value: string | number,
   mode: InputMode
 ): string => {
-  if (!value || value === "0") return "0";
+  if (!value || value === '0') return '0';
 
-  const num = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(num)) return "0";
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(num)) return '0';
 
-  if (mode === "usd") {
-    return num.toLocaleString("en-US", {
+  if (mode === 'usd') {
+    return num.toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
   } else {
     if (num >= 1) {
-      return num.toLocaleString("en-US", {
+      return num.toLocaleString('en-US', {
         minimumFractionDigits: 0,
         maximumFractionDigits: 6,
       });
@@ -97,7 +97,7 @@ const SendToken = () => {
   const { token, setStep, recipient, setRecipient, amount, setAmount } =
     useSendTokenHLStore();
   const { accounts, wallets } = useWalletStore();
-  const [inputMode, setInputMode] = useState<InputMode>("token");
+  const [inputMode, setInputMode] = useState<InputMode>('token');
   const [isAddressDropdownOpen, setIsAddressDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -110,7 +110,7 @@ const SendToken = () => {
   const [isLoadingDomain, setIsLoadingDomain] = useState(false);
 
   const onBack = () => {
-    setStep("select");
+    setStep('select');
   };
 
   // Calculate converted amounts
@@ -118,25 +118,25 @@ const SendToken = () => {
     if (!token || !amount || isNaN(parseFloat(amount))) {
       return {
         isValidAmount: false,
-        conversionAmount: "0",
+        conversionAmount: '0',
       };
     }
 
     const numAmount = parseFloat(amount);
     const tokenPrice = token.currentPrice || 0;
 
-    if (inputMode === "token") {
-      const usdVal = tokenPrice > 0 ? (numAmount * tokenPrice).toFixed(2) : "0";
+    if (inputMode === 'token') {
+      const usdVal = tokenPrice > 0 ? (numAmount * tokenPrice).toFixed(2) : '0';
       return {
         isValidAmount: numAmount > 0 && numAmount <= token.total,
-        conversionAmount: formatConversionNumber(usdVal, "usd"),
+        conversionAmount: formatConversionNumber(usdVal, 'usd'),
       };
     } else {
       const tokenVal =
-        tokenPrice > 0 ? (numAmount / tokenPrice).toFixed(8) : "0";
+        tokenPrice > 0 ? (numAmount / tokenPrice).toFixed(8) : '0';
       return {
         isValidAmount: numAmount > 0 && numAmount <= (token.marketValue || 0),
-        conversionAmount: formatConversionNumber(tokenVal, "token"),
+        conversionAmount: formatConversionNumber(tokenVal, 'token'),
       };
     }
   }, [amount, inputMode, token]);
@@ -179,7 +179,7 @@ const SendToken = () => {
           setAddressFromDomain(null);
         }
       } catch (error) {
-        console.error("Failed to check domain:", error);
+        console.error('Failed to check domain:', error);
         setIsValidDomain(false);
         setAddressFromDomain(null);
       } finally {
@@ -232,9 +232,9 @@ const SendToken = () => {
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [isAddressDropdownOpen]);
 
@@ -246,7 +246,7 @@ const SendToken = () => {
   const handleMaxClick = () => {
     if (!token) return;
 
-    if (inputMode === "token") {
+    if (inputMode === 'token') {
       setAmount(token.total.toString());
     } else {
       setAmount((token.marketValue || 0).toFixed(2));
@@ -255,7 +255,7 @@ const SendToken = () => {
 
   const toggleInputMode = () => {
     if (!token || !amount) {
-      setInputMode(inputMode === "token" ? "usd" : "token");
+      setInputMode(inputMode === 'token' ? 'usd' : 'token');
       return;
     }
 
@@ -263,21 +263,21 @@ const SendToken = () => {
     const numAmount = parseFloat(amount);
     const tokenPrice = token.marketValue || 0;
 
-    if (inputMode === "token" && tokenPrice > 0) {
+    if (inputMode === 'token' && tokenPrice > 0) {
       setAmount((numAmount * tokenPrice).toFixed(2));
-      setInputMode("usd");
-    } else if (inputMode === "usd" && tokenPrice > 0) {
+      setInputMode('usd');
+    } else if (inputMode === 'usd' && tokenPrice > 0) {
       setAmount((numAmount / tokenPrice).toFixed(8));
-      setInputMode("token");
+      setInputMode('token');
     } else {
-      setInputMode(inputMode === "token" ? "usd" : "token");
+      setInputMode(inputMode === 'token' ? 'usd' : 'token');
     }
   };
 
   return (
     <DialogWrapper>
       <DialogHeader
-        title={`Send ${token?.coin || "Token"}`}
+        title={`Send ${token?.coin || 'Token'}`}
         onClose={onBack}
         icon={<ArrowLeft className="size-4 text-white" />}
       />
@@ -290,13 +290,13 @@ const SendToken = () => {
                 src={getSpotTokenImage(token.coin)}
                 alt={token.coin}
                 className="size-full rounded-full"
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
+                onError={e => {
+                  e.currentTarget.style.display = 'none';
                   const parent = e.currentTarget.parentElement;
                   if (parent) {
-                    const fallbackDiv = document.createElement("div");
+                    const fallbackDiv = document.createElement('div');
                     fallbackDiv.className =
-                      "size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-lg border border-[var(--primary-color)]/20";
+                      'size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-lg border border-[var(--primary-color)]/20';
                     fallbackDiv.textContent = token.coin
                       .charAt(0)
                       .toUpperCase();
@@ -306,7 +306,7 @@ const SendToken = () => {
               />
               <div className="absolute bottom-0 p-1 right-0 flex items-center justify-center bg-black rounded-full">
                 <img
-                  src={getNetworkIcon("hyperliquid")}
+                  src={getNetworkIcon('hyperliquid')}
                   alt="Hyperliquid"
                   className="size-6 rounded-full"
                 />
@@ -322,12 +322,12 @@ const SendToken = () => {
                 <Input
                   type="text"
                   value={recipient}
-                  onChange={(e) => setRecipient(e.target.value)}
+                  onChange={e => setRecipient(e.target.value)}
                   placeholder="0x... or name.hl"
                   className={`pr-12 ${
                     recipient && !isValidAddress
-                      ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                      : "border-white/10 focus:ring-[var(--primary-color-light)]"
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                      : 'border-white/10 focus:ring-[var(--primary-color-light)]'
                   }`}
                 />
                 <button
@@ -349,7 +349,7 @@ const SendToken = () => {
                         initial={{ opacity: 0, scale: 0.95, y: -10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                        transition={{ duration: 0.15, ease: "easeOut" }}
+                        transition={{ duration: 0.15, ease: 'easeOut' }}
                         className="fixed bg-[var(--background-color)] border border-white/10 rounded-lg shadow-lg max-h-60 overflow-y-auto min-w-[320px] w-max z-[9999] flex flex-col"
                         style={{
                           top: `${dropdownPosition.top}px`,
@@ -360,14 +360,14 @@ const SendToken = () => {
                           Select Address
                         </p>
                         <div className="flex-1 overflow-y-auto">
-                          {accounts.map((account) => {
+                          {accounts.map(account => {
                             const wallet = wallets[account.id];
                             return (
                               <button
                                 key={account.id}
                                 onClick={() =>
                                   handleAddressSelect(
-                                    wallet?.eip155?.address || ""
+                                    wallet?.eip155?.address || ''
                                   )
                                 }
                                 className="w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors last:rounded-b-lg whitespace-nowrap cursor-pointer"
@@ -384,7 +384,7 @@ const SendToken = () => {
                                   </p>
                                   <p className="text-xs text-[var(--text-color)]/60">
                                     {truncateAddress(
-                                      wallet?.eip155?.address || ""
+                                      wallet?.eip155?.address || ''
                                     )}
                                   </p>
                                 </div>
@@ -436,7 +436,7 @@ const SendToken = () => {
                   <div className="text-muted-foreground text-xs rounded-full bg-green-500/10 px-4 py-2 flex items-center">
                     <CircleCheck className="size-4 mr-2" />
                     <p className="break-all">
-                      Resolves to: {truncateAddress(addressFromDomain || "")}
+                      Resolves to: {truncateAddress(addressFromDomain || '')}
                     </p>
                   </div>
                 )}
@@ -459,12 +459,12 @@ const SendToken = () => {
                   onClick={toggleInputMode}
                   className="px-2 py-1 text-xs bg-[var(--primary-color)] hover:bg-[var(--primary-color)]/80 text-white"
                 >
-                  {inputMode === "token" ? (
+                  {inputMode === 'token' ? (
                     <DollarSign className="size-3" />
                   ) : (
                     <Coins className="size-3" />
                   )}
-                  {inputMode === "token" ? "USD" : token.coin}
+                  {inputMode === 'token' ? 'USD' : token.coin}
                 </Button>
               </div>
 
@@ -473,14 +473,14 @@ const SendToken = () => {
                 <input
                   type="number"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder={inputMode === "token" ? "0.0" : "0.00"}
+                  onChange={e => setAmount(e.target.value)}
+                  placeholder={inputMode === 'token' ? '0.0' : '0.00'}
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 pr-12 text-base transition-colors duration-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                     amount && !isValidAmount
-                      ? "border-red-500 focus:ring-red-500"
-                      : "border-white/10 focus:ring-[var(--primary-color-light)]"
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-white/10 focus:ring-[var(--primary-color-light)]'
                   }`}
-                  step={inputMode === "token" ? "0.000001" : "0.01"}
+                  step={inputMode === 'token' ? '0.000001' : '0.01'}
                   min="0"
                 />
                 <Button
@@ -494,14 +494,14 @@ const SendToken = () => {
               {/* Conversion and Available Balance */}
               <div className="flex items-center justify-between text-sm text-gray-400">
                 <span>
-                  {inputMode === "token"
+                  {inputMode === 'token'
                     ? `≈ $${conversionAmount}`
                     : `≈ ${conversionAmount} ${token.coin}`}
                 </span>
                 <span>
-                  Available:{" "}
-                  {inputMode === "token"
-                    ? `${formatDisplayNumber(token.total, "token")} ${
+                  Available:{' '}
+                  {inputMode === 'token'
+                    ? `${formatDisplayNumber(token.total, 'token')} ${
                         token.coin
                       }`
                     : formatCurrency(token.marketValue)}
@@ -511,10 +511,10 @@ const SendToken = () => {
               {/* Validation message */}
               {amount && !isValidAmount && (
                 <p className="text-red-400 text-xs">
-                  {inputMode === "token"
+                  {inputMode === 'token'
                     ? `Insufficient balance. Max: ${formatDisplayNumber(
                         token.total,
-                        "token"
+                        'token'
                       )} ${token.coin}`
                     : `Insufficient balance. Max: ${formatCurrency(
                         token.marketValue
@@ -527,7 +527,7 @@ const SendToken = () => {
       </DialogContent>
       <DialogFooter>
         <Button
-          onClick={() => setStep("confirm")}
+          onClick={() => setStep('confirm')}
           className="flex-1"
           disabled={!isValidAddress || !isValidAmount}
         >

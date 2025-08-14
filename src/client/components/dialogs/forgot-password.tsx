@@ -1,19 +1,19 @@
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import { Lock, XIcon } from "lucide-react";
-import { Button, DialogFooter, DialogHeader } from "../ui";
-import useWallet from "@/client/hooks/use-wallet";
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import { Lock, XIcon } from 'lucide-react';
+import { Button, DialogFooter, DialogHeader } from '../ui';
+import useWallet from '@/client/hooks/use-wallet';
 
 const ForgotPassword = () => {
   const { closeDialog } = useDialogStore();
   const { resetWallet } = useWallet();
   const handleResetWallet = () => {
-    if (confirm("Are you sure you want to reset your wallet?")) {
+    if (confirm('Are you sure you want to reset your wallet?')) {
       resetWallet();
       window.close();
     }
   };
   const handleOpenWhy = () => {
-    window.open("https://docs.purro.xyz/faq/why-reset-wallet", "_blank");
+    window.open('https://docs.purro.xyz/faq/why-reset-wallet', '_blank');
   };
 
   return (

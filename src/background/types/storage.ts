@@ -1,10 +1,10 @@
 export type SessionData = {
-    password: string;
-    timestamp: number;
-    expiresAt: number;
-}
+  password: string;
+  timestamp: number;
+  expiresAt: number;
+};
 
 export type PasswordData = {
-    data: string;
-    salt: string;
-}
+  data: string;
+  salt: string;
+};

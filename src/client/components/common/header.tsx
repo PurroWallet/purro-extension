@@ -1,4 +1,4 @@
-import { cn } from "@/client/lib/utils";
+import { cn } from '@/client/lib/utils';
 
 const Header = ({
   children,
@@ -10,7 +10,7 @@ const Header = ({
   return (
     <div
       className={cn(
-        "bg-[var(--background-color)] border-b border-white/10 h-12 px-2 flex items-center justify-between font-livvic",
+        'bg-[var(--background-color)] border-b border-white/10 h-12 px-2 flex items-center justify-between font-livvic',
         className
       )}
     >

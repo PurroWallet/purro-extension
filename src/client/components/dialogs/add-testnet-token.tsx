@@ -1,54 +1,54 @@
-import { useState } from "react";
-import { XIcon, RefreshCw, Plus, AlertCircle } from "lucide-react";
+import { useState } from 'react';
+import { XIcon, RefreshCw, Plus, AlertCircle } from 'lucide-react';
 import {
   Button,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogWrapper,
-} from "../ui";
-import { Input } from "../ui/input";
-import useTestnetTokensStore from "../../hooks/use-testnet-tokens-store";
-import useDevModeStore from "../../hooks/use-dev-mode";
-import { getTestnetTokenMetadata } from "../../utils/testnet-rpc";
+} from '../ui';
+import { Input } from '../ui/input';
+import useTestnetTokensStore from '../../hooks/use-testnet-tokens-store';
+import useDevModeStore from '../../hooks/use-dev-mode';
+import { getTestnetTokenMetadata } from '../../utils/testnet-rpc';
 
 const AddTestnetToken = ({ onClose }: { onClose: () => void }) => {
   const { isDevMode } = useDevModeStore();
   const { addToken, getTokenByAddress } = useTestnetTokensStore();
 
   const [tokenData, setTokenData] = useState({
-    address: "",
-    name: "",
-    symbol: "",
-    decimals: "18",
-    icon_url: "",
+    address: '',
+    name: '',
+    symbol: '',
+    decimals: '18',
+    icon_url: '',
   });
 
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
   const [isAdding, setIsAdding] = useState(false);
 
   const handleFetchMetadata = async () => {
     if (!tokenData.address) {
-      setError("Please enter a token address first");
+      setError('Please enter a token address first');
       return;
     }
 
-    setError("");
+    setError('');
     setIsLoadingMetadata(true);
 
     try {
       const metadata = await getTestnetTokenMetadata(tokenData.address);
-      setTokenData((prev) => ({
+      setTokenData(prev => ({
         ...prev,
         name: metadata.name,
         symbol: metadata.symbol,
         decimals: metadata.decimals.toString(),
       }));
     } catch (error) {
-      console.error("Failed to fetch token metadata:", error);
+      console.error('Failed to fetch token metadata:', error);
       setError(
-        "Failed to fetch token metadata. Please enter details manually."
+        'Failed to fetch token metadata. Please enter details manually.'
       );
     } finally {
       setIsLoadingMetadata(false);
@@ -57,18 +57,18 @@ const AddTestnetToken = ({ onClose }: { onClose: () => void }) => {
 
   const handleAddToken = async () => {
     if (!tokenData.address || !tokenData.symbol || !tokenData.name) {
-      setError("Please fill in required fields: address, symbol, and name");
+      setError('Please fill in required fields: address, symbol, and name');
       return;
     }
 
     // Check if token already exists
     const existingToken = getTokenByAddress(tokenData.address);
     if (existingToken) {
-      setError("This token has already been added");
+      setError('This token has already been added');
       return;
     }
 
-    setError("");
+    setError('');
     setIsAdding(true);
 
     try {
@@ -83,8 +83,8 @@ const AddTestnetToken = ({ onClose }: { onClose: () => void }) => {
       // Success - close dialog
       onClose();
     } catch (error) {
-      console.error("Failed to add token:", error);
-      setError("Failed to add token. Please try again.");
+      console.error('Failed to add token:', error);
+      setError('Failed to add token. Please try again.');
     } finally {
       setIsAdding(false);
     }
@@ -92,14 +92,14 @@ const AddTestnetToken = ({ onClose }: { onClose: () => void }) => {
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setTokenData((prev) => ({ ...prev, address: value }));
-    setError(""); // Clear error when user starts typing
+    setTokenData(prev => ({ ...prev, address: value }));
+    setError(''); // Clear error when user starts typing
   };
 
   const handleInputChange =
     (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      setTokenData((prev) => ({ ...prev, [field]: e.target.value }));
-      setError(""); // Clear error when user starts typing
+      setTokenData(prev => ({ ...prev, [field]: e.target.value }));
+      setError(''); // Clear error when user starts typing
     };
 
   if (!isDevMode) {
@@ -177,7 +177,7 @@ const AddTestnetToken = ({ onClose }: { onClose: () => void }) => {
                 {isLoadingMetadata ? (
                   <RefreshCw className="size-4 animate-spin" />
                 ) : (
-                  "Fetch"
+                  'Fetch'
                 )}
               </Button>
             </div>
@@ -194,14 +194,14 @@ const AddTestnetToken = ({ onClose }: { onClose: () => void }) => {
                 type="text"
                 placeholder="Token Name"
                 value={tokenData.name}
-                onChange={handleInputChange("name")}
+                onChange={handleInputChange('name')}
                 hasError={!!error && !tokenData.name}
               />
               <Input
                 type="text"
                 placeholder="Symbol"
                 value={tokenData.symbol}
-                onChange={handleInputChange("symbol")}
+                onChange={handleInputChange('symbol')}
                 hasError={!!error && !tokenData.symbol}
               />
             </div>
@@ -211,13 +211,13 @@ const AddTestnetToken = ({ onClose }: { onClose: () => void }) => {
                 type="text"
                 placeholder="Decimals (usually 18)"
                 value={tokenData.decimals}
-                onChange={handleInputChange("decimals")}
+                onChange={handleInputChange('decimals')}
               />
               <Input
                 type="text"
                 placeholder="Icon URL (optional)"
                 value={tokenData.icon_url}
-                onChange={handleInputChange("icon_url")}
+                onChange={handleInputChange('icon_url')}
               />
             </div>
           </div>
@@ -260,7 +260,7 @@ const AddTestnetToken = ({ onClose }: { onClose: () => void }) => {
             ) : (
               <Plus className="size-4" />
             )}
-            {isAdding ? "Adding..." : "Add Token"}
+            {isAdding ? 'Adding...' : 'Add Token'}
           </Button>
         </div>
       </DialogFooter>

@@ -1,7 +1,7 @@
-import { motion } from "motion/react";
+import { motion } from 'motion/react';
 
-import { AnimatePresence } from "motion/react";
-import useDrawerStore from "@/client/hooks/use-drawer-store";
+import { AnimatePresence } from 'motion/react';
+import useDrawerStore from '@/client/hooks/use-drawer-store';
 
 export const Drawer = () => {
   const { isOpen, component, closeDrawer } = useDrawerStore();
@@ -18,14 +18,14 @@ export const Drawer = () => {
         >
           <motion.div
             className="bg-[var(--card-color)] flex flex-col h-fit w-full round z-[40] rounded-t-3xl"
-            initial={{ y: "100%" }}
+            initial={{ y: '100%' }}
             animate={{ y: 0 }}
-            exit={{ y: "100%" }}
+            exit={{ y: '100%' }}
             transition={{
               duration: 0.2,
-              ease: "easeOut",
+              ease: 'easeOut',
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             {component}
           </motion.div>

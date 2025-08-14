@@ -1,14 +1,14 @@
-import { Button, InputPassword } from "@/client/components/ui";
-import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
-import { Check, X } from "lucide-react";
-import { useState } from "react";
-import useWallet from "@/client/hooks/use-wallet";
-import useWalletStore from "@/client/hooks/use-wallet-store";
+import { Button, InputPassword } from '@/client/components/ui';
+import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
+import { Check, X } from 'lucide-react';
+import { useState } from 'react';
+import useWallet from '@/client/hooks/use-wallet';
+import useWalletStore from '@/client/hooks/use-wallet-store';
 import {
   evmWalletKeyUtils,
   solanaWalletKeyUtils,
   suiWalletKeyUtils,
-} from "@/background/utils/keys";
+} from '@/background/utils/keys';
 
 const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
   const { chain, privateKey, setPrivateKey, accountName, setAccountName } =
@@ -26,14 +26,14 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
     try {
       // First validate the private key format and get address
       let isValid = false;
-      let walletAddress = "";
+      let walletAddress = '';
 
       // EVM chains (Ethereum, Hyperliquid, Base, Arbitrum) all use the same validation
       if (
-        chain === "ethereum" ||
-        chain === "hyperevm" ||
-        chain === "base" ||
-        chain === "arbitrum"
+        chain === 'ethereum' ||
+        chain === 'hyperevm' ||
+        chain === 'base' ||
+        chain === 'arbitrum'
       ) {
         try {
           isValid = evmWalletKeyUtils.isValidPrivateKey(privateKey);
@@ -46,7 +46,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
           console.error(`❌ EVM validation error for ${chain}:`, evmError);
           isValid = false;
         }
-      } else if (chain === "solana") {
+      } else if (chain === 'solana') {
         try {
           isValid = solanaWalletKeyUtils.isValidPrivateKey(privateKey);
 
@@ -55,10 +55,10 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
             walletAddress = wallet.address;
           }
         } catch (solanaError) {
-          console.error("❌ Solana validation error:", solanaError);
+          console.error('❌ Solana validation error:', solanaError);
           isValid = false;
         }
-      } else if (chain === "sui") {
+      } else if (chain === 'sui') {
         try {
           isValid = suiWalletKeyUtils.isValidPrivateKey(privateKey);
 
@@ -67,14 +67,14 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
             walletAddress = wallet.address;
           }
         } catch (suiError) {
-          console.error("❌ Sui validation error:", suiError);
+          console.error('❌ Sui validation error:', suiError);
           isValid = false;
         }
       }
 
       if (!isValid) {
         console.error(`❌ Private key validation failed for chain: ${chain}`);
-        throw new Error("Invalid private key. Please try again.");
+        throw new Error('Invalid private key. Please try again.');
       }
 
       // Set the address for display
@@ -85,26 +85,26 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
         const exists = await checkPrivateKeyExists(privateKey);
 
         if (exists) {
-          console.warn("⚠️ Private key already exists in wallet");
-          setError("This private key is already imported.");
+          console.warn('⚠️ Private key already exists in wallet');
+          setError('This private key is already imported.');
           return false;
         }
       } catch (checkError) {
-        console.error("❌ Error checking private key existence:", checkError);
+        console.error('❌ Error checking private key existence:', checkError);
         // Continue with import even if check fails
       }
 
       return true;
     } catch (error) {
-      console.error("❌ Private key validation failed with error:", error);
-      console.error("📊 Error details:", {
+      console.error('❌ Private key validation failed with error:', error);
+      console.error('📊 Error details:', {
         message: error instanceof Error ? error.message : String(error),
         chain,
         privateKeyLength: privateKey?.length || 0,
         stack: error instanceof Error ? error.stack : undefined,
       });
 
-      setError("Invalid private key. Please try again.");
+      setError('Invalid private key. Please try again.');
       setAddress(null);
       return false;
     }
@@ -116,22 +116,22 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
         <div className="space-y-1">
           <h1 className="text-xl font-bold text-center">Import Private Key</h1>
           <p className="text-base text-gray-500 text-center">
-            {chain == null && "Select the chain"}
-            {chain === "ethereum" && "Enter your Ethereum private key"}
-            {chain === "solana" && "Enter your Solana private key"}
-            {chain === "sui" && "Enter your Sui private key"}
-            {chain === "hyperevm" && "Enter your Hyperliquid private key"}
-            {chain === "base" && "Enter your Base private key"}
-            {chain === "arbitrum" && "Enter your Arbitrum private key"}
+            {chain == null && 'Select the chain'}
+            {chain === 'ethereum' && 'Enter your Ethereum private key'}
+            {chain === 'solana' && 'Enter your Solana private key'}
+            {chain === 'sui' && 'Enter your Sui private key'}
+            {chain === 'hyperevm' && 'Enter your Hyperliquid private key'}
+            {chain === 'base' && 'Enter your Base private key'}
+            {chain === 'arbitrum' && 'Enter your Arbitrum private key'}
           </p>
         </div>
         {chain != null && (
           <div className="flex flex-col gap-2">
             <InputPassword
               placeholder={`Enter your ${chain} private key`}
-              value={privateKey ?? ""}
+              value={privateKey ?? ''}
               showToggle={false}
-              onChange={async (e) => {
+              onChange={async e => {
                 const inputValue = e.target.value;
 
                 setPrivateKey(inputValue);
@@ -142,14 +142,14 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
                 if (inputValue.trim()) {
                   try {
                     let isValid = false;
-                    let walletAddress = "";
+                    let walletAddress = '';
 
                     // EVM chains (Ethereum, Hyperliquid, Base, Arbitrum) all use the same validation
                     if (
-                      chain === "ethereum" ||
-                      chain === "hyperevm" ||
-                      chain === "base" ||
-                      chain === "arbitrum"
+                      chain === 'ethereum' ||
+                      chain === 'hyperevm' ||
+                      chain === 'base' ||
+                      chain === 'arbitrum'
                     ) {
                       try {
                         isValid =
@@ -163,7 +163,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
                       } catch (evmError) {
                         isValid = false;
                       }
-                    } else if (chain === "solana") {
+                    } else if (chain === 'solana') {
                       try {
                         isValid =
                           solanaWalletKeyUtils.isValidPrivateKey(inputValue);
@@ -176,7 +176,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
                       } catch (solanaError) {
                         isValid = false;
                       }
-                    } else if (chain === "sui") {
+                    } else if (chain === 'sui') {
                       try {
                         isValid =
                           suiWalletKeyUtils.isValidPrivateKey(inputValue);
@@ -195,8 +195,8 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
                   }
                 }
               }}
-              onKeyDown={async (e) => {
-                if (e.key === "Enter") {
+              onKeyDown={async e => {
+                if (e.key === 'Enter') {
                   if (await validatePrivateKey()) {
                     onNext();
                   }
@@ -207,8 +207,8 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
             <input
               type="text"
               placeholder={`Account ${accounts.length + 1}`}
-              value={accountName ?? ""}
-              onChange={(e) => setAccountName(e.target.value)}
+              value={accountName ?? ''}
+              onChange={e => setAccountName(e.target.value)}
               className="w-full px-4 py-3 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color-light)] bg-[var(--card-color)] text-white placeholder-gray-400 text-base"
             />
 

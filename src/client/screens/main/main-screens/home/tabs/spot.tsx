@@ -1,22 +1,22 @@
-import { useMemo } from "react";
-import { HyperliquidApiSpotAssetContext } from "@/client/types/hyperliquid-api";
-import { useHlPortfolioData } from "@/client/hooks/use-hyperliquid-portfolio";
-import { formatCurrency } from "@/client/utils/formatters";
-import HyperLiquidSpotDataIndexer from "@/client/lib/spot-data-indexer";
-import TabsLoading from "./tabs-loading";
-import TabsError from "./tabs-error";
-import useNetworkSettingsStore from "@/client/hooks/use-network-store";
-import { getSpotTokenImage } from "@/client/utils/icons";
-import { Button } from "@/client/components/ui";
-import { DepositHyperDexDrawer } from "@/client/components/drawers";
-import useDrawerStore from "@/client/hooks/use-drawer-store";
-import useWalletStore from "@/client/hooks/use-wallet-store";
+import { useMemo } from 'react';
+import { HyperliquidApiSpotAssetContext } from '@/client/types/hyperliquid-api';
+import { useHlPortfolioData } from '@/client/hooks/use-hyperliquid-portfolio';
+import { formatCurrency } from '@/client/utils/formatters';
+import HyperLiquidSpotDataIndexer from '@/client/lib/spot-data-indexer';
+import TabsLoading from './tabs-loading';
+import TabsError from './tabs-error';
+import useNetworkSettingsStore from '@/client/hooks/use-network-store';
+import { getSpotTokenImage } from '@/client/utils/icons';
+import { Button } from '@/client/components/ui';
+import { DepositHyperDexDrawer } from '@/client/components/drawers';
+import useDrawerStore from '@/client/hooks/use-drawer-store';
+import useWalletStore from '@/client/hooks/use-wallet-store';
 
 const WalletTabsSpot = () => {
   const { isHyperliquidDexEnabled } = useNetworkSettingsStore();
   const { openDrawer } = useDrawerStore();
   const { activeAccount } = useWalletStore();
-  const isWatchOnly = activeAccount?.source === "watchOnly";
+  const isWatchOnly = activeAccount?.source === 'watchOnly';
 
   const { spotData, isSpotLoading, spotError } = useHlPortfolioData({
     fetchSpot: isHyperliquidDexEnabled, // Only fetch if Hyperliquid DEX is enabled
@@ -39,7 +39,7 @@ const WalletTabsSpot = () => {
         spotData.context as HyperliquidApiSpotAssetContext
       );
     } catch (error) {
-      console.error("Error creating SpotDataIndexer:", error);
+      console.error('Error creating SpotDataIndexer:', error);
       return null;
     }
   }, [isHyperliquidDexEnabled, spotData?.context]);
@@ -102,7 +102,7 @@ const WalletTabsSpot = () => {
           <div className="bg-[var(--card-color)] rounded-lg p-3">
             <div className="text-muted-foreground text-sm">Spot Balance</div>
             <div className="font-semibold text-lg flex items-center gap-2">
-              <p>{formatCurrency(portfolioValue)}</p>{" "}
+              <p>{formatCurrency(portfolioValue)}</p>{' '}
               {!isWatchOnly && (
                 <Button
                   variant="secondary"
@@ -175,13 +175,13 @@ export const SpotItem = ({
             src={getSpotTokenImage(symbol)}
             alt={symbol}
             className="size-full rounded-full"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
+            onError={e => {
+              e.currentTarget.style.display = 'none';
               const parent = e.currentTarget.parentElement;
               if (parent) {
-                const fallbackDiv = document.createElement("div");
+                const fallbackDiv = document.createElement('div');
                 fallbackDiv.className =
-                  "size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-lg border border-[var(--primary-color)]/20";
+                  'size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-lg border border-[var(--primary-color)]/20';
                 fallbackDiv.textContent = symbol.charAt(0).toUpperCase();
                 parent.insertBefore(fallbackDiv, e.currentTarget);
               }
@@ -193,10 +193,10 @@ export const SpotItem = ({
         <div>
           <div className="truncate font-semibold text-lg">{name}</div>
           <div className="text-muted-foreground mt-0.5 truncate text-sm">
-            {balance.toLocaleString("en-US", {
+            {balance.toLocaleString('en-US', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 4,
-            })}{" "}
+            })}{' '}
             {symbol}
           </div>
         </div>

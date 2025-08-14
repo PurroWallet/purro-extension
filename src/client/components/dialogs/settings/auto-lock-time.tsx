@@ -4,11 +4,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogWrapper,
-} from "@/client/components/ui";
+} from '@/client/components/ui';
 
-import { useState, useEffect } from "react";
-import { AlertCircle } from "lucide-react";
-import { useSessionDuration } from "@/client/hooks/use-session-duration";
+import { useState, useEffect } from 'react';
+import { AlertCircle } from 'lucide-react';
+import { useSessionDuration } from '@/client/hooks/use-session-duration';
 
 const AutoLockTime = ({ onBack }: { onBack: () => void }) => {
   const { duration, limits, loading, error, updateSessionDuration } =
@@ -24,14 +24,14 @@ const AutoLockTime = ({ onBack }: { onBack: () => void }) => {
 
   // Predefined duration options (in minutes)
   const durationOptions = [
-    { value: 5, label: "5 minutes" },
-    { value: 15, label: "15 minutes" },
-    { value: 30, label: "30 minutes" },
-    { value: 60, label: "1 hour" },
-    { value: 120, label: "2 hours" },
-    { value: 240, label: "4 hours" },
-    { value: 480, label: "8 hours" },
-    { value: 1440, label: "24 hours" },
+    { value: 5, label: '5 minutes' },
+    { value: 15, label: '15 minutes' },
+    { value: 30, label: '30 minutes' },
+    { value: 60, label: '1 hour' },
+    { value: 120, label: '2 hours' },
+    { value: 240, label: '4 hours' },
+    { value: 480, label: '8 hours' },
+    { value: 1440, label: '24 hours' },
   ];
 
   const handleSave = async () => {
@@ -77,14 +77,14 @@ const AutoLockTime = ({ onBack }: { onBack: () => void }) => {
           {/* Duration Options */}
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
-              {durationOptions.map((option) => (
+              {durationOptions.map(option => (
                 <button
                   key={option.value}
                   onClick={() => setSelectedDuration(option.value)}
                   className={`p-3 rounded-lg border transition-all duration-200 text-left ${
                     selectedDuration === option.value
-                      ? "border-[var(--primary-color)] bg-[var(--primary-color)]/20 text-white"
-                      : "border-white/20 bg-[var(--card-color)] text-white/80 hover:border-white/40"
+                      ? 'border-[var(--primary-color)] bg-[var(--primary-color)]/20 text-white'
+                      : 'border-white/20 bg-[var(--card-color)] text-white/80 hover:border-white/40'
                   }`}
                 >
                   <span className="text-sm font-medium">{option.label}</span>
@@ -120,7 +120,7 @@ const AutoLockTime = ({ onBack }: { onBack: () => void }) => {
             }
             className="flex-1"
           >
-            {saving ? "Saving..." : "Save"}
+            {saving ? 'Saving...' : 'Save'}
           </Button>
         </div>
       </DialogFooter>

@@ -1,13 +1,13 @@
-import { AccountIcon, AccountName } from "@/client/components/account";
-import AccountSheet from "@/client/components/account-sheet/account-sheet";
-import { LoadingDisplay, LockDisplay } from "@/client/components/display";
-import { Dialog, DialogFooter } from "@/client/components/ui";
-import { Button } from "@/client/components/ui/button";
-import useAccountSheetStore from "@/client/hooks/use-account-sheet-store";
-import useInit from "@/client/hooks/use-init";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import { sendMessage } from "@/client/utils/extension-message-utils";
-import { formatTime, getTimeColor } from "@/client/utils/formatters";
+import { AccountIcon, AccountName } from '@/client/components/account';
+import AccountSheet from '@/client/components/account-sheet/account-sheet';
+import { LoadingDisplay, LockDisplay } from '@/client/components/display';
+import { Dialog, DialogFooter } from '@/client/components/ui';
+import { Button } from '@/client/components/ui/button';
+import useAccountSheetStore from '@/client/hooks/use-account-sheet-store';
+import useInit from '@/client/hooks/use-init';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import { sendMessage } from '@/client/utils/extension-message-utils';
+import { formatTime, getTimeColor } from '@/client/utils/formatters';
 import {
   Clock,
   Send,
@@ -18,9 +18,9 @@ import {
   RefreshCw,
   ArrowRight,
   Fuel,
-} from "lucide-react";
-import { useEffect, useState } from "react";
-import { createRoot } from "react-dom/client";
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { createRoot } from 'react-dom/client';
 
 export interface TransactionRequest {
   to?: string;
@@ -54,20 +54,20 @@ const approveTransaction = async (
   origin: string,
   transaction: TransactionRequest
 ) => {
-  return await sendMessage("ETH_APPROVE_TRANSACTION", { origin, transaction });
+  return await sendMessage('ETH_APPROVE_TRANSACTION', { origin, transaction });
 };
 
 const rejectTransaction = async (origin: string) => {
-  return await sendMessage("ETH_REJECT_TRANSACTION", { origin });
+  return await sendMessage('ETH_REJECT_TRANSACTION', { origin });
 };
 
 const formatAddress = (address: string) => {
-  if (!address) return "";
+  if (!address) return '';
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 };
 
 const formatValue = (value?: string) => {
-  if (!value || value === "0") return "0";
+  if (!value || value === '0') return '0';
   try {
     // Convert wei to ETH
     const ethValue = parseFloat(value);
@@ -81,7 +81,7 @@ const formatValue = (value?: string) => {
 };
 
 const formatGas = (gas?: string) => {
-  if (!gas) return "0";
+  if (!gas) return '0';
   try {
     return parseInt(gas, 16).toLocaleString();
   } catch {
@@ -90,11 +90,11 @@ const formatGas = (gas?: string) => {
 };
 
 const formatGasPrice = (gasPrice?: string) => {
-  if (!gasPrice) return "0";
+  if (!gasPrice) return '0';
   try {
     // Convert wei to gwei
     const gwei = parseInt(gasPrice, 16) / 1e9;
-    return gwei.toFixed(2) + " Gwei";
+    return gwei.toFixed(2) + ' Gwei';
   } catch {
     return gasPrice;
   }
@@ -113,15 +113,15 @@ export const TransactionScreen = () => {
   const { open: openAccountSheet } = useAccountSheetStore();
 
   // Check if current account is watch-only
-  const isWatchOnlyAccount = activeAccount?.source === "watchOnly";
+  const isWatchOnlyAccount = activeAccount?.source === 'watchOnly';
 
   useEffect(() => {
     // Get transaction request from URL params
     const urlParams = new URLSearchParams(window.location.search);
-    const origin = urlParams.get("origin");
-    const favicon = urlParams.get("favicon");
-    const title = urlParams.get("title");
-    const transactionParam = urlParams.get("transaction");
+    const origin = urlParams.get('origin');
+    const favicon = urlParams.get('favicon');
+    const title = urlParams.get('title');
+    const transactionParam = urlParams.get('transaction');
 
     if (origin && transactionParam) {
       try {
@@ -134,8 +134,8 @@ export const TransactionScreen = () => {
           timestamp: Date.now(),
         });
       } catch (error) {
-        console.error("Failed to parse transaction data:", error);
-        setError("Invalid transaction data");
+        console.error('Failed to parse transaction data:', error);
+        setError('Invalid transaction data');
       }
     }
   }, []);
@@ -144,7 +144,7 @@ export const TransactionScreen = () => {
     if (!transactionRequest) return;
 
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
+      setTimeLeft(prev => {
         if (prev <= 1) {
           // Auto-close when timeout
           window.close();
@@ -165,9 +165,9 @@ export const TransactionScreen = () => {
 
     try {
       console.log(
-        "🔄 Approving transaction for:",
+        '🔄 Approving transaction for:',
         transactionRequest.origin,
-        "transaction:",
+        'transaction:',
         transactionRequest.transaction
       );
 
@@ -177,28 +177,28 @@ export const TransactionScreen = () => {
         transactionRequest.transaction
       );
 
-      console.log("✅ Transaction approval result:", result);
+      console.log('✅ Transaction approval result:', result);
 
       // Small delay to ensure message is processed
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Close popup
       window.close();
     } catch (error) {
-      console.error("❌ Error approving transaction:", error);
+      console.error('❌ Error approving transaction:', error);
 
       const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred";
+        error instanceof Error ? error.message : 'Unknown error occurred';
       setError(errorMessage);
 
       // Check if it's a retryable error
       const isRetryableError =
-        errorMessage.includes("session") ||
-        errorMessage.includes("unlock") ||
-        errorMessage.includes("storage") ||
-        errorMessage.includes("timeout") ||
-        errorMessage.includes("gas") ||
-        errorMessage.includes("network");
+        errorMessage.includes('session') ||
+        errorMessage.includes('unlock') ||
+        errorMessage.includes('storage') ||
+        errorMessage.includes('timeout') ||
+        errorMessage.includes('gas') ||
+        errorMessage.includes('network');
 
       if (isRetryableError && retryCount < MAX_RETRIES) {
         console.log(
@@ -206,12 +206,15 @@ export const TransactionScreen = () => {
             retryCount + 1
           }/${MAX_RETRIES}`
         );
-        setRetryCount((prev) => prev + 1);
+        setRetryCount(prev => prev + 1);
 
         // Auto-retry after delay
-        setTimeout(() => {
-          handleApprove();
-        }, RETRY_DELAY * (retryCount + 1)); // Exponential backoff
+        setTimeout(
+          () => {
+            handleApprove();
+          },
+          RETRY_DELAY * (retryCount + 1)
+        ); // Exponential backoff
       }
 
       // Don't close popup on error so user can retry or see error message
@@ -230,7 +233,7 @@ export const TransactionScreen = () => {
       // Close popup
       window.close();
     } catch (error) {
-      console.error("Error rejecting transaction:", error);
+      console.error('Error rejecting transaction:', error);
       // Still close popup even on rejection error
       window.close();
     }
@@ -282,8 +285,8 @@ export const TransactionScreen = () => {
                 src={transactionRequest.favicon}
                 alt="Site favicon"
                 className="size-8 rounded"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
+                onError={e => {
+                  (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
             ) : (
@@ -358,8 +361,8 @@ export const TransactionScreen = () => {
               src={transactionRequest.favicon}
               alt="Site favicon"
               className="size-8 rounded"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
+              onError={e => {
+                (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
           ) : (
@@ -426,7 +429,7 @@ export const TransactionScreen = () => {
             <div className="flex items-center justify-between">
               <span className="text-sm text-white/60">From:</span>
               <span className="text-sm font-mono">
-                {formatAddress(transaction.from || "")}
+                {formatAddress(transaction.from || '')}
               </span>
             </div>
             <div className="flex items-center justify-center py-2">
@@ -435,13 +438,13 @@ export const TransactionScreen = () => {
             <div className="flex items-center justify-between">
               <span className="text-sm text-white/60">To:</span>
               <span className="text-sm font-mono">
-                {formatAddress(transaction.to || "")}
+                {formatAddress(transaction.to || '')}
               </span>
             </div>
           </div>
 
           {/* Value */}
-          {transaction.value && transaction.value !== "0" && (
+          {transaction.value && transaction.value !== '0' && (
             <div className="flex items-center justify-between py-2 border-t border-white/10">
               <span className="text-sm text-white/60">Amount:</span>
               <span className="text-sm font-bold text-[var(--primary-color)]">
@@ -497,7 +500,7 @@ export const TransactionScreen = () => {
           </div>
 
           {/* Data field if present */}
-          {transaction.data && transaction.data !== "0x" && (
+          {transaction.data && transaction.data !== '0x' && (
             <div className="border-t border-white/10 pt-3 mt-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-white/60">Data:</span>
@@ -543,7 +546,7 @@ export const TransactionScreen = () => {
                 <RefreshCw className="size-4 animate-spin" />
                 {retryCount > 0
                   ? `Retrying... (${retryCount}/${MAX_RETRIES})`
-                  : "Sending..."}
+                  : 'Sending...'}
               </>
             ) : (
               <>
@@ -558,7 +561,7 @@ export const TransactionScreen = () => {
   );
 };
 
-const container = document.getElementById("root");
+const container = document.getElementById('root');
 if (container) {
   const root = createRoot(container);
   root.render(<TransactionScreen />);

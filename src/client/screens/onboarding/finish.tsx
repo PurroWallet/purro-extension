@@ -1,18 +1,18 @@
-import { useEffect, useState } from "react";
-import logo from "@/assets/icon.png";
-import Discord from "@/assets/icon-component/discord";
-import XTwitter from "@/assets/icon-component/x-twitter";
-import { openSidePanel } from "@/client/lib/utils";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
-import { LoadingDisplay, ErrorDisplay } from "@/client/components/display";
-import { Button } from "@/client/components/ui";
-import useWallet from "@/client/hooks/use-wallet";
+import { useEffect, useState } from 'react';
+import logo from '@/assets/icon.png';
+import Discord from '@/assets/icon-component/discord';
+import XTwitter from '@/assets/icon-component/x-twitter';
+import { openSidePanel } from '@/client/lib/utils';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
+import { LoadingDisplay, ErrorDisplay } from '@/client/components/display';
+import { Button } from '@/client/components/ui';
+import useWallet from '@/client/hooks/use-wallet';
 import {
   ChainType,
   supportedChain,
   SupportedChainType,
-} from "@/background/types/account";
+} from '@/background/types/account';
 
 const Finish = () => {
   const {
@@ -26,7 +26,7 @@ const Finish = () => {
   } = useCreateWalletStore();
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
   const [hasExecuted, setHasExecuted] = useState<boolean>(false);
   const { accounts } = useWalletStore();
   const { createWallet, importPrivateKey } = useWallet();
@@ -40,41 +40,41 @@ const Finish = () => {
 
       setHasExecuted(true);
       setIsLoading(true);
-      setError("");
+      setError('');
       setIsSuccess(false);
 
       try {
         // Validate required data
-        if (!password || password.trim() === "") {
-          throw new Error("Password is required");
+        if (!password || password.trim() === '') {
+          throw new Error('Password is required');
         }
 
         // Handle based on import type
-        if (importType === "seed") {
+        if (importType === 'seed') {
           // Import wallet from seed phrase
-          if (!mnemonic || mnemonic.trim() === "") {
-            throw new Error("Seed phrase is required");
+          if (!mnemonic || mnemonic.trim() === '') {
+            throw new Error('Seed phrase is required');
           }
           await createWallet({
             password,
             mnemonic,
           });
-        } else if (importType === "privateKey") {
+        } else if (importType === 'privateKey') {
           // Import wallet from private key
           if (!privateKey || !privateKey.trim() || !chain) {
-            throw new Error("Private key and chain are required");
+            throw new Error('Private key and chain are required');
           }
           if (!supportedChain.includes(chain as SupportedChainType)) {
-            throw new Error("Invalid chain");
+            throw new Error('Invalid chain');
           }
           let chainType: ChainType;
           if (
-            chain === "hyperevm" ||
-            chain === "base" ||
-            chain === "arbitrum" ||
-            chain === "ethereum"
+            chain === 'hyperevm' ||
+            chain === 'base' ||
+            chain === 'arbitrum' ||
+            chain === 'ethereum'
           ) {
-            chainType = "eip155";
+            chainType = 'eip155';
           } else {
             chainType = chain;
           }
@@ -89,8 +89,8 @@ const Finish = () => {
         } else {
           // Default: Create new wallet (no importType set)
           // Use the seed phrase that was shown to user for backup
-          if (!mnemonic || mnemonic.trim() === "") {
-            throw new Error("Seed phrase is required");
+          if (!mnemonic || mnemonic.trim() === '') {
+            throw new Error('Seed phrase is required');
           }
           await createWallet({
             password,
@@ -102,7 +102,7 @@ const Finish = () => {
         try {
           reset();
         } catch (resetError) {
-          console.error("Error resetting store:", resetError);
+          console.error('Error resetting store:', resetError);
         }
 
         setIsSuccess(true);
@@ -116,8 +116,8 @@ const Finish = () => {
 
     // Only execute if we have the required data and haven't executed yet
     if (
-      (importType === "seed" ||
-        importType === "privateKey" ||
+      (importType === 'seed' ||
+        importType === 'privateKey' ||
         (!importType && mnemonic)) &&
       !hasExecuted
     ) {
@@ -140,21 +140,21 @@ const Finish = () => {
 
   // Get content based on operation type
   const getSuccessContent = () => {
-    if (importType === "seed") {
+    if (importType === 'seed') {
       return {
-        title: "Wallet Imported Successfully!",
-        description: "Your wallet has been imported from seed phrase.",
+        title: 'Wallet Imported Successfully!',
+        description: 'Your wallet has been imported from seed phrase.',
       };
-    } else if (importType === "privateKey") {
+    } else if (importType === 'privateKey') {
       return {
-        title: "Account Imported Successfully!",
-        description: "Your account has been imported from private key.",
+        title: 'Account Imported Successfully!',
+        description: 'Your account has been imported from private key.',
       };
     } else {
       // Default: Create new wallet
       return {
         title: "You're all set!",
-        description: "Your Purro wallet has been created successfully.",
+        description: 'Your Purro wallet has been created successfully.',
       };
     }
   };
@@ -163,18 +163,18 @@ const Finish = () => {
 
   const socialLinks = [
     {
-      name: "About Purro",
-      url: "https://purro.xyz",
+      name: 'About Purro',
+      url: 'https://purro.xyz',
       icon: <img src={logo} alt="logo" className="size-6" />,
     },
     {
-      name: "@purro_xyz",
-      url: "https://x.com/purro_xyz",
+      name: '@purro_xyz',
+      url: 'https://x.com/purro_xyz',
       icon: <XTwitter className="size-6" />,
     },
     {
-      name: "Discord",
-      url: "https://discord.gg/VJunuK9T5w",
+      name: 'Discord',
+      url: 'https://discord.gg/VJunuK9T5w',
       icon: <Discord className="size-6" />,
     },
   ];
@@ -199,7 +199,7 @@ const Finish = () => {
             </p>
 
             <div className="grid grid-cols-3 gap-2 justify-center w-full mt-6">
-              {socialLinks.map((link) => (
+              {socialLinks.map(link => (
                 <button
                   key={link.name}
                   onClick={() => handleSocialClick(link.url)}

@@ -1,16 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 import {
   DialogContent,
   DialogHeader,
   DialogWrapper,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   getTokenCacheStats,
   clearChainTokenCache,
   clearAllTokenCache,
-} from "@/services/alchemy-api-optimized";
-import { Database, Trash2, HardDrive, Clock } from "lucide-react";
-import { cn } from "@/lib/utils";
+} from '@/services/alchemy-api-optimized';
+import { Database, Trash2, HardDrive, Clock } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CacheStats {
   totalEntries: number;
@@ -30,7 +30,7 @@ const TokenCacheManagement = ({ onBack }: { onBack: () => void }) => {
       const cacheStats = await getTokenCacheStats();
       setStats(cacheStats);
     } catch (error) {
-      console.error("Failed to load cache stats:", error);
+      console.error('Failed to load cache stats:', error);
     } finally {
       setLoading(false);
     }
@@ -41,7 +41,7 @@ const TokenCacheManagement = ({ onBack }: { onBack: () => void }) => {
   }, []);
 
   const handleClearChainCache = async (
-    chain: "ethereum" | "base" | "arbitrum"
+    chain: 'ethereum' | 'base' | 'arbitrum'
   ) => {
     try {
       setClearing(chain);
@@ -57,45 +57,45 @@ const TokenCacheManagement = ({ onBack }: { onBack: () => void }) => {
 
   const handleClearAllCache = async () => {
     try {
-      setClearing("all");
+      setClearing('all');
       await clearAllTokenCache();
       await loadStats(); // Reload stats
-      console.log("✅ Cleared all token cache");
+      console.log('✅ Cleared all token cache');
     } catch (error) {
-      console.error("Failed to clear all cache:", error);
+      console.error('Failed to clear all cache:', error);
     } finally {
       setClearing(null);
     }
   };
 
   const formatDate = (timestamp: number | null | undefined) => {
-    if (!timestamp) return "N/A";
+    if (!timestamp) return 'N/A';
     return new Date(timestamp).toLocaleDateString();
   };
 
   const getChainName = (chainId: string) => {
     switch (chainId) {
-      case "1":
-        return "Ethereum";
-      case "8453":
-        return "Base";
-      case "42161":
-        return "Arbitrum";
+      case '1':
+        return 'Ethereum';
+      case '8453':
+        return 'Base';
+      case '42161':
+        return 'Arbitrum';
       default:
         return `Chain ${chainId}`;
     }
   };
 
-  const getChainKey = (chainId: string): "ethereum" | "base" | "arbitrum" => {
+  const getChainKey = (chainId: string): 'ethereum' | 'base' | 'arbitrum' => {
     switch (chainId) {
-      case "1":
-        return "ethereum";
-      case "8453":
-        return "base";
-      case "42161":
-        return "arbitrum";
+      case '1':
+        return 'ethereum';
+      case '8453':
+        return 'base';
+      case '42161':
+        return 'arbitrum';
       default:
-        return "ethereum";
+        return 'ethereum';
     }
   };
 
@@ -161,9 +161,9 @@ const TokenCacheManagement = ({ onBack }: { onBack: () => void }) => {
                         }
                         disabled={clearing === getChainKey(chainId)}
                         className={cn(
-                          "px-3 py-1 rounded-md text-xs font-medium transition-colors",
-                          "bg-red-500/20 text-red-400 hover:bg-red-500/30",
-                          "disabled:opacity-50 disabled:cursor-not-allowed"
+                          'px-3 py-1 rounded-md text-xs font-medium transition-colors',
+                          'bg-red-500/20 text-red-400 hover:bg-red-500/30',
+                          'disabled:opacity-50 disabled:cursor-not-allowed'
                         )}
                       >
                         {clearing === getChainKey(chainId) ? (
@@ -205,14 +205,14 @@ const TokenCacheManagement = ({ onBack }: { onBack: () => void }) => {
             {stats && stats.totalEntries > 0 && (
               <button
                 onClick={handleClearAllCache}
-                disabled={clearing === "all"}
+                disabled={clearing === 'all'}
                 className={cn(
-                  "w-full py-3 px-4 rounded-lg font-medium transition-colors",
-                  "bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30",
-                  "disabled:opacity-50 disabled:cursor-not-allowed"
+                  'w-full py-3 px-4 rounded-lg font-medium transition-colors',
+                  'bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30',
+                  'disabled:opacity-50 disabled:cursor-not-allowed'
                 )}
               >
-                {clearing === "all" ? (
+                {clearing === 'all' ? (
                   <div className="flex items-center justify-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border border-red-400 border-b-transparent"></div>
                     Clearing All Cache...

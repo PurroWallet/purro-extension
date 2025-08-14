@@ -1,19 +1,19 @@
-import useWallet from "@/client/hooks/use-wallet";
-import { cn } from "@/client/lib/utils";
-import Header from "@/client/components/common/header";
-import { useState } from "react";
-import logo from "@/assets/icon.png";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import { Button, InputPassword } from "@/client/components/ui";
-import LoadingDisplay from "@/client/components/display/loading-display";
-import ForgotPassword from "../dialogs/forgot-password";
-import IconNameLogo from "../icon-name-logo";
+import useWallet from '@/client/hooks/use-wallet';
+import { cn } from '@/client/lib/utils';
+import Header from '@/client/components/common/header';
+import { useState } from 'react';
+import logo from '@/assets/icon.png';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import { Button, InputPassword } from '@/client/components/ui';
+import LoadingDisplay from '@/client/components/display/loading-display';
+import ForgotPassword from '../dialogs/forgot-password';
+import IconNameLogo from '../icon-name-logo';
 
 const LockDisplay = () => {
   const { loading, isLocked, hasWallet, loadWalletState } = useWalletStore();
   const { unlockWallet } = useWallet();
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState('');
   const [hasError, setHasError] = useState(false);
   const { openDialog } = useDialogStore();
 
@@ -43,8 +43,8 @@ const LockDisplay = () => {
   return (
     <div
       className={cn(
-        "bg-[var(--background-color)] size-full absolute inset-0 z-[50] transition-all duration-300 overflow-hidden",
-        shouldShowLock ? "block" : "hidden"
+        'bg-[var(--background-color)] size-full absolute inset-0 z-[50] transition-all duration-300 overflow-hidden',
+        shouldShowLock ? 'block' : 'hidden'
       )}
     >
       <div className="flex flex-col h-full">
@@ -58,8 +58,8 @@ const LockDisplay = () => {
             <InputPassword
               value={password}
               onChange={onChangePassword}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
                   handleUnlock();
                 }
               }}

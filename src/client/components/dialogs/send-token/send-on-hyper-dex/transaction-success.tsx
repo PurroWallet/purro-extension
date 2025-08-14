@@ -3,15 +3,15 @@ import {
   DialogContent,
   DialogFooter,
   DialogWrapper,
-} from "@/client/components/ui";
-import { DialogHeader } from "@/client/components/ui";
-import { Menu } from "@/client/components/ui/menu";
-import useSendTokenHLStore from "@/client/hooks/use-send-token-HL-store";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import { Check, CheckCircle, Send, X } from "lucide-react";
-import { motion } from "motion/react";
-import { useEffect, useState } from "react";
-import { getAddressByDomain } from "@/client/services/hyperliquid-name-api";
+} from '@/client/components/ui';
+import { DialogHeader } from '@/client/components/ui';
+import { Menu } from '@/client/components/ui/menu';
+import useSendTokenHLStore from '@/client/hooks/use-send-token-HL-store';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import { Check, CheckCircle, Send, X } from 'lucide-react';
+import { motion } from 'motion/react';
+import { useEffect, useState } from 'react';
+import { getAddressByDomain } from '@/client/services/hyperliquid-name-api';
 
 const TransactionSuccess = () => {
   const {
@@ -29,7 +29,7 @@ const TransactionSuccess = () => {
 
   useEffect(() => {
     const resolveRecipientAddress = async () => {
-      if (recipient.startsWith("0x")) {
+      if (recipient.startsWith('0x')) {
         setRecipientAddress(recipient);
         return;
       }
@@ -42,7 +42,7 @@ const TransactionSuccess = () => {
             return;
           }
         } catch (error) {
-          console.error("Failed to resolve domain:", error);
+          console.error('Failed to resolve domain:', error);
         }
       }
 
@@ -54,18 +54,18 @@ const TransactionSuccess = () => {
 
   const handleDone = () => {
     // Clear the form data
-    setRecipient("");
-    setAmount("");
+    setRecipient('');
+    setAmount('');
     setToken(null);
-    setStep("select");
+    setStep('select');
     closeDialog();
   };
 
   const handleSendAnother = () => {
     // Keep the token selected but clear amount and recipient
-    setRecipient("");
-    setAmount("");
-    setStep("send");
+    setRecipient('');
+    setAmount('');
+    setStep('send');
   };
 
   if (!token) {
@@ -86,7 +86,7 @@ const TransactionSuccess = () => {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{
-              type: "spring",
+              type: 'spring',
               stiffness: 200,
               damping: 15,
             }}
@@ -109,21 +109,21 @@ const TransactionSuccess = () => {
             <Menu
               items={[
                 {
-                  label: "Amount",
+                  label: 'Amount',
                   description: `${amount} ${token.coin}`,
                 },
                 {
-                  label: "To",
+                  label: 'To',
                   description: `${recipientAddress.slice(
                     0,
                     6
                   )}...${recipientAddress.slice(-4)}${
-                    recipient.endsWith(".hl") ? ` (${recipient})` : ""
+                    recipient.endsWith('.hl') ? ` (${recipient})` : ''
                   }`,
                 },
                 {
-                  label: "Network",
-                  description: "Hyperliquid DEX",
+                  label: 'Network',
+                  description: 'Hyperliquid DEX',
                 },
               ]}
             />

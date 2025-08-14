@@ -1,14 +1,14 @@
-import WalletAddressesSimple from "./wallet-addresses-simple";
-import { useState } from "react";
-import { GripVertical, Settings } from "lucide-react";
+import WalletAddressesSimple from './wallet-addresses-simple';
+import { useState } from 'react';
+import { GripVertical, Settings } from 'lucide-react';
 // import EditAccount from "../dialogs/edit-account/edit-account";
-import { cn } from "@/client/lib/utils";
-import useEditAccountStore from "@/client/hooks/use-edit-account-store";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import useWallet from "@/client/hooks/use-wallet";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import { AccountIcon, AccountName } from "../account";
-import EditAccount from "../dialogs/edit-account";
+import { cn } from '@/client/lib/utils';
+import useEditAccountStore from '@/client/hooks/use-edit-account-store';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import useWallet from '@/client/hooks/use-wallet';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import { AccountIcon, AccountName } from '../account';
+import EditAccount from '../dialogs/edit-account';
 
 const AccountList = () => {
   const { reorderAccounts, setActiveAccount } = useWallet();
@@ -25,16 +25,16 @@ const AccountList = () => {
     index: number
   ) => {
     setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/html", e.currentTarget.outerHTML);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.currentTarget.outerHTML);
     // Add a slight delay to prevent immediate opacity change
     setTimeout(() => {
-      (e.currentTarget as HTMLElement).style.opacity = "0.5";
+      (e.currentTarget as HTMLElement).style.opacity = '0.5';
     }, 0);
   };
 
   const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
-    (e.currentTarget as HTMLElement).style.opacity = "1";
+    (e.currentTarget as HTMLElement).style.opacity = '1';
     setDraggedIndex(null);
     setDragOverIndex(null);
   };
@@ -44,7 +44,7 @@ const AccountList = () => {
     index: number
   ) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
+    e.dataTransfer.dropEffect = 'move';
 
     // Only set drag over index if it's different from dragged index
     if (draggedIndex !== index) {
@@ -86,12 +86,12 @@ const AccountList = () => {
     newAccounts.splice(dropIndex, 0, draggedAccount);
 
     // Get ordered IDs
-    const orderedIds = newAccounts.map((account) => account.id);
+    const orderedIds = newAccounts.map(account => account.id);
 
     try {
       await reorderAccounts(orderedIds);
     } catch (error) {
-      console.error("Failed to reorder accounts:", error);
+      console.error('Failed to reorder accounts:', error);
     }
 
     setDraggedIndex(null);
@@ -105,11 +105,11 @@ const AccountList = () => {
     try {
       await setActiveAccount(accountId);
     } catch (error) {
-      console.error("Failed to switch account:", error);
+      console.error('Failed to switch account:', error);
     }
   };
 
-  const isConnect = window.location.pathname.includes("connect.html");
+  const isConnect = window.location.pathname.includes('connect.html');
 
   return (
     <div className="flex flex-col gap-2">
@@ -125,22 +125,22 @@ const AccountList = () => {
           <div
             key={account.id}
             draggable
-            onDragStart={(e) => handleDragStart(e, index)}
+            onDragStart={e => handleDragStart(e, index)}
             onDragEnd={handleDragEnd}
-            onDragOver={(e) => handleDragOver(e, index)}
+            onDragOver={e => handleDragOver(e, index)}
             onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, index)}
+            onDrop={e => handleDrop(e, index)}
             onMouseEnter={() => setHoveredAccount(account.id)}
             onMouseLeave={() => setHoveredAccount(null)}
             className={`transition-all duration-300 ease-in-out rounded-lg p-2 cursor-pointer group relative ${
               isActive
-                ? "bg-[var(--primary-color)] border border-[var(--primary-color)]/10"
-                : "bg-[var(--background-color)] hover:bg-[var(--background-color)]/80"
+                ? 'bg-[var(--primary-color)] border border-[var(--primary-color)]/10'
+                : 'bg-[var(--background-color)] hover:bg-[var(--background-color)]/80'
             } ${
               isDragOver
-                ? "border-2 border-[var(--primary-color)] border-dashed bg-[var(--primary-color)]/10 transform scale-105"
-                : ""
-            } ${isDragging ? "opacity-50 transform rotate-2 scale-95" : ""}`}
+                ? 'border-2 border-[var(--primary-color)] border-dashed bg-[var(--primary-color)]/10 transform scale-105'
+                : ''
+            } ${isDragging ? 'opacity-50 transform rotate-2 scale-95' : ''}`}
           >
             {/* Main account row */}
             <div
@@ -166,10 +166,10 @@ const AccountList = () => {
               {!isConnect && (
                 <button
                   className={cn(
-                    "flex items-center justify-center gap-2 transition-transform duration-200 hover:bg-white/10 rounded-full p-2 cursor-pointer ml-auto",
-                    isHovered ? "block" : "hidden"
+                    'flex items-center justify-center gap-2 transition-transform duration-200 hover:bg-white/10 rounded-full p-2 cursor-pointer ml-auto',
+                    isHovered ? 'block' : 'hidden'
                   )}
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     setSelectedAccountId(account.id);
                     openDialog(<EditAccount />);
@@ -184,14 +184,14 @@ const AccountList = () => {
             <div
               className={`overflow-hidden transition-all duration-300 ease-in-out ${
                 shouldShowAddresses
-                  ? "max-h-96 opacity-100 mt-2"
-                  : "max-h-0 opacity-0 mt-0"
+                  ? 'max-h-96 opacity-100 mt-2'
+                  : 'max-h-0 opacity-0 mt-0'
               }`}
-              onClick={(e) => e.stopPropagation()}
+              onClick={e => e.stopPropagation()}
             >
               <div
                 className={`transform transition-transform duration-300 ease-in-out ${
-                  shouldShowAddresses ? "translate-y-0" : "-translate-y-2"
+                  shouldShowAddresses ? 'translate-y-0' : '-translate-y-2'
                 }`}
               >
                 {(() => {
@@ -200,23 +200,23 @@ const AccountList = () => {
                   // Transform wallet data to the structure expected by WalletAddressesSimple
                   const transformedWallets = {
                     ethereum: {
-                      address: wallet?.eip155?.address || "",
+                      address: wallet?.eip155?.address || '',
                       publicKey:
-                        typeof wallet?.eip155?.publicKey === "string"
+                        typeof wallet?.eip155?.publicKey === 'string'
                           ? wallet?.eip155?.publicKey
-                          : (wallet?.eip155?.publicKey as any)?.data || "",
+                          : (wallet?.eip155?.publicKey as any)?.data || '',
                     },
                     solana: {
                       publicKey:
-                        typeof wallet?.solana?.publicKey === "string"
+                        typeof wallet?.solana?.publicKey === 'string'
                           ? wallet?.solana?.publicKey
-                          : (wallet?.solana?.publicKey as any)?.data || "",
+                          : (wallet?.solana?.publicKey as any)?.data || '',
                     },
                     sui: {
                       publicKey:
-                        typeof wallet?.sui?.publicKey === "string"
+                        typeof wallet?.sui?.publicKey === 'string'
                           ? wallet?.sui?.publicKey
-                          : (wallet?.sui?.publicKey as any)?.data || "",
+                          : (wallet?.sui?.publicKey as any)?.data || '',
                     },
                   };
 

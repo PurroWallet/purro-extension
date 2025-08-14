@@ -1,7 +1,7 @@
-import { createRoot } from "react-dom/client";
-import { LockDisplay } from "@/client/components/display";
-import UniverseBackground from "@/client/components/universe-background";
-import ImportSteps from "./import-steps";
+import { createRoot } from 'react-dom/client';
+import { LockDisplay } from '@/client/components/display';
+import UniverseBackground from '@/client/components/universe-background';
+import ImportSteps from './import-steps';
 
 const Import = () => {
   return (
@@ -17,7 +17,7 @@ const Import = () => {
   );
 };
 
-const container = document.getElementById("root");
+const container = document.getElementById('root');
 if (container) {
   const root = createRoot(container);
   root.render(<Import />);

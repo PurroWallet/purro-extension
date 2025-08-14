@@ -1,9 +1,9 @@
-import React from "react";
-import hlLogo from "@/assets/logo/hl-mint-logo.png";
+import React from 'react';
+import hlLogo from '@/assets/logo/hl-mint-logo.png';
 // import suiLogo from "@/assets/sui-white-logo.png";
 // import solanaLogo from "@/assets/solana-sol-logo.png";
 // import ethereumLogo from "@/assets/ethereum-eth-logo.png";
-import purroAnimated from "@/assets/gif/purro.gif";
+import purroAnimated from '@/assets/gif/purro.gif';
 
 interface UniverseBackgroundProps {
   className?: string;
@@ -11,25 +11,25 @@ interface UniverseBackgroundProps {
 }
 
 const UniverseBackground: React.FC<UniverseBackgroundProps> = ({
-  className = "",
+  className = '',
   children,
 }) => {
   const styles = {
     universeContainer: {
-      position: "absolute" as const,
+      position: 'absolute' as const,
       top: 0,
       left: 0,
-      width: "100%",
-      height: "100%",
-      overflow: "hidden" as const,
-      background: "var(--background-color)",
+      width: '100%',
+      height: '100%',
+      overflow: 'hidden' as const,
+      background: 'var(--background-color)',
     },
     universeBg: {
-      position: "absolute" as const,
+      position: 'absolute' as const,
       top: 0,
       left: 0,
-      width: "100%",
-      height: "100%",
+      width: '100%',
+      height: '100%',
       background: `
         radial-gradient(ellipse at center, 
           var(--primary-color-dark) 0%, 
@@ -40,40 +40,40 @@ const UniverseBackground: React.FC<UniverseBackgroundProps> = ({
       zIndex: 1,
     },
     stars: {
-      position: "absolute" as const,
+      position: 'absolute' as const,
       top: 0,
       left: 0,
-      width: "100%",
-      height: "100%",
+      width: '100%',
+      height: '100%',
       zIndex: 2,
     },
     nebula: {
-      position: "absolute" as const,
-      borderRadius: "50%",
-      filter: "blur(40px)",
+      position: 'absolute' as const,
+      borderRadius: '50%',
+      filter: 'blur(40px)',
       zIndex: 2,
     },
     shootingStar: {
-      position: "absolute" as const,
-      width: "2px",
-      height: "2px",
-      background: "var(--primary-color-light)",
-      borderRadius: "50%",
+      position: 'absolute' as const,
+      width: '2px',
+      height: '2px',
+      background: 'var(--primary-color-light)',
+      borderRadius: '50%',
       zIndex: 3,
     },
     planet: {
-      position: "absolute" as const,
-      borderRadius: "50%",
+      position: 'absolute' as const,
+      borderRadius: '50%',
       zIndex: 2,
     },
     universeContent: {
-      position: "relative" as const,
+      position: 'relative' as const,
       zIndex: 10,
-      width: "100%",
-      height: "100%",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
   };
 

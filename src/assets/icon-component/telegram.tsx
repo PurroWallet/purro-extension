@@ -1,11 +1,11 @@
-import { cn } from "@/client/lib/utils";
+import { cn } from '@/client/lib/utils';
 
 const Telegram = ({ className }: { className?: string }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 32 32"
-      className={cn("size-4", className)}
+      className={cn('size-4', className)}
       fill="currentColor"
     >
       <path
