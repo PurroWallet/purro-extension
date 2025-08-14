@@ -1,12 +1,12 @@
-import { ArrowLeft, Lock, Plus, Settings } from "lucide-react";
-import { cn } from "@/client/lib/utils";
-import useAccountSheetStore from "@/client/hooks/use-account-sheet-store";
-import { useState } from "react";
-import SupportedChainsDropdown from "./supported-chains-dropdown";
-import AccountList from "./account-list";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import useWallet from "@/client/hooks/use-wallet";
-import SettingsDialog from "../dialogs/settings/settings-dialog";
+import { ArrowLeft, Lock, Plus, Settings } from 'lucide-react';
+import { cn } from '@/client/lib/utils';
+import useAccountSheetStore from '@/client/hooks/use-account-sheet-store';
+import { useState } from 'react';
+import SupportedChainsDropdown from './supported-chains-dropdown';
+import AccountList from './account-list';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import useWallet from '@/client/hooks/use-wallet';
+import SettingsDialog from '../dialogs/settings/settings-dialog';
 
 const AccountSheet = () => {
   const { isOpen, close } = useAccountSheetStore();
@@ -28,7 +28,7 @@ const AccountSheet = () => {
     close();
   };
 
-  const isConnect = window.location.pathname.includes("connect.html");
+  const isConnect = window.location.pathname.includes('connect.html');
 
   return (
     <>
@@ -42,8 +42,8 @@ const AccountSheet = () => {
 
       <div
         className={cn(
-          "fixed top-0 left-0 h-full w-4/5 bg-[var(--card-color)] shadow-2xl z-[42] transform transition-transform duration-300 ease-out overflow-y-auto flex flex-col rounded-r-2xl",
-          isOpen ? "translate-x-0" : "-translate-x-full"
+          'fixed top-0 left-0 h-full w-4/5 bg-[var(--card-color)] shadow-2xl z-[42] transform transition-transform duration-300 ease-out overflow-y-auto flex flex-col rounded-r-2xl',
+          isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         {/* Header */}
@@ -70,7 +70,7 @@ const AccountSheet = () => {
             <button
               className="size-full px-2 py-3 hover:bg-white/10 transition-colors flex items-center justify-center cursor-pointer"
               onClick={() => {
-                window.open("import.html", "_blank");
+                window.open('import.html', '_blank');
               }}
             >
               <Plus className="size-5" />

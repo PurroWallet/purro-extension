@@ -7,8 +7,8 @@ import {
   HyperScanNftInstancesNextPageParams,
   HyperScanTokenTransfersResponse,
   HyperScanTokenTransfersNextPageParams,
-} from "@/client/types/hyperscan-api";
-import { ENDPOINTS, ENDPOINTS_TESTNET } from "./endpoints";
+} from '@/client/types/hyperscan-api';
+import { ENDPOINTS, ENDPOINTS_TESTNET } from './endpoints';
 
 // Constants for easy customization
 const ADDRESS_VALIDATION_REGEX = /^0x[a-fA-F0-9]{40}$/;
@@ -49,7 +49,7 @@ export const fetchHyperEvmNfts = async (
     throw new Error(`Invalid address format: ${address}`);
   }
 
-  let nextPageParamsString = "";
+  let nextPageParamsString = '';
   if (nextPageParams) {
     nextPageParamsString = `items_count=${nextPageParams?.items_count}&token_contract_address_hash=${nextPageParams?.token_contract_address_hash}&token_id=${nextPageParams?.token_id}&token_type=${nextPageParams?.token_type}`;
   }
@@ -75,7 +75,7 @@ export const fetchHyperEvmNftsCollection = async (
     throw new Error(`Invalid address format: ${address}`);
   }
 
-  let nextPageParamsString = "";
+  let nextPageParamsString = '';
   if (nextPageParams) {
     nextPageParamsString = `token_contract_address_hash=${nextPageParams?.token_contract_address_hash}&token_type=${nextPageParams?.token_type}`;
   }
@@ -131,7 +131,7 @@ export const fetchHyperEvmNftInstances = async (
     throw new Error(`Invalid holder address format: ${holderAddress}`);
   }
 
-  let nextPageParamsString = "";
+  let nextPageParamsString = '';
   if (nextPageParams) {
     nextPageParamsString = `&holder_address_hash=${nextPageParams.holder_address_hash}&unique_token=${nextPageParams.unique_token}`;
   }
@@ -150,7 +150,7 @@ export const fetchHyperEvmNftInstances = async (
 
 export const fetchHyperEvmTokenTransfers = async (
   address: string,
-  filter: "from" | "to" | "both",
+  filter: 'from' | 'to' | 'both',
   isDevMode: boolean = false,
   nextPageParams?: HyperScanTokenTransfersNextPageParams
 ): Promise<HyperScanTokenTransfersResponse> => {
@@ -158,7 +158,7 @@ export const fetchHyperEvmTokenTransfers = async (
     throw new Error(`Invalid address format: ${address}`);
   }
 
-  let nextPageParamsString = "";
+  let nextPageParamsString = '';
   if (nextPageParams) {
     nextPageParamsString = `&block_number=${nextPageParams.block_number}&index=${nextPageParams.index}`;
   }

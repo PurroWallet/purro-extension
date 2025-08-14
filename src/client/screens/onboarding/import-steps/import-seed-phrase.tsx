@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Button, MnemonicInput } from "@/client/components/ui";
-import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
+import { useState } from 'react';
+import { Button, MnemonicInput } from '@/client/components/ui';
+import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
 
 const ImportSeedPhrase = ({ onNext }: { onNext: () => void }) => {
   const [wordCount, setWordCount] = useState<12 | 24>(12);
@@ -17,7 +17,7 @@ const ImportSeedPhrase = ({ onNext }: { onNext: () => void }) => {
 
   const handleWordCountChange = (newWordCount: 12 | 24) => {
     setWordCount(newWordCount);
-    setMnemonic(""); // Reset seed phrase when changing word count
+    setMnemonic(''); // Reset seed phrase when changing word count
     setIsValidSeedPhrase(false); // Reset validation state
   };
 
@@ -37,8 +37,8 @@ const ImportSeedPhrase = ({ onNext }: { onNext: () => void }) => {
               onClick={() => handleWordCountChange(12)}
               className={`px-4 py-2 text-sm rounded-md transition-all ${
                 wordCount === 12
-                  ? "bg-[var(--primary-color)] text-white hover:bg-[var(--primary-color)]/80"
-                  : "bg-transparent text-gray-400 hover:text-white hover:bg-white/10"
+                  ? 'bg-[var(--primary-color)] text-white hover:bg-[var(--primary-color)]/80'
+                  : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/10'
               }`}
             >
               12 words
@@ -47,8 +47,8 @@ const ImportSeedPhrase = ({ onNext }: { onNext: () => void }) => {
               onClick={() => handleWordCountChange(24)}
               className={`px-4 py-2 text-sm rounded-md transition-all ${
                 wordCount === 24
-                  ? "bg-[var(--primary-color)] text-white hover:bg-[var(--primary-color)]/80"
-                  : "bg-transparent text-gray-400 hover:text-white hover:bg-white/10"
+                  ? 'bg-[var(--primary-color)] text-white hover:bg-[var(--primary-color)]/80'
+                  : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/10'
               }`}
             >
               24 words

@@ -1,20 +1,22 @@
-import { ArrowDown, ArrowUp } from "lucide-react";
-import TabsLoading from "../home/tabs/tabs-loading";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import { truncateAddress } from "@/client/utils/formatters";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import HistoryDetailDialog from "./history-detail-dialog";
+import { ArrowDown, ArrowUp } from 'lucide-react';
+import TabsLoading from '../home/tabs/tabs-loading';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import useDevModeStore from '@/client/hooks/use-dev-mode';
+import { truncateAddress } from '@/client/utils/formatters';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import HistoryDetailDialog from './history-detail-dialog';
 import {
   HyperScanTokenTransfersItems,
   HyperScanTokenTransfersNextPageParams,
-} from "@/client/types/hyperscan-api";
-import { fetchHyperEvmTokenTransfers } from "@/client/services/hyperscan-api";
-import { useEffect, useMemo, useState, useCallback } from "react";
-import { getHLNameByAddress } from "@/client/services/hyperliquid-name-api";
-import InfiniteScroll from "react-infinite-scroll-component";
+} from '@/client/types/hyperscan-api';
+import { fetchHyperEvmTokenTransfers } from '@/client/services/hyperscan-api';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { getHLNameByAddress } from '@/client/services/hyperliquid-name-api';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 const History = () => {
   const { getActiveAccountWalletObject } = useWalletStore();
+  const { isDevMode } = useDevModeStore();
   const activeAccount = getActiveAccountWalletObject();
   const [transactions, setTransactions] = useState<
     HyperScanTokenTransfersItems[]
@@ -34,15 +36,16 @@ const History = () => {
     try {
       const data = await fetchHyperEvmTokenTransfers(
         activeAccount.eip155.address,
-        "both",
+        'both',
+        isDevMode,
         nextPageParams
       );
-      console.log("data", data);
-      setTransactions((prev) => [...prev, ...(data?.items || [])]);
+      console.log('data', data);
+      setTransactions(prev => [...prev, ...(data?.items || [])]);
       setNextPageParams(data?.next_page_params || undefined);
       setHasMore(data?.next_page_params !== null);
     } catch (error) {
-      console.error("Error fetching transactions:", error);
+      console.error('Error fetching transactions:', error);
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +61,7 @@ const History = () => {
   const listAddresses: string[] =
     useMemo(() => {
       return transactions
-        .map((item) => {
+        .map(item => {
           if (item.from.hash !== activeAccount?.eip155?.address) {
             return item.from.hash;
           }
@@ -67,7 +70,7 @@ const History = () => {
           }
           return null;
         })
-        .filter((address) => address !== null)
+        .filter(address => address !== null)
         .filter((address, index, self) => self.indexOf(address) === index);
     }, [transactions, activeAccount]) || [];
 
@@ -81,7 +84,7 @@ const History = () => {
         }
 
         const hlNames = await Promise.all(
-          addressesToProcess.map(async (address) => {
+          addressesToProcess.map(async address => {
             const hlName = await getHLNameByAddress(address);
 
             return {
@@ -99,19 +102,19 @@ const History = () => {
 
   // Function to format large numbers in a compact way
   const formatTokenAmount = (amount: number): string => {
-    if (amount === 0) return "0";
+    if (amount === 0) return '0';
 
     const absAmount = Math.abs(amount);
 
     // For very large numbers, use scientific notation or compact format
     if (absAmount >= 1e12) {
-      return (amount / 1e12).toFixed(2) + "T";
+      return (amount / 1e12).toFixed(2) + 'T';
     } else if (absAmount >= 1e9) {
-      return (amount / 1e9).toFixed(2) + "B";
+      return (amount / 1e9).toFixed(2) + 'B';
     } else if (absAmount >= 1e6) {
-      return (amount / 1e6).toFixed(2) + "M";
+      return (amount / 1e6).toFixed(2) + 'M';
     } else if (absAmount >= 1e3) {
-      return (amount / 1e3).toFixed(2) + "K";
+      return (amount / 1e3).toFixed(2) + 'K';
     } else if (absAmount >= 1) {
       return amount.toFixed(4);
     } else if (absAmount >= 0.0001) {
@@ -149,11 +152,11 @@ const History = () => {
         }
         endMessage={
           <p
-            style={{ textAlign: "center" }}
+            style={{ textAlign: 'center' }}
             className={
               !isLoading && transactions && transactions.length === 0
-                ? "hidden"
-                : ""
+                ? 'hidden'
+                : ''
             }
           >
             <b>Yay! You have seen it all</b>
@@ -163,15 +166,15 @@ const History = () => {
         pullDownToRefresh
         pullDownToRefreshThreshold={50}
         pullDownToRefreshContent={
-          <h3 style={{ textAlign: "center" }}>&#8595; Pull down to refresh</h3>
+          <h3 style={{ textAlign: 'center' }}>&#8595; Pull down to refresh</h3>
         }
         releaseToRefreshContent={
-          <h3 style={{ textAlign: "center" }}>&#8593; Release to refresh</h3>
+          <h3 style={{ textAlign: 'center' }}>&#8593; Release to refresh</h3>
         }
         className="flex flex-col gap-2"
       >
         {transactions &&
-          transactions.map((item) => {
+          transactions.map(item => {
             // Convert addresses to lowercase for comparison
             const toAddress = item.to.hash?.toLowerCase();
             const fromAddress = item.from.hash?.toLowerCase();
@@ -179,9 +182,9 @@ const History = () => {
 
             const isReceive = toAddress === userAddress;
             const isSend = fromAddress === userAddress;
-            const isTokenMinting = item.type.includes("token_minting");
-            const isTokenBurning = item.type.includes("token_burning");
-            const isTokenTransfer = item.type.includes("token_transfer");
+            const isTokenMinting = item.type.includes('token_minting');
+            const isTokenBurning = item.type.includes('token_burning');
+            const isTokenTransfer = item.type.includes('token_transfer');
 
             return (
               <div
@@ -192,18 +195,18 @@ const History = () => {
                 <div className="flex items-center justify-center size-12 rounded-full bg-[var(--primary-color)]/10 relative">
                   {item.token.icon_url && (
                     <img
-                      src={item.token.icon_url || ""}
+                      src={item.token.icon_url || ''}
                       alt="logo"
                       className="size-full rounded-full"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
+                      onError={e => {
+                        e.currentTarget.style.display = 'none';
                         const parent = e.currentTarget.parentElement;
                         if (parent) {
-                          const fallbackDiv = document.createElement("div");
+                          const fallbackDiv = document.createElement('div');
                           fallbackDiv.className =
-                            "size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-lg border border-[var(--primary-color)]/20";
+                            'size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-lg border border-[var(--primary-color)]/20';
                           fallbackDiv.textContent =
-                            item.token.symbol?.charAt(0).toUpperCase() || "";
+                            item.token.symbol?.charAt(0).toUpperCase() || '';
                           parent.insertBefore(fallbackDiv, e.currentTarget);
                         }
                       }}
@@ -211,7 +214,7 @@ const History = () => {
                   )}
                   {!item.token.icon_url && (
                     <div className="size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-lg border border-[var(--primary-color)]/20">
-                      {item.token.symbol?.charAt(0).toUpperCase() || "?"}
+                      {item.token.symbol?.charAt(0).toUpperCase() || '?'}
                     </div>
                   )}
                   {isSend && (
@@ -238,62 +241,64 @@ const History = () => {
                     !isTokenMinting &&
                     !isTokenBurning &&
                     !isTokenTransfer
-                      ? "Sent"
+                      ? 'Sent'
                       : isReceive &&
-                        !isTokenMinting &&
-                        !isTokenBurning &&
-                        !isTokenTransfer
-                      ? "Received"
-                      : isTokenMinting
-                      ? "Minted"
-                      : isTokenBurning
-                      ? "Burned"
-                      : "Transferred"}
-                    {item.token.type === "ERC-20" && " Token"}
-                    {item.token.type === "ERC-721" && " NFT"}
-                    {item.token.type === "ERC-1155" && " NFT"}
-                    {item.token.type === "ERC-404" && " Token"}
+                          !isTokenMinting &&
+                          !isTokenBurning &&
+                          !isTokenTransfer
+                        ? 'Received'
+                        : isTokenMinting
+                          ? 'Minted'
+                          : isTokenBurning
+                            ? 'Burned'
+                            : 'Transferred'}
+                    {item.token.type === 'ERC-20' && ' Token'}
+                    {item.token.type === 'ERC-721' && ' NFT'}
+                    {item.token.type === 'ERC-1155' && ' NFT'}
+                    {item.token.type === 'ERC-404' && ' Token'}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {(item.token.type === "ERC-20"
-                      ? item.token.symbol || item.token.name || "Unnamed token"
-                      : item.token.name || "Unnamed NFT"
+                    {(item.token.type === 'ERC-20'
+                      ? item.token.symbol || item.token.name || 'Unnamed token'
+                      : item.token.name || 'Unnamed NFT'
                     ).length > 10
-                      ? `${(item.token.type === "ERC-20"
+                      ? `${(item.token.type === 'ERC-20'
                           ? item.token.symbol ||
                             item.token.name ||
-                            "Unnamed token"
-                          : item.token.name || "Unnamed NFT"
+                            'Unnamed token'
+                          : item.token.name || 'Unnamed NFT'
                         ).substring(0, 10)}...`
-                      : item.token.type === "ERC-20"
-                      ? item.token.symbol || item.token.name || "Unnamed token"
-                      : item.token.name || "Unnamed NFT"}
+                      : item.token.type === 'ERC-20'
+                        ? item.token.symbol ||
+                          item.token.name ||
+                          'Unnamed token'
+                        : item.token.name || 'Unnamed NFT'}
                   </p>
                 </div>
 
                 <div className="flex flex-col items-end ml-auto">
                   <p className="text-sm font-bold">
-                    {isSend ? "-" : "+"}
+                    {isSend ? '-' : '+'}
                     {/* Display amount - you may need to format this based on token decimals */}
                     {formatTokenAmount(
-                      Number(item.total?.value || "0") /
-                        10 ** Number(item.total?.decimals || "0")
-                    )}{" "}
+                      Number(item.total?.value || '0') /
+                        10 ** Number(item.total?.decimals || '0')
+                    )}{' '}
                     {item.token.symbol && item.token.symbol.length > 6
                       ? `${item.token.symbol.substring(0, 6)}...`
-                      : item.token.symbol || "Unknown"}
+                      : item.token.symbol || 'Unknown'}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {isSend ? "To" : "From"}
+                    {isSend ? 'To' : 'From'}
                     {isReceive &&
                       ` ${
-                        hlNames.find((hlName) => hlName[item.from.hash])?.[
+                        hlNames.find(hlName => hlName[item.from.hash])?.[
                           item.from.hash
                         ] || truncateAddress(item.from.hash)
                       }`}
                     {isSend &&
                       ` ${
-                        hlNames.find((hlName) => hlName[item.to.hash])?.[
+                        hlNames.find(hlName => hlName[item.to.hash])?.[
                           item.to.hash
                         ] || truncateAddress(item.to.hash)
                       }`}

@@ -1,7 +1,7 @@
-import { cn } from "@/client/lib/utils";
+import { cn } from '@/client/lib/utils';
 
 const LoadingDisplay = ({
-  className = "text-[var(--primary-color-light)]",
+  className = 'text-[var(--primary-color-light)]',
 }: {
   className?: string;
 }) => {
@@ -10,7 +10,7 @@ const LoadingDisplay = ({
       <div className="flex-1 size-full flex flex-col items-center justify-center gap-2">
         <div
           className={cn(
-            "animate-spin rounded-full size-10 border-b-2 border-[var(--primary-color-light)]",
+            'animate-spin rounded-full size-10 border-b-2 border-[var(--primary-color-light)]',
             className
           )}
         ></div>

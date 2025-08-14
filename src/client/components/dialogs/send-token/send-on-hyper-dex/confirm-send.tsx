@@ -3,17 +3,17 @@ import {
   DialogContent,
   DialogFooter,
   DialogWrapper,
-} from "@/client/components/ui";
-import { DialogHeader } from "@/client/components/ui";
-import { Menu } from "@/client/components/ui/menu";
-import { sendMessage } from "@/client/utils/extension-message-utils";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import { ArrowLeft, Send, X } from "lucide-react";
-import useSendTokenHLStore from "@/client/hooks/use-send-token-HL-store";
-import { useEffect, useState } from "react";
-import { getAddressByDomain } from "@/client/services/hyperliquid-name-api";
-import { useHlPortfolioData } from "@/client/hooks/use-hyperliquid-portfolio";
-import useDevModeStore from "@/client/hooks/use-dev-mode";
+} from '@/client/components/ui';
+import { DialogHeader } from '@/client/components/ui';
+import { Menu } from '@/client/components/ui/menu';
+import { sendMessage } from '@/client/utils/extension-message-utils';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import { ArrowLeft, Send, X } from 'lucide-react';
+import useSendTokenHLStore from '@/client/hooks/use-send-token-HL-store';
+import { useEffect, useState } from 'react';
+import { getAddressByDomain } from '@/client/services/hyperliquid-name-api';
+import { useHlPortfolioData } from '@/client/hooks/use-hyperliquid-portfolio';
+import useDevModeStore from '@/client/hooks/use-dev-mode';
 
 // Real gas estimation function using the app's RPC infrastructure
 
@@ -27,7 +27,7 @@ const ConfirmSend = () => {
 
   useEffect(() => {
     const resolveRecipientAddress = async () => {
-      if (recipient.startsWith("0x")) {
+      if (recipient.startsWith('0x')) {
         setRecipientAddress(recipient);
         return;
       }
@@ -40,7 +40,7 @@ const ConfirmSend = () => {
             return;
           }
         } catch (error) {
-          console.error("Failed to resolve domain:", error);
+          console.error('Failed to resolve domain:', error);
         }
       }
 
@@ -54,10 +54,10 @@ const ConfirmSend = () => {
     if (token && recipient && amount) {
       try {
         setIsLoading(true);
-        console.log("🚀 Starting transaction send process...");
+        console.log('🚀 Starting transaction send process...');
 
         // Send transaction through the Hyperliquid handler
-        const result = await sendMessage("HYPERLIQUID_SEND_TOKEN", {
+        const result = await sendMessage('HYPERLIQUID_SEND_TOKEN', {
           destination: recipientAddress,
           amount,
           tokenName: token.tokenInfo?.name,
@@ -70,25 +70,25 @@ const ConfirmSend = () => {
 
         if (isSuccess) {
           refetchSpot();
-          setStep("success");
+          setStep('success');
         } else {
           alert(result.error);
         }
       } catch (error) {
-        console.error("❌ Transaction failed:", error);
+        console.error('❌ Transaction failed:', error);
 
-        let errorMessage = "Transaction failed. Please try again.";
+        let errorMessage = 'Transaction failed. Please try again.';
         if (error instanceof Error) {
-          if (error.message.includes("insufficient funds")) {
+          if (error.message.includes('insufficient funds')) {
             errorMessage =
-              "Insufficient funds for this transaction including gas fees.";
-          } else if (error.message.includes("gas")) {
+              'Insufficient funds for this transaction including gas fees.';
+          } else if (error.message.includes('gas')) {
             errorMessage =
-              "Gas estimation failed. The transaction may fail or gas price may have changed.";
-          } else if (error.message.includes("nonce")) {
-            errorMessage = "Transaction nonce error. Please try again.";
-          } else if (error.message.includes("rejected")) {
-            errorMessage = "Transaction was rejected.";
+              'Gas estimation failed. The transaction may fail or gas price may have changed.';
+          } else if (error.message.includes('nonce')) {
+            errorMessage = 'Transaction nonce error. Please try again.';
+          } else if (error.message.includes('rejected')) {
+            errorMessage = 'Transaction was rejected.';
           } else {
             errorMessage = `Transaction failed: ${error.message}`;
           }
@@ -102,7 +102,7 @@ const ConfirmSend = () => {
   };
 
   const handleBackFromConfirm = () => {
-    setStep("send");
+    setStep('send');
   };
 
   return (
@@ -128,19 +128,19 @@ const ConfirmSend = () => {
               <Menu
                 items={[
                   {
-                    label: "Amount",
+                    label: 'Amount',
                     description: `${amount} ${token.coin}`,
                   },
                   {
-                    label: "To",
+                    label: 'To',
                     isLongDescription: true,
                     description: `${recipientAddress}${
-                      recipient.endsWith(".hl") ? ` (${recipient})` : ""
+                      recipient.endsWith('.hl') ? ` (${recipient})` : ''
                     }`,
                   },
                   {
-                    label: "Network",
-                    description: "Hyperliquid DEX",
+                    label: 'Network',
+                    description: 'Hyperliquid DEX',
                   },
                 ]}
               />

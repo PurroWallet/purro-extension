@@ -1,5 +1,6 @@
-import { cn } from "@/client/lib/utils";
-import { ChevronRightIcon } from "lucide-react";
+import React from 'react';
+import { cn } from '@/client/lib/utils';
+import { ChevronRightIcon } from 'lucide-react';
 
 interface MenuProps {
   items: {
@@ -24,8 +25,8 @@ export const Menu = ({ items }: MenuProps) => {
             <button
               key={`${item.label}-${index}`}
               className={cn(
-                "flex items-center gap-3 pl-4 w-full hover:bg-white/10 transition-colors duration-200 cursor-pointer",
-                index !== items.length - 1 && "border-b border-white/10",
+                'flex items-center gap-3 pl-4 w-full hover:bg-white/10 transition-colors duration-200 cursor-pointer',
+                index !== items.length - 1 && 'border-b border-white/10',
                 item.itemClassName
               )}
               onClick={item.onClick}
@@ -33,24 +34,24 @@ export const Menu = ({ items }: MenuProps) => {
               {item.icon && <item.icon className="size-5" />}
               <div
                 className={cn(
-                  "flex items-center justify-between gap-3 py-4 pr-4 w-full",
-                  item.isLongDescription && "flex-col items-start"
+                  'flex items-center justify-between gap-3 py-4 pr-4 w-full',
+                  item.isLongDescription && 'flex-col items-start'
                 )}
               >
                 <p className="text-base font-medium text-left">{item.label}</p>
                 <div
                   className={cn(
-                    "flex items-center gap-2",
-                    item.isLongDescription && "items-start"
+                    'flex items-center gap-2',
+                    item.isLongDescription && 'items-start'
                   )}
                 >
                   {item.description && (
                     <p
                       className={cn(
-                        "flex-1 text-base text-gray-400 text-right max-w-[150px]",
+                        'flex-1 text-base text-gray-400 text-right max-w-[150px]',
                         item.isLongDescription
-                          ? "text-left max-w-full w-full break-all"
-                          : "truncate"
+                          ? 'text-left max-w-full w-full break-all'
+                          : 'truncate'
                       )}
                     >
                       {item.description}

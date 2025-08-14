@@ -1,5 +1,5 @@
-import { Button } from "@/client/components/ui";
-import SeedPhraseRender from "@/client/components/render/seed-phrase-render";
+import { Button } from '@/client/components/ui';
+import SeedPhraseRender from '@/client/components/render/seed-phrase-render';
 
 interface ShowGeneratedSeedPhraseProps {
   seedPhrase: string;
@@ -36,7 +36,7 @@ const ShowGeneratedSeedPhrase = ({
           onClick={onCreateWallet}
           disabled={isCreating}
         >
-          {isCreating ? "Creating..." : "Create Wallet"}
+          {isCreating ? 'Creating...' : 'Create Wallet'}
         </Button>
       </div>
     </div>

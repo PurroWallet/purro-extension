@@ -1,12 +1,12 @@
-import { useHlPortfolioData } from "@/client/hooks/use-hyperliquid-portfolio";
-import { formatCurrency } from "@/client/utils/formatters";
-import TabsLoading from "./tabs-loading";
-import TabsError from "./tabs-error";
-import useNetworkSettingsStore from "@/client/hooks/use-network-store";
-import { Button } from "@/client/components/ui";
-import { DepositHyperDexDrawer } from "@/client/components/drawers/deposit-hyperdex-drawer";
-import useDrawerStore from "@/client/hooks/use-drawer-store";
-import useWalletStore from "@/client/hooks/use-wallet-store";
+import { useHlPortfolioData } from '@/client/hooks/use-hyperliquid-portfolio';
+import { formatCurrency } from '@/client/utils/formatters';
+import TabsLoading from './tabs-loading';
+import TabsError from './tabs-error';
+import useNetworkSettingsStore from '@/client/hooks/use-network-store';
+import { Button } from '@/client/components/ui';
+import { DepositHyperDexDrawer } from '@/client/components/drawers/deposit-hyperdex-drawer';
+import useDrawerStore from '@/client/hooks/use-drawer-store';
+import useWalletStore from '@/client/hooks/use-wallet-store';
 
 // Define types for position data
 interface Position {
@@ -41,7 +41,7 @@ const WalletTabsPerps = () => {
   const { openDrawer } = useDrawerStore();
   const { activeAccount } = useWalletStore();
 
-  const isWatchOnly = activeAccount?.source === "watchOnly";
+  const isWatchOnly = activeAccount?.source === 'watchOnly';
 
   const { perpsData, isPerpsLoading, perpsError } = useHlPortfolioData({
     fetchSpot: false,
@@ -96,7 +96,7 @@ const WalletTabsPerps = () => {
             <div className="text-muted-foreground text-sm">Account Value</div>
             <div className="font-semibold text-lg flex items-center gap-2">
               {formatCurrency(
-                parseFloat(perpsData?.marginSummary?.accountValue || "0")
+                parseFloat(perpsData?.marginSummary?.accountValue || '0')
               )}
               {!isWatchOnly && (
                 <Button
@@ -115,7 +115,7 @@ const WalletTabsPerps = () => {
             <div className="text-muted-foreground text-sm">Margin Used</div>
             <div className="font-semibold text-lg">
               {formatCurrency(
-                parseFloat(perpsData?.marginSummary?.totalMarginUsed || "0")
+                parseFloat(perpsData?.marginSummary?.totalMarginUsed || '0')
               )}
             </div>
           </div>
@@ -123,14 +123,14 @@ const WalletTabsPerps = () => {
             <div className="text-muted-foreground text-sm">Total Position</div>
             <div className="font-semibold text-lg">
               {formatCurrency(
-                parseFloat(perpsData?.marginSummary?.totalNtlPos || "0")
+                parseFloat(perpsData?.marginSummary?.totalNtlPos || '0')
               )}
             </div>
           </div>
           <div className="bg-[var(--card-color)] rounded-lg p-3">
             <div className="text-muted-foreground text-sm">Withdrawable</div>
             <div className="font-semibold text-lg">
-              {formatCurrency(parseFloat(perpsData?.withdrawable || "0"))}
+              {formatCurrency(parseFloat(perpsData?.withdrawable || '0'))}
             </div>
           </div>
         </div>
@@ -160,11 +160,11 @@ const WalletTabsPerps = () => {
                         <div
                           className={`flex items-center gap-1 px-2 py-1 rounded-md font-semibold  ${
                             isLong(asset.position.szi)
-                              ? "bg-green-500/20 text-green-500"
-                              : "bg-red-500/20 text-red-500"
+                              ? 'bg-green-500/20 text-green-500'
+                              : 'bg-red-500/20 text-red-500'
                           }`}
                         >
-                          {isLong(asset.position.szi) ? "Long" : "Short"}
+                          {isLong(asset.position.szi) ? 'Long' : 'Short'}
                         </div>
                       </div>
                       <div className="text-muted-foreground text-xs capitalize text-gray-300">
@@ -176,8 +176,8 @@ const WalletTabsPerps = () => {
                     <div
                       className={`font-semibold text-lg ${
                         parseFloat(asset.position.unrealizedPnl) >= 0
-                          ? "text-green-500"
-                          : "text-red-500"
+                          ? 'text-green-500'
+                          : 'text-red-500'
                       }`}
                     >
                       <p className="text-muted-foreground text-xs text-right text-gray-300">
@@ -199,7 +199,7 @@ const WalletTabsPerps = () => {
                         {formatCurrency(
                           parseFloat(asset.position.szi),
                           2,
-                          "",
+                          '',
                           false
                         )}
                         {asset.position.coin}

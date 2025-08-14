@@ -1,74 +1,74 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 @import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&family=Livvic:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,900&display=swap');
 
 :root {
-    --primary-color: #088b88;
-    --primary-color-light: #8FFFFD;
-    --primary-color-dark: #166260;
-    --background-color: #0f1a1f;
-    --text-color: #f0f0f0;
-    --button-color: #8FFFFD;
-    --button-color-secondary: #163737;
-    --button-color-destructive: #FFA48F;
-    --card-color: #163737;
+  --primary-color: #088b88;
+  --primary-color-light: #8ffffd;
+  --primary-color-dark: #166260;
+  --background-color: #0f1a1f;
+  --text-color: #f0f0f0;
+  --button-color: #8ffffd;
+  --button-color-secondary: #163737;
+  --button-color-destructive: #ffa48f;
+  --card-color: #163737;
 
-    /* Chặn select text cho toàn bộ app */
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
+  /* Chặn select text cho toàn bộ app */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 /* Translation prevention styles */
 .notranslate {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 /* Prevent translation for specific elements */
-[translate="no"] {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
+[translate='no'] {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 /* Hide scrollbars globally */
 * {
-    scrollbar-width: none;
-    /* Firefox */
-    -ms-overflow-style: none;
-    /* Internet Explorer 10+ */
-    user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* Internet Explorer 10+ */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 *::-webkit-scrollbar {
-    display: none;
-    /* WebKit browsers (Chrome, Safari, Edge) */
+  display: none;
+  /* WebKit browsers (Chrome, Safari, Edge) */
 }
 
 /* Ensure body and html don't show scrollbars */
 html,
 body {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    background-color: var(--background-color);
-    color: var(--text-color);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
 
 input,
 textarea {
-    user-select: text;
-    -webkit-user-select: text;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .font-livvic {
-    font-family: "Livvic", sans-serif;
-    font-style: normal;
+  font-family: 'Livvic', sans-serif;
+  font-style: normal;
 }

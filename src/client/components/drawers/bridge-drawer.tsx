@@ -1,4 +1,4 @@
-import { deBridgeLogo, hyperliquidLogo, hyperUnit } from "@/assets/logo";
+import { deBridgeLogo, hyperliquidLogo, hyperUnit } from '@/assets/logo';
 
 export const BridgeDrawer = () => {
   return (
@@ -6,11 +6,11 @@ export const BridgeDrawer = () => {
       <p className="text-sm text-white/80 mb-4">
         We are currently still building In-App Bridge. However, you can still
         bridge token to Hyperliquid & HyperEVM right on DEX or some the DApps
-        below. Curious? Check out our{" "}
+        below. Curious? Check out our{' '}
         <a
           href="https://docs.purro.xyz/roadmap"
           target="_blank"
-          className="text-[var(--primary-color-light)]"
+          className="text-[var(--primary-color-light)]" rel="noreferrer"
         >
           roadmap.
         </a>
@@ -19,7 +19,7 @@ export const BridgeDrawer = () => {
         <div
           className="w-full bg-[var(--primary-color)]/60 rounded-lg px-4 py-3 flex items-center justify-start border border-[var(--primary-color)]/20 hover:border-[var(--primary-color)]/40 cursor-pointer transition-all hover:bg-[var(--primary-color)]/80 gap-2"
           onClick={() => {
-            window.open("https://app.hyperliquid.xyz/trade", "_blank");
+            window.open('https://app.hyperliquid.xyz/trade', '_blank');
           }}
         >
           <img src={hyperliquidLogo} alt="Hyperliquid" className="size-8" />
@@ -28,7 +28,7 @@ export const BridgeDrawer = () => {
         <div
           className="w-full bg-[var(--primary-color)]/60 rounded-lg px-4 py-3 flex items-center justify-start border border-[var(--primary-color)]/20 hover:border-[var(--primary-color)]/40 cursor-pointer transition-all hover:bg-[var(--primary-color)]/80 gap-2"
           onClick={() => {
-            window.open("https://app.hyperunit.xyz", "_blank");
+            window.open('https://app.hyperunit.xyz', '_blank');
           }}
         >
           <img src={hyperUnit} alt="Hyperliquid" className="size-8" />
@@ -38,8 +38,8 @@ export const BridgeDrawer = () => {
           className="w-full bg-[var(--primary-color)]/60 rounded-lg px-4 py-3 flex items-center justify-start border border-[var(--primary-color)]/20 hover:border-[var(--primary-color)]/40 cursor-pointer transition-all hover:bg-[var(--primary-color)]/80 gap-2"
           onClick={() => {
             window.open(
-              "https://app.debridge.finance/?inputChain=8453&outputChain=999",
-              "_blank"
+              'https://app.debridge.finance/?inputChain=8453&outputChain=999',
+              '_blank'
             );
           }}
         >

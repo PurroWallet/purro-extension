@@ -1,18 +1,18 @@
-import useDepositTransferStore from "@/client/hooks/use-deposit-transfer-store";
+import useDepositTransferStore from '@/client/hooks/use-deposit-transfer-store';
 import {
   DialogWrapper,
   DialogHeader,
   DialogContent,
   DialogFooter,
   Button,
-} from "@/client/components/ui";
-import { ArrowDownUp, X } from "lucide-react";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import { useMemo, useState } from "react";
-import { useHlPortfolioData } from "@/client/hooks/use-hyperliquid-portfolio";
-import { formatCurrency } from "@/client/utils/formatters";
-import { sendMessage } from "@/client/utils/extension-message-utils";
-import useDevModeStore from "@/client/hooks/use-dev-mode";
+} from '@/client/components/ui';
+import { ArrowDownUp, X } from 'lucide-react';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import { useMemo, useState } from 'react';
+import { useHlPortfolioData } from '@/client/hooks/use-hyperliquid-portfolio';
+import { formatCurrency } from '@/client/utils/formatters';
+import { sendMessage } from '@/client/utils/extension-message-utils';
+import useDevModeStore from '@/client/hooks/use-dev-mode';
 
 const Transfer = () => {
   const { isDevMode } = useDevModeStore();
@@ -30,17 +30,17 @@ const Transfer = () => {
   const spotBalance = useMemo(() => {
     if (isSpotLoading) return 0;
 
-    const usdcBalance = spotData.balances.find((token) => {
-      return token.coin.toUpperCase() === "USDC";
+    const usdcBalance = spotData.balances.find(token => {
+      return token.coin.toUpperCase() === 'USDC';
     });
 
     return usdcBalance?.total || 0;
   }, [spotData, isSpotLoading]);
 
   const perpBalance = useMemo(() => {
-    if (isPerpsLoading) return "0";
+    if (isPerpsLoading) return '0';
 
-    return perpsData?.withdrawable.toString() || "0";
+    return perpsData?.withdrawable.toString() || '0';
   }, [spotData, isSpotLoading]);
 
   const isValidAmount = useMemo(() => {
@@ -71,7 +71,7 @@ const Transfer = () => {
     setIsLoading(true);
     try {
       const result = await sendMessage(
-        "HYPERLIQUID_TRANSFER_BETWEEN_SPOT_AND_PERP",
+        'HYPERLIQUID_TRANSFER_BETWEEN_SPOT_AND_PERP',
         {
           amount,
           fromSpot: isFromSpot,
@@ -80,12 +80,12 @@ const Transfer = () => {
       );
 
       if (result.success) {
-        setStep("success");
+        setStep('success');
       } else {
-        console.error("Error sending transfer message:", result.error);
+        console.error('Error sending transfer message:', result.error);
       }
     } catch (error) {
-      console.error("Error sending transfer message:", error);
+      console.error('Error sending transfer message:', error);
     } finally {
       refetchAll();
       setIsLoading(false);
@@ -105,7 +105,7 @@ const Transfer = () => {
             <div className="flex flex-col gap-2 w-full rounded-lg bg-[var(--card-color)] px-4 pb-4 pt-2">
               <p>from</p>
               <div className="text-lg text-[var(--primary-color-light)]">
-                {isFromSpot ? "Hyperliquid Spot" : "Hyperliquid Preps"}
+                {isFromSpot ? 'Hyperliquid Spot' : 'Hyperliquid Preps'}
               </div>
             </div>
             <div className="absolute rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[var(--background-color)] p-2">
@@ -119,7 +119,7 @@ const Transfer = () => {
             <div className="flex flex-col gap-2 w-full rounded-lg bg-[var(--card-color)] px-4 pt-4 pb-2">
               <p>to</p>
               <div className="text-lg text-[var(--primary-color-light)]">
-                {isFromSpot ? "Hyperliquid Preps" : "Hyperliquid Spot"}
+                {isFromSpot ? 'Hyperliquid Preps' : 'Hyperliquid Spot'}
               </div>
             </div>
           </div>
@@ -137,14 +137,14 @@ const Transfer = () => {
               <input
                 type="number"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder={"0.00"}
+                onChange={e => setAmount(e.target.value)}
+                placeholder={'0.00'}
                 className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 pr-12 text-base transition-colors duration-200 ${
                   amount && !isValidAmount
-                    ? "border-red-500 focus:ring-red-500"
-                    : "border-white/10 focus:ring-[var(--primary-color-light)]"
+                    ? 'border-red-500 focus:ring-red-500'
+                    : 'border-white/10 focus:ring-[var(--primary-color-light)]'
                 }`}
-                step={"0.01"}
+                step={'0.01'}
                 min="0"
               />
               <Button
@@ -158,11 +158,11 @@ const Transfer = () => {
             {/* Conversion and Available Balance */}
             <div className="flex items-center justify-end text-sm text-gray-400">
               <span>
-                Available:{" "}
+                Available:{' '}
                 {formatCurrency(
                   isFromSpot ? spotBalance : perpBalance,
                   2,
-                  "USDC"
+                  'USDC'
                 )}
               </span>
             </div>
@@ -189,7 +189,7 @@ const Transfer = () => {
           {isLoading ? (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
           ) : (
-            "Confirm"
+            'Confirm'
           )}
         </Button>
       </DialogFooter>

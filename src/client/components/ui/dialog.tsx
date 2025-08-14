@@ -1,7 +1,8 @@
-import { cn } from "@/client/lib/utils";
-import { ArrowLeft } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
-import useDialogStore from "@/client/hooks/use-dialog-store";
+import React from 'react';
+import { cn } from '@/client/lib/utils';
+import { ArrowLeft } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import useDialogStore from '@/client/hooks/use-dialog-store';
 
 const DialogContent = ({
   children,
@@ -13,7 +14,7 @@ const DialogContent = ({
   return (
     <div
       className={cn(
-        "p-4 flex-1 overflow-y-auto flex flex-col gap-4",
+        'p-4 flex-1 overflow-y-auto flex flex-col gap-4',
         className
       )}
     >
@@ -59,7 +60,7 @@ const DialogFooter = ({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 justify-between py-3 px-4",
+        'flex items-center gap-2 justify-between py-3 px-4',
         className
       )}
     >
@@ -78,14 +79,14 @@ const DialogWrapper = ({
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        className={cn("flex flex-col h-full", className)}
+        className={cn('flex flex-col h-full', className)}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
         transition={{
           duration: 0.2,
           ease: [0.25, 0.46, 0.45, 0.94],
-          type: "tween",
+          type: 'tween',
         }}
       >
         {children}
@@ -109,12 +110,12 @@ const Dialog = () => {
         >
           <motion.div
             className="bg-[var(--background-color)] size-full flex flex-col"
-            initial={{ y: "100%" }}
+            initial={{ y: '100%' }}
             animate={{ y: 0 }}
-            exit={{ y: "100%" }}
+            exit={{ y: '100%' }}
             transition={{
               duration: 0.2,
-              ease: "easeOut",
+              ease: 'easeOut',
             }}
           >
             {component}

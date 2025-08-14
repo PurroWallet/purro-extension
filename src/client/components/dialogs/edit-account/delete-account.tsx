@@ -1,14 +1,14 @@
-import useWallet from "@/client/hooks/use-wallet";
-import useWalletStore from "@/client/hooks/use-wallet-store";
+import useWallet from '@/client/hooks/use-wallet';
+import useWalletStore from '@/client/hooks/use-wallet-store';
 import {
   Button,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogWrapper,
-} from "@/client/components/ui";
-import useEditAccountStore from "@/client/hooks/use-edit-account-store";
-import { useEffect } from "react";
+} from '@/client/components/ui';
+import useEditAccountStore from '@/client/hooks/use-edit-account-store';
+import { useEffect } from 'react';
 
 const DeleteAccount = ({
   onBack,
@@ -20,7 +20,7 @@ const DeleteAccount = ({
   const { removeAccount } = useWallet();
   const { selectedAccountId } = useEditAccountStore();
   const { accounts, hasWallet } = useWalletStore();
-  const account = accounts.find((account) => account.id === selectedAccountId);
+  const account = accounts.find(account => account.id === selectedAccountId);
   const isAccountHaveSeedPhrase = account?.seedPhraseId !== undefined;
 
   // Check if this is the last account
@@ -29,7 +29,7 @@ const DeleteAccount = ({
   useEffect(() => {
     // If wallet no longer exists (was reset), redirect to onboarding
     if (!hasWallet) {
-      window.location.href = "/onboarding.html";
+      window.location.href = '/onboarding.html';
     }
   }, [hasWallet]);
 
@@ -73,7 +73,7 @@ const DeleteAccount = ({
             </div>
           </div>
 
-          {isAccountHaveSeedPhrase && account?.source !== "watchOnly" && (
+          {isAccountHaveSeedPhrase && account?.source !== 'watchOnly' && (
             <div className="p-3 bg-amber-900/20 border border-amber-700/50 rounded-lg">
               <p className="text-sm text-amber-200">
                 <strong>Seed Phrase Account:</strong> This account has a seed
@@ -83,7 +83,7 @@ const DeleteAccount = ({
             </div>
           )}
 
-          {!isAccountHaveSeedPhrase && account?.source !== "watchOnly" && (
+          {!isAccountHaveSeedPhrase && account?.source !== 'watchOnly' && (
             <div className="p-3 bg-amber-900/20 border border-amber-700/50 rounded-lg">
               <p className="text-sm text-amber-200">
                 <strong>Private Key Account:</strong> This account uses a

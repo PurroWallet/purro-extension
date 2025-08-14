@@ -1,6 +1,6 @@
-import { Button } from "@/client/components/ui";
-import { ChevronRight, ListOrdered, KeyRound, Plus, Eye } from "lucide-react";
-import useCreateWalletStore from "@/client/hooks/use-create-wallet-store";
+import { Button } from '@/client/components/ui';
+import { ChevronRight, ListOrdered, KeyRound, Plus, Eye } from 'lucide-react';
+import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
 
 const ChooseImportMethod = ({
   onCreateAccount,
@@ -16,22 +16,22 @@ const ChooseImportMethod = ({
   const { setImportType } = useCreateWalletStore();
 
   const handleCreateAccount = () => {
-    setImportType("create-account");
+    setImportType('create-account');
     onCreateAccount();
   };
 
   const handleSeedPhrase = () => {
-    setImportType("seed");
+    setImportType('seed');
     onSeedPhrase();
   };
 
   const handlePrivateKey = () => {
-    setImportType("privateKey");
+    setImportType('privateKey');
     onPrivateKey();
   };
 
   const handleWatchOnly = () => {
-    setImportType("watchOnly");
+    setImportType('watchOnly');
     onWatchOnly();
   };
 

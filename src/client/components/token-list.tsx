@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { formatCurrency } from "../utils/formatters";
-import { ChainType } from "../types/wallet";
-import { getTokenLogo } from "../utils/icons";
-import { getNetworkIcon } from "@/utils/network-icons";
+import { useState } from 'react';
+import { formatCurrency } from '../utils/formatters';
+import { ChainType } from '../types/wallet';
+import { getTokenLogo } from '../utils/icons';
+import { getNetworkIcon } from '@/utils/network-icons';
 
 interface UnifiedToken {
   chain: ChainType;
@@ -33,9 +33,9 @@ interface TokenItemProps {
 
 const TokenItem = ({ token, onClick }: TokenItemProps) => {
   // Safely handle potential null/undefined values
-  const safeSymbol = token.symbol || "UNKNOWN";
-  const safeName = token.name || "Unknown Token";
-  const safeChainName = token.chainName || "Unknown Chain";
+  const safeSymbol = token.symbol || 'UNKNOWN';
+  const safeName = token.name || 'Unknown Token';
+  const safeChainName = token.chainName || 'Unknown Chain';
   const safeBalanceFormatted = token.balanceFormatted || 0;
   const safeValue = token.usdValue || 0;
 
@@ -54,8 +54,8 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
     <div
       className={`bg-[var(--card-color)] rounded-lg p-3 flex items-center gap-3 ${
         onClick
-          ? "cursor-pointer hover:bg-[var(--card-color)]/80 transition-colors"
-          : ""
+          ? 'cursor-pointer hover:bg-[var(--card-color)]/80 transition-colors'
+          : ''
       }`}
       onClick={handleClick}
     >
@@ -98,7 +98,7 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
             {safeBalanceFormatted.toLocaleString(undefined, {
               maximumFractionDigits: 6,
               minimumFractionDigits: 0,
-            })}{" "}
+            })}{' '}
             <span className="font-medium">{safeSymbol}</span>
           </div>
         </div>
@@ -115,8 +115,8 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
 const TokenList = ({
   tokens,
   onTokenClick,
-  className = "",
-  emptyMessage = "No tokens found",
+  className = '',
+  emptyMessage = 'No tokens found',
 }: TokenListProps) => {
   if (!tokens || tokens.length === 0) {
     return (

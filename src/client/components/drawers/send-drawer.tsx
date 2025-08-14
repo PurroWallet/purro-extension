@@ -1,6 +1,6 @@
-import useDrawerStore from "@/client/hooks/use-drawer-store";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import { SendOnEVM, SendOnHyperDex } from "../dialogs";
+import useDrawerStore from '@/client/hooks/use-drawer-store';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import { SendOnEVM, SendOnHyperDex } from '../dialogs';
 
 export const SendDrawer = () => {
   const { openDialog } = useDialogStore();

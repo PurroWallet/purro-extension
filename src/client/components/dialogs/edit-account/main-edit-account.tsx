@@ -7,21 +7,21 @@ import {
   Pencil,
   Trash2,
   X,
-} from "lucide-react";
-import { DialogContent, DialogHeader } from "../../ui";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import useWallet from "@/client/hooks/use-wallet";
-import { useEffect, useState } from "react";
-import { SeedPhraseData } from "@/background/types/account";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import useEditAccountStore from "@/client/hooks/use-edit-account-store";
-import { AccountIcon } from "../../account";
-import { Menu } from "../../ui/menu";
-import { getHLNameByAddress } from "@/client/services/hyperliquid-name-api";
-import { HlNameIcon } from "@/assets/icon-component/hl-name-icon";
+} from 'lucide-react';
+import { DialogContent, DialogHeader } from '../../ui';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import useWallet from '@/client/hooks/use-wallet';
+import { useEffect, useState } from 'react';
+import { SeedPhraseData } from '@/background/types/account';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import useEditAccountStore from '@/client/hooks/use-edit-account-store';
+import { AccountIcon } from '../../account';
+import { Menu } from '../../ui/menu';
+import { getHLNameByAddress } from '@/client/services/hyperliquid-name-api';
+import { HlNameIcon } from '@/assets/icon-component/hl-name-icon';
 
 // Constants for easy customization
-const HL_NAME_LABEL = "HL Name";
+const HL_NAME_LABEL = 'HL Name';
 
 interface MainEditAccountProps {
   onEditIcon: () => void;
@@ -42,11 +42,11 @@ const MainEditAccount = ({
   const { accounts, getAccountWalletObject } = useWalletStore();
   const { selectedAccountId } = useEditAccountStore();
   const { getSeedPhraseById } = useWallet();
-  const account = accounts.find((account) => account.id === selectedAccountId);
+  const account = accounts.find(account => account.id === selectedAccountId);
   const accountWallet = selectedAccountId
     ? getAccountWalletObject(selectedAccountId)
     : null;
-  const isWatchOnly = account?.source === "watchOnly";
+  const isWatchOnly = account?.source === 'watchOnly';
   const [seedPhrase, setSeedPhrase] = useState<SeedPhraseData | null>(null);
   const [hlName, setHlName] = useState<string | null>(null);
 
@@ -60,7 +60,7 @@ const MainEditAccount = ({
   useEffect(() => {
     let isMounted = true;
     if (accountAddress) {
-      getHLNameByAddress(accountAddress).then((name) => {
+      getHLNameByAddress(accountAddress).then(name => {
         if (isMounted) setHlName(name);
       });
     } else {
@@ -71,15 +71,15 @@ const MainEditAccount = ({
     };
   }, [accountAddress]);
 
-  if (account?.source === "seedPhrase") {
-    useEffect(() => {
+  useEffect(() => {
+    if (account?.source === 'seedPhrase') {
       const fetchSeedPhrase = async () => {
-        const seedPhrase = await getSeedPhraseById(account?.seedPhraseId || "");
+        const seedPhrase = await getSeedPhraseById(account?.seedPhraseId || '');
         setSeedPhrase(seedPhrase);
       };
       fetchSeedPhrase();
-    }, [account?.seedPhraseId]);
-  }
+    }
+  }, [account?.seedPhraseId, account?.source, getSeedPhraseById]);
 
   return (
     <>
@@ -117,7 +117,7 @@ const MainEditAccount = ({
                     onClick: () => {
                       window.open(
                         `https://app.hlnames.xyz/name/${hlName}`,
-                        "_blank"
+                        '_blank'
                       );
                     },
                   },
@@ -125,7 +125,7 @@ const MainEditAccount = ({
               : []),
             {
               icon: IdCard,
-              label: "Name",
+              label: 'Name',
               onClick: onEditName,
               description: account?.name,
               arrowLeft: true,
@@ -138,19 +138,19 @@ const MainEditAccount = ({
               {
                 isHidden: !seedPhrase,
                 icon: ListOrdered,
-                label: "Recovery Phrase",
+                label: 'Recovery Phrase',
                 description: seedPhrase?.name,
               },
               {
                 isHidden: !seedPhrase,
                 icon: FileLock,
-                label: "Show Recovery Phrase",
+                label: 'Show Recovery Phrase',
                 onClick: onShowSeedPhrase,
                 arrowLeft: true,
               },
               {
                 icon: FileKey2,
-                label: "Private Key",
+                label: 'Private Key',
                 onClick: onShowPrivateKey,
                 arrowLeft: true,
               },
@@ -161,9 +161,9 @@ const MainEditAccount = ({
           items={[
             {
               icon: Trash2,
-              label: "Remove Account",
+              label: 'Remove Account',
               onClick: onRemoveAccount,
-              itemClassName: "text-red-400",
+              itemClassName: 'text-red-400',
             },
           ]}
         />

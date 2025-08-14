@@ -1,7 +1,7 @@
-import { Copy } from "lucide-react";
-import { Button } from "@/client/components/ui";
-import { Check } from "lucide-react";
-import { useState } from "react";
+import { Copy } from 'lucide-react';
+import { Button } from '@/client/components/ui';
+import { Check } from 'lucide-react';
+import { useState } from 'react';
 
 const PrivateKeyDisplay = ({ privateKey }: { privateKey: string }) => {
   const [copied, setCopied] = useState(false);

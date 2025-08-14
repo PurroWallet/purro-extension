@@ -3,29 +3,29 @@ import {
   DialogContent,
   DialogFooter,
   DialogWrapper,
-} from "@/client/components/ui";
-import { DialogHeader } from "@/client/components/ui";
-import useDepositTransferStore from "@/client/hooks/use-deposit-transfer-store";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import { CheckCircle, Repeat, X } from "lucide-react";
-import { motion } from "motion/react";
+} from '@/client/components/ui';
+import { DialogHeader } from '@/client/components/ui';
+import useDepositTransferStore from '@/client/hooks/use-deposit-transfer-store';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import { CheckCircle, Repeat, X } from 'lucide-react';
+import { motion } from 'motion/react';
 
 const TransactionSuccess = () => {
   const { amount, isFromSpot, setStep, setAmount } = useDepositTransferStore();
   const { closeDialog } = useDialogStore();
 
-  const fromLabel = isFromSpot ? "Hyperliquid Spot" : "Hyperliquid Perps";
-  const toLabel = isFromSpot ? "Hyperliquid Perps" : "Hyperliquid Spot";
+  const fromLabel = isFromSpot ? 'Hyperliquid Spot' : 'Hyperliquid Perps';
+  const toLabel = isFromSpot ? 'Hyperliquid Perps' : 'Hyperliquid Spot';
 
   const handleDone = () => {
-    setAmount("");
-    setStep("transfer");
+    setAmount('');
+    setStep('transfer');
     closeDialog();
   };
 
   const handleTransferAgain = () => {
-    setAmount("");
-    setStep("transfer");
+    setAmount('');
+    setStep('transfer');
   };
 
   return (
@@ -48,7 +48,7 @@ const TransactionSuccess = () => {
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
             className="flex items-center justify-center"
           >
             <div className="relative">

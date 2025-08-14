@@ -3,16 +3,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogWrapper,
-} from "@/client/components/ui/dialog";
-import { Button } from "@/client/components/ui";
-import useWallet from "@/client/hooks/use-wallet";
+} from '@/client/components/ui/dialog';
+import { Button } from '@/client/components/ui';
+import useWallet from '@/client/hooks/use-wallet';
 
 const ResetWallet = ({ onBack }: { onBack: () => void }) => {
   const { resetWallet } = useWallet();
 
   const handleReset = async () => {
     await resetWallet();
-    window.open("/html/onboarding.html", "_blank");
+    window.open('/html/onboarding.html', '_blank');
   };
 
   return (

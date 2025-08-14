@@ -1,12 +1,12 @@
-import DockToLeftIcon from "@/assets/icon-component/dock-to-left-icon";
-import { hyperliquidLogo } from "@/assets/logo";
-import { AccountIcon, AccountName } from "@/client/components/account";
-import { openSidePanel } from "@/client/lib/utils";
-import { cn } from "@/client/lib/utils";
-import { X } from "lucide-react";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import useAccountSheetStore from "@/client/hooks/use-account-sheet-store";
-import { useMemo } from "react";
+import DockToLeftIcon from '@/assets/icon-component/dock-to-left-icon';
+import { hyperliquidLogo } from '@/assets/logo';
+import { AccountIcon, AccountName } from '@/client/components/account';
+import { openSidePanel } from '@/client/lib/utils';
+import { cn } from '@/client/lib/utils';
+import { X } from 'lucide-react';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import useAccountSheetStore from '@/client/hooks/use-account-sheet-store';
+import { useMemo } from 'react';
 
 const MainHeader = ({
   className,
@@ -17,7 +17,7 @@ const MainHeader = ({
   onHistoryToggle,
 }: {
   className?: string;
-  currentScreen: "home" | "explore" | "nft" | "history" | "swap";
+  currentScreen: 'home' | 'explore' | 'nft' | 'history' | 'swap';
   onNftNetworkToggle?: () => void;
   onHistoryToggle?: () => void;
   isNftNetworkVisible: boolean;
@@ -25,9 +25,9 @@ const MainHeader = ({
 }) => {
   const { activeAccount, wallets } = useWalletStore();
   const { open: openAccountSheet } = useAccountSheetStore();
-  const isSidepanel = window.location.pathname.includes("sidepanel.html");
-  const isNftScreen = currentScreen === "nft";
-  const isHistoryScreen = currentScreen === "history";
+  const isSidepanel = window.location.pathname.includes('sidepanel.html');
+  const isNftScreen = currentScreen === 'nft';
+  const isHistoryScreen = currentScreen === 'history';
   const activeAccountAddress = useMemo(() => {
     return wallets[activeAccount?.id as string]?.eip155?.address;
   }, [activeAccount, wallets]);
@@ -35,7 +35,7 @@ const MainHeader = ({
   return (
     <div
       className={cn(
-        "p-3 flex items-center justify-between border-b border-white/10 z-[40] relative",
+        'p-3 flex items-center justify-between border-b border-white/10 z-[40] relative',
         className
       )}
     >
@@ -100,8 +100,8 @@ export const NftNetworkNotification = ({
   return (
     <div
       className={cn(
-        "bg-[var(--card-color)] border-b border-white/10 w-full overflow-hidden transition-all duration-300 ease-in-out",
-        isVisible ? "max-h-20 opacity-100" : "max-h-0 opacity-0"
+        'bg-[var(--card-color)] border-b border-white/10 w-full overflow-hidden transition-all duration-300 ease-in-out',
+        isVisible ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'
       )}
     >
       <div className="p-2">
@@ -118,8 +118,8 @@ export const HistoryNotification = ({ isVisible }: { isVisible: boolean }) => {
   return (
     <div
       className={cn(
-        "bg-[var(--card-color)] border-b border-white/10 w-full overflow-hidden transition-all duration-300 ease-in-out",
-        isVisible ? "max-h-20 opacity-100" : "max-h-0 opacity-0"
+        'bg-[var(--card-color)] border-b border-white/10 w-full overflow-hidden transition-all duration-300 ease-in-out',
+        isVisible ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'
       )}
     >
       <div className="p-2">

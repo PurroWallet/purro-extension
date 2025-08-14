@@ -1,25 +1,25 @@
-import { Button } from "../ui";
+import { Button } from '../ui';
 import {
   arbitrumLogo,
   baseLogo,
   ethereumLogo,
   hyperliquidLogo,
   hyperliquidLogoDark,
-} from "@/assets/logo";
-import { QRCodeCanvas } from "qrcode.react";
+} from '@/assets/logo';
+import { QRCodeCanvas } from 'qrcode.react';
 
-import { truncateAddress } from "@/client/utils/formatters";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import useNetworkSettingsStore from "@/client/hooks/use-network-store";
+import { truncateAddress } from '@/client/utils/formatters';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import useNetworkSettingsStore from '@/client/hooks/use-network-store';
 import {
   ArrowLeftIcon,
   CopyIcon,
   QrCodeIcon,
   CheckIcon,
   DownloadIcon,
-} from "lucide-react";
-import { useState, useRef } from "react";
-import { ChainType } from "@/client/types/wallet";
+} from 'lucide-react';
+import { useState, useRef } from 'react';
+import { ChainType } from '@/client/types/wallet';
 
 interface ChainOption {
   id: ChainType;
@@ -29,23 +29,23 @@ interface ChainOption {
 
 const chainOptions: ChainOption[] = [
   {
-    id: "hyperevm",
-    name: "HyperEVM",
+    id: 'hyperevm',
+    name: 'HyperEVM',
     logo: hyperliquidLogo,
   },
   {
-    id: "ethereum",
-    name: "Ethereum",
+    id: 'ethereum',
+    name: 'Ethereum',
     logo: ethereumLogo,
   },
   {
-    id: "base",
-    name: "Base",
+    id: 'base',
+    name: 'Base',
     logo: baseLogo,
   },
   {
-    id: "arbitrum",
-    name: "Arbitrum",
+    id: 'arbitrum',
+    name: 'Arbitrum',
     logo: arbitrumLogo,
   },
 ];
@@ -67,7 +67,7 @@ const ChainOptionItem = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy:", err);
+      console.error('Failed to copy:', err);
     }
   };
 
@@ -109,15 +109,15 @@ export const ReceiveChooseDrawer = () => {
   const { isNetworkActive } = useNetworkSettingsStore();
 
   // Filter chain options to only show active networks
-  const activeChainOptions = chainOptions.filter((option) =>
-    isNetworkActive(option.id)
+  const activeChainOptions = chainOptions.filter(option =>
+    isNetworkActive(option.id as any)
   );
 
   if (selectedChain) {
     return (
       <ReceiveAddress
         chain={selectedChain}
-        address={activeAccount?.eip155?.address || ""}
+        address={activeAccount?.eip155?.address || ''}
         back={() => setSelectedChain(null)}
       />
     );
@@ -136,11 +136,11 @@ export const ReceiveChooseDrawer = () => {
 
         {/* Chain Options */}
         <div className="flex flex-col gap-2 flex-1">
-          {activeChainOptions.map((option) => (
+          {activeChainOptions.map(option => (
             <ChainOptionItem
               key={option.id}
               option={option}
-              address={activeAccount?.eip155?.address || ""}
+              address={activeAccount?.eip155?.address || ''}
               onClick={setSelectedChain}
             />
           ))}
@@ -169,7 +169,7 @@ export const ReceiveAddress = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy:", err);
+      console.error('Failed to copy:', err);
     }
   };
 
@@ -179,12 +179,12 @@ export const ReceiveAddress = ({
       if (!canvas) return;
 
       // Convert canvas to blob
-      canvas.toBlob((blob) => {
+      canvas.toBlob(blob => {
         if (!blob) return;
 
         // Create download link
         const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
+        const link = document.createElement('a');
         link.href = url;
         link.download = `${getChainName(chain)}-address-qr.png`;
         document.body.appendChild(link);
@@ -194,9 +194,9 @@ export const ReceiveAddress = ({
 
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
-      }, "image/png");
+      }, 'image/png');
     } catch (err) {
-      console.error("Failed to save QR code:", err);
+      console.error('Failed to save QR code:', err);
     }
   };
 
@@ -224,17 +224,17 @@ export const ReceiveAddress = ({
           <QRCodeCanvas
             value={address}
             size={200}
-            level={"L"}
+            level={'L'}
             ref={qrRef}
             imageSettings={{
               src:
-                chain === "hyperevm"
+                chain === 'hyperevm'
                   ? hyperliquidLogoDark
-                  : chain === "ethereum"
-                  ? ethereumLogo
-                  : chain === "base"
-                  ? baseLogo
-                  : arbitrumLogo,
+                  : chain === 'ethereum'
+                    ? ethereumLogo
+                    : chain === 'base'
+                      ? baseLogo
+                      : arbitrumLogo,
               x: undefined,
               y: undefined,
               height: 32,
@@ -260,12 +260,12 @@ export const ReceiveAddress = ({
       <div className="mt-2 flex gap-2">
         <Button onClick={handleCopy} disabled={copied} className="flex-1">
           <CopyIcon className="size-4" />
-          {copied ? "Copied!" : "Copy Address"}
+          {copied ? 'Copied!' : 'Copy Address'}
         </Button>
 
         <Button onClick={handleSaveQR} disabled={saved} className="flex-1">
           <DownloadIcon className="size-4" />
-          {saved ? "Saved!" : "Save QR"}
+          {saved ? 'Saved!' : 'Save QR'}
         </Button>
       </div>
     </div>

@@ -1,21 +1,21 @@
-import { ArrowLeft, Image } from "lucide-react";
+import { ArrowLeft, Image } from 'lucide-react';
 import {
   HyperScanNftInstancesItem,
   HyperScanNftInstancesNextPageParams,
-} from "@/client/types/hyperscan-api";
-import NftInstancesIdDialog from "./nft-instances-id-dialog";
-import { useState, useEffect } from "react";
-import TravelExplore from "@/assets/icon-component/travel-explore";
+} from '@/client/types/hyperscan-api';
+import NftInstancesIdDialog from './nft-instances-id-dialog';
+import { useState, useEffect } from 'react';
+import TravelExplore from '@/assets/icon-component/travel-explore';
 import {
   DialogContent,
   DialogHeader,
   DialogWrapper,
   Pagination,
-} from "@/client/components/ui";
-import { NFTImage } from "@/client/components/nft-image";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import useWalletStore from "@/client/hooks/use-wallet-store";
-import useNFTInstancesWithCache from "@/client/hooks/use-nft-instances-with-cache";
+} from '@/client/components/ui';
+import { NFTImage } from '@/client/components/nft-image';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import useNFTInstancesWithCache from '@/client/hooks/use-nft-instances-with-cache';
 
 interface NftInstancesDialogProps {
   tokenAddress: string;
@@ -31,7 +31,7 @@ const NftInstancesDialog = ({
   const { closeDialog } = useDialogStore();
   const { getActiveAccountWalletObject } = useWalletStore();
   const activeAccount = getActiveAccountWalletObject();
-  const [screen, setScreen] = useState<"list" | "detail">("list");
+  const [screen, setScreen] = useState<'list' | 'detail'>('list');
   const [selectedInstance, setSelectedInstance] =
     useState<HyperScanNftInstancesItem | null>(null);
 
@@ -66,7 +66,7 @@ const NftInstancesDialog = ({
   // Store next page parameters when data changes
   useEffect(() => {
     if (nftInstances?.next_page_params) {
-      setPageParams((prev) => ({
+      setPageParams(prev => ({
         ...prev,
         [currentPage + 1]: nftInstances.next_page_params || undefined,
       }));
@@ -75,43 +75,43 @@ const NftInstancesDialog = ({
 
   // Handle page navigation
   const goToNextPage = () => {
-    console.log("Going to next page, current:", currentPage);
+    console.log('Going to next page, current:', currentPage);
     if (nftInstances?.next_page_params) {
-      setCurrentPage((prev) => {
+      setCurrentPage(prev => {
         const nextPage = prev + 1;
-        console.log("Next page will be:", nextPage);
+        console.log('Next page will be:', nextPage);
         return nextPage;
       });
     }
   };
 
   const goToPrevPage = () => {
-    console.log("Going to previous page, current:", currentPage);
+    console.log('Going to previous page, current:', currentPage);
     if (currentPage > 1) {
-      setCurrentPage((prev) => {
+      setCurrentPage(prev => {
         const prevPage = prev - 1;
-        console.log("Previous page will be:", prevPage);
+        console.log('Previous page will be:', prevPage);
         return prevPage;
       });
     }
   };
 
-  console.log("nftInstances", nftInstances);
-  console.log("currentPage", currentPage);
-  console.log("pageParams", pageParams);
+  console.log('nftInstances', nftInstances);
+  console.log('currentPage', currentPage);
+  console.log('pageParams', pageParams);
 
   const openNftInstanceDialog = (nftInstance: HyperScanNftInstancesItem) => {
     setSelectedInstance(nftInstance);
-    setScreen("detail");
+    setScreen('detail');
   };
 
   const goBackToList = () => {
-    setScreen("list");
+    setScreen('list');
     setSelectedInstance(null);
   };
 
   // Render detail screen
-  if (screen === "detail" && selectedInstance) {
+  if (screen === 'detail' && selectedInstance) {
     return (
       <NftInstancesIdDialog
         nftInstance={selectedInstance}
@@ -133,7 +133,7 @@ const NftInstancesDialog = ({
             onClick={() => {
               window.open(
                 `https://www.hyperscan.com/token/${tokenAddress}`,
-                "_blank"
+                '_blank'
               );
             }}
           >
@@ -158,7 +158,7 @@ const NftInstancesDialog = ({
             <div className="text-sm text-muted-foreground">
               {error instanceof Error
                 ? error.message
-                : "Unknown error occurred"}
+                : 'Unknown error occurred'}
             </div>
           </div>
         )}
@@ -178,22 +178,22 @@ const NftInstancesDialog = ({
           nftInstances?.items.length > 0 && (
             <>
               {/* Debug info (only in development) */}
-              {process.env.NODE_ENV === "development" && (
+              {process.env.NODE_ENV === 'development' && (
                 <div className="mb-4 p-2 bg-gray-800 rounded text-xs text-gray-300">
                   <p>Page: {currentPage}</p>
                   <p>Items: {nftInstances.items.length}</p>
                   <p>Has Next: {!!nftInstances.next_page_params}</p>
                   <p>Can Go Back: {currentPage > 1}</p>
-                  <p>Page Params Keys: {Object.keys(pageParams).join(", ")}</p>
+                  <p>Page Params Keys: {Object.keys(pageParams).join(', ')}</p>
                   {nftInstances.next_page_params && (
                     <p>
-                      Next Page Params:{" "}
+                      Next Page Params:{' '}
                       {JSON.stringify(nftInstances.next_page_params)}
                     </p>
                   )}
                   {pageParams[currentPage] && (
                     <p>
-                      Current Page Params:{" "}
+                      Current Page Params:{' '}
                       {JSON.stringify(pageParams[currentPage])}
                     </p>
                   )}
@@ -218,7 +218,7 @@ const NftInstancesDialog = ({
                         tokenName={tokenName}
                         tokenId={instance.id}
                         onError={(error: Error) => {
-                          console.error("NFT instance image failed to load:", {
+                          console.error('NFT instance image failed to load:', {
                             tokenName,
                             instanceId: instance.id,
                             imageUrl: instance.image_url,

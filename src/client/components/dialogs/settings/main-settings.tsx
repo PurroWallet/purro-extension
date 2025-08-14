@@ -1,4 +1,4 @@
-import useDialogStore from "@/client/hooks/use-dialog-store";
+import useDialogStore from '@/client/hooks/use-dialog-store';
 import {
   CircleHelp,
   FileLock2,
@@ -11,18 +11,18 @@ import {
   TimerReset,
   XIcon,
   SquareDashedBottomCode,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   DialogContent,
   DialogHeader,
   DialogWrapper,
-} from "@/client/components/ui/dialog";
-import logo from "@/assets/icon.png";
-import { version } from "@/manifest.json";
-import Discord from "@/assets/icon-component/discord";
-import XTwitter from "@/assets/icon-component/x-twitter";
-import Telegram from "@/assets/icon-component/telegram";
-import { Menu } from "../../ui/menu";
+} from '@/client/components/ui/dialog';
+import logo from '@/assets/icon.png';
+import { version } from '@/manifest.json';
+import Discord from '@/assets/icon-component/discord';
+import XTwitter from '@/assets/icon-component/x-twitter';
+import Telegram from '@/assets/icon-component/telegram';
+import { Menu } from '../../ui/menu';
 
 interface MainSettingsProps {
   onConnectedDApps: () => void;
@@ -58,19 +58,19 @@ const MainSettings = ({
             items={[
               {
                 icon: Plug,
-                label: "Connected DApps",
+                label: 'Connected DApps',
                 onClick: onConnectedDApps,
                 arrowLeft: true,
               },
               {
                 icon: Globe,
-                label: "Active Network",
+                label: 'Active Network',
                 onClick: onActiveNetwork,
                 arrowLeft: true,
               },
               {
                 icon: SquareDashedBottomCode,
-                label: "Developer Mode",
+                label: 'Developer Mode',
                 onClick: onDeveloperMode,
                 arrowLeft: true,
               },
@@ -81,28 +81,28 @@ const MainSettings = ({
             items={[
               {
                 icon: TimerReset,
-                label: "Auto-Lock Time",
+                label: 'Auto-Lock Time',
                 onClick: onAutoLockTime,
                 arrowLeft: true,
               },
               {
                 icon: RotateCcwKey,
-                label: "Change Password",
+                label: 'Change Password',
                 onClick: onChangePassword,
                 arrowLeft: true,
               },
               {
                 icon: FileX2,
-                label: "Remove Seedphrase",
+                label: 'Remove Seedphrase',
                 onClick: onDeleteSeedPhrase,
-                itemClassName: "text-red-400",
+                itemClassName: 'text-red-400',
                 arrowLeft: true,
               },
               {
                 icon: RotateCcw,
-                label: "Reset Wallet",
+                label: 'Reset Wallet',
                 onClick: onResetWallet,
-                itemClassName: "text-red-400",
+                itemClassName: 'text-red-400',
                 arrowLeft: true,
               },
             ]}
@@ -112,21 +112,21 @@ const MainSettings = ({
             items={[
               {
                 icon: CircleHelp,
-                label: "Help & Support",
-                onClick: () => window.open("https://purro.xyz/help", "_blank"),
+                label: 'Help & Support',
+                onClick: () => window.open('https://purro.xyz/help', '_blank'),
                 arrowLeft: true,
               },
               {
                 icon: FileText,
-                label: "Terms of Service",
-                onClick: () => window.open("https://purro.xyz/terms", "_blank"),
+                label: 'Terms of Service',
+                onClick: () => window.open('https://purro.xyz/terms', '_blank'),
                 arrowLeft: true,
               },
               {
                 icon: FileLock2,
-                label: "Privacy Policy",
+                label: 'Privacy Policy',
                 onClick: () =>
-                  window.open("https://purro.xyz/privacy", "_blank"),
+                  window.open('https://purro.xyz/privacy', '_blank'),
                 arrowLeft: true,
               },
             ]}
@@ -136,21 +136,21 @@ const MainSettings = ({
             items={[
               {
                 icon: Discord,
-                label: "Discord",
+                label: 'Discord',
                 onClick: () =>
-                  window.open("https://discord.gg/VJunuK9T5w", "_blank"),
+                  window.open('https://discord.gg/VJunuK9T5w', '_blank'),
                 arrowLeft: true,
               },
               {
                 icon: XTwitter,
-                label: "X (Twitter)",
-                onClick: () => window.open("https://x.com/purro_xyz", "_blank"),
+                label: 'X (Twitter)',
+                onClick: () => window.open('https://x.com/purro_xyz', '_blank'),
                 arrowLeft: true,
               },
               {
                 icon: Telegram,
-                label: "Telegram",
-                onClick: () => window.open("https://t.me/purro_xyz", "_blank"),
+                label: 'Telegram',
+                onClick: () => window.open('https://t.me/purro_xyz', '_blank'),
                 arrowLeft: true,
               },
             ]}

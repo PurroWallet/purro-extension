@@ -1,13 +1,13 @@
-import { useState } from "react";
-import { Copy, Check } from "lucide-react";
-import { motion } from "motion/react";
+import React, { useState } from 'react';
+import { Copy, Check } from 'lucide-react';
+import { motion } from 'motion/react';
 import {
   ethereumLogo,
   hyperliquidLogo,
   arbitrumLogo,
   baseLogo,
-} from "@/assets/logo";
-import { truncateAddress } from "@/client/utils/formatters";
+} from '@/assets/logo';
+import { truncateAddress } from '@/client/utils/formatters';
 // import solanaLogo from "@/assets/solana-sol-logo.png";
 // import suiLogo from "@/assets/sui-white-logo.png";
 
@@ -43,26 +43,26 @@ const WalletAddressesSimple = ({
   // Prepare wallet addresses data
   const walletAddresses: WalletAddress[] = [
     {
-      chain: "hyperliquid",
-      name: "Hyperliquid",
+      chain: 'hyperliquid',
+      name: 'Hyperliquid',
       address: wallets.ethereum.address,
       icon: hyperliquidLogo,
     },
     {
-      chain: "ethereum",
-      name: "Ethereum",
+      chain: 'ethereum',
+      name: 'Ethereum',
       address: wallets.ethereum.address,
       icon: ethereumLogo,
     },
     {
-      chain: "arbitrum",
-      name: "Arbitrum",
+      chain: 'arbitrum',
+      name: 'Arbitrum',
       address: wallets.ethereum.address,
       icon: arbitrumLogo,
     },
     {
-      chain: "base",
-      name: "Base",
+      chain: 'base',
+      name: 'Base',
       address: wallets.ethereum.address,
       icon: baseLogo,
     },
@@ -78,7 +78,7 @@ const WalletAddressesSimple = ({
     //   address: wallets.sui.publicKey,
     //   icon: suiLogo,
     // },
-  ].filter((wallet) => wallet.address && wallet.address.trim() !== "");
+  ].filter(wallet => wallet.address && wallet.address.trim() !== '');
 
   const handleCopyAddress = async (address: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -87,14 +87,14 @@ const WalletAddressesSimple = ({
       setCopiedAddress(address);
       setTimeout(() => setCopiedAddress(null), 2000);
     } catch (error) {
-      console.error("Failed to copy address:", error);
+      console.error('Failed to copy address:', error);
     }
   };
 
   return (
-    <div className={`space-y-1 ${className || ""}`}>
+    <div className={`space-y-1 ${className || ''}`}>
       {walletAddresses.length > 0 &&
-        walletAddresses.map((wallet) => (
+        walletAddresses.map(wallet => (
           <div
             key={wallet.chain}
             className="flex items-center justify-between p-2 bg-white/5 rounded text-xs"
@@ -112,7 +112,7 @@ const WalletAddressesSimple = ({
               </div>
             </div>
             <button
-              onClick={(e) => handleCopyAddress(wallet.address, e)}
+              onClick={e => handleCopyAddress(wallet.address, e)}
               className="ml-1 p-1 rounded hover:bg-white/10 transition-colors flex-shrink-0 flex items-center gap-2 cursor-pointer"
               title="Copy address"
             >
@@ -124,7 +124,7 @@ const WalletAddressesSimple = ({
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{
-                    type: "spring",
+                    type: 'spring',
                     stiffness: 500,
                   }}
                 >

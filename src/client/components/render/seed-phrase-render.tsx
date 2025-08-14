@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { Copy, Check } from "lucide-react";
-import { Button } from "@/client/components/ui";
+import React, { useState } from 'react';
+import { Copy, Check } from 'lucide-react';
+import { Button } from '@/client/components/ui';
 
 interface SeedPhraseRenderProps {
   seedPhrase?: string;
@@ -10,20 +10,20 @@ interface SeedPhraseRenderProps {
 
 const SeedPhraseRender: React.FC<SeedPhraseRenderProps> = ({
   seedPhrase,
-  className = "",
+  className = '',
   isCopyable = true,
 }) => {
   const [copied, setCopied] = useState(false);
 
-  const words = seedPhrase?.split(" ") || [];
+  const words = seedPhrase?.split(' ') || [];
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(seedPhrase || "");
+      await navigator.clipboard.writeText(seedPhrase || '');
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error("Failed to copy seed phrase:", error);
+      console.error('Failed to copy seed phrase:', error);
     }
   };
 

@@ -4,19 +4,19 @@ import {
   DialogFooter,
   DialogHeader,
   DialogWrapper,
-} from "@/client/components/ui";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import { X } from "lucide-react";
-import useSendTokenHLStore from "@/client/hooks/use-send-token-HL-store";
-import useNetworkSettingsStore from "@/client/hooks/use-network-store";
-import { useHlPortfolioData } from "@/client/hooks/use-hyperliquid-portfolio";
-import { useMemo } from "react";
-import HyperLiquidSpotDataIndexer from "@/client/lib/spot-data-indexer";
+} from '@/client/components/ui';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import { X } from 'lucide-react';
+import useSendTokenHLStore from '@/client/hooks/use-send-token-HL-store';
+import useNetworkSettingsStore from '@/client/hooks/use-network-store';
+import { useHlPortfolioData } from '@/client/hooks/use-hyperliquid-portfolio';
+import { useMemo } from 'react';
+import HyperLiquidSpotDataIndexer from '@/client/lib/spot-data-indexer';
 import {
   HyperliquidApiSpotAssetContext,
   UserBalance,
-} from "@/client/types/hyperliquid-api";
-import { SpotItem } from "@/client/screens/main/main-screens/home/tabs/spot";
+} from '@/client/types/hyperliquid-api';
+import { SpotItem } from '@/client/screens/main/main-screens/home/tabs/spot';
 
 const ChooseToken = () => {
   const { closeDialog } = useDialogStore();
@@ -44,7 +44,7 @@ const ChooseToken = () => {
         spotData.context as HyperliquidApiSpotAssetContext
       );
     } catch (error) {
-      console.error("Error creating SpotDataIndexer:", error);
+      console.error('Error creating SpotDataIndexer:', error);
       return null;
     }
   }, [isHyperliquidDexEnabled, spotData?.context]);
@@ -65,7 +65,7 @@ const ChooseToken = () => {
 
   const handleClick = (token: UserBalance) => {
     setToken(token);
-    setStep("send");
+    setStep('send');
   };
 
   return (

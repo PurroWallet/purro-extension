@@ -1,18 +1,20 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 interface AccountSheetStore {
-    isOpen: boolean;
+  isOpen: boolean;
 }
 
 interface AccountSheetStoreActions {
-    open: () => void;
-    close: () => void;
+  open: () => void;
+  close: () => void;
 }
 
-const useAccountSheetStore = create<AccountSheetStore & AccountSheetStoreActions>((set) => ({
-    isOpen: false,
-    open: () => set({ isOpen: true }),
-    close: () => set({ isOpen: false }),
+const useAccountSheetStore = create<
+  AccountSheetStore & AccountSheetStoreActions
+>(set => ({
+  isOpen: false,
+  open: () => set({ isOpen: true }),
+  close: () => set({ isOpen: false }),
 }));
 
 export default useAccountSheetStore;
