@@ -166,7 +166,7 @@ export const encryption = {
       key = await crypto.subtle.deriveKey(
         {
           name: 'PBKDF2',
-          salt: salt,
+          salt: salt as BufferSource,
           iterations: ITERATIONS,
           hash: 'SHA-256',
         },
@@ -180,7 +180,7 @@ export const encryption = {
       const encrypted = await crypto.subtle.encrypt(
         {
           name: 'AES-GCM',
-          iv: nonce,
+          iv: nonce as BufferSource,
           tagLength: TAG_LENGTH * 8, // 128 bits
         },
         key,
@@ -195,8 +195,8 @@ export const encryption = {
         encrypted: arrayBufferToBase64(encrypted),
         iterations: ITERATIONS,
         kdf: KDF,
-        nonce: arrayBufferToBase64(nonce.buffer),
-        salt: arrayBufferToBase64(salt.buffer),
+        nonce: arrayBufferToBase64(nonce.buffer as ArrayBuffer),
+        salt: arrayBufferToBase64(salt.buffer as ArrayBuffer),
       };
     } catch (error) {
       throw new Error(`Encryption failed: ${(error as Error).message}`);
@@ -240,7 +240,7 @@ export const encryption = {
       key = await crypto.subtle.deriveKey(
         {
           name: 'PBKDF2',
-          salt: salt,
+          salt: salt as BufferSource,
           iterations: encryptedData.iterations,
           hash: 'SHA-256',
         },
@@ -253,7 +253,7 @@ export const encryption = {
       const decrypted = await crypto.subtle.decrypt(
         {
           name: 'AES-GCM',
-          iv: nonce,
+          iv: nonce as BufferSource,
           tagLength: TAG_LENGTH * 8,
         },
         key,
@@ -316,7 +316,7 @@ export const encryption = {
       const hashBuffer = await crypto.subtle.deriveBits(
         {
           name: 'PBKDF2',
-          salt: passwordSalt,
+          salt: passwordSalt as BufferSource,
           iterations: ITERATIONS,
           hash: 'SHA-256',
         },
@@ -326,7 +326,7 @@ export const encryption = {
 
       return {
         data: arrayBufferToBase64(hashBuffer),
-        salt: arrayBufferToBase64(passwordSalt.buffer),
+        salt: arrayBufferToBase64(passwordSalt.buffer as ArrayBuffer),
       };
     } catch (error) {
       throw new Error(`Password hashing failed: ${(error as Error).message}`);
@@ -543,7 +543,7 @@ export const encryption = {
       return await crypto.subtle.deriveBits(
         {
           name: 'PBKDF2',
-          salt: salt,
+          salt: salt as BufferSource,
           iterations: iterations,
           hash: 'SHA-256',
         },
