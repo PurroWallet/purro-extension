@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { UnifiedToken } from "@/client/components/token-list";
-import { SwapRouteV2Response } from "@/client/types/liquiswap-api";
+import { SwapRouteV2Response } from "@/client/types/liquidswap-api";
 
 export interface SwapState {
   // Token selection

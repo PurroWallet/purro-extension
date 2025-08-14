@@ -14,7 +14,7 @@ import useSwapStore from "@/client/hooks/use-swap-store";
 import useDrawerStore from "@/client/hooks/use-drawer-store";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import { fetchBalances, fetchTokens } from "@/client/services/liquidswap-api";
-import { Token as ApiToken } from "@/client/types/liquiswap-api";
+import { Token as ApiToken } from "@/client/types/liquidswap-api";
 import useLiquidSwapTokens from "@/client/hooks/use-liquidswap-tokens";
 
 // Simple formatBalance function
@@ -88,8 +88,6 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
   // Use TanStack Query hook for user balances only
   const {
     balances: userBalances,
-    isLoadingBalances,
-    balancesError,
     refetchBalances,
   } = useLiquidSwapTokens(0); // Set limit to 0 to only fetch balances
 

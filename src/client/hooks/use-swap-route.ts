@@ -2,7 +2,7 @@ import { useEffect, useCallback, useRef } from "react";
 import {
   SwapRouteV2Request,
   SwapRouteV2Response,
-} from "@/client/types/liquiswap-api";
+} from "@/client/types/liquidswap-api";
 import { routeFinding } from "@/client/services/liquidswap-api";
 import useSwapStore from "./use-swap-store";
 import useDebounce from "./use-debounce";

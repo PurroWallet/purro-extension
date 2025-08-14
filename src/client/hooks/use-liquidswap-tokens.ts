@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchTokens, fetchBalances } from "@/client/services/liquidswap-api";
-import { FetchTokenResponse, FetchBalancesResponse, Token, Balance } from "@/client/types/liquiswap-api";
+import { FetchTokenResponse, FetchBalancesResponse, Token, Balance } from "@/client/types/liquidswap-api";
 import QueryKeys from "@/client/utils/query-keys";
 import useWalletStore from "./use-wallet-store";
 

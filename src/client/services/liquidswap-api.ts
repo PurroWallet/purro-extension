@@ -5,7 +5,7 @@ import {
   FetchTokenResponse,
   SwapRouteV2Request,
   SwapRouteV2Response,
-} from "../types/liquiswap-api";
+} from "../types/liquidswap-api";
 import { ENDPOINTS } from "./endpoints";
 
 export const routeFinding = async (
