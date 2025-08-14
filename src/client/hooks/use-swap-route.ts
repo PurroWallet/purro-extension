@@ -4,6 +4,13 @@ import { routeFinding } from "@/client/services/liquidswap-api";
 import useSwapStore from "./use-swap-store";
 import useDebounce from "./use-debounce";
 
+const feeRecipient = "0x490BF4E4425092382612aE7f88D5D98b5029C1aF";
+const feeBps = 20;
+
+// Token addresses for wrap/unwrap detection
+const WHYPE_TOKEN_ADDRESS = "0x5555555555555555555555555555555555555555";
+const HYPE_DEAD_ADDRESS = "0x000000000000000000000000000000000000dEaD";
+
 export const useSwapRoute = () => {
   const {
     tokenIn,
@@ -18,6 +25,28 @@ export const useSwapRoute = () => {
     setAmountIn,
     setAmountOut,
   } = useSwapStore();
+
+  // Helper functions to detect HYPE/WHYPE tokens
+  const isHypeToken = (token: any): boolean => {
+    if (!token) return false;
+    return token.symbol === 'HYPE' ||
+           token.contractAddress === 'native' ||
+           token.contractAddress === 'NATIVE' ||
+           token.contractAddress === HYPE_DEAD_ADDRESS;
+  };
+
+  const isWhypeToken = (token: any): boolean => {
+    if (!token) return false;
+    return token.symbol === 'WHYPE' ||
+           token.contractAddress?.toLowerCase() === WHYPE_TOKEN_ADDRESS.toLowerCase();
+  };
+
+  const isDirectWrapUnwrap = (): boolean => {
+    if (!tokenIn || !tokenOut) return false;
+    const isWrap = isHypeToken(tokenIn) && isWhypeToken(tokenOut);
+    const isUnwrap = isWhypeToken(tokenIn) && isHypeToken(tokenOut);
+    return isWrap || isUnwrap;
+  };
 
   // Debounce input amounts to avoid too many API calls
   const debouncedAmountIn = useDebounce(amountIn, 500);
@@ -41,6 +70,8 @@ export const useSwapRoute = () => {
         slippage: slippagePercent,
         multiHop: true,
         unwrapWHYPE: true,
+        feeRecipient: feeRecipient,
+        feeBps: feeBps,
       };
 
       // Use human-readable amounts for API (not wei)
@@ -72,7 +103,9 @@ export const useSwapRoute = () => {
       debouncedAmountOut,
       isExactIn,
       slippage,
-      isCurrentlyFetching: isCurrentlyFetching.current
+      isCurrentlyFetching: isCurrentlyFetching.current,
+      tokenInAddress: tokenIn?.contractAddress,
+      tokenOutAddress: tokenOut?.contractAddress,
     });
 
     const getRoute = async () => {
@@ -93,6 +126,70 @@ export const useSwapRoute = () => {
       if (!inputAmount || parseFloat(inputAmount) <= 0) {
         setRoute(null);
         setRouteError(null);
+        return;
+      }
+
+      // Handle direct wrap/unwrap scenarios
+      if (isDirectWrapUnwrap()) {
+        console.log("🔄 Direct wrap/unwrap detected, skipping route fetch");
+
+        // For direct wrap/unwrap, amountOut = amountIn (1:1 ratio)
+        const amount = parseFloat(inputAmount);
+
+        // Create a mock route for direct wrap/unwrap
+        const mockRoute: SwapRouteV2Response = {
+          success: true,
+          tokens: {
+            tokenIn: {
+              address: tokenIn.contractAddress,
+              symbol: tokenIn.symbol,
+              name: tokenIn.name,
+              decimals: tokenIn.decimals,
+            },
+            tokenOut: {
+              address: tokenOut.contractAddress,
+              symbol: tokenOut.symbol,
+              name: tokenOut.name,
+              decimals: tokenOut.decimals,
+            },
+          },
+          amountIn: amount.toString(),
+          amountOut: amount.toString(),
+          averagePriceImpact: "0",
+          execution: {
+            to: isWhypeToken(tokenOut) ? WHYPE_TOKEN_ADDRESS : HYPE_DEAD_ADDRESS,
+            calldata: "0x", // Will be handled by the swap function
+            details: {
+              path: [tokenIn.contractAddress, tokenOut.contractAddress],
+              amountIn: amount.toString(),
+              amountOut: amount.toString(),
+              minAmountOut: amount.toString(),
+              hopSwaps: [[{
+                tokenIn: tokenIn.contractAddress,
+                tokenOut: tokenOut.contractAddress,
+                routerIndex: 0,
+                routerName: "Direct Wrap/Unwrap",
+                fee: 0,
+                amountIn: amount.toString(),
+                amountOut: amount.toString(),
+                stable: true,
+                priceImpact: "0",
+              }]],
+            },
+          },
+        };
+
+        setRoute(mockRoute);
+        setRouteError(null);
+        setIsLoadingRoute(false);
+
+        // Update the opposite amount (1:1 ratio for wrap/unwrap)
+        if (isExactIn) {
+          setAmountOut(amount.toFixed(6));
+        } else {
+          setAmountIn(amount.toFixed(6));
+        }
+
         return;
       }
 
@@ -173,9 +270,71 @@ export const useSwapRoute = () => {
         console.log("⏸️ Already fetching route (refetch), skipping...");
         return;
       }
-      
+
       const amount = isExactIn ? amountIn : amountOut;
       if (!amount || parseFloat(amount) <= 0) return;
+
+      // Handle direct wrap/unwrap scenarios in refetch as well
+      if (isDirectWrapUnwrap()) {
+        console.log("🔄 Direct wrap/unwrap detected in refetch, skipping API call");
+
+        const amountValue = parseFloat(amount);
+
+        // Create the same mock route
+        const mockRoute: SwapRouteV2Response = {
+          success: true,
+          tokens: {
+            tokenIn: {
+              address: tokenIn.contractAddress,
+              symbol: tokenIn.symbol,
+              name: tokenIn.name,
+              decimals: tokenIn.decimals,
+            },
+            tokenOut: {
+              address: tokenOut.contractAddress,
+              symbol: tokenOut.symbol,
+              name: tokenOut.name,
+              decimals: tokenOut.decimals,
+            },
+          },
+          amountIn: amountValue.toString(),
+          amountOut: amountValue.toString(),
+          averagePriceImpact: "0",
+          execution: {
+            to: isWhypeToken(tokenOut) ? WHYPE_TOKEN_ADDRESS : HYPE_DEAD_ADDRESS,
+            calldata: "0x",
+            details: {
+              path: [tokenIn.contractAddress, tokenOut.contractAddress],
+              amountIn: amountValue.toString(),
+              amountOut: amountValue.toString(),
+              minAmountOut: amountValue.toString(),
+              hopSwaps: [[{
+                tokenIn: tokenIn.contractAddress,
+                tokenOut: tokenOut.contractAddress,
+                routerIndex: 0,
+                routerName: "Direct Wrap/Unwrap",
+                fee: 0,
+                amountIn: amountValue.toString(),
+                amountOut: amountValue.toString(),
+                stable: true,
+                priceImpact: "0",
+              }]],
+            },
+          },
+        };
+
+        setRoute(mockRoute);
+        setRouteError(null);
+
+        // Update the opposite amount (1:1 ratio for wrap/unwrap)
+        if (isExactIn) {
+          setAmountOut(amountValue.toFixed(6));
+        } else {
+          setAmountIn(amountValue.toFixed(6));
+        }
+
+        return;
+      }
 
       setIsLoadingRoute(true);
       setRouteError(null);
@@ -183,7 +342,7 @@ export const useSwapRoute = () => {
 
       try {
         console.log("🔄 Refetching route (timer triggered)");
-        
+
         const route = await fetchRoute(
           tokenIn.contractAddress,
           tokenOut.contractAddress,
@@ -194,7 +353,7 @@ export const useSwapRoute = () => {
 
         if (route) {
           setRoute(route);
-          
+
           // Update the opposite amount based on route
           if (isExactIn) {
             const outputAmount = parseFloat(route.amountOut);

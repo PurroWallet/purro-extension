@@ -9,6 +9,8 @@ import useAccountSheetStore from "@/client/hooks/use-account-sheet-store";
 import { useMemo } from "react";
 import useDrawerStore from "@/client/hooks/use-drawer-store";
 import { SwapSettingsDrawer } from "@/client/components/drawers";
+import { CircularTimer } from "@/client/components/ui/circular-timer";
+import useSwapTimerStore from "@/client/hooks/use-swap-timer-store";
 
 const MainHeader = ({
   className,
@@ -35,6 +37,7 @@ const MainHeader = ({
   }, [activeAccount, wallets]);
   const isSwapScreen = currentScreen === "swap";
   const { openDrawer } = useDrawerStore();
+  const { timeLeft, isTimerActive } = useSwapTimerStore();
 
   return (
     <div
@@ -81,11 +84,27 @@ const MainHeader = ({
       )}
 
       {isSwapScreen && (
-        <div
-          className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
-          onClick={() => openDrawer(<SwapSettingsDrawer />)}
-        >
-          <Settings className="size-5 text-white/90" />
+        <div className="flex items-center gap-2">
+          {/* Circular Timer */}
+          {isTimerActive && (
+            <div className="flex items-center justify-center">
+              <CircularTimer
+                timeLeft={timeLeft}
+                totalTime={20}
+                isActive={isTimerActive}
+                size={24}
+                strokeWidth={2}
+              />
+            </div>
+          )}
+
+          {/* Settings Button */}
+          <div
+            className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
+            onClick={() => openDrawer(<SwapSettingsDrawer />)}
+          >
+            <Settings className="size-5 text-white/90" />
+          </div>
         </div>
       )}
 

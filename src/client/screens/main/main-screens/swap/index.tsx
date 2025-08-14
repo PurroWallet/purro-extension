@@ -1,19 +1,12 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Button, Input } from "@/client/components/ui";
-import {
-  ArrowUpDown,
-  ChevronDown,
-  AlertTriangle,
-  Zap,
-} from "lucide-react";
+import { ArrowUpDown, ChevronDown, AlertTriangle, Zap } from "lucide-react";
 import useSwapStore from "@/client/hooks/use-swap-store";
 import useSwapRoute from "@/client/hooks/use-swap-route";
-import {
-  SwapInputTokenSelectorDrawer,
-  SwapOutputTokenSelectorDrawer,
-} from "@/client/components/drawers";
+import { SwapTokenSelectorDrawer } from "@/client/components/drawers";
 import { getTokenLogo } from "@/client/utils/icons";
 import useDrawerStore from "@/client/hooks/use-drawer-store";
+import useSwapTimerStore from "@/client/hooks/use-swap-timer-store";
 // Create a comprehensive formatBalance function for display
 const formatBalance = (balance: number): string => {
   if (balance === 0) return "0";
@@ -37,6 +30,9 @@ const formatBalance = (balance: number): string => {
 
 import { sendMessage } from "@/client/utils/extension-message-utils";
 import useWalletStore from "@/client/hooks/use-wallet-store";
+import { SwapSuccess } from "@/client/components/dialogs";
+import useDialogStore from "@/client/hooks/use-dialog-store";
+import { fetchBalances } from "@/client/services/liquidswap-api";
 
 // Default WHYPE token data
 const DEFAULT_WHYPE_TOKEN = {
@@ -48,6 +44,11 @@ const DEFAULT_WHYPE_TOKEN = {
   totalTransfers: 1280900,
   transfers24h: 61195,
 };
+
+// HYPE native token identifiers
+const HYPE_NATIVE_IDENTIFIERS = ["HYPE", "native", "NATIVE"];
+const WHYPE_TOKEN_ADDRESS = "0x5555555555555555555555555555555555555555";
+const HYPE_DEAD_ADDRESS = "0x000000000000000000000000000000000000dEaD";
 
 const Swap = () => {
   const {
@@ -66,12 +67,13 @@ const Swap = () => {
     setIsExactIn,
     setIsSwapping,
     setTokenOut,
+    setTokenIn,
     switchTokens,
-    resetAmounts,
   } = useSwapStore();
 
   const { getActiveAccountWalletObject } = useWalletStore();
   const { openDrawer } = useDrawerStore();
+  const { openDialog } = useDialogStore();
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
 
   // Initialize swap route hook
@@ -80,10 +82,7 @@ const Swap = () => {
   const [swapError, setSwapError] = useState<string | null>(null);
 
   // Timer state for route refetching
-  const [timeLeft, setTimeLeft] = useState(20);
-  const [isTimerActive, setIsTimerActive] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { startTimer, resetTimer, cleanup } = useSwapTimerStore();
 
   // Auto-set WHYPE as default output token if no token is selected
   useEffect(() => {
@@ -136,58 +135,148 @@ const Swap = () => {
   const tokenInBalance = tokenIn ? getTokenBalance(tokenIn) : 0;
   const tokenOutBalance = tokenOut ? getTokenBalance(tokenOut) : 0;
 
-  // Timer functions
-  const startTimer = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (intervalRef.current) clearInterval(intervalRef.current);
+  // Helper functions to detect HYPE/WHYPE scenarios
+  const isHypeToken = (token: any): boolean => {
+    if (!token) return false;
+    return (
+      token.isNative ||
+      HYPE_NATIVE_IDENTIFIERS.includes(token.symbol) ||
+      HYPE_NATIVE_IDENTIFIERS.includes(token.contractAddress) ||
+      token.contractAddress === "native" ||
+      token.contractAddress === "NATIVE" ||
+      token.contractAddress === HYPE_DEAD_ADDRESS
+    );
+  };
 
-    setTimeLeft(20);
-    setIsTimerActive(true);
+  const isWhypeToken = (token: any): boolean => {
+    if (!token) return false;
+    return (
+      token.symbol === "WHYPE" ||
+      token.contractAddress?.toLowerCase() === WHYPE_TOKEN_ADDRESS.toLowerCase()
+    );
+  };
 
-    // Update timer every second
-    intervalRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          // Timer finished, refetch route
-          if (tokenIn && tokenOut && (amountIn || amountOut)) {
-            refetchRoute().then(() => {});
+  const isWrapScenario = (): boolean => {
+    return isHypeToken(tokenIn) && isWhypeToken(tokenOut);
+  };
+
+  const isUnwrapScenario = (): boolean => {
+    return isWhypeToken(tokenIn) && isHypeToken(tokenOut);
+  };
+
+  const getActionButtonText = (): string => {
+    if (isWrapScenario()) {
+      return "Wrap";
+    } else if (isUnwrapScenario()) {
+      return "Unwrap";
+    } else {
+      return "Swap";
+    }
+  };
+
+  useEffect(() => {
+    const fetchWHYPEBalance = async () => {
+      if (!activeAccountAddress) return;
+      if (
+        tokenOut?.contractAddress !== WHYPE_TOKEN_ADDRESS &&
+        tokenIn?.contractAddress !== WHYPE_TOKEN_ADDRESS
+      ) {
+        return;
+      }
+
+      try {
+        console.log("🔄 Fetching WHYPE balance for:", activeAccountAddress);
+
+        const balance = await fetchBalances({
+          wallet: activeAccountAddress || "",
+          limit: 1000,
+        });
+
+        console.log("📊 Full balance response:", balance);
+
+        const whypeBalance = balance.data.tokens.find(
+          (token: any) => token.token === WHYPE_TOKEN_ADDRESS
+        );
+
+        console.log("🔍 WHYPE balance found:", whypeBalance);
+
+        if (whypeBalance) {
+          // Create a temporary token object to use getTokenBalance function
+          const tempToken = {
+            balance: whypeBalance.balance,
+            decimals: 18, // WHYPE has 18 decimals
+          };
+          const formattedBalance = getTokenBalance(tempToken);
+
+          console.log("💰 Formatted WHYPE balance:", formattedBalance);
+
+          if (tokenOut?.contractAddress === WHYPE_TOKEN_ADDRESS) {
+            console.log("🔄 Updating tokenOut with WHYPE balance");
+            setTokenOut({
+              ...tokenOut,
+              balance: whypeBalance.balance,
+              balanceFormatted: formattedBalance,
+              usdValue: formattedBalance * (tokenOut?.usdPrice || 0),
+            });
+          } else if (tokenIn?.contractAddress === WHYPE_TOKEN_ADDRESS) {
+            console.log("🔄 Updating tokenIn with WHYPE balance");
+            setTokenIn({
+              ...tokenIn,
+              balance: whypeBalance.balance,
+              balanceFormatted: formattedBalance,
+              usdValue: formattedBalance * (tokenIn?.usdPrice || 0),
+            });
           }
-          return 20; // Reset timer
+        } else {
+          console.log("❌ No WHYPE balance found in response");
         }
-        return prev - 1;
-      });
-    }, 1000);
-  };
+      } catch (error) {
+        console.error("❌ Error fetching WHYPE balance:", error);
+      }
+    };
 
-  const resetTimer = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    setTimeLeft(20);
-    setIsTimerActive(false);
-  };
+    // Only fetch if we have an active account and either token is WHYPE
+    if (activeAccountAddress && (
+      tokenOut?.contractAddress === WHYPE_TOKEN_ADDRESS ||
+      tokenIn?.contractAddress === WHYPE_TOKEN_ADDRESS
+    )) {
+      fetchWHYPEBalance();
+    }
+  }, [activeAccountAddress, tokenOut?.contractAddress, tokenIn?.contractAddress]);
 
   // Start timer when both tokens are selected and there's an amount, but only after initial route is loaded
   useEffect(() => {
-    if (tokenIn && tokenOut && (amountIn || amountOut) && !isLoadingRoute && route) {
+    if (
+      tokenIn &&
+      tokenOut &&
+      (amountIn || amountOut) &&
+      !isLoadingRoute &&
+      route
+    ) {
       // Only start timer if we have a successful route (not immediately after token/amount changes)
-      startTimer();
+      startTimer(refetchRoute);
     } else {
       resetTimer();
     }
 
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [tokenIn, tokenOut, amountIn, amountOut, isLoadingRoute, route]);
+    return cleanup;
+  }, [
+    tokenIn,
+    tokenOut,
+    amountIn,
+    amountOut,
+    isLoadingRoute,
+    route,
+    startTimer,
+    resetTimer,
+    cleanup,
+    refetchRoute,
+  ]);
 
   // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, []);
+    return cleanup;
+  }, [cleanup]);
 
   // Validation
   const inputAmount = parseFloat(amountIn || "0");
@@ -273,7 +362,7 @@ const Swap = () => {
     }
   };
 
-  // Handle swap execution
+  // Handle swap execution with automatic approval
   const handleSwap = async () => {
     if (!isValidSwap || !activeAccountAddress || !route) return;
 
@@ -281,50 +370,224 @@ const Swap = () => {
     setSwapError(null);
 
     try {
-      console.log("🔄 Executing swap...", {
+      const actionType = isWrapScenario()
+        ? "wrap"
+        : isUnwrapScenario()
+        ? "unwrap"
+        : "swap";
+      console.log(`🔄 Starting ${actionType} with automatic approval...`, {
         tokenIn: tokenIn.symbol,
         tokenOut: tokenOut.symbol,
         amountIn,
         amountOut,
         route: route.execution,
+        actionType,
       });
 
       if (!route.execution) {
         throw new Error("No execution data in route");
       }
 
-      // Prepare transaction data
-      const transactionData = {
-        type: "eth_sendTransaction",
-        from: activeAccountAddress,
-        to: route.execution.to,
-        data: route.execution.calldata,
-        gas: "0x7A120", // Default gas limit for swaps (500,000)
-        chainId: "0x28528", // HyperEVM chain ID
-      };
+      // Check if this is a direct wrap/unwrap scenario
+      const isDirectWrapUnwrapScenario = isWrapScenario() || isUnwrapScenario();
 
-      console.log("📝 Swap transaction data:", transactionData);
+      // Determine if we're swapping from native token
+      const isFromNativeToken = isHypeToken(tokenIn);
 
-      // Send transaction via background script
-      const result = await sendMessage("EVM_SEND_TRANSACTION", {
-        transaction: transactionData,
-      });
+      // Step 1: Handle approval for ERC20 tokens (skip for direct wrap/unwrap)
+      if (!isFromNativeToken && !isDirectWrapUnwrapScenario) {
+        console.log("🔍 Checking and handling token approval...");
+
+        const spenderAddress = route.execution.to;
+        if (!spenderAddress) {
+          throw new Error("No spender address found in route");
+        }
+
+        // Check current allowance
+        const allowanceData = {
+          tokenAddress: tokenIn.contractAddress,
+          ownerAddress: activeAccountAddress,
+          spenderAddress: spenderAddress,
+          chainId: "0x3e7", // HyperEVM
+        };
+
+        console.log("🔍 Checking token allowance:", allowanceData);
+        const allowanceResult = await sendMessage(
+          "EVM_CHECK_TOKEN_ALLOWANCE",
+          allowanceData
+        );
+
+        if (!allowanceResult.success) {
+          throw new Error(allowanceResult.error || "Failed to check allowance");
+        }
+
+        const allowance = allowanceResult.data.allowance;
+
+        // Convert current amount to wei for comparison
+        const amountInFloat = parseFloat(amountIn);
+        const decimals = tokenIn.decimals || 18;
+        const amountInWei = BigInt(
+          Math.floor(amountInFloat * Math.pow(10, decimals))
+        );
+        const allowanceWei = BigInt(allowance);
+
+        const needsApproval = allowanceWei < amountInWei;
+
+        console.log("✅ Allowance check result:", {
+          allowance,
+          amountInWei: amountInWei.toString(),
+          needsApproval,
+        });
+
+        // Step 2: Approve if needed
+        if (needsApproval) {
+          console.log("📝 Approving token for swap...");
+
+          // Use a large approval amount (max uint256 is common practice)
+          const maxApproval =
+            "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+
+          const approvalData = {
+            tokenAddress: tokenIn.contractAddress,
+            spenderAddress: spenderAddress,
+            amount: maxApproval,
+            chainId: "0x3e7", // HyperEVM
+          };
+
+          const approvalResult = await sendMessage(
+            "EVM_APPROVE_TOKEN",
+            approvalData
+          );
+
+          if (!approvalResult.success) {
+            throw new Error(approvalResult.error || "Token approval failed");
+          }
+
+          console.log("✅ Token approved successfully:", approvalResult.data);
+        }
+      }
+
+      // Step 3: Execute the transaction
+      console.log("🔄 Executing transaction...");
+
+      let transactionData;
+      let result;
+
+      if (isDirectWrapUnwrapScenario) {
+        // Handle direct wrap/unwrap
+        console.log("🔄 Executing direct wrap/unwrap...");
+
+        if (isWrapScenario()) {
+          // HYPE -> WHYPE: Call wrap function on WHYPE contract
+          const amountInFloat = parseFloat(amountIn);
+          const decimals = tokenIn.decimals || 18;
+          const amountInWei = BigInt(
+            Math.floor(amountInFloat * Math.pow(10, decimals))
+          );
+
+          transactionData = {
+            to: WHYPE_TOKEN_ADDRESS,
+            data: "0xd0e30db0", // deposit() function selector for WETH-like contracts
+            value: `0x${amountInWei.toString(16)}`,
+          };
+        } else {
+          // WHYPE -> HYPE: Call unwrap function on WHYPE contract
+          const amountInFloat = parseFloat(amountIn);
+          const decimals = tokenIn.decimals || 18;
+          const amountInWei = BigInt(
+            Math.floor(amountInFloat * Math.pow(10, decimals))
+          );
+
+          // For unwrapping, we need to call withdraw(amount) on WHYPE contract
+          // withdraw(uint256) has selector 0x2e1a7d4d
+          const withdrawSelector = "0x2e1a7d4d";
+          const amountHex = amountInWei.toString(16).padStart(64, "0");
+
+          transactionData = {
+            to: WHYPE_TOKEN_ADDRESS,
+            data: withdrawSelector + amountHex,
+            value: "0x0",
+          };
+        }
+
+        console.log("📝 Direct wrap/unwrap transaction data:", transactionData);
+
+        // Send transaction via background script
+        result = await sendMessage("EVM_SWAP_HYPERLIQUID_TOKEN", {
+          transaction: transactionData,
+        });
+      } else {
+        // Handle regular swap
+        let transactionValue = "0";
+
+        if (isFromNativeToken) {
+          // Convert human-readable amount to wei for native token transfer
+          const amountInFloat = parseFloat(amountIn);
+          const decimals = tokenIn.decimals || 18;
+          const amountInWei = BigInt(
+            Math.floor(amountInFloat * Math.pow(10, decimals))
+          );
+          transactionValue = `0x${amountInWei.toString(16)}`;
+
+          console.log("💰 Native token swap detected:", {
+            symbol: tokenIn.symbol,
+            amountIn,
+            amountInWei: amountInWei.toString(),
+            transactionValue,
+          });
+        }
+
+        // Prepare transaction data
+        transactionData = {
+          to: route.execution.to,
+          data: route.execution.calldata,
+          value: transactionValue,
+        };
+
+        console.log("📝 Swap transaction data:", transactionData);
+
+        // Send transaction via background script
+        result = await sendMessage("EVM_SWAP_HYPERLIQUID_TOKEN", {
+          transaction: transactionData,
+        });
+      }
 
       if (result.success) {
-        console.log("✅ Swap successful:", result.data);
+        const actionType = isWrapScenario()
+          ? "Wrap"
+          : isUnwrapScenario()
+          ? "Unwrap"
+          : "Swap";
+        console.log(`✅ ${actionType} successful:`, result.data);
 
-        // Reset amounts after successful swap
-        resetAmounts();
-
-        // Could show success modal here
-        alert(`🎉 Swap successful! Transaction hash: ${result.data.hash}`);
+        // Show success dialog
+        openDialog(
+          <SwapSuccess
+            transactionHash={result.data}
+            tokenIn={tokenIn}
+            tokenOut={tokenOut}
+            amountIn={amountIn}
+            amountOut={amountOut}
+            chainId={result.data.chainId || "0x3e7"}
+          />
+        );
       } else {
-        throw new Error(result.error || "Swap failed");
+        const actionType = isWrapScenario()
+          ? "Wrap"
+          : isUnwrapScenario()
+          ? "Unwrap"
+          : "Swap";
+        throw new Error(result.error || `${actionType} failed`);
       }
     } catch (error) {
-      console.error("❌ Swap error:", error);
+      const actionType = isWrapScenario()
+        ? "Wrap"
+        : isUnwrapScenario()
+        ? "Unwrap"
+        : "Swap";
+      console.error(`❌ ${actionType} error:`, error);
       const errorMessage =
-        error instanceof Error ? error.message : "Swap failed";
+        error instanceof Error ? error.message : `${actionType} failed`;
       setSwapError(errorMessage);
     } finally {
       setIsSwapping(false);
@@ -334,16 +597,20 @@ const Swap = () => {
   // Token selection handlers
   const handleTokenInSelect = () => {
     openDrawer(
-      <SwapInputTokenSelectorDrawer
-        selectedTokenAddress={tokenOut?.contractAddress}
+      <SwapTokenSelectorDrawer
+        mode="input"
+        selectedTokenAddress={tokenIn?.contractAddress}
+        excludeTokenAddress={tokenOut?.contractAddress}
       />
     );
   };
 
   const handleTokenOutSelect = () => {
     openDrawer(
-      <SwapOutputTokenSelectorDrawer
-        selectedTokenAddress={tokenIn?.contractAddress}
+      <SwapTokenSelectorDrawer
+        mode="output"
+        selectedTokenAddress={tokenOut?.contractAddress}
+        excludeTokenAddress={tokenIn?.contractAddress}
       />
     );
   };
@@ -402,17 +669,8 @@ const Swap = () => {
       <div className="space-y-4 flex flex-col">
         {/* Swap Interface */}
         <div className="relative flex flex-col gap-1">
-          {/* Timer progress bar */}
-          <div
-            className={`h-10 shadow-2xl transition-all duration-1000 ease-linear rounded-xl z-10 absolute top-0 left-0 rotate-180 ${
-              isTimerActive && "shadow-emerald-400 bg-transparent"
-            }`}
-            style={{
-              width: isTimerActive ? `${((20 - timeLeft) / 20) * 100}%` : "0%",
-            }}
-          />
           {/* Token In */}
-          <div className="space-y-2 border border-[var(--primary-color)]/20 rounded-xl p-4 flex flex-col justify-between bg-[var(--card-color)]/30">
+          <div className="space-y-2 border border-[var(--primary-color)]/20 rounded-xl p-4 flex flex-col justify-between bg-[var(--card-color)]/30 relative z-10">
             <div className="flex items-center justify-between">
               <h1 className="text-white/60 font-medium">Sell</h1>
               {tokenIn && (
@@ -474,7 +732,7 @@ const Swap = () => {
             </div>
           </div>
           {/* Switch Button */}
-          <div className="flex justify-center p-1 border border-[var(--primary-color)]/20 bg-[var(--background-color)] w-fit rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div className="flex justify-center p-1 border border-[var(--primary-color)]/20 bg-[var(--background-color)] w-fit rounded-full z-20 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
             <div className="h-1 w-14 bg-[var(--background-color)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10" />
             <button
               onClick={switchTokens}
@@ -610,30 +868,38 @@ const Swap = () => {
           </div>
         )}
 
-        {/* Swap Button */}
-        <Button
-          onClick={handleSwap}
-          disabled={!isValidSwap || isSwapping || isLoadingRoute}
-          variant="primary"
-          className="w-full font-medium py-4 text-lg"
-        >
-          {isSwapping ? (
-            <div className="flex items-center gap-2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Swapping...
-            </div>
-          ) : !tokenIn || !tokenOut ? (
-            "Select tokens"
-          ) : !amountIn || !amountOut ? (
-            "Enter amount"
-          ) : hasInsufficientBalance ? (
-            "Insufficient balance"
-          ) : routeError ? (
-            "No route found"
-          ) : (
-            "Swap"
-          )}
-        </Button>
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          <Button
+            onClick={handleSwap}
+            disabled={!isValidSwap || isSwapping || isLoadingRoute}
+            variant="primary"
+            className="w-full font-medium py-4 text-lg"
+          >
+            {isSwapping ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                {isWrapScenario()
+                  ? "Wrapping..."
+                  : isUnwrapScenario()
+                  ? "Unwrapping..."
+                  : "Swapping..."}
+              </div>
+            ) : !tokenIn || !tokenOut ? (
+              "Select tokens"
+            ) : !amountIn || !amountOut ? (
+              "Enter amount"
+            ) : hasInsufficientBalance ? (
+              `Insufficient ${tokenIn.symbol} balance`
+            ) : routeError ? (
+              "No route available"
+            ) : !route ? (
+              "Finding best route..."
+            ) : (
+              getActionButtonText()
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );
