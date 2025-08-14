@@ -1,5 +1,6 @@
 import { runStorageHandlerTests } from './storage-handler.test';
 import { runAccountHandlerTests } from './account-handler.test';
+import { runSecurityTests } from './security-tests';
 
 // Main test runner for all handler tests
 export const runAllHandlerTests = async () => {
@@ -12,6 +13,10 @@ export const runAllHandlerTests = async () => {
 
         // Run account handler tests
         await runAccountHandlerTests();
+        console.log('\n' + '='.repeat(50) + '\n');
+
+        // Run security tests
+        await runSecurityTests();
         console.log('\n' + '='.repeat(50) + '\n');
 
         console.log('🎉 All handler tests completed successfully!');

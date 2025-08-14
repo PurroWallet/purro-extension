@@ -129,7 +129,7 @@ const fetchAlchemyTokenBalances = async (
                     if (attempt < retries) {
                         // Progressive backoff with jitter: 2s, 4s, 8s, 12s, 16s + random 0-2s
                         const baseDelay = Math.min(Math.pow(2, attempt) * 1000, 16000);
-                        const jitter = Math.random() * 2000; // 0-2s random jitter
+                        const jitter = crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff / 2000); // 0-2s random jitter
                         const delay = baseDelay + jitter;
                         console.log(`⏳ API overloaded, waiting ${Math.round(delay)}ms before retry...`);
                         await new Promise(resolve => setTimeout(resolve, delay));
@@ -142,7 +142,7 @@ const fetchAlchemyTokenBalances = async (
                     if (attempt < retries) {
                         // Longer delay for rate limiting with jitter
                         const baseDelay = Math.pow(2, attempt + 1) * 1000; // 4s, 8s, 16s, 32s, 64s
-                        const jitter = Math.random() * 1000; // 0-1s random jitter
+                        const jitter = crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff / 1000); // 0-1s random jitter
                         const delay = baseDelay + jitter;
                         console.log(`⏳ Rate limited, waiting ${Math.round(delay)}ms...`);
                         await new Promise(resolve => setTimeout(resolve, delay));
@@ -155,7 +155,7 @@ const fetchAlchemyTokenBalances = async (
                     if (attempt < retries) {
                         // Server error backoff with jitter
                         const baseDelay = Math.pow(2, attempt) * 1000;
-                        const jitter = Math.random() * 1000;
+                        const jitter = crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff / 1000);
                         const delay = baseDelay + jitter;
                         console.log(`⏳ Server error, waiting ${Math.round(delay)}ms before retry...`);
                         await new Promise(resolve => setTimeout(resolve, delay));
@@ -173,7 +173,7 @@ const fetchAlchemyTokenBalances = async (
                 if (data.error.code === -32603 || data.error.message.includes('overloaded') || data.error.message.includes('unavailable')) {
                     console.warn(`⚠️ Alchemy API temporary error - attempt ${attempt}/${retries}:`, data.error.message);
                     if (attempt < retries) {
-                        const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+                        const delay = Math.pow(2, attempt) * 1000 + crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff / 1000);
                         console.log(`⏳ Temporary error, waiting ${Math.round(delay)}ms before retry...`);
                         await new Promise(resolve => setTimeout(resolve, delay));
                         continue;
@@ -199,7 +199,7 @@ const fetchAlchemyTokenBalances = async (
                 await new Promise(resolve => setTimeout(resolve, 3000));
             } else {
                 // General error backoff
-                const delay = Math.pow(2, attempt - 1) * 1000 + Math.random() * 1000;
+                const delay = Math.pow(2, attempt - 1) * 1000 + crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff / 1000);
                 console.log(`⏳ General error, waiting ${Math.round(delay)}ms before retry...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
             }

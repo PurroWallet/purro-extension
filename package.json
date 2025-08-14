@@ -1,13 +1,15 @@
 {
 	"type": "module",
 	"scripts": {
-		"build": "vite build",
-		"build:watch": "vite build --watch --mode development",
-		"type-check": "tsc --noEmit",
-		"test:encryption": "npx tsx src/background/lib/encryption-test.ts",
-		"test:storage": "npx tsx src/background/handlers/test/storage-handler.test.ts",
-		"test:account": "npx tsx src/background/handlers/test/account-handler.test.ts",
-		"test:handlers": "npx tsx src/background/handlers/test/run-all-tests.ts"
+		"dev": "vite",
+		"build": "tsc && vite build",
+		"preview": "vite preview",
+		"test": "tsx src/background/handlers/test/run-all-tests.ts",
+		"test:encryption": "tsx src/background/lib/encryption-test.ts",
+		"test:security": "tsx src/background/handlers/test/security-tests.ts",
+		"security:audit": "pnpm audit --audit-level moderate",
+		"security:audit-fix": "pnpm audit --fix",
+		"security:check": "pnpm run security:audit && pnpm run test:security"
 	},
 	"dependencies": {
 		"@mysten/sui": "^1.30.5",
@@ -37,6 +39,12 @@
 		"@types/react": "^19.1.6",
 		"@types/react-dom": "^19.1.6",
 		"@vitejs/plugin-react": "^4.5.1",
+		"tsx": "^4.20.4",
 		"typescript": "^5.8.3"
+	},
+	"pnpm": {
+		"overrides": {
+			"form-data@>=4.0.0 <4.0.4": ">=4.0.4"
+		}
 	}
 }
