@@ -1,7 +1,7 @@
 {
   "name": "Purro (Beta)",
   "description": "The Purr-fect Web3 Wallet",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "manifest_version": 3,
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; frame-src 'none';"
@@ -24,8 +24,12 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["contentScript.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "contentScript.js"
+      ],
       "run_at": "document_start",
       "type": "module"
     }
@@ -42,7 +46,9 @@
         "injectedProviderBundle.js",
         "purro-icon.js"
       ],
-      "matches": ["<all_urls>"]
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ],
   "icons": {
@@ -59,5 +65,7 @@
     "alarms",
     "offscreen"
   ],
-  "host_permissions": ["https://*/*"]
+  "host_permissions": [
+    "https://*/*"
+  ]
 }

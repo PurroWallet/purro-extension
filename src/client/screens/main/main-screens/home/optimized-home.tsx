@@ -3,13 +3,10 @@ import ShuffleIcon from '@/assets/icon-component/shuffle-icon';
 import SwapVertIcon from '@/assets/icon-component/swap-vert-icon';
 import { CircleFadingPlus, EyeIcon } from 'lucide-react';
 import SendIcon from '@/assets/icon-component/send-icon';
-import useWalletStore from '@/client/hooks/use-wallet-store';
 import { cn } from '@/client/lib/utils';
 import WalletTabs from './tabs';
-import { Button } from '@/client/components/ui';
 
 const OptimizedHome = () => {
-  const { activeAccount } = useWalletStore();
   const isWatchOnly = false; // TODO: Check account type properly
 
   return (

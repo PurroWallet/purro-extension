@@ -3,14 +3,14 @@ import {
   DialogContent,
   DialogHeader,
   DialogWrapper,
-} from '@/components/ui/dialog';
+} from '@/client/components/ui';
 import {
   getTokenCacheStats,
   clearChainTokenCache,
   clearAllTokenCache,
-} from '@/services/alchemy-api-optimized';
+} from '@/client/services/alchemy-api';
 import { Database, Trash2, HardDrive, Clock } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/client/lib/utils';
 
 interface CacheStats {
   totalEntries: number;

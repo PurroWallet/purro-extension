@@ -132,7 +132,8 @@ const TransactionSuccess = () => {
   }
 
   const explorerUrl = getExplorerUrl(token.chain, transactionHash);
-  const tokenLogoSrc = token?.logo || getTokenLogo(token?.symbol || '');
+  const tokenLogoSrc =
+    token?.logo || getTokenLogo(token?.symbol || '') || undefined;
 
   return (
     <DialogWrapper>
@@ -194,18 +195,18 @@ const TransactionSuccess = () => {
                       className="size-5 rounded-full mr-2"
                       onError={e => {
                         const target = e.target as HTMLImageElement;
-                        target.src = getTokenLogo('default');
+                        target.src = getTokenLogo('default') || '';
                       }}
                     />
                     <span className="text-white font-medium">
                       {amount} {token.symbol}
                     </span>
                   </div>
-                  {token.priceUsd && (
+                  {token.usdPrice && (
                     <div className="text-gray-400 text-sm">
                       ≈ $
                       {(
-                        (parseFloat(amount) || 0) * (token.priceUsd || 0)
+                        (parseFloat(amount) || 0) * (token.usdPrice || 0)
                       ).toFixed(2)}
                     </div>
                   )}

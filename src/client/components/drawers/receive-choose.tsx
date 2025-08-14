@@ -110,7 +110,7 @@ export const ReceiveChooseDrawer = () => {
 
   // Filter chain options to only show active networks
   const activeChainOptions = chainOptions.filter(option =>
-    isNetworkActive(option.id)
+    isNetworkActive(option.id as any)
   );
 
   if (selectedChain) {

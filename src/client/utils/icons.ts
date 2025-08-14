@@ -10,6 +10,7 @@ export const NETWORK_ICONS: Record<ChainType, string> = {
   ethereum: ethereumLogo,
   base: baseLogo,
   arbitrum: arbitrumLogo,
+  'hyperevm-testnet': hyperliquidLogo,
 };
 
 export const getNetworkIcon = (networkId: ChainType): string => {

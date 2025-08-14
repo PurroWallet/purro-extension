@@ -85,7 +85,7 @@ const ConnectedDAppsDialog = ({ onBack }: { onBack: () => void }) => {
     }
   };
 
-  const handleDisconnect = async (origin: string) => {
+  const handleDisconnect = async (_origin: string) => {
     if (!activeAccount) return;
 
     try {

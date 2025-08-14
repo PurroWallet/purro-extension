@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { HyperScanNftCollectionsNextPageParams } from '../types/hyperscan-api';
 import useNFTStore from './use-nft-store';
 import useWalletStore from './use-wallet-store';
+import useDevModeStore from './use-dev-mode';
 import { fetchHyperEvmNftsCollection } from '@/client/services/hyperscan-api';
 import QueryKeys from '../utils/query-keys';
 
@@ -10,6 +11,7 @@ const useNFTsWithCache = (
   pageParams: HyperScanNftCollectionsNextPageParams | undefined
 ) => {
   const { getActiveAccountWalletObject } = useWalletStore();
+  const { isDevMode } = useDevModeStore();
   const activeAccount = getActiveAccountWalletObject();
   const { getNFTData, setNFTData, isDataFresh } = useNFTStore();
   const address = activeAccount?.eip155?.address;
@@ -19,7 +21,7 @@ const useNFTsWithCache = (
     queryFn: async () => {
       if (!address) throw new Error('No active address');
 
-      const result = await fetchHyperEvmNftsCollection(address, pageParams);
+      const result = await fetchHyperEvmNftsCollection(address, isDevMode, pageParams);
 
       // Cache the result
       setNFTData(address, page, pageParams, result);

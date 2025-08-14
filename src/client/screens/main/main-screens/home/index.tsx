@@ -26,7 +26,7 @@ const Home = () => {
   const { isDevMode } = useDevModeStore();
 
   // In dev mode, get testnet tokens to show raw HYPE balance
-  const { allUnifiedTokens, isLoading: isTestnetLoading } = useUnifiedTokens();
+  const { allUnifiedTokens } = useUnifiedTokens();
 
   // Compute HYPE native balance on testnet
   const testnetHypeBalance = useMemo(() => {

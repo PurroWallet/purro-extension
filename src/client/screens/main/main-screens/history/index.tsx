@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import TabsLoading from '../home/tabs/tabs-loading';
 import useWalletStore from '@/client/hooks/use-wallet-store';
+import useDevModeStore from '@/client/hooks/use-dev-mode';
 import { truncateAddress } from '@/client/utils/formatters';
 import useDialogStore from '@/client/hooks/use-dialog-store';
 import HistoryDetailDialog from './history-detail-dialog';
@@ -15,6 +16,7 @@ import InfiniteScroll from 'react-infinite-scroll-component';
 
 const History = () => {
   const { getActiveAccountWalletObject } = useWalletStore();
+  const { isDevMode } = useDevModeStore();
   const activeAccount = getActiveAccountWalletObject();
   const [transactions, setTransactions] = useState<
     HyperScanTokenTransfersItems[]
@@ -35,6 +37,7 @@ const History = () => {
       const data = await fetchHyperEvmTokenTransfers(
         activeAccount.eip155.address,
         'both',
+        isDevMode,
         nextPageParams
       );
       console.log('data', data);

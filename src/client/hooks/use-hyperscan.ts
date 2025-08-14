@@ -14,12 +14,14 @@ import {
 } from '../types/hyperscan-api';
 import QueryKeys from '../utils/query-keys';
 import useWalletStore from './use-wallet-store';
+import useDevModeStore from './use-dev-mode';
 
 // Constants for easy customization
 const ADDRESS_VALIDATION_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
 const useHyperscan = () => {
   const { getActiveAccountWalletObject } = useWalletStore();
+  const { isDevMode } = useDevModeStore();
   const activeAccount = getActiveAccountWalletObject();
   const address = activeAccount?.eip155?.address;
 
@@ -34,7 +36,7 @@ const useHyperscan = () => {
     return useQuery({
       queryKey: [QueryKeys.HYPER_EVM_NFTS_COLLECTIONS, address, nextPageParams],
       queryFn: () =>
-        fetchHyperEvmNftsCollection(address as string, nextPageParams),
+        fetchHyperEvmNftsCollection(address as string, isDevMode, nextPageParams),
       staleTime: 60 * 1000 * 10, // 10 minutes
       enabled: isValidAddress(address),
     });
@@ -43,7 +45,7 @@ const useHyperscan = () => {
   const useNFTs = (nextPageParams?: HyperScanNftNextPageParams) => {
     return useQuery({
       queryKey: [QueryKeys.HYPER_EVM_NFTS, address, nextPageParams],
-      queryFn: () => fetchHyperEvmNfts(address as string, nextPageParams),
+      queryFn: () => fetchHyperEvmNfts(address as string, isDevMode, nextPageParams),
       staleTime: 60 * 1000 * 10, // 10 minutes
       enabled: isValidAddress(address),
     });
@@ -74,6 +76,7 @@ const useHyperscan = () => {
         fetchHyperEvmNftInstances(
           tokenAddress,
           address as string,
+          isDevMode,
           nextPageParams
         ),
       staleTime: 60 * 1000 * 5, // 5 minutes
@@ -94,7 +97,7 @@ const useHyperscan = () => {
         nextPageParams,
       ],
       queryFn: () =>
-        fetchHyperEvmTokenTransfers(address as string, filter, nextPageParams),
+        fetchHyperEvmTokenTransfers(address as string, filter, isDevMode, nextPageParams),
       staleTime: 60 * 1000 * 5, // 5 minutes
       enabled: isValidAddress(address) && enabled,
     });

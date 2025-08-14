@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { HyperScanNftInstancesNextPageParams } from '../types/hyperscan-api';
 import useNFTStore from './use-nft-store';
 import useWalletStore from './use-wallet-store';
+import useDevModeStore from './use-dev-mode';
 import { fetchHyperEvmNftInstances } from '@/client/services/hyperscan-api';
 import QueryKeys from '../utils/query-keys';
 
@@ -12,6 +13,7 @@ const useNFTInstancesWithCache = (
   enabled: boolean = true
 ) => {
   const { getActiveAccountWalletObject } = useWalletStore();
+  const { isDevMode } = useDevModeStore();
   const activeAccount = getActiveAccountWalletObject();
   const { getNFTInstancesData, setNFTInstancesData, isDataFresh } =
     useNFTStore();
@@ -31,6 +33,7 @@ const useNFTInstancesWithCache = (
       const result = await fetchHyperEvmNftInstances(
         tokenAddress,
         holderAddress,
+        isDevMode,
         pageParams
       );
 

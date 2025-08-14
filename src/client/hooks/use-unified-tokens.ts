@@ -145,7 +145,7 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
           contractAddress: item.token.address,
           decimals: parseInt(item.token.decimals),
           isNative: item.token.isNative,
-          icon_url: item.token.icon_url || undefined,
+          logo: item.token.icon_url || undefined,
         });
       });
     }
