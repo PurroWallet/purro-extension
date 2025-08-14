@@ -28,7 +28,10 @@ const VerifyMnemonic = ({ onNext }: VerifyMnemonicProps) => {
     const positions: number[] = [];
 
     while (positions.length < 3) {
-      const randomIndex = Math.floor(Math.random() * words.length);
+      const randomIndex = Math.floor(
+        crypto.getRandomValues(new Uint32Array(1))[0] /
+          (0xffffffff / words.length)
+      );
       if (!positions.includes(randomIndex)) {
         positions.push(randomIndex);
       }
