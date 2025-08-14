@@ -3,10 +3,12 @@ import { hyperliquidLogo } from "@/assets/logo";
 import { AccountIcon, AccountName } from "@/client/components/account";
 import { openSidePanel } from "@/client/lib/utils";
 import { cn } from "@/client/lib/utils";
-import { X } from "lucide-react";
+import { Settings, X } from "lucide-react";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import useAccountSheetStore from "@/client/hooks/use-account-sheet-store";
 import { useMemo } from "react";
+import useDrawerStore from "@/client/hooks/use-drawer-store";
+import { SwapSettingsDrawer } from "@/client/components/drawers";
 
 const MainHeader = ({
   className,
@@ -31,6 +33,8 @@ const MainHeader = ({
   const activeAccountAddress = useMemo(() => {
     return wallets[activeAccount?.id as string]?.eip155?.address;
   }, [activeAccount, wallets]);
+  const isSwapScreen = currentScreen === "swap";
+  const { openDrawer } = useDrawerStore();
 
   return (
     <div
@@ -52,7 +56,7 @@ const MainHeader = ({
         />
       </div>
 
-      {!isSidepanel && !isNftScreen && !isHistoryScreen && (
+      {!isSidepanel && !isNftScreen && !isHistoryScreen && !isSwapScreen && (
         <div
           className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
           onClick={async () => {
@@ -71,8 +75,17 @@ const MainHeader = ({
           {!isNftNetworkVisible ? (
             <img src={hyperliquidLogo} alt="Hyperliquid" className="size-5" />
           ) : (
-            <X className="size-5 text-white/90" />
+            <Settings className="size-5 text-white/90" />
           )}
+        </div>
+      )}
+
+      {isSwapScreen && (
+        <div
+          className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
+          onClick={() => openDrawer(<SwapSettingsDrawer />)}
+        >
+          <Settings className="size-5 text-white/90" />
         </div>
       )}
 

@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { X, Search, RefreshCw } from "lucide-react";
+import { X, Search, RefreshCw, BadgeCheck } from "lucide-react";
 import { UnifiedToken } from "@/client/components/token-list";
 import { getTokenLogo } from "@/client/utils/icons";
+import { Button, IconButton } from "@/client/components/ui/button";
 import useSwapStore from "@/client/hooks/use-swap-store";
 import useDrawerStore from "@/client/hooks/use-drawer-store";
 import useWalletStore from "@/client/hooks/use-wallet-store";
@@ -72,7 +73,9 @@ const SwapInputTokenSelectorDrawer: React.FC<
               const balanceNum =
                 parseFloat(balance.balance) / Math.pow(10, balance.decimals);
 
-              const tokenAddress = balance.token.toLowerCase().includes("native")
+              const tokenAddress = balance.token
+                .toLowerCase()
+                .includes("native")
                 ? "0x5555555555555555555555555555555555555555"
                 : balance.token;
               return {
@@ -196,75 +199,75 @@ const SwapInputTokenSelectorDrawer: React.FC<
   };
 
   return (
-    <div className="flex flex-col h-full max-h-[80vh]">
+    <div className="flex flex-col h-full max-h-[80vh] bg-[var(--background-color)] rounded-t-lg overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
-        <h2 className="text-lg font-semibold text-white">Select Input Token</h2>
+      <div className="flex items-center justify-between p-3 border-b border-white/10 bg-[var(--card-color)]/50">
+        <h2 className="text-lg font-semibold text-[var(--text-color)]">
+          Select Input Token
+        </h2>
         <div className="flex items-center gap-2">
           <button
             onClick={refreshBalances}
             disabled={isLoading}
-            className="size-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors disabled:opacity-50"
-            title="Refresh balances"
+            className="size-8 flex items-center justify-center rounded-full hover:bg-[var(--card-color)]/80 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Refresh token list"
           >
             <RefreshCw
-              className={`size-4 text-gray-400 ${
+              className={`size-4 text-[var(--primary-color-light)] ${
                 isLoading ? "animate-spin" : ""
               }`}
             />
           </button>
-          <button
-            onClick={closeDrawer}
-            className="size-8 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
-          >
-            <X className="size-4 text-white" />
-          </button>
+          <IconButton onClick={closeDrawer}>
+            <X className="size-4 text-[var(--text-color)]" />
+          </IconButton>
         </div>
       </div>
 
       {/* Search */}
-      <div className="p-4 border-b border-white/10">
+      <div className="p-2 border-b border-white/10 bg-[var(--card-color)]/30">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 size-4 text-[var(--primary-color-light)]" />
           <input
             type="text"
             placeholder="Search your tokens..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-3 bg-[var(--card-color)]/50 border border-[var(--primary-color)]/20 rounded-lg text-[var(--text-color)] placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color-light)] focus:border-[var(--primary-color-light)] transition-all duration-300"
           />
         </div>
       </div>
 
       {/* Token List */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto bg-[var(--background-color)]">
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
-            <span className="text-gray-400">Loading your tokens...</span>
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--primary-color-light)] mr-2"></div>
+            <span className="text-white/60">Loading your tokens...</span>
           </div>
         ) : hasError ? (
           <div className="flex flex-col items-center justify-center py-8 px-4">
-            <span className="text-red-400 text-center mb-3">
+            <span className="text-[var(--button-color-destructive)] text-center mb-3">
               Error loading your tokens
             </span>
-            <button
+            <Button
               onClick={refreshBalances}
-              className="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+              variant="primary"
+              className="px-3 py-1 text-xs"
             >
               Retry
-            </button>
+            </Button>
           </div>
         ) : filteredTokens.length === 0 ? (
           <div className="flex items-center justify-center py-8">
-            <span className="text-gray-400">
+            <span className="text-white/60">
               {searchQuery
                 ? "No matching tokens found"
                 : "You don't have any tokens yet"}
             </span>
           </div>
         ) : (
-          <div className="p-4 space-y-1">
+          <div className="">
             {filteredTokens.map((token) => {
               const tokenLogo = token.logo || getTokenLogo(token.symbol);
               const balance = getTokenBalance(token);
@@ -274,10 +277,10 @@ const SwapInputTokenSelectorDrawer: React.FC<
                 <button
                   key={token.address}
                   onClick={() => handleTokenSelect(token)}
-                  className="w-full flex items-center p-3 rounded-lg hover:bg-white/5 transition-colors group"
+                  className="w-full flex items-center py-3 px-4 hover:bg-[var(--primary-color)]/20 transition-all duration-300 group"
                 >
                   {/* Token Icon */}
-                  <div className="size-10 flex items-center justify-center bg-gray-800 rounded-full mr-3 overflow-hidden">
+                  <div className="size-10 flex items-center justify-center bg-[var(--card-color)]/50 rounded-full mr-3 overflow-hidden border border-white/10">
                     {tokenLogo ? (
                       <img
                         src={tokenLogo}
@@ -288,7 +291,7 @@ const SwapInputTokenSelectorDrawer: React.FC<
                         }}
                       />
                     ) : (
-                      <span className="text-xs font-medium text-gray-400">
+                      <span className="text-xs font-medium text-[var(--primary-color-light)]">
                         {token.symbol.slice(0, 3)}
                       </span>
                     )}
@@ -298,24 +301,27 @@ const SwapInputTokenSelectorDrawer: React.FC<
                   <div className="flex-1 text-left">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-white font-medium group-hover:text-blue-400 transition-colors">
-                          {token.symbol}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-[var(--text-color)] font-medium group-hover:text-[var(--primary-color-light)] transition-colors duration-300">
+                            {token.symbol}
+                          </p>
+                          {hasBalance && (
+                            <span className="px-1.5 py-0.5 text-xs bg-[var(--primary-color)] text-black rounded font-medium">
+                              Owned
+                            </span>
+                          )}
+                        </div>
                         {token.name && (
-                          <p className="text-sm text-gray-400 truncate max-w-40">
+                          <p className="text-sm text-white/60 truncate max-w-40">
                             {token.name}
                           </p>
                         )}
                       </div>
                       <div className="text-right">
-                        <p
-                          className={`font-medium ${
-                            hasBalance ? "text-white" : "text-gray-500"
-                          }`}
-                        >
+                        <p className="text-[var(--text-color)] font-medium">
                           {balance}
                         </p>
-                        <p className="text-xs text-gray-400">Balance</p>
+                        <p className="text-xs text-white/60">Your Balance</p>
                       </div>
                     </div>
                   </div>

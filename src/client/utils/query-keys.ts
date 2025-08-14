@@ -28,6 +28,9 @@ const QueryKeys = {
     ARBITRUM_NATIVE_BALANCE: 'arbitrumNativeBalance',
     HYPEREVM_NATIVE_BALANCE: 'hyperevmNativeBalance',
     NATIVE_TOKEN_PRICES: 'nativeTokenPrices',
+    // LiquidSwap API keys
+    LIQUIDSWAP_TOKENS: 'liquidswapTokens',
+    LIQUIDSWAP_BALANCES: 'liquidswapBalances',
 };
 
 export default QueryKeys;
