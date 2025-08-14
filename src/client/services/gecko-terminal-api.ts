@@ -1,8 +1,8 @@
-import { ENDPOINTS } from "./endpoints";
+import { ENDPOINTS } from './endpoints';
 
 // https://www.geckoterminal.com/dex-api
 
-export type Network = "hyperevm" | "eth" | "base" | "arbitrum";
+export type Network = 'hyperevm' | 'eth' | 'base' | 'arbitrum';
 
 export const fetchTrendingPools = async (networkId: Network, page: number) => {
   const response = await fetch(

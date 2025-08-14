@@ -1702,7 +1702,7 @@ export const evmHandler = {
     }
   },
 
-async handleSwapHyperliquidToken(data: { transaction: TransactionRequest }): Promise<MessageResponse> {
+  async handleSwapHyperliquidToken(data: { transaction: TransactionRequest }): Promise<MessageResponse> {
         console.log('[Purro] 🔄 Starting handleSwapHyperliquidToken process...', data.transaction);
         
         try {

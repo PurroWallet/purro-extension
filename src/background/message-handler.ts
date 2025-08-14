@@ -177,6 +177,17 @@ export class MessageHandler {
           result = await evmHandler.handleSendToken(data);
           break;
 
+        // Swap
+        case 'EVM_SWAP_HYPERLIQUID_TOKEN':
+            result = await evmHandler.handleSwapHyperliquidToken(data);
+            break;
+        case 'EVM_CHECK_TOKEN_ALLOWANCE':
+            result = await evmHandler.checkTokenAllowance(data);
+            break;
+        case 'EVM_APPROVE_TOKEN':
+            result = await evmHandler.approveToken(data);
+            break;
+
         // Hyperliquid DEX
         case 'HYPERLIQUID_TRANSFER_BETWEEN_SPOT_AND_PERP':
           result = await hyperliquidHandler.transferBetweenSpotAndPerp(data);
