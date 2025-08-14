@@ -1,12 +1,20 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useCallback,
+  useRef,
+} from "react";
 import { X, Search, RefreshCw, BadgeCheck, ChevronDown } from "lucide-react";
+import InfiniteScroll from "react-infinite-scroll-component";
 import { UnifiedToken } from "@/client/components/token-list";
 import { getTokenLogo } from "@/client/utils/icons";
 import { Button, IconButton } from "@/client/components/ui/button";
 import useSwapStore from "@/client/hooks/use-swap-store";
 import useDrawerStore from "@/client/hooks/use-drawer-store";
 import useWalletStore from "@/client/hooks/use-wallet-store";
-import { fetchBalances } from "@/client/services/liquidswap-api";
+import { fetchBalances, fetchTokens } from "@/client/services/liquidswap-api";
+import { Token as ApiToken } from "@/client/types/liquiswap-api";
 import useLiquidSwapTokens from "@/client/hooks/use-liquidswap-tokens";
 
 // Simple formatBalance function
@@ -64,17 +72,26 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
   const [hasUserTokensError, setHasUserTokensError] = useState(false);
   const [isYourTokensExpanded, setIsYourTokensExpanded] = useState(true);
   const [isDefaultTokensExpanded, setIsDefaultTokensExpanded] = useState(true);
+  const [defaultTokenLogos, setDefaultTokenLogos] = useState<{
+    [address: string]: string | null;
+  }>({});
+
+  // Infinite scroll state
+  const [allTokens, setAllTokens] = useState<Token[]>([]);
+  const [isLoadingMoreTokens, setIsLoadingMoreTokens] = useState(false);
+  const [hasMoreTokens, setHasMoreTokens] = useState(true);
+  const [currentLimit, setCurrentLimit] = useState(20);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
 
-  // Use TanStack Query hook for default tokens data
+  // Use TanStack Query hook for user balances only
   const {
-    tokens: apiTokens,
     balances: userBalances,
-    isLoading: isLoadingDefaultTokens,
-    hasError: hasDefaultTokensError,
-    refetchAll,
-  } = useLiquidSwapTokens();
+    isLoadingBalances,
+    balancesError,
+    refetchBalances,
+  } = useLiquidSwapTokens(0); // Set limit to 0 to only fetch balances
 
   // Fetch user balances which includes all token data
   useEffect(() => {
@@ -96,9 +113,15 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
         console.log("User tokens - fetchBalances response:", response);
 
         if (response.success) {
+          const tokenLogos = await Promise.all(
+            response.data.tokens.map((balance) =>
+              getTokenLogo(balance.symbol, "hyperevm", balance.token)
+            )
+          );
+
           // Convert Balance objects to Token format
           const userTokensList: Token[] = response.data.tokens.map(
-            (balance) => {
+            (balance, index) => {
               const balanceNum =
                 parseFloat(balance.balance) / Math.pow(10, balance.decimals);
 
@@ -114,7 +137,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
                 decimals: balance.decimals,
                 balance: balanceNum.toString(),
                 balanceRaw: balance.balance,
-                logo: getTokenLogo(balance.symbol),
+                logo: tokenLogos[index],
               };
             }
           );
@@ -134,6 +157,83 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
     loadBalances();
   }, [activeAccountAddress, selectedTokenAddress, excludeTokenAddress]);
 
+  // Initial load of tokens
+  useEffect(() => {
+    const loadInitialTokens = async () => {
+      try {
+        setIsLoadingMoreTokens(true);
+        const response = await fetchTokens({
+          limit: 20,
+          metadata: true,
+        });
+
+        if (response.success) {
+          // Convert API tokens to local Token interface
+          const convertedTokens: Token[] = response.data.tokens.map(
+            (apiToken: ApiToken) => ({
+              address: apiToken.address,
+              symbol: apiToken.symbol,
+              name: apiToken.name,
+              decimals: apiToken.decimals,
+              balance: "0",
+              balanceRaw: "0",
+              transfers24h: apiToken.transfers24h,
+              isERC20Verified: apiToken.isERC20Verified,
+              totalTransfers: apiToken.totalTransfers,
+            })
+          );
+          setAllTokens(convertedTokens);
+          setHasMoreTokens(response.data.tokens.length === 20);
+        }
+      } catch (error) {
+        console.error("Error loading initial tokens:", error);
+      } finally {
+        setIsLoadingMoreTokens(false);
+      }
+    };
+
+    loadInitialTokens();
+  }, []);
+
+  // Load more tokens function
+  const loadMoreTokens = useCallback(async () => {
+    if (isLoadingMoreTokens || !hasMoreTokens) return;
+
+    try {
+      setIsLoadingMoreTokens(true);
+      const newLimit = currentLimit + 20;
+
+      const response = await fetchTokens({
+        limit: newLimit,
+        metadata: true,
+      });
+
+      if (response.success) {
+        // Convert API tokens to local Token interface
+        const convertedTokens: Token[] = response.data.tokens.map(
+          (apiToken: ApiToken) => ({
+            address: apiToken.address,
+            symbol: apiToken.symbol,
+            name: apiToken.name,
+            decimals: apiToken.decimals,
+            balance: "0",
+            balanceRaw: "0",
+            transfers24h: apiToken.transfers24h,
+            isERC20Verified: apiToken.isERC20Verified,
+            totalTransfers: apiToken.totalTransfers,
+          })
+        );
+        setAllTokens(convertedTokens);
+        setCurrentLimit(newLimit);
+        setHasMoreTokens(response.data.tokens.length === newLimit);
+      }
+    } catch (error) {
+      console.error("Error loading more tokens:", error);
+    } finally {
+      setIsLoadingMoreTokens(false);
+    }
+  }, [currentLimit, isLoadingMoreTokens, hasMoreTokens]);
+
   // Convert API tokens to Token format with WHYPE and HYPE as default tokens
   const defaultTokens = useMemo(() => {
     const tokens: Token[] = [];
@@ -146,7 +246,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
       decimals: 18,
       balance: "0",
       balanceRaw: "0",
-      logo: getTokenLogo("HYPE"),
+      logo: null, // Will be loaded asynchronously
       transfers24h: 0,
       isERC20Verified: true,
       totalTransfers: 0,
@@ -160,7 +260,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
       decimals: DEFAULT_WHYPE_TOKEN.decimals,
       balance: "0",
       balanceRaw: "0",
-      logo: getTokenLogo(DEFAULT_WHYPE_TOKEN.symbol),
+      logo: null, // Will be loaded asynchronously
       transfers24h: DEFAULT_WHYPE_TOKEN.transfers24h,
       isERC20Verified: DEFAULT_WHYPE_TOKEN.isERC20Verified,
       totalTransfers: DEFAULT_WHYPE_TOKEN.totalTransfers,
@@ -170,10 +270,11 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
     tokens.push(hypeToken);
     tokens.push(whypeToken);
 
-    // Add other tokens from API
-    const otherTokens = apiTokens
+    // Add other tokens from infinite scroll
+    const otherTokens = allTokens
       .filter(
-        (token) => token.address !== DEFAULT_WHYPE_TOKEN.address && // Avoid duplicating WHYPE
+        (token) =>
+          token.address !== DEFAULT_WHYPE_TOKEN.address && // Avoid duplicating WHYPE
           token.address !== "native" && // Avoid duplicating HYPE
           token.symbol !== "HYPE" // Avoid duplicating HYPE by symbol
       )
@@ -184,7 +285,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
         decimals: token.decimals,
         balance: "0",
         balanceRaw: "0",
-        logo: getTokenLogo(token.symbol),
+        logo: null, // Will be loaded asynchronously
         transfers24h: token.transfers24h,
         isERC20Verified: token.isERC20Verified,
         totalTransfers: token.totalTransfers,
@@ -192,29 +293,61 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
 
     tokens.push(...otherTokens);
     return tokens;
-  }, [apiTokens, selectedTokenAddress, excludeTokenAddress]);
+  }, [allTokens, selectedTokenAddress, excludeTokenAddress]);
 
-  // Merge default tokens with user balances
+  // Load logos for default tokens asynchronously
+  useEffect(() => {
+    const loadDefaultTokenLogos = async () => {
+      const logoPromises = defaultTokens.map(async (token) => {
+        const logo = await getTokenLogo(
+          token.symbol,
+          "hyperevm",
+          token.address
+        );
+        return { address: token.address, logo };
+      });
+
+      const logoResults = await Promise.all(logoPromises);
+      const logoMap: { [address: string]: string | null } = {};
+
+      logoResults.forEach(({ address, logo }) => {
+        logoMap[address] = logo;
+      });
+
+      setDefaultTokenLogos(logoMap);
+    };
+
+    if (defaultTokens.length > 0) {
+      loadDefaultTokenLogos();
+    }
+  }, [defaultTokens]);
+
+  // Merge default tokens with user balances and logos
   const defaultTokensWithBalances = useMemo(() => {
     return defaultTokens.map((token) => {
       const userBalance = userBalances.find(
         (balance) => balance.token.toLowerCase() === token.address.toLowerCase()
       );
 
+      const tokenWithLogo = {
+        ...token,
+        logo: defaultTokenLogos[token.address] || token.logo,
+      };
+
       if (userBalance) {
         const balanceNum =
           parseFloat(userBalance.balance) / Math.pow(10, userBalance.decimals);
         return {
-          ...token,
+          ...tokenWithLogo,
           balance: balanceNum.toString(),
           balanceRaw: userBalance.balance,
           decimals: userBalance.decimals, // Use accurate decimals from balance API
         };
       }
 
-      return token;
+      return tokenWithLogo;
     });
-  }, [defaultTokens, userBalances]);
+  }, [defaultTokens, userBalances, defaultTokenLogos]);
 
   // Filter user tokens based on search and sort by balance
   const filteredUserTokens = useMemo(() => {
@@ -283,12 +416,14 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
     });
   }, [defaultTokensWithBalances, searchQuery]);
 
+
+
   // Auto-select WHYPE as default output token if no token is selected and mode is output
   useEffect(() => {
     if (
       mode === "output" &&
       !tokenOut &&
-      !isLoadingDefaultTokens &&
+      !isLoadingMoreTokens &&
       defaultTokens.length > 0
     ) {
       // Find WHYPE token in the list
@@ -313,7 +448,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
         setTokenOut(unifiedToken);
       }
     }
-  }, [mode, tokenOut, isLoadingDefaultTokens, defaultTokens, setTokenOut]);
+  }, [mode, tokenOut, isLoadingMoreTokens, defaultTokens, setTokenOut]);
 
   const handleTokenSelect = (token: Token) => {
     // Don't allow selection of disabled tokens
@@ -323,11 +458,10 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
 
     console.log("🔍 Selected token:", token);
 
-    const tokenAddress = token.address.toLowerCase().includes("native") ? "0x000000000000000000000000000000000000dEaD" : token.address;
-
-    // Convert Token to UnifiedToken format
+    // Don't convert HYPE token address - use the original address
+    // The dead address should be preserved for HYPE tokens
     const unifiedToken: UnifiedToken = {
-      contractAddress: tokenAddress,
+      contractAddress: token.address,
       symbol: token.symbol,
       name: token.name,
       decimals: token.decimals,
@@ -384,22 +518,72 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
 
     // Check what tokens are currently selected/excluded
     // We need to check both by address and by inferring symbol from known addresses
-    const selectedSymbol = (selectedTokenAddress === 'native' || selectedTokenAddress === '0x000000000000000000000000000000000000dEaD') ? 'HYPE' :
-                           selectedTokenAddress?.toLowerCase() === DEFAULT_WHYPE_TOKEN.address.toLowerCase() ? 'WHYPE' : '';
-    const excludedSymbol = (excludeTokenAddress === 'native' || excludeTokenAddress === '0x000000000000000000000000000000000000dEaD') ? 'HYPE' :
-                          excludeTokenAddress?.toLowerCase() === DEFAULT_WHYPE_TOKEN.address.toLowerCase() ? 'WHYPE' : '';
+    const selectedSymbol =
+      selectedTokenAddress === "native" ||
+      selectedTokenAddress === "0x000000000000000000000000000000000000dEaD"
+        ? "HYPE"
+        : selectedTokenAddress?.toLowerCase() ===
+          DEFAULT_WHYPE_TOKEN.address.toLowerCase()
+        ? "WHYPE"
+        : "";
+    const excludedSymbol =
+      excludeTokenAddress === "native" ||
+      excludeTokenAddress === "0x000000000000000000000000000000000000dEaD"
+        ? "HYPE"
+        : excludeTokenAddress?.toLowerCase() ===
+          DEFAULT_WHYPE_TOKEN.address.toLowerCase()
+        ? "WHYPE"
+        : "";
 
-    const selectedIsHype = isHypeToken(selectedTokenAddress || "", selectedSymbol);
-    const selectedIsWhype = isWhypeToken(selectedTokenAddress || "", selectedSymbol);
-    const excludedIsHype = isHypeToken(excludeTokenAddress || "", excludedSymbol);
-    const excludedIsWhype = isWhypeToken(excludeTokenAddress || "", excludedSymbol);
+    const selectedIsHype = isHypeToken(
+      selectedTokenAddress || "",
+      selectedSymbol
+    );
+    const selectedIsWhype = isWhypeToken(
+      selectedTokenAddress || "",
+      selectedSymbol
+    );
+    const excludedIsHype = isHypeToken(
+      excludeTokenAddress || "",
+      excludedSymbol
+    );
+    const excludedIsWhype = isWhypeToken(
+      excludeTokenAddress || "",
+      excludedSymbol
+    );
 
-    // Allow HYPE ↔ WHYPE combinations (don't disable them)
+    console.log("🔍 Token disable check:", {
+      currentToken: token.symbol,
+      currentAddress: token.address,
+      currentIsHype,
+      currentIsWhype,
+      selectedTokenAddress,
+      excludeTokenAddress,
+      selectedIsHype,
+      selectedIsWhype,
+      excludedIsHype,
+      excludedIsWhype,
+    });
+
+    // Special handling for HYPE/WHYPE pairs
+    // Never disable HYPE or WHYPE when the other is selected (allow wrap/unwrap)
     if (
       (currentIsHype && (selectedIsWhype || excludedIsWhype)) ||
       (currentIsWhype && (selectedIsHype || excludedIsHype))
     ) {
-      return false;
+      console.log("🔄 Allowing HYPE/WHYPE combination for wrap/unwrap");
+      return false; // Allow HYPE ↔ WHYPE combinations
+    }
+
+    // Disable same token types to prevent duplicate selection
+    if (currentIsHype && (selectedIsHype || excludedIsHype)) {
+      console.log("🚫 Disabling HYPE (already selected)");
+      return true; // Disable HYPE if HYPE is already selected
+    }
+
+    if (currentIsWhype && (selectedIsWhype || excludedIsWhype)) {
+      console.log("🚫 Disabling WHYPE (already selected)");
+      return true; // Disable WHYPE if WHYPE is already selected
     }
 
     return false; // Don't disable other tokens
@@ -415,24 +599,32 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
         limit: 200,
       });
 
+      const tokenLogos = await Promise.all(
+        response.data.tokens.map((balance) =>
+          getTokenLogo(balance.symbol, "hyperevm", balance.token)
+        )
+      );
+
       if (response.success) {
         // Convert Balance objects to Token format
-        const userTokensList: Token[] = response.data.tokens.map((balance) => {
-          const balanceNum =
-            parseFloat(balance.balance) / Math.pow(10, balance.decimals);
-          const tokenAddress = balance.token.toLowerCase().includes("native")
-            ? "native" // Keep native tokens as "native" to distinguish from WHYPE
-            : balance.token;
-          return {
-            address: tokenAddress,
-            symbol: balance.symbol,
-            name: balance.name,
-            decimals: balance.decimals,
-            balance: balanceNum.toString(),
-            balanceRaw: balance.balance,
-            logo: getTokenLogo(balance.symbol),
-          };
-        });
+        const userTokensList: Token[] = response.data.tokens.map(
+          (balance, index) => {
+            const balanceNum =
+              parseFloat(balance.balance) / Math.pow(10, balance.decimals);
+            const tokenAddress = balance.token.toLowerCase().includes("native")
+              ? "native" // Keep native tokens as "native" to distinguish from WHYPE
+              : balance.token;
+            return {
+              address: tokenAddress,
+              symbol: balance.symbol,
+              name: balance.name,
+              decimals: balance.decimals,
+              balance: balanceNum.toString(),
+              balanceRaw: balance.balance,
+              logo: tokenLogos[index],
+            };
+          }
+        );
 
         setUserTokens(userTokensList);
         setHasUserTokensError(false);
@@ -446,8 +638,41 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
       setIsLoadingUserTokens(false);
     }
 
-    // Also refresh default tokens
-    refetchAll();
+    // Also refresh balances and reload tokens
+    refetchBalances();
+
+    // Reset and reload tokens
+    setAllTokens([]);
+    setCurrentLimit(20);
+    setHasMoreTokens(true);
+
+    try {
+      const response = await fetchTokens({
+        limit: 20,
+        metadata: true,
+      });
+
+      if (response.success) {
+        // Convert API tokens to local Token interface
+        const convertedTokens: Token[] = response.data.tokens.map(
+          (apiToken: ApiToken) => ({
+            address: apiToken.address,
+            symbol: apiToken.symbol,
+            name: apiToken.name,
+            decimals: apiToken.decimals,
+            balance: "0",
+            balanceRaw: "0",
+            transfers24h: apiToken.transfers24h,
+            isERC20Verified: apiToken.isERC20Verified,
+            totalTransfers: apiToken.totalTransfers,
+          })
+        );
+        setAllTokens(convertedTokens);
+        setHasMoreTokens(response.data.tokens.length === 20);
+      }
+    } catch (error) {
+      console.error("Error refreshing tokens:", error);
+    }
   };
 
   return (
@@ -460,15 +685,13 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={refreshBalances}
-            disabled={isLoadingUserTokens || isLoadingDefaultTokens}
+            disabled={isLoadingUserTokens || isLoadingMoreTokens}
             className="size-8 flex items-center justify-center rounded-full hover:bg-[var(--card-color)]/80 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             title="Refresh token list"
           >
             <RefreshCw
               className={`size-4 text-[var(--primary-color-light)] ${
-                isLoadingUserTokens || isLoadingDefaultTokens
-                  ? "animate-spin"
-                  : ""
+                isLoadingUserTokens || isLoadingMoreTokens ? "animate-spin" : ""
               }`}
             />
           </button>
@@ -493,7 +716,11 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
       </div>
 
       {/* Token List */}
-      <div className="flex-1 overflow-y-auto bg-[var(--background-color)]">
+      <div
+        id="scrollable-container"
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto bg-[var(--background-color)]"
+      >
         {/* Your Tokens Section */}
         <div className="border-b border-white/10">
           <button
@@ -543,7 +770,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
               ) : (
                 <div className="">
                   {filteredUserTokens.map((token) => {
-                    const tokenLogo = token.logo || getTokenLogo(token.symbol);
+                    const tokenLogo = token.logo; // User tokens already have logos loaded
                     const balance = getTokenBalance(token);
                     const hasBalance = parseFloat(token.balance) > 0;
                     const disabled = isTokenDisabled(token);
@@ -661,25 +888,10 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
 
           {isDefaultTokensExpanded && (
             <div className="">
-              {isLoadingDefaultTokens ? (
+              {allTokens.length === 0 && isLoadingMoreTokens ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--primary-color-light)] mr-2"></div>
-                  <span className="text-white/60">
-                    Loading tokens and balances...
-                  </span>
-                </div>
-              ) : hasDefaultTokensError ? (
-                <div className="flex flex-col items-center justify-center py-8 px-4">
-                  <span className="text-[var(--button-color-destructive)] text-center mb-3">
-                    Error loading tokens
-                  </span>
-                  <Button
-                    onClick={refreshBalances}
-                    variant="primary"
-                    className="px-3 py-1 text-xs"
-                  >
-                    Retry
-                  </Button>
+                  <span className="text-white/60">Loading tokens...</span>
                 </div>
               ) : filteredDefaultTokens.length === 0 ? (
                 <div className="flex items-center justify-center py-8">
@@ -690,9 +902,32 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
                   </span>
                 </div>
               ) : (
-                <div className="">
+                <InfiniteScroll
+                  dataLength={filteredDefaultTokens.length}
+                  next={loadMoreTokens}
+                  hasMore={hasMoreTokens}
+                  loader={
+                    <div className="flex items-center justify-center py-4">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[var(--primary-color-light)] mr-2"></div>
+                      <span className="text-white/60 text-sm">
+                        Loading more tokens...
+                      </span>
+                    </div>
+                  }
+                  endMessage={
+                    !searchQuery && (
+                      <div className="flex items-center justify-center py-4">
+                        <span className="text-white/40 text-sm">
+                          No more tokens to load
+                        </span>
+                      </div>
+                    )
+                  }
+                  scrollableTarget="scrollable-container"
+                  className=""
+                >
                   {filteredDefaultTokens.map((token) => {
-                    const tokenLogo = token.logo || getTokenLogo(token.symbol);
+                    const tokenLogo = token.logo; // Logos are now loaded in defaultTokensWithBalances
                     const balance = getTokenBalance(token);
                     const hasBalance = parseFloat(token.balance) > 0;
                     const isActive = (token.transfers24h || 0) > 0;
@@ -830,7 +1065,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
                       </button>
                     );
                   })}
-                </div>
+                </InfiniteScroll>
               )}
             </div>
           )}

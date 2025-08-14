@@ -1,5 +1,8 @@
 import { useEffect, useCallback, useRef } from "react";
-import { SwapRouteV2Request, SwapRouteV2Response } from "@/client/types/liquiswap-api";
+import {
+  SwapRouteV2Request,
+  SwapRouteV2Response,
+} from "@/client/types/liquiswap-api";
 import { routeFinding } from "@/client/services/liquidswap-api";
 import useSwapStore from "./use-swap-store";
 import useDebounce from "./use-debounce";
@@ -29,16 +32,20 @@ export const useSwapRoute = () => {
   // Helper functions to detect HYPE/WHYPE tokens
   const isHypeToken = (token: any): boolean => {
     if (!token) return false;
-    return token.symbol === 'HYPE' ||
-           token.contractAddress === 'native' ||
-           token.contractAddress === 'NATIVE' ||
-           token.contractAddress === HYPE_DEAD_ADDRESS;
+    return (
+      token.symbol === "HYPE" ||
+      token.contractAddress === "native" ||
+      token.contractAddress === "NATIVE" ||
+      token.contractAddress === HYPE_DEAD_ADDRESS
+    );
   };
 
   const isWhypeToken = (token: any): boolean => {
     if (!token) return false;
-    return token.symbol === 'WHYPE' ||
-           token.contractAddress?.toLowerCase() === WHYPE_TOKEN_ADDRESS.toLowerCase();
+    return (
+      token.symbol === "WHYPE" ||
+      token.contractAddress?.toLowerCase() === WHYPE_TOKEN_ADDRESS.toLowerCase()
+    );
   };
 
   const isDirectWrapUnwrap = (): boolean => {
@@ -51,48 +58,51 @@ export const useSwapRoute = () => {
   // Debounce input amounts to avoid too many API calls
   const debouncedAmountIn = useDebounce(amountIn, 500);
   const debouncedAmountOut = useDebounce(amountOut, 500);
-  
+
   // Use ref to prevent duplicate calls
   const isCurrentlyFetching = useRef(false);
   const lastFetchParams = useRef<string | null>(null);
 
-  const fetchRoute = useCallback(async (
-    tokenInAddress: string,
-    tokenOutAddress: string,
-    amount: string,
-    exactIn: boolean,
-    slippagePercent: number
-  ): Promise<SwapRouteV2Response | null> => {
-    try {
-      const params: SwapRouteV2Request = {
-        tokenIn: tokenInAddress,
-        tokenOut: tokenOutAddress,
-        slippage: slippagePercent,
-        multiHop: true,
-        unwrapWHYPE: true,
-        feeRecipient: feeRecipient,
-        feeBps: feeBps,
-      };
+  const fetchRoute = useCallback(
+    async (
+      tokenInAddress: string,
+      tokenOutAddress: string,
+      amount: string,
+      exactIn: boolean,
+      slippagePercent: number
+    ): Promise<SwapRouteV2Response | null> => {
+      try {
+        const params: SwapRouteV2Request = {
+          tokenIn: tokenInAddress,
+          tokenOut: tokenOutAddress,
+          slippage: slippagePercent,
+          multiHop: true,
+          unwrapWHYPE: true,
+          feeRecipient: feeRecipient,
+          feeBps: feeBps,
+        };
 
-      // Use human-readable amounts for API (not wei)
-      if (exactIn) {
-        params.amountIn = parseFloat(amount);
-      } else {
-        params.amountOut = parseFloat(amount);
+        // Use human-readable amounts for API (not wei)
+        if (exactIn) {
+          params.amountIn = parseFloat(amount);
+        } else {
+          params.amountOut = parseFloat(amount);
+        }
+
+        console.log("🔍 Fetching swap route with params:", params);
+
+        // Use the routeFinding method from liquidswap-api
+        const result = await routeFinding(params);
+
+        console.log("✅ Route found:", result);
+        return result;
+      } catch (error) {
+        console.error("❌ Error fetching swap route:", error);
+        throw error;
       }
-
-      console.log("🔍 Fetching swap route with params:", params);
-
-      // Use the routeFinding method from liquidswap-api
-      const result = await routeFinding(params);
-      
-      console.log("✅ Route found:", result);
-      return result;
-    } catch (error) {
-      console.error("❌ Error fetching swap route:", error);
-      throw error;
-    }
-  }, []);
+    },
+    []
+  );
 
   // Effect to fetch route when inputs change
   useEffect(() => {
@@ -116,7 +126,11 @@ export const useSwapRoute = () => {
       }
 
       // Validate inputs
-      if (!tokenIn || !tokenOut || tokenIn.contractAddress === tokenOut.contractAddress) {
+      if (
+        !tokenIn ||
+        !tokenOut ||
+        tokenIn.contractAddress === tokenOut.contractAddress
+      ) {
         setRoute(null);
         setRouteError(null);
         return;
@@ -157,24 +171,30 @@ export const useSwapRoute = () => {
           amountOut: amount.toString(),
           averagePriceImpact: "0",
           execution: {
-            to: isWhypeToken(tokenOut) ? WHYPE_TOKEN_ADDRESS : HYPE_DEAD_ADDRESS,
+            to: isWhypeToken(tokenOut)
+              ? WHYPE_TOKEN_ADDRESS
+              : HYPE_DEAD_ADDRESS,
             calldata: "0x", // Will be handled by the swap function
             details: {
               path: [tokenIn.contractAddress, tokenOut.contractAddress],
               amountIn: amount.toString(),
               amountOut: amount.toString(),
               minAmountOut: amount.toString(),
-              hopSwaps: [[{
-                tokenIn: tokenIn.contractAddress,
-                tokenOut: tokenOut.contractAddress,
-                routerIndex: 0,
-                routerName: "Direct Wrap/Unwrap",
-                fee: 0,
-                amountIn: amount.toString(),
-                amountOut: amount.toString(),
-                stable: true,
-                priceImpact: "0",
-              }]],
+              hopSwaps: [
+                [
+                  {
+                    tokenIn: tokenIn.contractAddress,
+                    tokenOut: tokenOut.contractAddress,
+                    routerIndex: 0,
+                    routerName: "Direct Wrap/Unwrap",
+                    fee: 0,
+                    amountIn: amount.toString(),
+                    amountOut: amount.toString(),
+                    stable: true,
+                    priceImpact: "0",
+                  },
+                ],
+              ],
             },
           },
         };
@@ -195,7 +215,7 @@ export const useSwapRoute = () => {
 
       // Create unique key for this fetch attempt
       const fetchKey = `${tokenIn.contractAddress}-${tokenOut.contractAddress}-${inputAmount}-${isExactIn}-${slippage}`;
-      
+
       // Check if we already made this exact same request recently
       if (lastFetchParams.current === fetchKey) {
         console.log("⏸️ Same params as last fetch, skipping...", fetchKey);
@@ -209,17 +229,31 @@ export const useSwapRoute = () => {
       isCurrentlyFetching.current = true;
       lastFetchParams.current = fetchKey;
 
+      const tokenInAddress = tokenIn.contractAddress
+        .toLowerCase()
+        .includes("native")
+        ? WHYPE_TOKEN_ADDRESS
+        : tokenIn.contractAddress;
+      const tokenOutAddress = tokenOut.contractAddress
+        .toLowerCase()
+        .includes("native")
+        ? WHYPE_TOKEN_ADDRESS
+        : tokenOut.contractAddress;
+
       try {
-        console.log("🔍 Fetching route (initial/change triggered) with params:", {
-          tokenInAddress: tokenIn.contractAddress,
-          tokenOutAddress: tokenOut.contractAddress,
-          amount: inputAmount,
-          isExactIn,
-          slippage
-        });
+        console.log(
+          "🔍 Fetching route (initial/change triggered) with params:",
+          {
+            tokenInAddress: tokenIn.contractAddress,
+            tokenOutAddress: tokenOut.contractAddress,
+            amount: inputAmount,
+            isExactIn,
+            slippage,
+          }
+        );
         const route = await fetchRoute(
-          tokenIn.contractAddress,
-          tokenOut.contractAddress,
+          tokenInAddress,
+          tokenOutAddress,
           inputAmount,
           isExactIn,
           slippage
@@ -227,7 +261,7 @@ export const useSwapRoute = () => {
 
         if (route) {
           setRoute(route);
-          
+
           // Update the opposite amount based on route
           // API returns amounts in human-readable format (as strings)
           if (isExactIn) {
@@ -239,7 +273,8 @@ export const useSwapRoute = () => {
           }
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to fetch route";
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to fetch route";
         setRouteError(errorMessage);
         console.error("Swap route error:", error);
       } finally {
@@ -276,7 +311,9 @@ export const useSwapRoute = () => {
 
       // Handle direct wrap/unwrap scenarios in refetch as well
       if (isDirectWrapUnwrap()) {
-        console.log("🔄 Direct wrap/unwrap detected in refetch, skipping API call");
+        console.log(
+          "🔄 Direct wrap/unwrap detected in refetch, skipping API call"
+        );
 
         const amountValue = parseFloat(amount);
 
@@ -301,24 +338,30 @@ export const useSwapRoute = () => {
           amountOut: amountValue.toString(),
           averagePriceImpact: "0",
           execution: {
-            to: isWhypeToken(tokenOut) ? WHYPE_TOKEN_ADDRESS : HYPE_DEAD_ADDRESS,
+            to: isWhypeToken(tokenOut)
+              ? WHYPE_TOKEN_ADDRESS
+              : HYPE_DEAD_ADDRESS,
             calldata: "0x",
             details: {
               path: [tokenIn.contractAddress, tokenOut.contractAddress],
               amountIn: amountValue.toString(),
               amountOut: amountValue.toString(),
               minAmountOut: amountValue.toString(),
-              hopSwaps: [[{
-                tokenIn: tokenIn.contractAddress,
-                tokenOut: tokenOut.contractAddress,
-                routerIndex: 0,
-                routerName: "Direct Wrap/Unwrap",
-                fee: 0,
-                amountIn: amountValue.toString(),
-                amountOut: amountValue.toString(),
-                stable: true,
-                priceImpact: "0",
-              }]],
+              hopSwaps: [
+                [
+                  {
+                    tokenIn: tokenIn.contractAddress,
+                    tokenOut: tokenOut.contractAddress,
+                    routerIndex: 0,
+                    routerName: "Direct Wrap/Unwrap",
+                    fee: 0,
+                    amountIn: amountValue.toString(),
+                    amountOut: amountValue.toString(),
+                    stable: true,
+                    priceImpact: "0",
+                  },
+                ],
+              ],
             },
           },
         };
@@ -343,9 +386,20 @@ export const useSwapRoute = () => {
       try {
         console.log("🔄 Refetching route (timer triggered)");
 
+        const tokenInAddress = tokenIn.contractAddress
+          .toLowerCase()
+          .includes("native")
+          ? WHYPE_TOKEN_ADDRESS
+          : tokenIn.contractAddress;
+        const tokenOutAddress = tokenOut.contractAddress
+          .toLowerCase()
+          .includes("native")
+          ? WHYPE_TOKEN_ADDRESS
+          : tokenOut.contractAddress;
+
         const route = await fetchRoute(
-          tokenIn.contractAddress,
-          tokenOut.contractAddress,
+          tokenInAddress,
+          tokenOutAddress,
           amount,
           isExactIn,
           slippage
@@ -364,7 +418,8 @@ export const useSwapRoute = () => {
           }
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to fetch route";
+        const errorMessage =
+          error instanceof Error ? error.message : "Failed to fetch route";
         setRouteError(errorMessage);
         console.error("Refetch route error:", error);
       } finally {

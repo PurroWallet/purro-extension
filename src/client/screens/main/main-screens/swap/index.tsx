@@ -28,11 +28,21 @@ const formatBalance = (balance: number): string => {
   return (balance / 1000000).toFixed(2) + "M";
 };
 
+// Format price change percentage
+const formatPriceChange = (change: number): string => {
+  const sign = change >= 0 ? "+" : "";
+  return `${sign}${change.toFixed(2)}%`;
+};
+
 import { sendMessage } from "@/client/utils/extension-message-utils";
 import useWalletStore from "@/client/hooks/use-wallet-store";
 import { SwapSuccess } from "@/client/components/dialogs";
 import useDialogStore from "@/client/hooks/use-dialog-store";
 import { fetchBalances } from "@/client/services/liquidswap-api";
+import {
+  fetchTokenPrices,
+  Network,
+} from "@/client/services/gecko-terminal-api";
 
 // Default WHYPE token data
 const DEFAULT_WHYPE_TOKEN = {
@@ -43,6 +53,7 @@ const DEFAULT_WHYPE_TOKEN = {
   isERC20Verified: true,
   totalTransfers: 1280900,
   transfers24h: 61195,
+  logo: "https://coin-images.coingecko.com/coins/images/54469/large/_UP3jBsi_400x400.jpg?1739905920",
 };
 
 // HYPE native token identifiers
@@ -81,6 +92,14 @@ const Swap = () => {
 
   const [swapError, setSwapError] = useState<string | null>(null);
 
+  // Token price state
+  const [tokenPrices, setTokenPrices] = useState<{
+    [address: string]: {
+      price: number;
+      priceChange24h: number;
+    };
+  }>({});
+
   // Timer state for route refetching
   const { startTimer, resetTimer, cleanup } = useSwapTimerStore();
 
@@ -95,7 +114,7 @@ const Swap = () => {
         balance: "0",
         chain: "hyperevm" as const,
         chainName: "HyperEVM",
-        logo: undefined,
+        logo: DEFAULT_WHYPE_TOKEN.logo,
         balanceFormatted: 0,
         usdValue: 0,
       };
@@ -236,22 +255,31 @@ const Swap = () => {
     };
 
     // Only fetch if we have an active account and either token is WHYPE
-    if (activeAccountAddress && (
-      tokenOut?.contractAddress === WHYPE_TOKEN_ADDRESS ||
-      tokenIn?.contractAddress === WHYPE_TOKEN_ADDRESS
-    )) {
+    if (
+      activeAccountAddress &&
+      (tokenOut?.contractAddress === WHYPE_TOKEN_ADDRESS ||
+        tokenIn?.contractAddress === WHYPE_TOKEN_ADDRESS)
+    ) {
       fetchWHYPEBalance();
     }
-  }, [activeAccountAddress, tokenOut?.contractAddress, tokenIn?.contractAddress]);
+  }, [
+    activeAccountAddress,
+    tokenOut?.contractAddress,
+    tokenIn?.contractAddress,
+  ]);
 
   // Start timer when both tokens are selected and there's an amount, but only after initial route is loaded
+  // Skip timer for wrap/unwrap scenarios
   useEffect(() => {
+    const isWrapUnwrapScenario = isWrapScenario() || isUnwrapScenario();
+
     if (
       tokenIn &&
       tokenOut &&
       (amountIn || amountOut) &&
       !isLoadingRoute &&
-      route
+      route &&
+      !isWrapUnwrapScenario // Don't start timer for wrap/unwrap
     ) {
       // Only start timer if we have a successful route (not immediately after token/amount changes)
       startTimer(refetchRoute);
@@ -271,6 +299,124 @@ const Swap = () => {
     resetTimer,
     cleanup,
     refetchRoute,
+  ]);
+
+  // Fetch token prices when tokens are selected
+  useEffect(() => {
+    const fetchPrices = async () => {
+      const addresses: string[] = [];
+
+      // Add token addresses to fetch prices for
+      if (tokenIn?.contractAddress) {
+        let tokenInAddress = tokenIn.contractAddress;
+
+        if (tokenIn.contractAddress.toLowerCase() === "native") {
+          tokenInAddress = WHYPE_TOKEN_ADDRESS;
+        }
+        addresses.push(tokenInAddress);
+      }
+      if (tokenOut?.contractAddress) {
+        let tokenOutAddress = tokenOut.contractAddress;
+
+        if (tokenOut.contractAddress.toLowerCase() === "native") {
+          tokenOutAddress = WHYPE_TOKEN_ADDRESS;
+        }
+        addresses.push(tokenOutAddress);
+      }
+
+      if (addresses.length === 0) return;
+
+      try {
+        console.log("🔄 Fetching token prices for:", addresses);
+
+        // Determine network based on token chain
+        const network: Network =
+          tokenIn?.chain === "hyperevm" || tokenOut?.chain === "hyperevm"
+            ? "hyperevm"
+            : "eth"; // Default to eth for other chains
+
+        const response = await fetchTokenPrices(network, addresses);
+
+        console.log("📊 Token prices response:", response);
+
+        if (response?.data?.attributes) {
+          const prices = response.data.attributes.token_prices || {};
+          const priceChanges =
+            response.data.attributes.h24_price_change_percentage || {};
+
+          const newTokenPrices: {
+            [address: string]: { price: number; priceChange24h: number };
+          } = {};
+
+          addresses.forEach((address) => {
+            console.log("🔍 Address:", address);
+            const price = prices[address.toLowerCase()];
+            const priceChange = priceChanges[address.toLowerCase()];
+            console.log("🔍 Price:", price);
+            console.log("🔍 Price Change:", priceChange);
+
+            if (price !== undefined) {
+              newTokenPrices[address] = {
+                price: parseFloat(price),
+                priceChange24h: priceChange ? parseFloat(priceChange) : 0,
+              };
+            }
+
+            const isHaveNativeToken =
+              tokenIn?.contractAddress?.toLowerCase() === "native" ||
+              tokenOut?.contractAddress?.toLowerCase() === "native";
+
+            if (isHaveNativeToken && newTokenPrices["native"] === undefined) {
+              newTokenPrices["native"] = {
+                price: parseFloat(price),
+                priceChange24h: priceChange ? parseFloat(priceChange) : 0,
+              };
+            }
+          });
+
+          setTokenPrices(newTokenPrices);
+          console.log("💰 Updated token prices:", newTokenPrices);
+
+          // Update token objects with prices
+          if (tokenIn?.contractAddress) {
+            const tokenInAddress =
+              tokenIn.contractAddress.toLowerCase() === "native"
+                ? WHYPE_TOKEN_ADDRESS
+                : tokenIn.contractAddress;
+
+            if (newTokenPrices[tokenInAddress]) {
+              setTokenIn({
+                ...tokenIn,
+                usdPrice: newTokenPrices[tokenInAddress].price,
+              });
+            }
+          }
+
+          if (tokenOut?.contractAddress) {
+            const tokenOutAddress =
+              tokenOut.contractAddress.toLowerCase() === "native"
+                ? WHYPE_TOKEN_ADDRESS
+                : tokenOut.contractAddress;
+
+            if (newTokenPrices[tokenOutAddress]) {
+              setTokenOut({
+                ...tokenOut,
+                usdPrice: newTokenPrices[tokenOutAddress].price,
+              });
+            }
+          }
+        }
+      } catch (error) {
+        console.error("❌ Error fetching token prices:", error);
+      }
+    };
+
+    fetchPrices();
+  }, [
+    tokenIn?.contractAddress,
+    tokenOut?.contractAddress,
+    tokenIn?.chain,
+    tokenOut?.chain,
   ]);
 
   // Cleanup on unmount
@@ -632,9 +778,9 @@ const Swap = () => {
       {token ? (
         <>
           <div className="size-8 flex items-center justify-center rounded-full overflow-hidden flex-shrink-0">
-            {token.logo || getTokenLogo(token.symbol) ? (
+            {token.logo ? (
               <img
-                src={token.logo || getTokenLogo(token.symbol)}
+                src={token.logo}
                 alt={token.symbol}
                 className="size-6 rounded-full"
                 onError={(e) => {
@@ -710,22 +856,32 @@ const Swap = () => {
                   label="Select token"
                 />
               </div>
-
-              {/* {hasInsufficientBalance && (
-                <p className="text-xs text-red-400 flex items-center gap-1">
-                  <AlertTriangle className="size-3" />
-                  Insufficient balance
-                </p>
-              )} */}
             </div>
             <div>
               {tokenIn && amountIn && parseFloat(amountIn) > 0 ? (
-                <p className="text-xs text-white/60">
-                  ~ $
-                  {(
-                    (parseFloat(amountIn) || 0) * (tokenIn.usdPrice || 0)
-                  ).toFixed(2)}
-                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-white/60">
+                    ~ $
+                    {(
+                      (parseFloat(amountIn) || 0) * (tokenIn.usdPrice || 0)
+                    ).toFixed(2)}
+                  </span>
+                  {tokenIn.contractAddress &&
+                    tokenPrices[tokenIn.contractAddress] && (
+                      <span
+                        className={`text-xs font-medium ${
+                          tokenPrices[tokenIn.contractAddress.toLowerCase()]
+                            .priceChange24h >= 0
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        {formatPriceChange(
+                          tokenPrices[tokenIn.contractAddress].priceChange24h
+                        )}
+                      </span>
+                    )}
+                </div>
               ) : (
                 <p className="text-xs text-white/60 opacity-0">~ $0.00</p>
               )}
@@ -775,22 +931,33 @@ const Swap = () => {
                   label="Select token"
                 />
               </div>
-
-              {/* {hasInsufficientBalance && (
-                <p className="text-xs text-red-400 flex items-center gap-1">
-                  <AlertTriangle className="size-3" />
-                  Insufficient balance
-                </p>
-              )} */}
             </div>
             <div>
               {tokenOut && amountOut && parseFloat(amountOut) > 0 ? (
-                <p className="text-xs text-white/60">
-                  ~ $
-                  {(
-                    (parseFloat(amountOut) || 0) * (tokenOut.usdPrice || 0)
-                  ).toFixed(2)}
-                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-white/60">
+                    ~ $
+                    {(
+                      (parseFloat(amountOut) || 0) * (tokenOut.usdPrice || 0)
+                    ).toFixed(2)}
+                  </span>
+                  {tokenOut.contractAddress &&
+                    tokenPrices[tokenOut.contractAddress] && (
+                      <span
+                        className={`text-xs font-medium ${
+                          tokenPrices[tokenOut.contractAddress.toLowerCase()]
+                            .priceChange24h >= 0
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }`}
+                      >
+                        {formatPriceChange(
+                          tokenPrices[tokenOut.contractAddress.toLowerCase()]
+                            .priceChange24h
+                        )}
+                      </span>
+                    )}
+                </div>
               ) : (
                 <p className="text-xs text-white/60 opacity-0">~ $0.00</p>
               )}
@@ -798,51 +965,86 @@ const Swap = () => {
           </div>
         </div>
 
-        {/* Route Info */}
-        {isLoadingRoute && (
-          <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--primary-color-light)] mr-2"></div>
-            <span className="text-sm text-white/60">Finding best route...</span>
-          </div>
+        {/* Route Info - Hide for wrap/unwrap scenarios */}
+        {!isWrapScenario() && !isUnwrapScenario() && (
+          <>
+            {isLoadingRoute && (
+              <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--primary-color-light)] mr-2"></div>
+                <span className="text-sm text-white/60">
+                  Finding best route...
+                </span>
+              </div>
+            )}
+
+            {route && !isLoadingRoute && (
+              <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white/60">Price Impact</span>
+                  <span
+                    className={`text-sm font-medium ${
+                      parseFloat(route.averagePriceImpact) > 5
+                        ? "text-[var(--button-color-destructive)]"
+                        : parseFloat(route.averagePriceImpact) > 1
+                        ? "text-[var(--primary-color-light)]"
+                        : "text-[var(--primary-color)]"
+                    }`}
+                  >
+                    {parseFloat(route.averagePriceImpact).toFixed(2)}%
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white/60">
+                    Slippage Tolerance
+                  </span>
+                  <span className="text-sm text-[var(--text-color)]">
+                    {slippage}%
+                  </span>
+                </div>
+
+                {route.execution?.details.hopSwaps &&
+                  route.execution.details.hopSwaps.length > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-white/60">Route</span>
+                      <div className="flex items-center gap-1">
+                        <Zap className="size-3 text-[var(--primary-color-light)]" />
+                        <span className="text-xs text-white/60">
+                          {route.execution.details.hopSwaps.length} hop
+                          {route.execution.details.hopSwaps.length > 1
+                            ? "s"
+                            : ""}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white/60">Fee</span>
+                  <div className="flex items-center gap-1">0.2%</div>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
-        {route && !isLoadingRoute && (
-          <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4 space-y-3">
+        {/* Exchange Rate for Wrap/Unwrap Operations */}
+        {(isWrapScenario() || isUnwrapScenario()) && tokenIn && tokenOut && (
+          <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-white/60">Price Impact</span>
-              <span
-                className={`text-sm font-medium ${
-                  parseFloat(route.averagePriceImpact) > 5
-                    ? "text-[var(--button-color-destructive)]"
-                    : parseFloat(route.averagePriceImpact) > 1
-                    ? "text-[var(--primary-color-light)]"
-                    : "text-[var(--primary-color)]"
-                }`}
-              >
-                {parseFloat(route.averagePriceImpact).toFixed(2)}%
+              <span className="text-sm text-white/60">Exchange Rate</span>
+              <span className="text-sm text-[var(--text-color)] font-medium">
+                1 {tokenIn.symbol} = 1 {tokenOut.symbol}
               </span>
             </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-white/60">Slippage Tolerance</span>
-              <span className="text-sm text-[var(--text-color)]">
-                {slippage}%
+            <div className="flex items-center justify-center mt-2">
+              <span className="text-xs text-white/50">
+                {isWrapScenario()
+                  ? "Wrapping HYPE to WHYPE"
+                  : "Unwrapping WHYPE to HYPE"}{" "}
+                • No fees • Instant
               </span>
             </div>
-
-            {route.execution?.details.hopSwaps &&
-              route.execution.details.hopSwaps.length > 0 && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Route</span>
-                  <div className="flex items-center gap-1">
-                    <Zap className="size-3 text-[var(--primary-color-light)]" />
-                    <span className="text-xs text-white/60">
-                      {route.execution.details.hopSwaps.length} hop
-                      {route.execution.details.hopSwaps.length > 1 ? "s" : ""}
-                    </span>
-                  </div>
-                </div>
-              )}
           </div>
         )}
 

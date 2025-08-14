@@ -89,5 +89,3 @@ export const fetchBalances = async (
 
   return response.json();
 };
-
-export const getTokenLogo = (tokenSymbol: string) => { };

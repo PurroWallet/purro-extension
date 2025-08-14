@@ -35,9 +35,9 @@ const History = () => {
       const data = await fetchHyperEvmTokenTransfers(
         activeAccount.eip155.address,
         "both",
+        false,
         nextPageParams
       );
-      console.log("data", data);
       setTransactions((prev) => [...prev, ...(data?.items || [])]);
       setNextPageParams(data?.next_page_params || undefined);
       setHasMore(data?.next_page_params !== null);
