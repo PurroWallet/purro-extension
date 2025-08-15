@@ -1,4 +1,5 @@
 import ShuffleIcon from '@/assets/icon-component/shuffle-icon';
+import SwapVertIcon from '@/assets/icon-component/swap-vert-icon';
 import { CircleFadingPlus, EyeIcon } from 'lucide-react';
 import WalletTabs from './tabs';
 import SendIcon from '@/assets/icon-component/send-icon';
@@ -17,7 +18,6 @@ import {
 import useWalletStore from '@/client/hooks/use-wallet-store';
 import useDevModeStore from '@/client/hooks/use-dev-mode';
 import { useUnifiedTokens } from '@/client/hooks/use-unified-tokens';
-import CurrencyChange from '@/assets/icon-component/currency-change';
 
 const Home = () => {
   const { totalBalance, isLoading } = useOptimizedPortfolio();
@@ -102,7 +102,7 @@ const Home = () => {
               </Button>
               <Button
                 icon={
-                  <CurrencyChange className="text-[var(--primary-color-light)]" />
+                  <SwapVertIcon className="text-[var(--primary-color-light)]" />
                 }
                 onClick={() => {
                   openDrawer(<SwapDrawer />);

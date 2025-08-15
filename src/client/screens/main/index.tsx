@@ -10,13 +10,12 @@ import MainHeader, {
   NftNetworkNotification,
 } from './main-header';
 import { cn } from '@/client/lib/utils';
-import { Clock, HomeIcon, ImageIcon } from 'lucide-react';
+import { ArrowUpDownIcon, Clock, HomeIcon, ImageIcon } from 'lucide-react';
 import AccountSheet from '@/client/components/account-sheet/account-sheet';
 import Home from './main-screens/home';
 import Nft from './main-screens/nft';
 import History from './main-screens/history';
 import Swap from './main-screens/swap';
-import CurrencyChange from '@/assets/icon-component/currency-change';
 
 const queryClient = new QueryClient();
 
@@ -86,7 +85,7 @@ export const MainContent = () => {
           isActive={mainScreen === 'swap'}
           onClick={() => setMainScreen('swap')}
           icon={
-            <CurrencyChange
+            <ArrowUpDownIcon
               className={cn(
                 mainScreen === 'swap' && 'text-[var(--primary-color-light)]'
               )}
