@@ -105,7 +105,7 @@ const Transfer = () => {
             <div className="flex flex-col gap-2 w-full rounded-lg bg-[var(--card-color)] px-4 pb-4 pt-2">
               <p>from</p>
               <div className="text-lg text-[var(--primary-color-light)]">
-                {isFromSpot ? 'Hyperliquid Spot' : 'Hyperliquid Preps'}
+                {isFromSpot ? 'Hyperliquid Spot' : 'Hyperliquid Perps'}
               </div>
             </div>
             <div className="absolute rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[var(--background-color)] p-2">
@@ -119,7 +119,7 @@ const Transfer = () => {
             <div className="flex flex-col gap-2 w-full rounded-lg bg-[var(--card-color)] px-4 pt-4 pb-2">
               <p>to</p>
               <div className="text-lg text-[var(--primary-color-light)]">
-                {isFromSpot ? 'Hyperliquid Preps' : 'Hyperliquid Spot'}
+                {isFromSpot ? 'Hyperliquid Perps' : 'Hyperliquid Spot'}
               </div>
             </div>
           </div>
