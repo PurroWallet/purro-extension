@@ -14,13 +14,13 @@ const WalletNFTs = () => {
   const activeAccount = getActiveAccountWalletObject();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageParams, setPageParams] = useState<
-    Record<number, HyperScanNftCollectionsNextPageParams | undefined>
+    Record<number, HyperScanNftCollectionsNextPageParams | undefined | null>
   >({
     1: undefined, // First page has no params
   });
   const { data: nfts, isLoading: isLoadingNfts } = useNFTsWithCache(
     currentPage,
-    pageParams[currentPage]
+    pageParams[currentPage] || undefined
   );
   const { openDialog } = useDialogStore();
 
@@ -79,7 +79,7 @@ const WalletNFTs = () => {
   const handleOpenNftInstancesDialog = (nft: any) => {
     openDialog(
       <NftInstancesDialog
-        tokenAddress={nft.token.address}
+        tokenAddress={nft.token.address_hash}
         tokenName={nft.token.name}
         tokenSymbol={nft.token.symbol}
         tokenType={nft.token.type}
@@ -92,7 +92,7 @@ const WalletNFTs = () => {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 p-2">
         {nfts?.items?.map((item, index) => (
           <div
-            key={`nft-${item.token.address}`}
+            key={`nft-${item.token.address_hash}`}
             className="aspect-square rounded-lg overflow-hidden bg-card hover:scale-105 transition-transform cursor-pointer border-[var(--primary-color-light)]/20 border"
             onClick={() => handleOpenNftInstancesDialog(item)}
           >

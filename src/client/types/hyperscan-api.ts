@@ -36,81 +36,96 @@ export interface HyperScanNftInstancesNextPageParams {
 
 export interface HyperScanNFTResponse {
   items: {
-    is_unique: boolean;
+    animation_url: string | null;
+    external_app_url: string | null;
     id: string;
-    holder_address_hash: string;
     image_url: string;
-    animation_url: string;
-    external_app_url: string;
+    is_unique: boolean | null;
+    media_type: string | null;
+    media_url: string;
     metadata: {
-      year: number;
-      tags: string[];
-      name: string;
-      image_url: string;
-      home_url: string;
-      external_url: string;
-      description: string;
-      attributes: Array<{
-        value: string;
-        trait_type: string;
-      }>;
-    };
+      description?: string;
+      image?: string;
+      name?: string;
+      title?: string;
+      record?: {
+        data: any;
+        name: {
+          expiry: string;
+          name: string;
+          owner: string;
+        };
+      };
+      [key: string]: any; // Allow for additional metadata fields
+    } | null;
+    owner: string | null;
+    thumbnails: any | null;
     token: {
-      circulating_market_cap: string;
-      icon_url: string;
+      address_hash: string;
+      circulating_market_cap: string | null;
+      decimals: string | null;
+      exchange_rate: string | null;
+      holders_count: string;
+      icon_url: string | null;
       name: string;
-      decimals: string;
       symbol: string;
-      address: string;
+      total_supply: string | null;
       type: string;
-      holders: string;
-      exchange_rate: string;
-      total_supply: string;
+      volume_24h: string | null;
     };
     token_type: string;
     value: string;
   }[];
-  next_page_params: HyperScanNftNextPageParams;
+  next_page_params: HyperScanNftNextPageParams | null;
 }
 
 export interface HyperScanNftCollectionsResponse {
   items: {
-    token: {
-      circulating_market_cap: string;
-      icon_url: string;
-      name: string;
-      decimals: string;
-      symbol: string;
-      address: string;
-      type: string;
-      holders: string;
-      exchange_rate: string;
-      total_supply: string;
-    };
     amount: string;
+    token: {
+      address_hash: string;
+      circulating_market_cap: string | null;
+      decimals: string | null;
+      exchange_rate: string | null;
+      holders_count: string;
+      icon_url: string | null;
+      name: string;
+      symbol: string;
+      total_supply: string | null;
+      type: string;
+      volume_24h: string | null;
+    };
     token_instances: {
-      is_unique: boolean;
+      animation_url: string | null;
+      external_app_url: string | null;
       id: string;
-      holder_address_hash: string;
       image_url: string;
-      animation_url: string;
-      external_app_url: string;
+      is_unique: boolean | null;
+      media_type: string | null;
+      media_url: string;
       metadata: {
-        year: number;
-        tags: string[];
-        name: string;
-        image_url: string;
-        home_url: string;
-        external_url: string;
-        description: string;
-        attributes: Array<{
-          value: string;
-          trait_type: string;
-        }>;
-      };
+        description?: string;
+        image?: string;
+        name?: string;
+        title?: string;
+        record?: {
+          data: any;
+          name: {
+            expiry: string;
+            name: string;
+            owner: string;
+          };
+        };
+        [key: string]: any; // Allow for additional metadata fields
+      } | null;
+      owner: string | null;
+      thumbnails: any | null;
+      token: any | null;
+      token_type: string;
+      value: string;
     }[];
   }[];
-  next_page_params: HyperScanNftCollectionsNextPageParams;
+  next_page_params: HyperScanNftCollectionsNextPageParams | null;
 }
 
 export interface HyperScanNftInstancesResponse {
@@ -119,37 +134,43 @@ export interface HyperScanNftInstancesResponse {
 }
 
 export interface HyperScanNftInstancesItem {
-  is_unique: boolean;
+  animation_url: string | null;
+  external_app_url: string | null;
   id: string;
-  holder_address_hash: string;
   image_url: string;
-  animation_url: string;
-  external_app_url: string;
+  is_unique: boolean | null;
+  media_type: string | null;
+  media_url: string;
   metadata: {
-    year: number;
-    tags: string[];
-    name: string;
-    image_url: string;
-    home_url: string;
-    external_url: string;
-    description: string;
-    attributes: Array<{
-      value: string;
-      trait_type: string;
-    }>;
-  };
+    description?: string;
+    image?: string;
+    name?: string;
+    title?: string;
+    record?: {
+      data: any;
+      name: {
+        expiry: string;
+        name: string;
+        owner: string;
+      };
+    };
+    [key: string]: any; // Allow for additional metadata fields
+  } | null;
+  owner: string | null;
+  thumbnails: any | null;
   token: {
-    circulating_market_cap: string;
-    icon_url: string;
+    address_hash: string;
+    circulating_market_cap: string | null;
+    decimals: string | null;
+    exchange_rate: string | null;
+    holders_count: string;
+    icon_url: string | null;
     name: string;
-    decimals: string;
     symbol: string;
-    address: string;
+    total_supply: string | null;
     type: string;
-    holders: string;
-    exchange_rate: string;
-    total_supply: string;
-  };
+    volume_24h: string | null;
+  } | null;
   token_type: string;
   value: string;
 }

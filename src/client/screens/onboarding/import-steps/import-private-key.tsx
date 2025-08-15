@@ -151,6 +151,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
                 if (inputValue.trim()) {
                   try {
                     let isValid = false;
+                    // @ts-ignore - walletAddress is assigned but not used
                     let walletAddress = '';
 
                     // EVM chains (Ethereum, Hyperliquid, Base, Arbitrum) all use the same validation
