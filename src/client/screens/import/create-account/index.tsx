@@ -11,7 +11,7 @@ import { SeedPhraseWithId } from '@/types';
 
 const CreateAccount = ({ onNext }: { onNext: () => void }) => {
   const { accountName, setAccountName, setMnemonic } = useCreateWalletStore();
-  const { accounts } = useWalletStore();
+  const { accounts, initialized } = useWalletStore();
   const { createWallet, getAllSeedPhrases } = useWallet();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCreatingWallet, setIsCreatingWallet] = useState(false);
@@ -22,10 +22,12 @@ const CreateAccount = ({ onNext }: { onNext: () => void }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (accounts.length > 0) {
-      setAccountName(`Account ${accounts.length + 1}`);
+    if (!accountName && initialized) {
+      setAccountName(
+        `Account ${accounts.length > 0 ? accounts.length + 1 : 1}`
+      );
     }
-  }, [accounts, setAccountName]);
+  }, [accounts, accountName, setAccountName, initialized]);
 
   useEffect(() => {
     const fetchSeedPhrases = async () => {
@@ -56,7 +58,7 @@ const CreateAccount = ({ onNext }: { onNext: () => void }) => {
 
       // Auto-set account name if not already set
       if (!accountName) {
-        const newAccountName = `Account ${accounts.length + 1}`;
+        const newAccountName = `Account ${accounts.length > 0 ? accounts.length + 1 : 1}`;
         setAccountName(newAccountName);
       }
 
