@@ -3,15 +3,15 @@ import {
   DialogContent,
   DialogFooter,
   DialogWrapper,
-} from "@/client/components/ui";
-import { DialogHeader } from "@/client/components/ui";
-import useDialogStore from "@/client/hooks/use-dialog-store";
-import useSwapStore from "@/client/hooks/use-swap-store";
-import { CheckCircle, Repeat, X, ExternalLink, Copy } from "lucide-react";
-import { motion } from "motion/react";
-import { useState } from "react";
-import { getTokenLogo } from "@/client/utils/icons";
-import { useHlPortfolioData } from "@/client/hooks/use-hyperliquid-portfolio";
+} from '@/client/components/ui';
+import { DialogHeader } from '@/client/components/ui';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import useSwapStore from '@/client/hooks/use-swap-store';
+import { CheckCircle, Repeat, X, ExternalLink, Copy } from 'lucide-react';
+import { motion } from 'motion/react';
+import { useState } from 'react';
+import TokenLogo from '@/client/components/token-logo';
+import { useHlPortfolioData } from '@/client/hooks/use-hyperliquid-portfolio';
 
 interface SwapSuccessProps {
   transactionHash: string;
@@ -22,28 +22,28 @@ interface SwapSuccessProps {
   chainId?: string;
 }
 
-const SwapSuccess = ({ 
-  transactionHash, 
-  tokenIn, 
-  tokenOut, 
-  amountIn, 
+const SwapSuccess = ({
+  transactionHash,
+  tokenIn,
+  tokenOut,
+  amountIn,
   amountOut,
-  chainId = "0x3e7" // Default to HyperEVM
+  chainId = '0x3e7', // Default to HyperEVM
 }: SwapSuccessProps) => {
   const { closeDialog } = useDialogStore();
   const { resetAmounts } = useSwapStore();
   const [copied, setCopied] = useState(false);
-  const { refetchAll } = useHlPortfolioData()
+  const { refetchAll } = useHlPortfolioData();
 
   const getExplorerUrl = (hash: string, chainId: string) => {
     switch (chainId) {
-      case "0x1": // Ethereum
+      case '0x1': // Ethereum
         return `https://etherscan.io/tx/${hash}`;
-      case "0xa4b1": // Arbitrum
+      case '0xa4b1': // Arbitrum
         return `https://arbiscan.io/tx/${hash}`;
-      case "0x2105": // Base
+      case '0x2105': // Base
         return `https://basescan.org/tx/${hash}`;
-      case "0x3e7": // HyperEVM
+      case '0x3e7': // HyperEVM
         return `https://purrsec.com/tx/${hash}`;
       default:
         return `https://purrsec.com/tx/${hash}`;
@@ -67,7 +67,7 @@ const SwapSuccess = ({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
-      console.error("Failed to copy transaction hash:", error);
+      console.error('Failed to copy transaction hash:', error);
     }
   };
 
@@ -97,7 +97,7 @@ const SwapSuccess = ({
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{
-              type: "spring",
+              type: 'spring',
               stiffness: 260,
               damping: 20,
               delay: 0.1,
@@ -119,20 +119,15 @@ const SwapSuccess = ({
               {/* From Token */}
               <div className="flex flex-col items-center space-y-2">
                 <div className="size-12 rounded-full overflow-hidden bg-gray-800 flex items-center justify-center">
-                  {tokenIn.logo || getTokenLogo(tokenIn.symbol) ? (
-                    <img
-                      src={tokenIn.logo || getTokenLogo(tokenIn.symbol)}
-                      alt={tokenIn.symbol}
-                      className="size-8 rounded-full"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <span className="text-sm font-medium text-gray-400">
-                      {tokenIn.symbol.slice(0, 3)}
-                    </span>
-                  )}
+                  <TokenLogo
+                    symbol={tokenIn.symbol}
+                    existingLogo={tokenIn.logo}
+                    className="size-8 rounded-full"
+                    fallbackText={tokenIn.symbol.slice(0, 3)}
+                    onError={e => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-medium text-white">{amountIn}</p>
@@ -156,20 +151,15 @@ const SwapSuccess = ({
               {/* To Token */}
               <div className="flex flex-col items-center space-y-2">
                 <div className="size-12 rounded-full overflow-hidden bg-gray-800 flex items-center justify-center">
-                  {tokenOut.logo || getTokenLogo(tokenOut.symbol) ? (
-                    <img
-                      src={tokenOut.logo || getTokenLogo(tokenOut.symbol)}
-                      alt={tokenOut.symbol}
-                      className="size-8 rounded-full"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <span className="text-sm font-medium text-gray-400">
-                      {tokenOut.symbol.slice(0, 3)}
-                    </span>
-                  )}
+                  <TokenLogo
+                    symbol={tokenOut.symbol}
+                    existingLogo={tokenOut.logo}
+                    className="size-8 rounded-full"
+                    fallbackText={tokenOut.symbol.slice(0, 3)}
+                    onError={e => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-medium text-white">{amountOut}</p>
@@ -182,7 +172,9 @@ const SwapSuccess = ({
             <div className="space-y-3">
               <div className="bg-gray-800/50 rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">Transaction Hash</span>
+                  <span className="text-sm text-gray-400">
+                    Transaction Hash
+                  </span>
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={handleCopyHash}
@@ -214,12 +206,17 @@ const SwapSuccess = ({
             {/* Network Info */}
             <div className="text-center">
               <p className="text-xs text-gray-400">
-                Transaction confirmed on{" "}
+                Transaction confirmed on{' '}
                 <span className="text-blue-400">
-                  {chainId === "0x3e7" ? "HyperEVM" : 
-                   chainId === "0x1" ? "Ethereum" :
-                   chainId === "0xa4b1" ? "Arbitrum" :
-                   chainId === "0x2105" ? "Base" : "Unknown Network"}
+                  {chainId === '0x3e7'
+                    ? 'HyperEVM'
+                    : chainId === '0x1'
+                      ? 'Ethereum'
+                      : chainId === '0xa4b1'
+                        ? 'Arbitrum'
+                        : chainId === '0x2105'
+                          ? 'Base'
+                          : 'Unknown Network'}
                 </span>
               </p>
             </div>
@@ -237,11 +234,7 @@ const SwapSuccess = ({
             <Repeat className="size-4" />
             <span>Swap Again</span>
           </Button>
-          <Button
-            onClick={handleDone}
-            variant="primary"
-            className="w-full"
-          >
+          <Button onClick={handleDone} variant="primary" className="w-full">
             Done
           </Button>
         </div>

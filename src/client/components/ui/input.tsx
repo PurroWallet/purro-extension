@@ -12,8 +12,11 @@ export const Input = ({
   className,
   hasError = false,
   disabled = false,
+  min,
+  max,
+  step,
 }: {
-  type: 'text';
+  type: 'text' | 'number';
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -21,6 +24,9 @@ export const Input = ({
   className?: string;
   hasError?: boolean;
   disabled?: boolean;
+  min?: string;
+  max?: string;
+  step?: string;
 }) => {
   return (
     <motion.input
@@ -30,6 +36,9 @@ export const Input = ({
       onKeyDown={onKeyDown}
       placeholder={placeholder}
       disabled={disabled}
+      min={min}
+      max={max}
+      step={step}
       className={cn(
         'w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 text-base transition-colors duration-200',
         hasError

@@ -9,7 +9,7 @@ import useSendTokenStore from '@/client/hooks/use-send-token-store';
 import useDialogStore from '@/client/hooks/use-dialog-store';
 import { CheckCircle, Send, X, ExternalLink } from 'lucide-react';
 import { getNetworkIcon } from '@/utils/network-icons';
-import { getTokenLogo } from '@/client/utils/icons';
+import TokenLogo from '@/client/components/token-logo';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { getAddressByDomain } from '@/client/services/hyperliquid-name-api';
@@ -132,8 +132,6 @@ const TransactionSuccess = () => {
   }
 
   const explorerUrl = getExplorerUrl(token.chain, transactionHash);
-  const tokenLogoSrc =
-    token?.logo || getTokenLogo(token?.symbol || '') || undefined;
 
   return (
     <DialogWrapper>
@@ -189,14 +187,10 @@ const TransactionSuccess = () => {
                 <span className="text-gray-400">Amount</span>
                 <div className="text-right">
                   <div className="flex items-center justify-end">
-                    <img
-                      src={tokenLogoSrc}
-                      alt={token.symbol}
+                    <TokenLogo
+                      symbol={token.symbol}
+                      existingLogo={token.logo}
                       className="size-5 rounded-full mr-2"
-                      onError={e => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = getTokenLogo('default') || '';
-                      }}
                     />
                     <span className="text-white font-medium">
                       {amount} {token.symbol}

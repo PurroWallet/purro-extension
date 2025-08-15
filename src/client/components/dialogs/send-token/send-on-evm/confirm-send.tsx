@@ -29,7 +29,7 @@ import {
   NativeToken,
   useNativeBalance,
 } from '@/client/hooks/use-native-balance';
-import { getTokenLogo } from '@/client/utils/icons';
+import TokenLogo from '@/client/components/token-logo';
 import { ensureTokenDecimals } from '@/client/utils/token-decimals';
 
 type GasEstimate = {
@@ -452,7 +452,6 @@ const ConfirmSend = () => {
 
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
   const isHLName = recipient.match(/^[a-zA-Z0-9]+\.hl$/);
-  const tokenLogoSrc = token?.logo || getTokenLogo(token?.symbol || '');
 
   useEffect(() => {
     const checkDomain = async () => {
@@ -771,17 +770,12 @@ const ConfirmSend = () => {
                   <span className="text-gray-400">Token</span>
                   <div className="flex items-center">
                     <div className="flex items-center justify-center size-6 bg-[var(--card-color)] rounded-full mr-2">
-                      {tokenLogoSrc ? (
-                        <img
-                          src={tokenLogoSrc}
-                          alt={token.symbol}
-                          className="size-6 rounded-full object-cover p-1"
-                        />
-                      ) : (
-                        <p className="text-white text-xs font-bold">
-                          {token.symbol.charAt(0).toUpperCase()}
-                        </p>
-                      )}
+                      <TokenLogo
+                        symbol={token.symbol}
+                        existingLogo={token.logo}
+                        className="size-6 rounded-full object-cover p-1"
+                        fallbackText={token.symbol.charAt(0).toUpperCase()}
+                      />
                     </div>
                     <span className="text-white font-medium">
                       {token.symbol}

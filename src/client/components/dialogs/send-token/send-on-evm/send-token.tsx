@@ -27,7 +27,7 @@ import { AccountIcon } from '@/client/components/account';
 import useDebounce from '@/client/hooks/use-debounce';
 import { getAddressByDomain } from '@/client/services/hyperliquid-name-api';
 import { getNetworkIcon } from '@/utils/network-icons';
-import { getTokenLogo } from '@/client/utils/icons';
+import TokenLogo from '@/client/components/token-logo';
 
 type InputMode = 'token' | 'usd';
 
@@ -107,8 +107,6 @@ const SendToken = () => {
     null
   );
   const [isLoadingDomain, setIsLoadingDomain] = useState(false);
-
-  const tokenLogoSrc = token?.logo || getTokenLogo(token?.symbol || '');
 
   const onBack = () => {
     setStep('select');
@@ -273,17 +271,12 @@ const SendToken = () => {
           <>
             {/* Token Display */}
             <div className="flex items-center justify-center size-24 bg-[var(--card-color)] rounded-full relative mx-auto mb-6">
-              {tokenLogoSrc ? (
-                <img
-                  src={tokenLogoSrc}
-                  alt={token.symbol}
-                  className="size-24 rounded-full object-cover p-1"
-                />
-              ) : (
-                <p className="text-white text-2xl font-bold">
-                  {token.symbol.charAt(0).toUpperCase()}
-                </p>
-              )}
+              <TokenLogo
+                symbol={token.symbol}
+                existingLogo={token.logo}
+                className="size-24 rounded-full object-cover p-1"
+                fallbackText={token.symbol.charAt(0).toUpperCase()}
+              />
               {token.chain && (
                 <div className="absolute bottom-0 p-1 right-0 flex items-center justify-center bg-white/90 rounded-full">
                   <img

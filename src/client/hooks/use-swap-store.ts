@@ -6,31 +6,35 @@ export interface SwapState {
   // Token selection
   tokenIn: UnifiedToken | null;
   tokenOut: UnifiedToken | null;
-  
+
+  // UI state
+  showTokenSelector: 'in' | 'out' | null;
+
   // Amounts
   amountIn: string;
   amountOut: string;
-  
+
   // Swap direction (true = user input tokenIn amount, false = user input tokenOut amount)
   isExactIn: boolean;
-  
+
   // Settings
   slippage: number; // percentage (0.1 = 0.1%)
   deadline: number; // minutes
-  
+
   // Route data
   route: SwapRouteV2Response | null;
   isLoadingRoute: boolean;
   routeError: string | null;
-  
+
   // Transaction
   isSwapping: boolean;
-  
 
-  
+
+
   // Actions
   setTokenIn: (token: UnifiedToken | null) => void;
   setTokenOut: (token: UnifiedToken | null) => void;
+  setShowTokenSelector: (show: 'in' | 'out' | null) => void;
   setAmountIn: (amount: string) => void;
   setAmountOut: (amount: string) => void;
   setIsExactIn: (isExactIn: boolean) => void;
@@ -40,7 +44,7 @@ export interface SwapState {
   setIsLoadingRoute: (loading: boolean) => void;
   setRouteError: (error: string | null) => void;
   setIsSwapping: (swapping: boolean) => void;
-  
+
   // Utility actions
   switchTokens: () => void;
   resetAmounts: () => void;
@@ -51,6 +55,7 @@ const useSwapStore = create<SwapState>((set, get) => ({
   // Initial state
   tokenIn: null,
   tokenOut: null,
+  showTokenSelector: null,
   amountIn: "",
   amountOut: "",
   isExactIn: true,
@@ -60,10 +65,11 @@ const useSwapStore = create<SwapState>((set, get) => ({
   isLoadingRoute: false,
   routeError: null,
   isSwapping: false,
-  
+
   // Actions
   setTokenIn: (token) => set({ tokenIn: token }),
   setTokenOut: (token) => set({ tokenOut: token }),
+  setShowTokenSelector: (show) => set({ showTokenSelector: show }),
   setAmountIn: (amount) => set({ amountIn: amount }),
   setAmountOut: (amount) => set({ amountOut: amount }),
   setIsExactIn: (isExactIn) => set({ isExactIn }),
@@ -73,7 +79,7 @@ const useSwapStore = create<SwapState>((set, get) => ({
   setIsLoadingRoute: (loading) => set({ isLoadingRoute: loading }),
   setRouteError: (error) => set({ routeError: error }),
   setIsSwapping: (swapping) => set({ isSwapping: swapping }),
-  
+
   // Utility actions
   switchTokens: () => {
     const { tokenIn, tokenOut, amountIn, amountOut, isExactIn } = get();
@@ -85,14 +91,14 @@ const useSwapStore = create<SwapState>((set, get) => ({
       route: null, // Clear route when switching
     });
   },
-  
-  resetAmounts: () => set({ 
-    amountIn: "", 
-    amountOut: "", 
+
+  resetAmounts: () => set({
+    amountIn: "",
+    amountOut: "",
     route: null,
-    routeError: null 
+    routeError: null
   }),
-  
+
   reset: () => set({
     tokenIn: null,
     tokenOut: null,
