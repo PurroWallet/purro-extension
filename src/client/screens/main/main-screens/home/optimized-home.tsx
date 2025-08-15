@@ -5,6 +5,7 @@ import { CircleFadingPlus, EyeIcon } from 'lucide-react';
 import SendIcon from '@/assets/icon-component/send-icon';
 import { cn } from '@/client/lib/utils';
 import WalletTabs from './tabs';
+import CurrencyChange from '@/assets/icon-component/currency-change';
 
 const OptimizedHome = () => {
   const isWatchOnly = false; // TODO: Check account type properly
@@ -54,7 +55,7 @@ const OptimizedHome = () => {
             </ActionButton>
             <ActionButton
               icon={
-                <SwapVertIcon className="text-[var(--primary-color-light)]" />
+                <CurrencyChange className="text-[var(--primary-color-light)]" />
               }
               onClick={() => {}}
               disabled={isWatchOnly}
