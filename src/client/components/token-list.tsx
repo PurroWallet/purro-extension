@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { formatCurrency } from '../utils/formatters';
 import { ChainType } from '../types/wallet';
 import { getTokenLogo } from '../utils/icons';
@@ -39,10 +39,29 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
   const safeBalanceFormatted = token.balanceFormatted || 0;
   const safeValue = token.usdValue || 0;
 
-  const tokenLogoSrc = token.logo || getTokenLogo(safeSymbol);
+  const [tokenLogoSrc, setTokenLogoSrc] = useState<string | null>(
+    token.logo || null
+  );
+
+  console.log("token", token, tokenLogoSrc);
   const networkIconSrc = getNetworkIcon(token.chain as ChainType);
 
-  const [tokenImageError, setTokenImageError] = useState(!tokenLogoSrc);
+  const [tokenImageError, setTokenImageError] = useState(!token.logo);
+
+  // Load token logo asynchronously if not provided
+  useEffect(() => {
+    if (!token.logo) {
+      getTokenLogo(safeSymbol, token.chain, token.contractAddress).then(
+        (logoUrl) => {
+          setTokenLogoSrc(logoUrl);
+          setTokenImageError(false);
+          if (!logoUrl) {
+            setTokenImageError(true);
+          }
+        }
+      );
+    }
+  }, [token.logo, safeSymbol]);
 
   const handleClick = () => {
     if (onClick) {

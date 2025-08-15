@@ -1702,6 +1702,254 @@ export const evmHandler = {
     }
   },
 
+  async handleSwapHyperliquidToken(data: { transaction: TransactionRequest }): Promise<MessageResponse> {
+        console.log('[Purro] 🔄 Starting handleSwapHyperliquidToken process...', data.transaction);
+        
+        try {
+            const { transaction } = data;
+
+            // Validate transaction data
+            if (!transaction.to) {
+                return {
+                    success: false,
+                    error: TRANSACTION_ERRORS.INVALID_TO_ADDRESS.message,
+                    code: TRANSACTION_ERRORS.INVALID_TO_ADDRESS.code
+                };
+            }
+
+            // Validate value if provided
+            if (transaction.value && !transaction.data) {
+                try {
+                    ethers.parseEther(transaction.value);
+                } catch (error) {
+                    return {
+                        success: false,
+                        error: TRANSACTION_ERRORS.INVALID_VALUE.message,
+                        code: TRANSACTION_ERRORS.INVALID_VALUE.code
+                    };
+                }
+            }
+
+            // Check wallet state
+            const { hasWallet } = await storageHandler.getWalletState();
+            if (!hasWallet) {
+                return {
+                    success: false,
+                    error: 'No wallet found',
+                    code: 4001
+                };
+            }
+
+            // Get active account
+            const activeAccount = await storageHandler.getActiveAccount();
+            if (!activeAccount) {
+                return {
+                    success: false,
+                    error: 'No active account found',
+                    code: 4001
+                };
+            }
+
+            // Get wallet for the active account
+            const wallet = await storageHandler.getWalletById(activeAccount.id);
+            if (!wallet || !wallet.eip155) {
+                return {
+                    success: false,
+                    error: 'EVM wallet not found for active account',
+                    code: 4001
+                };
+            }
+
+            // Use chainId from transaction if provided, otherwise get from storage
+            let chainId: string = "0x3e7";
+            console.log('[Purro] 🔗 Using chain ID:', chainId);
+            const chainInfo = supportedEVMChains[chainId];
+
+            if (!chainInfo) {
+                return {
+                    success: false,
+                    error: `Unsupported chain: ${chainId}`,
+                    code: 4001
+                };
+            }
+
+            let privateKey: string;
+            try {
+                console.log("[Purro] 🔄 Retrieving private key...");
+                privateKey = await accountHandler.getPrivateKeyByAccountId(
+                  activeAccount.id
+                );
+                console.log("[Purro] ✅ Private key retrieved successfully");
+            } catch (error) {
+                console.error("[Purro] ❌ Failed to retrieve private key:", error);
+        
+                // Check if it's a session issue
+                const session = await authHandler.getSession();
+                if (!session) {
+                  console.error("[Purro] ❌ Session not found or expired");
+                  return {
+                    success: false,
+                    error: 'Session not found or expired',
+                    code: 4001
+                  };
+                }
+        
+                // Generic private key error
+                return {
+                    success: false,
+                    error: 'Failed to retrieve private key',
+                    code: 4001
+                  };
+            }
+
+            const signerWallet = new ethers.Wallet(privateKey);
+            const provider = new ethers.JsonRpcProvider(chainInfo.rpcUrls[0]);
+            const connectedWallet = signerWallet.connect(provider);
+
+            // Prepare transaction with all parameters from frontend
+            const txParams: any = {
+                to: transaction.to,
+                value: transaction.value ? (
+                    transaction.value.startsWith('0x') 
+                        ? BigInt(transaction.value) 
+                        : ethers.parseEther(transaction.value)
+                ) : undefined,
+                data: transaction.data,
+            };
+
+            const tx = await connectedWallet.sendTransaction(txParams);
+            console.log('[Purro] ✅ Transaction sent:', tx.hash);
+
+            return {
+                success: true,
+                data: tx.hash,
+            };
+
+        } catch (error) {
+            console.error('[Purro] ❌ Error in handleSendToken:', error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to send transaction',
+                code: 4001
+            };
+        }
+    },
+
+
+async checkTokenAllowance(data: { tokenAddress: string, ownerAddress: string, spenderAddress: string, chainId: string }): Promise<MessageResponse> {
+        console.log('[Purro] 🔍 Checking token allowance...', data);
+        
+        try {
+            const { tokenAddress, ownerAddress, spenderAddress, chainId } = data;
+            
+            // Get RPC URL for the chain
+            const chainInfo = supportedEVMChains[chainId];
+            if (!chainInfo) {
+                throw new Error(`Unsupported chain: ${chainId}`);
+            }
+            const rpcUrl = chainInfo.rpcUrls[0];
+            const provider = new ethers.JsonRpcProvider(rpcUrl);
+
+            // ERC-20 allowance function ABI
+            const abi = ["function allowance(address owner, address spender) view returns (uint256)"];
+            const contract = new ethers.Contract(tokenAddress, abi, provider);
+
+            // Check allowance
+            const allowance = await contract.allowance(ownerAddress, spenderAddress);
+            
+            console.log('[Purro] ✅ Token allowance checked:', {
+                owner: ownerAddress,
+                spender: spenderAddress,
+                allowance: allowance.toString()
+            });
+
+            return {
+                success: true,
+                data: {
+                    allowance: allowance.toString()
+                }
+            };
+        } catch (error) {
+            console.error('[Purro] ❌ Error checking token allowance:', error);
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to check token allowance'
+            };
+        }
+    },
+
+    async approveToken(data: { tokenAddress: string, spenderAddress: string, amount: string, chainId: string }): Promise<MessageResponse> {
+      console.log('[Purro] 📝 Approving token...', data);
+      
+      try {
+          const { tokenAddress, spenderAddress, amount, chainId } = data;
+          
+          // Get active account
+          const activeAccount = await storageHandler.getActiveAccount();
+          if (!activeAccount) {
+              throw new Error('No active account');
+          }
+
+          // Get wallet info for address verification
+          const wallet = await storageHandler.getWalletById(activeAccount.id);
+          if (!wallet || !wallet.eip155) {
+              throw new Error('EVM wallet not found for active account');
+          }
+
+          // Get private key for transaction signing
+          const privateKey = await accountHandler.getPrivateKeyByAccountId(activeAccount.id);
+          if (!privateKey) {
+              throw new Error('Failed to retrieve private key');
+          }
+
+          // Create wallet instance for signing
+          const signerWallet = new ethers.Wallet(privateKey);
+
+          // Get RPC URL for the chain
+          const chainInfo = supportedEVMChains[chainId];
+          if (!chainInfo) {
+              throw new Error(`Unsupported chain: ${chainId}`);
+          }
+          const rpcUrl = chainInfo.rpcUrls[0];
+          const provider = new ethers.JsonRpcProvider(rpcUrl);
+          const connectedWallet = signerWallet.connect(provider);
+
+          // ERC-20 approve function ABI
+          const abi = ["function approve(address spender, uint256 amount) returns (bool)"];
+          const contract = new ethers.Contract(tokenAddress, abi, connectedWallet);
+
+          // Send approval transaction
+          const transaction = await contract.approve(spenderAddress, amount);
+          
+          console.log('[Purro] 📝 Approval transaction sent:', transaction.hash);
+
+          // Wait for confirmation
+          const receipt = await transaction.wait();
+          
+          console.log('[Purro] ✅ Token approval confirmed:', {
+              transactionHash: receipt.hash,
+              blockNumber: receipt.blockNumber,
+              gasUsed: receipt.gasUsed?.toString()
+          });
+
+          return {
+              success: true,
+              data: {
+                  hash: receipt.hash,
+                  blockNumber: receipt.blockNumber,
+                  gasUsed: receipt.gasUsed?.toString(),
+                  chainId: chainId
+              }
+          };
+      } catch (error) {
+          console.error('[Purro] ❌ Error approving token:', error);
+          return {
+              success: false,
+              error: error instanceof Error ? error.message : 'Failed to approve token'
+          };
+      }
+  },
+
   // Helper methods
   async closeExistingConnectPopups(): Promise<void> {
     try {

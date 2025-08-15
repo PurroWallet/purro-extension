@@ -17,3 +17,5 @@ export {
   CollapsibleTrigger,
   CollapsibleContent,
 } from './collapsiable';
+
+export { CircularTimer } from './circular-timer';

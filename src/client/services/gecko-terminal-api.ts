@@ -60,7 +60,7 @@ export const fetchTokenPrices = async (
   // If we have 30 or fewer addresses, make a single request
   if (addresses.length <= BATCH_SIZE) {
     const response = await fetch(
-      `${ENDPOINTS.GECKO_TERMINAL}/simple/networks/${network}/token_price/${addresses.join(',')}`,
+      `${ENDPOINTS.GECKO_TERMINAL}/simple/networks/${network}/token_price/${addresses.join(',')}?include_24hr_price_change=true`,
       {
         method: 'GET',
         headers: {
@@ -193,6 +193,27 @@ export const fetchTopPoolsForAToken = async (
 ) => {
   const response = await fetch(
     `${ENDPOINTS.GECKO_TERMINAL}/networks/${networkId}/tokens/${tokenAddress}/pools`,
+    {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json;version=20230302',
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Network response was not ok: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
+export const fetchTokenImage = async (
+  networkId: Network,
+  tokenAddress: string
+): Promise<{ data: { attributes: { image_url: string } } }> => {
+  const response = await fetch(
+    `${ENDPOINTS.GECKO_TERMINAL}/networks/${networkId}/tokens/${tokenAddress}?include=image_url`,
     {
       method: 'GET',
       headers: {
