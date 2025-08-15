@@ -42,6 +42,8 @@ import {
   fetchTokenPrices,
   Network,
 } from '@/client/services/gecko-terminal-api';
+import { Balance } from '@/client/types/liquidswap-api';
+import { UnifiedToken } from '@/client/components/token-list';
 
 // Default WHYPE token data
 const DEFAULT_WHYPE_TOKEN = {
@@ -123,7 +125,7 @@ const Swap = () => {
   }, [tokenOut, setTokenOut]);
 
   // Get token balances with proper decimal handling
-  const getTokenBalance = (token: any): number => {
+  const getTokenBalance = (token: UnifiedToken | null): number => {
     if (!token?.balance) return 0;
     try {
       // Handle both hex string and regular string balances
@@ -154,7 +156,7 @@ const Swap = () => {
   const tokenOutBalance = tokenOut ? getTokenBalance(tokenOut) : 0;
 
   // Helper functions to detect HYPE/WHYPE scenarios
-  const isHypeToken = (token: any): boolean => {
+  const isHypeToken = (token: UnifiedToken | null): boolean => {
     if (!token) return false;
     return (
       token.isNative ||
@@ -166,7 +168,7 @@ const Swap = () => {
     );
   };
 
-  const isWhypeToken = (token: any): boolean => {
+  const isWhypeToken = (token: UnifiedToken | null): boolean => {
     if (!token) return false;
     return (
       token.symbol === 'WHYPE' ||
@@ -219,16 +221,24 @@ const Swap = () => {
         }
 
         const whypeBalance = balance.data.tokens.find(
-          (token: any) => token.token === WHYPE_TOKEN_ADDRESS
+          (token: Balance) => token.token === WHYPE_TOKEN_ADDRESS
         );
 
         console.log('🔍 WHYPE balance found:', whypeBalance);
 
         if (whypeBalance && whypeBalance.balance !== undefined) {
           // Create a temporary token object to use getTokenBalance function
-          const tempToken = {
+          const tempToken: UnifiedToken = {
             balance: whypeBalance.balance,
             decimals: 18, // WHYPE has 18 decimals
+            chain: 'hyperevm' as const,
+            chainName: 'HyperEVM',
+            symbol: 'WHYPE',
+            name: 'Wrapped HYPE',
+            logo: 'https://coin-images.coingecko.com/coins/images/54469/large/_UP3jBsi_400x400.jpg?1739905920',
+            balanceFormatted: 0,
+            usdValue: 0,
+            contractAddress: DEFAULT_WHYPE_TOKEN.address,
           };
           const formattedBalance = getTokenBalance(tempToken);
 
@@ -286,6 +296,7 @@ const Swap = () => {
     ) {
       fetchWHYPEBalance();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeAccountAddress,
     tokenOut?.contractAddress,
@@ -312,6 +323,7 @@ const Swap = () => {
     }
 
     return cleanup;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     tokenIn,
     tokenOut,
@@ -436,6 +448,7 @@ const Swap = () => {
     };
 
     fetchPrices();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     tokenIn?.contractAddress,
     tokenOut?.contractAddress,
@@ -791,7 +804,7 @@ const Swap = () => {
     onClick,
     label,
   }: {
-    token: any;
+    token: UnifiedToken | null;
     onClick: () => void;
     label: string;
   }) => (

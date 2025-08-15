@@ -1090,16 +1090,16 @@ export const evmHandler = {
   },
 
   async handleSendTransaction(
-    data: { transaction: TransactionRequest },
+    data: { transactionData: TransactionRequest },
     sender: chrome.runtime.MessageSender
   ): Promise<MessageResponse> {
     console.log(
       '[Purro] 🔄 Starting handleSendTransaction process...',
-      data.transaction
+      data.transactionData
     );
 
     try {
-      const { transaction } = data;
+      const { transactionData: transaction } = data;
 
       // Validate transaction data
       if (!transaction.to) {
@@ -1721,7 +1721,8 @@ export const evmHandler = {
             if (transaction.value && !transaction.data) {
                 try {
                     ethers.parseEther(transaction.value);
-                } catch (error) {
+                } catch (error: unknown) {
+                    console.error('[Purro] ❌ Error in handleSwapHyperliquidToken:', error);
                     return {
                         success: false,
                         error: TRANSACTION_ERRORS.INVALID_VALUE.message,
