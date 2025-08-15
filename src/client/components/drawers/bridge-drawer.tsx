@@ -8,9 +8,10 @@ export const BridgeDrawer = () => {
         bridge token to Hyperliquid & HyperEVM right on DEX or some the DApps
         below. Curious? Check out our{' '}
         <a
-          href="https://docs.purro.xyz/roadmap"
+          href="https://docs.purro.xyz/wallet/roadmap"
           target="_blank"
-          className="text-[var(--primary-color-light)]" rel="noreferrer"
+          className="text-[var(--primary-color-light)]"
+          rel="noreferrer"
         >
           roadmap.
         </a>

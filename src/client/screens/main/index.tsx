@@ -4,7 +4,7 @@ import { Dialog, Drawer } from '@/client/components/ui';
 import useInit from '@/client/hooks/use-init';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import MainHeader, {
   HistoryNotification,
   NftNetworkNotification,
@@ -17,6 +17,7 @@ import Nft from './main-screens/nft';
 import History from './main-screens/history';
 import Swap from './main-screens/swap';
 import useWalletStore from '@/client/hooks/use-wallet-store';
+import useMainScreenStore from '@/client/hooks/use-main-screen-store';
 
 const queryClient = new QueryClient();
 
@@ -38,22 +39,21 @@ export const MainContent = () => {
   const { activeAccount } = useWalletStore();
   const isWatchOnly = activeAccount?.source === 'watchOnly';
 
-  const [mainScreen, setMainScreen] = useState<
-    'home' | 'explore' | 'nft' | 'history' | 'swap'
-  >('home');
-  const [isNftNetworkVisible, setIsNftNetworkVisible] = useState(false);
-  const [isHistoryVisible, setIsHistoryVisible] = useState(false);
+  const {
+    mainScreen,
+    isNftNetworkVisible,
+    isHistoryVisible,
+    setMainScreen,
+    toggleNftNetwork,
+    toggleHistory,
+  } = useMainScreenStore();
 
   // Auto-switch away from swap screen if account becomes watch-only
   useEffect(() => {
     if (isWatchOnly && mainScreen === 'swap') {
       setMainScreen('home');
     }
-  }, [isWatchOnly, mainScreen]);
-
-  const handleNftNetworkToggle = () => {
-    setIsNftNetworkVisible(!isNftNetworkVisible);
-  };
+  }, [isWatchOnly, mainScreen, setMainScreen]);
 
   return (
     <div className="size-full relative flex flex-col h-screen">
@@ -62,10 +62,10 @@ export const MainContent = () => {
           mainScreen === 'home' && 'bg-[var(--primary-color)] border-b-0'
         )}
         currentScreen={mainScreen}
-        onNftNetworkToggle={handleNftNetworkToggle}
+        onNftNetworkToggle={toggleNftNetwork}
         isNftNetworkVisible={isNftNetworkVisible}
         isHistoryVisible={isHistoryVisible}
-        onHistoryToggle={() => setIsHistoryVisible(!isHistoryVisible)}
+        onHistoryToggle={toggleHistory}
       />
       {mainScreen === 'nft' && (
         <NftNetworkNotification isVisible={isNftNetworkVisible} />

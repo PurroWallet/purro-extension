@@ -11,13 +11,13 @@ import { cn } from '@/client/lib/utils';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
 import {
   ReceiveChooseDrawer,
-  SwapDrawer,
   BridgeDrawer,
   SendDrawer,
 } from '@/client/components/drawers';
 import useWalletStore from '@/client/hooks/use-wallet-store';
 import useDevModeStore from '@/client/hooks/use-dev-mode';
 import { useUnifiedTokens } from '@/client/hooks/use-unified-tokens';
+import useMainScreenStore from '@/client/hooks/use-main-screen-store';
 
 const Home = () => {
   const { totalBalance, isLoading } = useOptimizedPortfolio();
@@ -25,6 +25,7 @@ const Home = () => {
   const { activeAccount } = useWalletStore();
   const { openDrawer } = useDrawerStore();
   const { isDevMode } = useDevModeStore();
+  const { setMainScreen } = useMainScreenStore();
 
   // In dev mode, get testnet tokens to show raw HYPE balance
   const { allUnifiedTokens } = useUnifiedTokens();
@@ -105,7 +106,8 @@ const Home = () => {
                   <SwapVertIcon className="text-[var(--primary-color-light)]" />
                 }
                 onClick={() => {
-                  openDrawer(<SwapDrawer />);
+                  setMainScreen('swap');
+                  // openDrawer(<SwapDrawer />);
                 }}
               >
                 Swap
