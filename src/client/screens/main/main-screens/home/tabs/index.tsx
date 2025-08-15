@@ -55,10 +55,7 @@ const WalletTabs = () => {
             }`}
             onClick={() => setActiveTab('evm')}
           >
-            EVM{' '}
-            {isDevMode && (
-              <span className="text-xs text-muted-foreground">Testnet</span>
-            )}
+            EVM
           </button>
 
           {isHyperliquidDexEnabled && (

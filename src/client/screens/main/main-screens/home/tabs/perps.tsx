@@ -106,7 +106,7 @@ const WalletTabsPerps = () => {
                     openDrawer(<DepositHyperDexDrawer />);
                   }}
                 >
-                  Deposit
+                  Transfer
                 </Button>
               )}
             </div>
