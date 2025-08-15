@@ -5,12 +5,12 @@ import {
   fetchUserPerpsBalance,
 } from '../services/hyperliquid-api';
 import { fetchTokenPrices } from '../services/gecko-terminal-api';
-import { fetchHyperEvmERC20Tokens } from '../services/hyperscan-api';
+import { fetchBalances } from '../services/liquidswap-api';
 import QueryKeys from '../utils/query-keys';
 import useWalletStore from './use-wallet-store';
 import SpotDataIndexer from '../lib/spot-data-indexer';
 import { HyperliquidApiSpotAssetContext } from '../types/hyperliquid-api';
-import { HyperScanTokenBalanceResponse } from '../types/hyperscan-api';
+import { FetchBalancesResponse } from '../types/liquidswap-api';
 import { useEffect, useMemo } from 'react';
 import useDevModeStore from './use-dev-mode';
 
@@ -74,8 +74,14 @@ export const useHlPortfolioData = (
   // Thêm evm tokens query nếu cần
   if (fetchEvm) {
     queries.push({
-      queryKey: [QueryKeys.HYPER_EVM_ERC20_TOKENS, userAddress],
-      queryFn: () => fetchHyperEvmERC20Tokens(userAddress, isDevMode),
+      queryKey: [QueryKeys.LIQUIDSWAP_BALANCES, userAddress],
+      queryFn: async () => {
+        const response = await fetchBalances({
+          wallet: userAddress,
+          limit: 200
+        });
+        return response;
+      },
       staleTime: 60 * 1000, // 60 seconds
       enabled: isValidAddress(userAddress),
     });
@@ -137,9 +143,10 @@ export const useHlPortfolioData = (
   // Fetch token prices if we have evmTokens
   const tokenAddresses = useMemo(() => {
     if (!fetchEvm) return [];
+    const evmData = evmTokensQuery.data as FetchBalancesResponse | null;
     return (
-      evmTokensQuery.data?.items?.map(
-        (item: HyperScanTokenBalanceResponse) => item.token.address
+      evmData?.data?.tokens?.map(
+        (token) => token.token
       ) || []
     );
   }, [fetchEvm, evmTokensQuery.data]);
@@ -163,14 +170,16 @@ export const useHlPortfolioData = (
 
   // Calculate EVM tokens value
   const evmValue = useMemo(() => {
-    if (!fetchEvm || !evmTokensQuery.data?.items) return 0;
+    if (!fetchEvm) return 0;
+    const evmData = evmTokensQuery.data as FetchBalancesResponse | null;
+    if (!evmData?.data?.tokens) return 0;
 
-    return evmTokensQuery.data.items.reduce(
-      (total: number, item: HyperScanTokenBalanceResponse) => {
-        const priceStr = tokenPricesData[item.token.address];
+    return evmData.data.tokens.reduce(
+      (total: number, token) => {
+        const priceStr = tokenPricesData[token.token];
         const price = priceStr ? parseFloat(priceStr) : 0;
         const balance =
-          parseFloat(item.value) / Math.pow(10, parseInt(item.token.decimals));
+          parseFloat(token.balance) / Math.pow(10, token.decimals);
         return total + balance * price;
       },
       0
@@ -203,7 +212,7 @@ export const useHlPortfolioData = (
 
   // Prepare return data
   const evmData = {
-    tokensData: evmTokensQuery.data,
+    tokensData: evmTokensQuery.data as FetchBalancesResponse | null,
     tokenPricesData,
   };
 
