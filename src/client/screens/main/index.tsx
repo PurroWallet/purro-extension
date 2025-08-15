@@ -4,7 +4,7 @@ import { Dialog, Drawer } from '@/client/components/ui';
 import useInit from '@/client/hooks/use-init';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MainHeader, {
   HistoryNotification,
   NftNetworkNotification,
@@ -16,6 +16,7 @@ import Home from './main-screens/home';
 import Nft from './main-screens/nft';
 import History from './main-screens/history';
 import Swap from './main-screens/swap';
+import useWalletStore from '@/client/hooks/use-wallet-store';
 
 const queryClient = new QueryClient();
 
@@ -34,11 +35,22 @@ const Main = () => {
 };
 
 export const MainContent = () => {
+  const { activeAccount } = useWalletStore();
+  const isWatchOnly = activeAccount?.source === 'watchOnly';
+
   const [mainScreen, setMainScreen] = useState<
     'home' | 'explore' | 'nft' | 'history' | 'swap'
   >('home');
   const [isNftNetworkVisible, setIsNftNetworkVisible] = useState(false);
   const [isHistoryVisible, setIsHistoryVisible] = useState(false);
+
+  // Auto-switch away from swap screen if account becomes watch-only
+  useEffect(() => {
+    if (isWatchOnly && mainScreen === 'swap') {
+      setMainScreen('home');
+    }
+  }, [isWatchOnly, mainScreen]);
+
   const handleNftNetworkToggle = () => {
     setIsNftNetworkVisible(!isNftNetworkVisible);
   };
@@ -69,7 +81,12 @@ export const MainContent = () => {
         {mainScreen === 'nft' && <Nft />}
       </div>
 
-      <div className="grid grid-cols-4 w-full border-t border-white/10">
+      <div
+        className={cn(
+          'grid w-full border-t border-white/10',
+          isWatchOnly ? 'grid-cols-3' : 'grid-cols-4'
+        )}
+      >
         <MainScreenTabButton
           isActive={mainScreen === 'home'}
           onClick={() => setMainScreen('home')}
@@ -81,17 +98,19 @@ export const MainContent = () => {
             />
           }
         />
-        <MainScreenTabButton
-          isActive={mainScreen === 'swap'}
-          onClick={() => setMainScreen('swap')}
-          icon={
-            <ArrowUpDownIcon
-              className={cn(
-                mainScreen === 'swap' && 'text-[var(--primary-color-light)]'
-              )}
-            />
-          }
-        />
+        {!isWatchOnly && (
+          <MainScreenTabButton
+            isActive={mainScreen === 'swap'}
+            onClick={() => setMainScreen('swap')}
+            icon={
+              <ArrowUpDownIcon
+                className={cn(
+                  mainScreen === 'swap' && 'text-[var(--primary-color-light)]'
+                )}
+              />
+            }
+          />
+        )}
         <MainScreenTabButton
           isActive={mainScreen === 'nft'}
           onClick={() => setMainScreen('nft')}
