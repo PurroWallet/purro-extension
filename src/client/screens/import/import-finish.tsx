@@ -48,7 +48,8 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
               // New wallet was already created in the previous step, just mark as successful
             } else {
               const finalAccountName =
-                accountName || `Account ${accounts.length + 1}`;
+                accountName ||
+                `Account ${accounts.length > 0 ? accounts.length + 1 : 1}`;
               await createAccountFromSeedPhrase({
                 seedPhraseId: selectedSeedPhraseId,
                 name: finalAccountName,
@@ -61,7 +62,8 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
               throw new Error('No seed phrase provided for import');
             }
             const finalAccountName =
-              accountName || `Account ${accounts.length + 1}`;
+              accountName ||
+              `Account ${accounts.length > 0 ? accounts.length + 1 : 1}`;
             const seedPhraseId = await importSeedPhrase({
               mnemonic: mnemonic.trim(),
               accountName: finalAccountName,

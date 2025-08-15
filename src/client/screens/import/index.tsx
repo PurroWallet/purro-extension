@@ -2,8 +2,11 @@ import { createRoot } from 'react-dom/client';
 import { LockDisplay } from '@/client/components/display';
 import UniverseBackground from '@/client/components/universe-background';
 import ImportSteps from './import-steps';
+import useInit from '@/client/hooks/use-init';
 
 const Import = () => {
+  useInit();
+
   return (
     <div className="relative">
       <UniverseBackground className="absolute inset-0 z-0" />

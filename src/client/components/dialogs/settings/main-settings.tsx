@@ -1,6 +1,5 @@
 import useDialogStore from '@/client/hooks/use-dialog-store';
 import {
-  CircleHelp,
   FileLock2,
   FileText,
   FileX2,
@@ -110,12 +109,12 @@ const MainSettings = ({
 
           <Menu
             items={[
-              {
-                icon: CircleHelp,
-                label: 'Help & Support',
-                onClick: () => window.open('https://purro.xyz/help', '_blank'),
-                arrowLeft: true,
-              },
+              // {
+              //   icon: CircleHelp,
+              //   label: 'Help & Support',
+              //   onClick: () => window.open('https://purro.xyz/help', '_blank'),
+              //   arrowLeft: true,
+              // },
               {
                 icon: FileText,
                 label: 'Terms of Service',

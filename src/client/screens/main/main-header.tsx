@@ -35,7 +35,7 @@ const MainHeader = ({
   const activeAccountAddress = useMemo(() => {
     return wallets[activeAccount?.id as string]?.eip155?.address;
   }, [activeAccount, wallets]);
-  const isSwapScreen = currentScreen === "swap";
+  const isSwapScreen = currentScreen === 'swap';
   const { openDrawer } = useDrawerStore();
   const { timeLeft, isTimerActive } = useSwapTimerStore();
 

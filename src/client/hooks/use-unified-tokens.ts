@@ -99,7 +99,7 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
     hyperliquidValue + safeAlchemyTotalValue + safeNativeTotalValue;
 
   const hyperliquidTokenCount = isHyperliquidActive
-    ? evmData?.tokensData?.items?.length || 0
+    ? evmData?.tokensData?.data?.tokens?.length || 0
     : 0;
   const totalTokenCount =
     hyperliquidTokenCount + alchemyTokenCount + nativeTokensCount;
@@ -125,27 +125,27 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
       });
     }
 
-    if (isHyperliquidActive && evmData?.tokensData?.items) {
-      evmData.tokensData.items.forEach((item: any) => {
-        const priceStr = tokenPricesData[item.token.address];
+    if (isHyperliquidActive && evmData?.tokensData?.data?.tokens) {
+      evmData.tokensData.data.tokens.forEach((token: any) => {
+        const priceStr = tokenPricesData[token.token];
         const price = priceStr ? parseFloat(priceStr) : 0;
         const balance =
-          parseFloat(item.value) / Math.pow(10, parseInt(item.token.decimals));
+          parseFloat(token.balance) / Math.pow(10, token.decimals);
         const usdValue = balance * price;
 
         unifiedTokens.push({
           chain: 'hyperevm',
           chainName: 'Hyperliquid EVM',
-          symbol: item.token.symbol,
-          name: item.token.name,
-          balance: item.value,
+          symbol: token.symbol,
+          name: token.name,
+          balance: token.balance,
           balanceFormatted: balance,
           usdValue,
           usdPrice: price,
-          contractAddress: item.token.address,
-          decimals: parseInt(item.token.decimals),
-          isNative: item.token.isNative,
-          logo: item.token.icon_url || undefined,
+          contractAddress: token.token,
+          decimals: token.decimals,
+          isNative: token.token.toLowerCase().includes('native'),
+          logo: undefined, // Liquidswap API doesn't provide icon_url
         });
       });
     }
@@ -161,7 +161,7 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
   }, [
     nativeTokens,
     isHyperliquidActive,
-    evmData?.tokensData?.items,
+    evmData?.tokensData?.data?.tokens,
     tokenPricesData,
     alchemyTokens,
   ]);

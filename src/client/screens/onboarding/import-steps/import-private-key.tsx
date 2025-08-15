@@ -1,7 +1,7 @@
 import { Button, InputPassword } from '@/client/components/ui';
 import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
 import { Check, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useWallet from '@/client/hooks/use-wallet';
 import useWalletStore from '@/client/hooks/use-wallet-store';
 import {
@@ -16,7 +16,16 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
   const [error, setError] = useState<string | null>(null);
   const [address, setAddress] = useState<string | null>(null);
   const { checkPrivateKeyExists } = useWallet();
-  const { accounts } = useWalletStore();
+  const { accounts, initialized } = useWalletStore();
+
+  // Auto-set account name based on existing accounts count
+  useEffect(() => {
+    if (!accountName && initialized) {
+      setAccountName(
+        `Account ${accounts.length > 0 ? accounts.length + 1 : 1}`
+      );
+    }
+  }, [accounts, accountName, setAccountName, initialized]);
 
   const validatePrivateKey = async () => {
     if (!privateKey) {
@@ -142,7 +151,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
                 if (inputValue.trim()) {
                   try {
                     let isValid = false;
-                    // @ts-expect-error: Variable is assigned but not read in this scope
+                    // @ts-ignore - walletAddress is assigned but not used
                     let walletAddress = '';
 
                     // EVM chains (Ethereum, Hyperliquid, Base, Arbitrum) all use the same validation
@@ -207,7 +216,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
 
             <input
               type="text"
-              placeholder={`Account ${accounts.length + 1}`}
+              placeholder={`Account ${accounts.length > 0 ? accounts.length + 1 : 1}`}
               value={accountName ?? ''}
               onChange={e => setAccountName(e.target.value)}
               className="w-full px-4 py-3 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color-light)] bg-[var(--card-color)] text-white placeholder-gray-400 text-base"

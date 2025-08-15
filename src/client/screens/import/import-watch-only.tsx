@@ -1,7 +1,7 @@
 import { Button } from '@/client/components/ui';
 import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
 import { X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useWallet from '@/client/hooks/use-wallet';
 import useWalletStore from '@/client/hooks/use-wallet-store';
 import { ChainType } from '@/background/types/account';
@@ -12,8 +12,17 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
   const { address, chain, accountName, setAddress, setAccountName } =
     useCreateWalletStore();
   const { importWatchOnlyWallet, checkWatchOnlyAddressExists } = useWallet();
-  const { accounts } = useWalletStore();
+  const { accounts, initialized } = useWalletStore();
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-set account name based on existing accounts count
+  useEffect(() => {
+    if (!accountName && initialized) {
+      setAccountName(
+        `Account ${accounts.length > 0 ? accounts.length + 1 : 1}`
+      );
+    }
+  }, [accounts, accountName, setAccountName, initialized]);
 
   const validateAddress = (address: string, blockchain: string): boolean => {
     if (!address) {
@@ -61,7 +70,8 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
       return;
     }
 
-    const finalAccountName = accountName || `Account ${accounts.length + 1}`;
+    const finalAccountName =
+      accountName || `Account ${accounts.length > 0 ? accounts.length + 1 : 1}`;
 
     if (!finalAccountName || !finalAccountName.trim()) {
       setError('Account name is required');
@@ -141,7 +151,7 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
 
           <input
             type="text"
-            placeholder={`Account ${accounts.length + 1}`}
+            placeholder={`Account ${accounts.length > 0 ? accounts.length + 1 : 1}`}
             value={accountName ?? ''}
             onChange={e => setAccountName(e.target.value)}
             className="w-full px-4 py-3 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color-light)] bg-[var(--card-color)] text-white placeholder-gray-400 text-base"

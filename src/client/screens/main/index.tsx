@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import LockDisplay from '@/client/components/display/lock-display';
 import { Dialog, Drawer } from '@/client/components/ui';
 import useInit from '@/client/hooks/use-init';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState, useRef, useEffect } from 'react';
+import { useEffect } from 'react';
 import MainHeader, {
   HistoryNotification,
   NftNetworkNotification,
@@ -19,6 +19,8 @@ import HomeAnimationIcon from '@/client/components/animation-icon/home';
 import SwapAnimationIcon from '@/client/components/animation-icon/swap';
 import NftsAnimationIcon from '@/client/components/animation-icon/nfts';
 import HistoryAnimationIcon from '@/client/components/animation-icon/history';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import useMainScreenStore from '@/client/hooks/use-main-screen-store';
 
 const queryClient = new QueryClient();
 
@@ -37,16 +39,25 @@ const Main = () => {
 };
 
 export const MainContent = () => {
-  const [mainScreen, setMainScreen] = useState<
-    'home' | 'explore' | 'nft' | 'history' | 'swap'
-  >('home');
-  const [isNftNetworkVisible, setIsNftNetworkVisible] = useState(false);
-  const [isHistoryVisible, setIsHistoryVisible] = useState(false);
   const [buttonHovered, setButtonHovered] = useState<string | null>(null);
+  const { activeAccount } = useWalletStore();
+  const isWatchOnly = activeAccount?.source === 'watchOnly';
 
-  const handleNftNetworkToggle = () => {
-    setIsNftNetworkVisible(!isNftNetworkVisible);
-  };
+  const {
+    mainScreen,
+    isNftNetworkVisible,
+    isHistoryVisible,
+    setMainScreen,
+    toggleNftNetwork,
+    toggleHistory,
+  } = useMainScreenStore();
+
+  // Auto-switch away from swap screen if account becomes watch-only
+  useEffect(() => {
+    if (isWatchOnly && mainScreen === 'swap') {
+      setMainScreen('home');
+    }
+  }, [isWatchOnly, mainScreen, setMainScreen]);
 
   return (
     <div className="size-full relative flex flex-col h-screen">
@@ -55,10 +66,10 @@ export const MainContent = () => {
           mainScreen === 'home' && 'bg-[var(--primary-color)] border-b-0'
         )}
         currentScreen={mainScreen}
-        onNftNetworkToggle={handleNftNetworkToggle}
+        onNftNetworkToggle={toggleNftNetwork}
         isNftNetworkVisible={isNftNetworkVisible}
         isHistoryVisible={isHistoryVisible}
-        onHistoryToggle={() => setIsHistoryVisible(!isHistoryVisible)}
+        onHistoryToggle={toggleHistory}
       />
       {mainScreen === 'nft' && (
         <NftNetworkNotification isVisible={isNftNetworkVisible} />
@@ -76,7 +87,8 @@ export const MainContent = () => {
 
       <div
         className={cn(
-          'bottom-0 relative w-full border-t border-white/10 rounded-none z-40 grid grid-cols-4 overflow-hidden transition-all duration-300 bg-[var(--background-color)/10] backdrop-blur-lg'
+          'grid w-full border-t border-white/10',
+          isWatchOnly ? 'grid-cols-3' : 'grid-cols-4'
         )}
       >
         <MainScreenTabButton
@@ -94,20 +106,22 @@ export const MainContent = () => {
           onMouseEnter={() => setButtonHovered('home')}
           onMouseLeave={() => setButtonHovered(null)}
         />
-        <MainScreenTabButton
-          isActive={mainScreen === 'swap'}
-          onClick={() => setMainScreen('swap')}
-          onMouseEnter={() => setButtonHovered('swap')}
-          onMouseLeave={() => setButtonHovered(null)}
-          icon={
-            <SwapAnimationIcon
-              className={cn(
-                mainScreen === 'swap' && 'text-[var(--primary-color-light)]'
-              )}
-              isHovered={buttonHovered === 'swap'}
-            />
-          }
-        />
+        {!isWatchOnly && (
+          <MainScreenTabButton
+            isActive={mainScreen === 'swap'}
+            onClick={() => setMainScreen('swap')}
+            onMouseEnter={() => setButtonHovered('swap')}
+            onMouseLeave={() => setButtonHovered(null)}
+            icon={
+              <SwapAnimationIcon
+                className={cn(
+                  mainScreen === 'swap' && 'text-[var(--primary-color-light)]'
+                )}
+                isHovered={buttonHovered === 'swap'}
+              />
+            }
+          />
+        )}
         <MainScreenTabButton
           isActive={mainScreen === 'nft'}
           onClick={() => setMainScreen('nft')}

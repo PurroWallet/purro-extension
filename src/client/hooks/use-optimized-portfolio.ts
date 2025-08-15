@@ -145,7 +145,7 @@ export const useOptimizedPortfolio = (): OptimizedPortfolioData => {
         totalValue: hyperliquidTotalValue,
         tokenCount:
           (isHyperliquidEvmActive
-            ? evmData?.tokensData?.items?.length || 0
+            ? evmData?.tokensData?.data?.tokens?.length || 0
             : 0) +
           (isHyperliquidDexEnabled && spotValue > 0 ? 1 : 0) +
           (isHyperliquidDexEnabled && perpsValue > 0 ? 1 : 0),
@@ -190,7 +190,7 @@ export const useOptimizedPortfolio = (): OptimizedPortfolioData => {
     hasActiveAlchemyChains,
     hyperliquidTotalValue,
     tokensByChain,
-    evmData?.tokensData?.items?.length,
+    evmData?.tokensData?.data?.tokens?.length,
     isHlLoading,
     hasHlError,
     isAlchemyLoading,

@@ -111,7 +111,7 @@ const WalletTabsSpot = () => {
                     openDrawer(<DepositHyperDexDrawer />);
                   }}
                 >
-                  Deposit
+                  Transfer
                 </Button>
               )}
             </div>

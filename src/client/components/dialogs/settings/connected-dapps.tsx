@@ -8,6 +8,7 @@ import { Globe, Clock, Unplug, X } from 'lucide-react';
 import { Button } from '@/client/components/ui';
 import useWalletStore from '@/client/hooks/use-wallet-store';
 import { formatDate } from '@/utils/formatters';
+import { sendMessage } from '@/client/utils/extension-message-utils';
 
 interface ConnectedSite {
   origin: string;
@@ -58,7 +59,7 @@ const groupSitesByTime = (sites: ConnectedSite[]) => {
 
 const ConnectedDAppsDialog = ({ onBack }: { onBack: () => void }) => {
   const { activeAccount } = useWalletStore();
-  const [connectedSites, _setConnectedSites] = useState<ConnectedSite[]>([]);
+  const [connectedSites, setConnectedSites] = useState<ConnectedSite[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitRemoveAll, setSubmitRemoveAll] = useState(false);
 
@@ -74,22 +75,34 @@ const ConnectedDAppsDialog = ({ onBack }: { onBack: () => void }) => {
 
     try {
       setLoading(true);
-      // const sites = await StorageService.getConnectedSitesWithTimestamps(
-      //   activeAccount.id
-      // );
-      // setConnectedSites(sites);
+      const sites = await sendMessage('GET_CONNECTED_SITES', {
+        accountId: activeAccount.id,
+      });
+
+      // Transform the data to match the expected format
+      const transformedSites = sites.map((site: any) => ({
+        origin: site.origin,
+        connectedAt: site.timestamp,
+        favicon: site.favicon,
+      }));
+
+      setConnectedSites(transformedSites);
     } catch (error) {
       console.error('Failed to load connected sites:', error);
+      setConnectedSites([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDisconnect = async (_origin: string) => {
+  const handleDisconnect = async (origin: string) => {
     if (!activeAccount) return;
 
     try {
-      // await StorageService.removeAccountConnection(activeAccount.id, origin);
+      await sendMessage('DELETE_CONNECTED_SITE', {
+        accountId: activeAccount.id,
+        origin: origin,
+      });
       // Reload the list
       await loadConnectedSites();
     } catch (error) {
@@ -101,7 +114,9 @@ const ConnectedDAppsDialog = ({ onBack }: { onBack: () => void }) => {
     if (!activeAccount) return;
 
     try {
-      // await StorageService.removeAllConnectionsWithAccount(activeAccount.id);
+      await sendMessage('DELETE_ALL_CONNECTED_SITES', {
+        accountId: activeAccount.id,
+      });
       // Reload the list
       await loadConnectedSites();
       setSubmitRemoveAll(false);

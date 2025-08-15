@@ -125,7 +125,7 @@ const CreateFromExistingSeed = ({
 
         <input
           type="text"
-          placeholder={`Account ${accountsLength + 1}`}
+          placeholder={`Account ${accountsLength > 0 ? accountsLength + 1 : 1}`}
           value={accountName ?? ''}
           onChange={e => setAccountName(e.target.value)}
           className="w-full px-4 py-3 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color-light)] bg-[var(--card-color)] text-white placeholder-gray-400 text-base"

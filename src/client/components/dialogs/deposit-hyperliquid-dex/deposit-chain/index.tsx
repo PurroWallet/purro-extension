@@ -16,9 +16,11 @@ const DepositChain = () => {
         icon={<X className="size-4" />}
       />
       <DialogContent>
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <p>Deposit USDC from Arbitrum</p>
+        <div className="flex flex-col gap-4 items-center justify-center min-h-[120px]">
+          <div className="flex flex-col gap-2 items-center">
+            <span className="text-muted-foreground text-sm">
+              Coming soon...
+            </span>
           </div>
         </div>
       </DialogContent>

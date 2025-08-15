@@ -1,4 +1,4 @@
-import { EyeIcon } from 'lucide-react';
+import { BellIcon, EyeIcon, XIcon } from 'lucide-react';
 import WalletTabs from './tabs';
 import { useOptimizedPortfolio } from '@/client/hooks/use-optimized-portfolio';
 import { formatCurrency } from '@/client/utils/formatters';
@@ -8,7 +8,6 @@ import { cn } from '@/client/lib/utils';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
 import {
   ReceiveChooseDrawer,
-  SwapDrawer,
   BridgeDrawer,
   SendDrawer,
 } from '@/client/components/drawers';
@@ -19,6 +18,11 @@ import SendAnimationIcon from '@/client/components/animation-icon/send';
 import ReceiveAnimationIcon from '@/client/components/animation-icon/receive';
 import SwapAnimationIcon from '@/client/components/animation-icon/swap';
 import BridgeAnimationIcon from '@/client/components/animation-icon/bridge';
+import useMainScreenStore from '@/client/hooks/use-main-screen-store';
+import useNotificationsStore from '@/client/hooks/use-notifications-store';
+import useDialogStore from '@/client/hooks/use-dialog-store';
+import NotificationsDialog from '@/client/components/dialogs/notifications-dialog';
+import { IconButton } from '@/client/components/ui';
 
 const Home = () => {
   const { totalBalance, isLoading } = useOptimizedPortfolio();
@@ -27,6 +31,11 @@ const Home = () => {
   const { openDrawer } = useDrawerStore();
   const { isDevMode } = useDevModeStore();
   const [buttonHovered, setButtonHovered] = useState<string | null>(null);
+  const { setMainScreen } = useMainScreenStore();
+  const { hasUnviewedNotifications, markAsViewed, getLatestNotification } =
+    useNotificationsStore();
+  const { openDialog } = useDialogStore();
+
   // In dev mode, get testnet tokens to show raw HYPE balance
   const { allUnifiedTokens } = useUnifiedTokens();
 
@@ -121,7 +130,7 @@ const Home = () => {
                   />
                 }
                 onClick={() => {
-                  openDrawer(<SwapDrawer />);
+                  setMainScreen('swap');
                 }}
               >
                 Swap
@@ -145,6 +154,41 @@ const Home = () => {
           )}
         </div>
       </div>
+      {hasUnviewedNotifications() && (
+        <div className="w-full flex items-center justify-center overflow-hidden">
+          <div className="flex items-center justify-center w-[90%] bg-[var(--primary-color-dark)] rounded-2xl p-4 relative hover:scale-[102%] transition-all duration-300">
+            <div
+              className="flex items-center gap-3 flex-1 cursor-pointer"
+              onClick={() => openDialog(<NotificationsDialog />)}
+            >
+              <div className="relative">
+                <BellIcon className="size-5 text-white" />
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-[var(--primary-color-light)] rounded-full" />
+              </div>
+              <p className="text-white text-sm">
+                Welcome to Purro Beta! Check out our latest updates and
+                features.
+              </p>
+            </div>
+            <div
+              onClick={e => {
+                e.stopPropagation();
+              }}
+            >
+              <IconButton
+                onClick={() => {
+                  const latestNotification = getLatestNotification();
+                  if (latestNotification) {
+                    markAsViewed(latestNotification.id);
+                  }
+                }}
+              >
+                <XIcon className="size-4 text-white" />
+              </IconButton>
+            </div>
+          </div>
+        </div>
+      )}
       <WalletTabs />
     </div>
   );

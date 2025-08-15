@@ -22,7 +22,8 @@ const NftInstancesIdDialog = ({
   const activeAccountWallet = getActiveAccountWalletObject();
 
   const isHlName =
-    nftInstance.token.address === '0x1d9d87eBc14e71490bB87f1C39F65BDB979f3cb7';
+    nftInstance.token?.address_hash ===
+    '0x1d9d87eBc14e71490bB87f1C39F65BDB979f3cb7';
 
   const [hlName, setHlName] = useState<string | null>(null);
   const [hlNameLoading, setHlNameLoading] = useState<boolean>(false);
@@ -50,7 +51,7 @@ const NftInstancesIdDialog = ({
   return (
     <DialogWrapper>
       <DialogHeader
-        title={`${nftInstance.token.name} #${nftInstance.id}`}
+        title={`${nftInstance.token?.name || 'Unknown'} #${nftInstance.id}`}
         onClose={onBack}
         icon={<ArrowLeft className="size-4 text-white" />}
         rightContent={
@@ -58,7 +59,7 @@ const NftInstancesIdDialog = ({
             className="p-2 rounded-full hover:bg-white/10 transition-all duration-300 cursor-pointer"
             onClick={() => {
               window.open(
-                `https://www.hyperscan.com/token/${nftInstance.token.address}/instance/${nftInstance.id}`,
+                `https://www.hyperscan.com/token/${nftInstance.token?.address_hash}/instance/${nftInstance.id}`,
                 '_blank'
               );
             }}
@@ -72,13 +73,13 @@ const NftInstancesIdDialog = ({
           <div className="border-2 border-[var(--primary-color-light)]/20 rounded-lg overflow-hidden aspect-square">
             <NFTImage
               imageUrl={nftInstance.image_url}
-              alt={nftInstance.token.name}
+              alt={nftInstance.token?.name || 'Unknown'}
               className="size-full object-contain"
-              tokenName={nftInstance.token.name}
+              tokenName={nftInstance.token?.name || 'Unknown'}
               tokenId={nftInstance.id}
               onError={(error: Error) => {
                 console.error('NFT instance image failed to load:', {
-                  tokenName: nftInstance.token.name,
+                  tokenName: nftInstance.token?.name || 'Unknown',
                   instanceId: nftInstance.id,
                   imageUrl: nftInstance.image_url,
                   error: error.message,
@@ -101,7 +102,8 @@ const NftInstancesIdDialog = ({
             <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
               <p className="text-base text-left font-semibold">Collection</p>
               <p className="text-sm text-muted-foreground text-right truncate w-full">
-                {nftInstance.token.name} ({nftInstance.token.symbol})
+                {nftInstance.token?.name || 'Unknown'} (
+                {nftInstance.token?.symbol || 'N/A'})
               </p>
             </div>
             <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer p-3 gap-2">
@@ -114,7 +116,8 @@ const NftInstancesIdDialog = ({
               <a
                 href={`https://app.hlnames.xyz/profile/${hlName}`}
                 target="_blank"
-                className="w-full flex items-center justify-center bg-[var(--card-color)]/80 hover:bg-[var(--card-color)]/60 transition-colors duration-200 cursor-pointer p-3 gap-2" rel="noreferrer"
+                className="w-full flex items-center justify-center bg-[var(--card-color)]/80 hover:bg-[var(--card-color)]/60 transition-colors duration-200 cursor-pointer p-3 gap-2"
+                rel="noreferrer"
               >
                 <p className="text-base text-center font-semibold text-[var(--primary-color-light)]">
                   See on Hyperliquid Names
@@ -127,7 +130,7 @@ const NftInstancesIdDialog = ({
               <h3 className="text-base font-semibold mb-1">Properties</h3>
               <div className="flex flex-col rounded-lg overflow-hidden">
                 {nftInstance.metadata?.attributes?.length > 0 &&
-                  nftInstance.metadata?.attributes?.map(attribute => (
+                  nftInstance.metadata?.attributes?.map((attribute: any) => (
                     <div
                       key={attribute.trait_type}
                       className="flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer p-3 gap-2 border-b border-white/10 last:border-b-0"
