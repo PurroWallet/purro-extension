@@ -29,8 +29,6 @@ export interface SwapState {
   // Transaction
   isSwapping: boolean;
 
-
-
   // Actions
   setTokenIn: (token: UnifiedToken | null) => void;
   setTokenOut: (token: UnifiedToken | null) => void;

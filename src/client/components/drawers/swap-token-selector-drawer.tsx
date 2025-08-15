@@ -140,6 +140,36 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
             }
           );
 
+          // Always ensure HYPE token is included in user tokens, even with 0 balance
+          const hasHypeToken = userTokensList.some(token =>
+            token.symbol === "HYPE" ||
+            token.address === "native" ||
+            token.address === "0x000000000000000000000000000000000000dEaD"
+          );
+
+          if (!hasHypeToken) {
+            // Add HYPE token with 0 balance
+            const hypeToken: Token = {
+              address: "0x000000000000000000000000000000000000dEaD",
+              symbol: "HYPE",
+              name: "Native HYPE",
+              decimals: 18,
+              balance: "0",
+              balanceRaw: "0",
+              logo: null, // Will be loaded asynchronously
+            };
+
+            // Get HYPE logo
+            try {
+              const hypeLogo = await getTokenLogo("HYPE", "hyperevm", "0x000000000000000000000000000000000000dEaD");
+              hypeToken.logo = hypeLogo;
+            } catch (error) {
+              console.warn("Failed to load HYPE logo:", error);
+            }
+
+            userTokensList.unshift(hypeToken); // Add at the beginning
+          }
+
           setUserTokens(userTokensList);
         } else {
           setHasUserTokensError(true);
@@ -610,6 +640,36 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
             };
           }
         );
+
+        // Always ensure HYPE token is included in user tokens, even with 0 balance
+        const hasHypeToken = userTokensList.some(token =>
+          token.symbol === "HYPE" ||
+          token.address === "native" ||
+          token.address === "0x000000000000000000000000000000000000dEaD"
+        );
+
+        if (!hasHypeToken) {
+          // Add HYPE token with 0 balance
+          const hypeToken: Token = {
+            address: "0x000000000000000000000000000000000000dEaD",
+            symbol: "HYPE",
+            name: "Native HYPE",
+            decimals: 18,
+            balance: "0",
+            balanceRaw: "0",
+            logo: null, // Will be loaded asynchronously
+          };
+
+          // Get HYPE logo
+          try {
+            const hypeLogo = await getTokenLogo("HYPE", "hyperevm", "0x000000000000000000000000000000000000dEaD");
+            hypeToken.logo = hypeLogo;
+          } catch (error) {
+            console.warn("Failed to load HYPE logo:", error);
+          }
+
+          userTokensList.unshift(hypeToken); // Add at the beginning
+        }
 
         setUserTokens(userTokensList);
         setHasUserTokensError(false);
