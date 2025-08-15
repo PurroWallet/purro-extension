@@ -26,6 +26,7 @@
 		"bs58": "^6.0.0",
 		"buffer": "^6.0.3",
 		"clsx": "^2.1.1",
+		"date-fns": "^4.1.0",
 		"ethers": "^6.14.3",
 		"hyperliquid": "^1.7.6",
 		"lucide-react": "^0.513.0",
