@@ -67,6 +67,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
   const { getActiveAccountWalletObject } = useWalletStore();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [userTokens, setUserTokens] = useState<Token[]>([]);
   const [isLoadingUserTokens, setIsLoadingUserTokens] = useState(true);
   const [hasUserTokensError, setHasUserTokensError] = useState(false);
@@ -84,6 +85,15 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
+
+  // Debounce search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Use TanStack Query hook for user balances only
   const {
@@ -185,14 +195,19 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
     loadBalances();
   }, [activeAccountAddress, selectedTokenAddress, excludeTokenAddress]);
 
-  // Initial load of tokens
+  // Load tokens based on search query
   useEffect(() => {
-    const loadInitialTokens = async () => {
+    const loadTokens = async () => {
       try {
         setIsLoadingMoreTokens(true);
+        setAllTokens([]); // Clear existing tokens when search changes
+        setCurrentLimit(20);
+        setHasMoreTokens(true);
+
         const response = await fetchTokens({
           limit: 20,
           metadata: true,
+          search: debouncedSearchQuery.trim() || undefined, // Only pass search if not empty
         });
 
         if (response.success) {
@@ -214,14 +229,14 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
           setHasMoreTokens(response.data.tokens.length === 20);
         }
       } catch (error) {
-        console.error("Error loading initial tokens:", error);
+        console.error("Error loading tokens:", error);
       } finally {
         setIsLoadingMoreTokens(false);
       }
     };
 
-    loadInitialTokens();
-  }, []);
+    loadTokens();
+  }, [debouncedSearchQuery]);
 
   // Load more tokens function
   const loadMoreTokens = useCallback(async () => {
@@ -234,6 +249,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
       const response = await fetchTokens({
         limit: newLimit,
         metadata: true,
+        search: debouncedSearchQuery.trim() || undefined, // Use current search query
       });
 
       if (response.success) {
@@ -260,7 +276,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
     } finally {
       setIsLoadingMoreTokens(false);
     }
-  }, [currentLimit, isLoadingMoreTokens, hasMoreTokens]);
+  }, [currentLimit, isLoadingMoreTokens, hasMoreTokens, debouncedSearchQuery]);
 
   // Convert API tokens to Token format with WHYPE and HYPE as default tokens
   const defaultTokens = useMemo(() => {
@@ -408,7 +424,10 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
   const filteredDefaultTokens = useMemo(() => {
     let filtered = defaultTokensWithBalances;
 
-    if (searchQuery.trim()) {
+    // Only filter locally if there's no search query (API handles search filtering)
+    // For user tokens, we still filter locally since they're not searched via API
+    if (searchQuery.trim() && !debouncedSearchQuery.trim()) {
+      // This handles the case where user is typing but debounced search hasn't triggered yet
       const query = searchQuery.toLowerCase();
       filtered = defaultTokensWithBalances.filter(
         (token) =>
@@ -442,7 +461,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
 
       return a.symbol.localeCompare(b.symbol); // Alphabetical fallback
     });
-  }, [defaultTokensWithBalances, searchQuery]);
+  }, [defaultTokensWithBalances, searchQuery, debouncedSearchQuery]);
 
 
 
@@ -695,6 +714,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
       const response = await fetchTokens({
         limit: 20,
         metadata: true,
+        search: debouncedSearchQuery.trim() || undefined, // Use current search query
       });
 
       if (response.success) {

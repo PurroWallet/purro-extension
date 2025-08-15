@@ -211,7 +211,7 @@ export const fetchTopPoolsForAToken = async (
 export const fetchTokenImage = async (
   networkId: Network,
   tokenAddress: string
-): Promise<{ data: { attributes: { image_url: string } } }> => {
+): Promise<{ data: { attributes: { image_url: string } } } | { errors: Array<{ status: string; title: string }>; meta: { ref_id: string } }> => {
   const response = await fetch(
     `${ENDPOINTS.GECKO_TERMINAL}/networks/${networkId}/tokens/${tokenAddress}?include=image_url`,
     {
@@ -222,9 +222,19 @@ export const fetchTokenImage = async (
     }
   );
 
+  const responseData = await response.json();
+
+  // If response is not ok, but we got JSON data, it might be an error response
+  // Don't throw immediately, let the caller handle the error response
   if (!response.ok) {
+    // Check if it's the specific error format you mentioned
+    if (responseData && typeof responseData === 'object' && 'errors' in responseData) {
+      return responseData; // Return the error response for the caller to handle
+    }
+
+    // For other types of errors, throw as before
     throw new Error(`Network response was not ok: ${response.status}`);
   }
 
-  return await response.json();
+  return responseData;
 };
