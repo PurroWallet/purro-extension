@@ -47,7 +47,7 @@ const MainHeader = ({
       )}
     >
       <div
-        className="flex items-center py-1 gap-2 pr-3 hover:bg-white/10 rounded-full transition-all duration-300 cursor-pointer"
+        className="flex items-center py-1 gap-2 ps-1 pr-3 hover:bg-white/10 rounded-full transition-all duration-300 cursor-pointer"
         onClick={openAccountSheet}
       >
         <div className="size-8 rounded-full bg-white/10 flex items-center justify-center cursor-pointer">
