@@ -49,6 +49,12 @@ export class MessageHandler {
         case 'GET_CONNECTED_SITES':
           result = await storageHandler.getConnectedSites(data.accountId);
           break;
+        case 'DELETE_CONNECTED_SITE':
+          result = await storageHandler.deleteConnectedSite(data.accountId, data.origin);
+          break;
+        case 'DELETE_ALL_CONNECTED_SITES':
+          result = await storageHandler.deleteAllConnectedSites(data.accountId);
+          break;
         case 'GET_WALLET_BY_ID':
           result = await storageHandler.getWalletById(data.accountId);
           break;
@@ -179,14 +185,14 @@ export class MessageHandler {
 
         // Swap
         case 'EVM_SWAP_HYPERLIQUID_TOKEN':
-            result = await evmHandler.handleSwapHyperliquidToken(data);
-            break;
+          result = await evmHandler.handleSwapHyperliquidToken(data);
+          break;
         case 'EVM_CHECK_TOKEN_ALLOWANCE':
-            result = await evmHandler.checkTokenAllowance(data);
-            break;
+          result = await evmHandler.checkTokenAllowance(data);
+          break;
         case 'EVM_APPROVE_TOKEN':
-            result = await evmHandler.approveToken(data);
-            break;
+          result = await evmHandler.approveToken(data);
+          break;
 
         // Hyperliquid DEX
         case 'HYPERLIQUID_TRANSFER_BETWEEN_SPOT_AND_PERP':
