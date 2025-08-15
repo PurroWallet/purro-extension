@@ -1,8 +1,5 @@
-import ShuffleIcon from '@/assets/icon-component/shuffle-icon';
-import SwapVertIcon from '@/assets/icon-component/swap-vert-icon';
-import { CircleFadingPlus, EyeIcon } from 'lucide-react';
+import { EyeIcon } from 'lucide-react';
 import WalletTabs from './tabs';
-import SendIcon from '@/assets/icon-component/send-icon';
 import { useOptimizedPortfolio } from '@/client/hooks/use-optimized-portfolio';
 import { formatCurrency } from '@/client/utils/formatters';
 import { useState, useEffect, useMemo } from 'react';
@@ -18,6 +15,10 @@ import {
 import useWalletStore from '@/client/hooks/use-wallet-store';
 import useDevModeStore from '@/client/hooks/use-dev-mode';
 import { useUnifiedTokens } from '@/client/hooks/use-unified-tokens';
+import SendAnimationIcon from '@/client/components/animation-icon/send';
+import ReceiveAnimationIcon from '@/client/components/animation-icon/receive';
+import SwapAnimationIcon from '@/client/components/animation-icon/swap';
+import BridgeAnimationIcon from '@/client/components/animation-icon/bridge';
 
 const Home = () => {
   const { totalBalance, isLoading } = useOptimizedPortfolio();
@@ -25,7 +26,7 @@ const Home = () => {
   const { activeAccount } = useWalletStore();
   const { openDrawer } = useDrawerStore();
   const { isDevMode } = useDevModeStore();
-
+  const [buttonHovered, setButtonHovered] = useState<string | null>(null);
   // In dev mode, get testnet tokens to show raw HYPE balance
   const { allUnifiedTokens } = useUnifiedTokens();
 
@@ -51,7 +52,7 @@ const Home = () => {
 
   return (
     <div>
-      <div className={cn('text-center h-48', isWatchOnly && 'h-fit')}>
+      <div className={cn('text-center h-44', isWatchOnly && 'h-fit')}>
         <div
           className={cn(
             'bg-[var(--primary-color)] h-32 relative pt-4',
@@ -81,8 +82,13 @@ const Home = () => {
           {!isWatchOnly && (
             <div className="grid grid-cols-4 bg-[var(--primary-color-dark)] w-[90%] rounded-2xl absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 items-center overflow-hidden">
               <Button
+                onMouseEnter={() => setButtonHovered('send')}
+                onMouseLeave={() => setButtonHovered(null)}
                 icon={
-                  <SendIcon className="text-[var(--primary-color-light)] size-5" />
+                  <SendAnimationIcon
+                    className="text-[var(--primary-color-light)] size-5"
+                    isHovered={buttonHovered === 'send'}
+                  />
                 }
                 onClick={() => {
                   openDrawer(<SendDrawer />);
@@ -91,8 +97,13 @@ const Home = () => {
                 Send
               </Button>
               <Button
+                onMouseEnter={() => setButtonHovered('receive')}
+                onMouseLeave={() => setButtonHovered(null)}
                 icon={
-                  <CircleFadingPlus className="text-[var(--primary-color-light)] size-5" />
+                  <ReceiveAnimationIcon
+                    className="text-[var(--primary-color-light)] size-5"
+                    isHovered={buttonHovered === 'receive'}
+                  />
                 }
                 onClick={() => {
                   openDrawer(<ReceiveChooseDrawer />);
@@ -101,8 +112,13 @@ const Home = () => {
                 Receive
               </Button>
               <Button
+                onMouseEnter={() => setButtonHovered('swap')}
+                onMouseLeave={() => setButtonHovered(null)}
                 icon={
-                  <SwapVertIcon className="text-[var(--primary-color-light)]" />
+                  <SwapAnimationIcon
+                    className="text-[var(--primary-color-light)]"
+                    isHovered={buttonHovered === 'swap'}
+                  />
                 }
                 onClick={() => {
                   openDrawer(<SwapDrawer />);
@@ -111,8 +127,13 @@ const Home = () => {
                 Swap
               </Button>
               <Button
+                onMouseEnter={() => setButtonHovered('bridge')}
+                onMouseLeave={() => setButtonHovered(null)}
                 icon={
-                  <ShuffleIcon className="text-[var(--primary-color-light)]" />
+                  <BridgeAnimationIcon
+                    className="text-[var(--primary-color-light)]"
+                    isHovered={buttonHovered === 'bridge'}
+                  />
                 }
                 onClick={() => {
                   openDrawer(<BridgeDrawer />);
@@ -133,15 +154,21 @@ const Button = ({
   children,
   icon,
   onClick,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   children: ReactNode;
   icon: ReactNode;
   onClick: () => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
 }) => {
   return (
     <button
-      className="flex flex-col items-center py-4 hover:bg-white/10 transition-all duration-300 cursor-pointer text-[var(--primary-color-light)] pt-5"
+      className="flex flex-col items-center py-4 hover:bg-white/10 transition-all duration-300 cursor-pointer text-[var(--primary-color-light)] pt-5 overflow-hidden"
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       {icon}
       {children}

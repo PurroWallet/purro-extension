@@ -45,7 +45,7 @@ importers:
         specifier: ^0.513.0
         version: 0.513.0(react@19.1.0)
       motion:
-        specifier: ^12.16.0
+        specifier: ^12.19.1
         version: 12.19.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       qrcode.react:
         specifier: ^4.2.0

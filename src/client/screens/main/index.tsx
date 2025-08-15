@@ -4,18 +4,21 @@ import { Dialog, Drawer } from '@/client/components/ui';
 import useInit from '@/client/hooks/use-init';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import MainHeader, {
   HistoryNotification,
   NftNetworkNotification,
 } from './main-header';
 import { cn } from '@/client/lib/utils';
-import { ArrowUpDownIcon, Clock, HomeIcon, ImageIcon } from 'lucide-react';
 import AccountSheet from '@/client/components/account-sheet/account-sheet';
 import Home from './main-screens/home';
 import Nft from './main-screens/nft';
 import History from './main-screens/history';
 import Swap from './main-screens/swap';
+import HomeAnimationIcon from '@/client/components/animation-icon/home';
+import SwapAnimationIcon from '@/client/components/animation-icon/swap';
+import NftsAnimationIcon from '@/client/components/animation-icon/nfts';
+import HistoryAnimationIcon from '@/client/components/animation-icon/history';
 
 const queryClient = new QueryClient();
 
@@ -39,6 +42,8 @@ export const MainContent = () => {
   >('home');
   const [isNftNetworkVisible, setIsNftNetworkVisible] = useState(false);
   const [isHistoryVisible, setIsHistoryVisible] = useState(false);
+  const [buttonHovered, setButtonHovered] = useState<string | null>(null);
+
   const handleNftNetworkToggle = () => {
     setIsNftNetworkVisible(!isNftNetworkVisible);
   };
@@ -61,7 +66,7 @@ export const MainContent = () => {
       {mainScreen === 'history' && (
         <HistoryNotification isVisible={isHistoryVisible} />
       )}
-      <div className="flex-1 overflow-y-auto">
+      <div className={cn('flex-1 overflow-y-auto transition-all duration-300')}>
         {mainScreen === 'home' && <Home />}
         {mainScreen === 'swap' && <Swap />}
         {/* {mainScreen === "explore" && <Explore />} */}
@@ -69,48 +74,65 @@ export const MainContent = () => {
         {mainScreen === 'nft' && <Nft />}
       </div>
 
-      <div className="grid grid-cols-4 w-full border-t border-white/10">
+      <div
+        className={cn(
+          'bottom-0 relative w-full border-t border-white/10 rounded-none z-40 grid grid-cols-4 overflow-hidden transition-all duration-300 bg-[var(--background-color)/10] backdrop-blur-lg'
+        )}
+      >
         <MainScreenTabButton
           isActive={mainScreen === 'home'}
           onClick={() => setMainScreen('home')}
           icon={
-            <HomeIcon
+            <HomeAnimationIcon
               className={cn(
-                mainScreen === 'home' && 'text-[var(--primary-color-light)]'
+                mainScreen === 'home' && 'text-[var(--primary-color-light)]',
+                'size-6'
               )}
+              isHovered={buttonHovered === 'home'}
             />
           }
+          onMouseEnter={() => setButtonHovered('home')}
+          onMouseLeave={() => setButtonHovered(null)}
         />
         <MainScreenTabButton
           isActive={mainScreen === 'swap'}
           onClick={() => setMainScreen('swap')}
+          onMouseEnter={() => setButtonHovered('swap')}
+          onMouseLeave={() => setButtonHovered(null)}
           icon={
-            <ArrowUpDownIcon
+            <SwapAnimationIcon
               className={cn(
                 mainScreen === 'swap' && 'text-[var(--primary-color-light)]'
               )}
+              isHovered={buttonHovered === 'swap'}
             />
           }
         />
         <MainScreenTabButton
           isActive={mainScreen === 'nft'}
           onClick={() => setMainScreen('nft')}
+          onMouseEnter={() => setButtonHovered('nft')}
+          onMouseLeave={() => setButtonHovered(null)}
           icon={
-            <ImageIcon
+            <NftsAnimationIcon
               className={cn(
                 mainScreen === 'nft' && 'text-[var(--primary-color-light)]'
               )}
+              isHovered={buttonHovered === 'nft'}
             />
           }
         />
         <MainScreenTabButton
           isActive={mainScreen === 'history'}
           onClick={() => setMainScreen('history')}
+          onMouseEnter={() => setButtonHovered('history')}
+          onMouseLeave={() => setButtonHovered(null)}
           icon={
-            <Clock
+            <HistoryAnimationIcon
               className={cn(
                 mainScreen === 'history' && 'text-[var(--primary-color-light)]'
               )}
+              isHovered={buttonHovered === 'history'}
             />
           }
         />
@@ -134,20 +156,25 @@ const MainScreenTabButton = ({
   isActive,
   onClick,
   icon,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   isActive: boolean;
   onClick: () => void;
   icon: React.ReactNode;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
 }) => {
   return (
     <button
       className={cn(
         'flex items-center justify-center py-4 transition-all cursor-pointer relative overflow-hidden',
         'hover:bg-white/5',
-        'before:absolute before:top-0 before:left-0 before:right-0 before:h-0.5 before:transition-all',
-        isActive && 'before:bg-[var(--primary-color-light)]'
+        isActive && ''
       )}
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       <div className={cn('transition-all relative z-10')}>{icon}</div>
     </button>
