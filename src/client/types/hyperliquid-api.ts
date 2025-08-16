@@ -1,25 +1,3 @@
-export interface SpotTokenDetails {
-  name: string;
-  maxSupply: string;
-  totalSupply: string;
-  circulatingSupply: string;
-  szDecimals: number;
-  weiDecimals: number;
-  midPx: string;
-  markPx: string;
-  prevDayPx: string;
-  genesis: {
-    userBalances: string[][];
-    existingTokenBalances: [];
-  };
-  deployer: string;
-  deployGas: string;
-  deployTime: string;
-  seededUsdc: string;
-  nonCirculatingUserBalances: [];
-  futureEmissions: string;
-}
-
 export interface HyperliquidToken {
   name: string;
   szDecimals: number;

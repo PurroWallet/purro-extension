@@ -307,6 +307,7 @@ const fetchSingleTokenMetadataFast = async (
     };
   } catch (error) {
     // Fast fallback - no retry, no logging spam
+    console.warn(`Failed to fetch token metadata for ${contractAddress}:`, error);
     return {
       name: 'Unknown Token',
       symbol: 'UNKNOWN',
