@@ -63,7 +63,7 @@ interface TokenSelectorDialogProps {
 
 export const TokenSelectorDialog: React.FC<TokenSelectorDialogProps> = ({
   excludeTokenAddress,
-  title = 'Select Token for Swap',
+  title = 'Tokens on HyperEVM',
 }) => {
   const { closeDialog } = useDialogStore();
   const { setTokenOut } = useSwapStore();
