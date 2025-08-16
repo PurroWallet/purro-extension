@@ -1,8 +1,5 @@
-import ShuffleIcon from '@/assets/icon-component/shuffle-icon';
-import SwapVertIcon from '@/assets/icon-component/swap-vert-icon';
-import { BellIcon, CircleFadingPlus, EyeIcon, XIcon } from 'lucide-react';
+import { BellIcon, EyeIcon, XIcon } from 'lucide-react';
 import WalletTabs from './tabs';
-import SendIcon from '@/assets/icon-component/send-icon';
 import { useOptimizedPortfolio } from '@/client/hooks/use-optimized-portfolio';
 import { formatCurrency } from '@/client/utils/formatters';
 import { useState, useEffect, useMemo } from 'react';
@@ -17,6 +14,10 @@ import {
 import useWalletStore from '@/client/hooks/use-wallet-store';
 import useDevModeStore from '@/client/hooks/use-dev-mode';
 import { useUnifiedTokens } from '@/client/hooks/use-unified-tokens';
+import SendAnimationIcon from '@/client/components/animation-icon/send';
+import ReceiveAnimationIcon from '@/client/components/animation-icon/receive';
+import SwapAnimationIcon from '@/client/components/animation-icon/swap';
+import BridgeAnimationIcon from '@/client/components/animation-icon/bridge';
 import useMainScreenStore from '@/client/hooks/use-main-screen-store';
 import useNotificationsStore from '@/client/hooks/use-notifications-store';
 import useDialogStore from '@/client/hooks/use-dialog-store';
@@ -29,6 +30,7 @@ const Home = () => {
   const { activeAccount } = useWalletStore();
   const { openDrawer } = useDrawerStore();
   const { isDevMode } = useDevModeStore();
+  const [buttonHovered, setButtonHovered] = useState<string | null>(null);
   const { setMainScreen } = useMainScreenStore();
   const { hasUnviewedNotifications, markAsViewed, getLatestNotification } =
     useNotificationsStore();
@@ -87,51 +89,68 @@ const Home = () => {
           )}
 
           {!isWatchOnly && (
-            <>
-              <div className="grid grid-cols-4 bg-[var(--primary-color-dark)] w-[90%] rounded-2xl absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 items-center overflow-hidden">
-                <Button
-                  icon={
-                    <SendIcon className="text-[var(--primary-color-light)] size-5" />
-                  }
-                  onClick={() => {
-                    openDrawer(<SendDrawer />);
-                  }}
-                >
-                  Send
-                </Button>
-                <Button
-                  icon={
-                    <CircleFadingPlus className="text-[var(--primary-color-light)] size-5" />
-                  }
-                  onClick={() => {
-                    openDrawer(<ReceiveChooseDrawer />);
-                  }}
-                >
-                  Receive
-                </Button>
-                <Button
-                  icon={
-                    <SwapVertIcon className="text-[var(--primary-color-light)]" />
-                  }
-                  onClick={() => {
-                    setMainScreen('swap');
-                    // openDrawer(<SwapDrawer />);
-                  }}
-                >
-                  Swap
-                </Button>
-                <Button
-                  icon={
-                    <ShuffleIcon className="text-[var(--primary-color-light)]" />
-                  }
-                  onClick={() => {
-                    openDrawer(<BridgeDrawer />);
-                  }}
-                >
-                  Bridge
-                </Button>
-              </div>
-            </>
+            <div className="grid grid-cols-4 bg-[var(--primary-color-dark)] w-[90%] rounded-2xl absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 items-center overflow-hidden">
+              <Button
+                onMouseEnter={() => setButtonHovered('send')}
+                onMouseLeave={() => setButtonHovered(null)}
+                icon={
+                  <SendAnimationIcon
+                    className="text-[var(--primary-color-light)] size-5"
+                    isHovered={buttonHovered === 'send'}
+                  />
+                }
+                onClick={() => {
+                  openDrawer(<SendDrawer />);
+                }}
+              >
+                Send
+              </Button>
+              <Button
+                onMouseEnter={() => setButtonHovered('receive')}
+                onMouseLeave={() => setButtonHovered(null)}
+                icon={
+                  <ReceiveAnimationIcon
+                    className="text-[var(--primary-color-light)] size-5"
+                    isHovered={buttonHovered === 'receive'}
+                  />
+                }
+                onClick={() => {
+                  openDrawer(<ReceiveChooseDrawer />);
+                }}
+              >
+                Receive
+              </Button>
+              <Button
+                onMouseEnter={() => setButtonHovered('swap')}
+                onMouseLeave={() => setButtonHovered(null)}
+                icon={
+                  <SwapAnimationIcon
+                    className="text-[var(--primary-color-light)]"
+                    isHovered={buttonHovered === 'swap'}
+                  />
+                }
+                onClick={() => {
+                  setMainScreen('swap');
+                }}
+              >
+                Swap
+              </Button>
+              <Button
+                onMouseEnter={() => setButtonHovered('bridge')}
+                onMouseLeave={() => setButtonHovered(null)}
+                icon={
+                  <BridgeAnimationIcon
+                    className="text-[var(--primary-color-light)]"
+                    isHovered={buttonHovered === 'bridge'}
+                  />
+                }
+                onClick={() => {
+                  openDrawer(<BridgeDrawer />);
+                }}
+              >
+                Bridge
+              </Button>
+            </div>
           )}
         </div>
       </div>
@@ -179,15 +198,21 @@ const Button = ({
   children,
   icon,
   onClick,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   children: ReactNode;
   icon: ReactNode;
   onClick: () => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
 }) => {
   return (
     <button
-      className="flex flex-col items-center py-4 hover:bg-white/10 transition-all duration-300 cursor-pointer text-[var(--primary-color-light)] pt-5"
+      className="flex flex-col items-center py-4 hover:bg-white/10 transition-all duration-300 cursor-pointer text-[var(--primary-color-light)] pt-5 overflow-hidden"
       onClick={onClick}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       {icon}
       {children}

@@ -49,7 +49,7 @@ const History = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [activeAccount?.eip155?.address, nextPageParams]);
+  }, [activeAccount?.eip155?.address, nextPageParams, isDevMode]);
 
   // Load initial transactions
   useEffect(() => {
@@ -58,6 +58,7 @@ const History = () => {
     }
   }, [activeAccount?.eip155?.address, transactions.length, fetchTransactions]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const listAddresses: string[] =
     useMemo(() => {
       return transactions

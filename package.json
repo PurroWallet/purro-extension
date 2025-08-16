@@ -30,7 +30,7 @@
 		"ethers": "^6.14.3",
 		"hyperliquid": "^1.7.6",
 		"lucide-react": "^0.513.0",
-		"motion": "^12.16.0",
+		"motion": "^12.19.1",
 		"qrcode.react": "^4.2.0",
 		"react": "^19.1.0",
 		"react-dom": "^19.1.0",
