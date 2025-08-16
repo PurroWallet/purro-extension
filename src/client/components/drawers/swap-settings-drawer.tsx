@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { X, Settings, Percent, Clock } from "lucide-react";
-import { Button, IconButton } from "@/client/components/ui/button";
-import useSwapStore from "@/client/hooks/use-swap-store";
-import useDrawerStore from "@/client/hooks/use-drawer-store";
+import React, { useState } from 'react';
+import { X, Settings, Percent, Clock } from 'lucide-react';
+import { Button, IconButton } from '@/client/components/ui/button';
+import useSwapStore from '@/client/hooks/use-swap-store';
+import useDrawerStore from '@/client/hooks/use-drawer-store';
 
 const SwapSettingsDrawer: React.FC = () => {
   const { slippage, deadline, setSlippage, setDeadline } = useSwapStore();
@@ -64,12 +64,12 @@ const SwapSettingsDrawer: React.FC = () => {
 
           {/* Preset buttons */}
           <div className="flex gap-2">
-            {predefinedSlippages.map((preset) => (
+            {predefinedSlippages.map(preset => (
               <Button
                 key={preset}
                 onClick={() => handleSlippagePreset(preset)}
                 variant={
-                  parseFloat(localSlippage) === preset ? "primary" : "secondary"
+                  parseFloat(localSlippage) === preset ? 'primary' : 'secondary'
                 }
                 className="px-3 py-2 text-sm"
               >
@@ -84,7 +84,7 @@ const SwapSettingsDrawer: React.FC = () => {
               type="number"
               placeholder="0.50"
               value={localSlippage}
-              onChange={(e) => setLocalSlippage(e.target.value)}
+              onChange={e => setLocalSlippage(e.target.value)}
               className="w-full pr-8 py-3 px-4 bg-[var(--card-color)]/50 border border-[var(--primary-color)]/20 rounded-lg text-[var(--text-color)] placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color-light)] focus:border-[var(--primary-color-light)] transition-all duration-300"
               min="0.01"
               max="50"
@@ -121,7 +121,7 @@ const SwapSettingsDrawer: React.FC = () => {
               type="number"
               placeholder="20"
               value={localDeadline}
-              onChange={(e) => setLocalDeadline(e.target.value)}
+              onChange={e => setLocalDeadline(e.target.value)}
               className="w-full pr-20 py-3 px-4 bg-[var(--card-color)]/50 border border-[var(--primary-color)]/20 rounded-lg text-[var(--text-color)] placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-[var(--primary-color-light)] focus:border-[var(--primary-color-light)] transition-all duration-300"
               min="1"
               max="4320"
@@ -138,19 +138,8 @@ const SwapSettingsDrawer: React.FC = () => {
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-white/10 bg-[var(--card-color)]/50 flex gap-3">
-        <Button
-          onClick={closeDrawer}
-          variant="secondary"
-          className="flex-1 px-4 py-3"
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={handleSave}
-          variant="primary"
-          className="flex-1 px-4 py-3"
-        >
+      <div className="p-4 border-t border-white/10 bg-[var(--card-color)]/50">
+        <Button onClick={handleSave} variant="primary" className="w-full">
           Save Settings
         </Button>
       </div>

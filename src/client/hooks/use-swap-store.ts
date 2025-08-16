@@ -21,15 +21,24 @@ export interface SwapState {
   slippage: number; // percentage (0.1 = 0.1%)
   deadline: number; // minutes
 
-  // Route data
+  // Route data - now managed by React Query
   route: SwapRouteV2Response | null;
-  isLoadingRoute: boolean;
-  routeError: string | null;
 
-  // Transaction
+  // Transaction state
   isSwapping: boolean;
 
+  // Token prices state
+  tokenPrices: {
+    [address: string]: {
+      price: number;
+      priceChange24h: number;
+    };
+  };
 
+  // Auto-refresh settings
+  enableAutoRefresh: boolean;
+  refreshInterval: number; // in milliseconds
+  lastRefreshTimestamp: number;
 
   // Actions
   setTokenIn: (token: UnifiedToken | null) => void;
@@ -41,14 +50,26 @@ export interface SwapState {
   setSlippage: (slippage: number) => void;
   setDeadline: (deadline: number) => void;
   setRoute: (route: SwapRouteV2Response | null) => void;
-  setIsLoadingRoute: (loading: boolean) => void;
-  setRouteError: (error: string | null) => void;
   setIsSwapping: (swapping: boolean) => void;
+  setTokenPrices: (prices: { [address: string]: { price: number; priceChange24h: number; } }) => void;
+  updateTokenPrice: (address: string, price: number, priceChange24h: number) => void;
+  setEnableAutoRefresh: (enable: boolean) => void;
+  setRefreshInterval: (interval: number) => void;
+  setLastRefreshTimestamp: (timestamp: number) => void;
 
   // Utility actions
   switchTokens: () => void;
   resetAmounts: () => void;
   reset: () => void;
+
+  // Helper methods
+  getSwapParams: () => {
+    tokenInAddress: string;
+    tokenOutAddress: string;
+    amount: string;
+    isExactIn: boolean;
+    slippage: number;
+  } | null;
 }
 
 const useSwapStore = create<SwapState>((set, get) => ({
@@ -62,9 +83,11 @@ const useSwapStore = create<SwapState>((set, get) => ({
   slippage: 0.5, // 0.5%
   deadline: 20, // 20 minutes
   route: null,
-  isLoadingRoute: false,
-  routeError: null,
   isSwapping: false,
+  tokenPrices: {},
+  enableAutoRefresh: true,
+  refreshInterval: 10000, // 10 seconds
+  lastRefreshTimestamp: 0,
 
   // Actions
   setTokenIn: (token) => set({ tokenIn: token }),
@@ -76,9 +99,18 @@ const useSwapStore = create<SwapState>((set, get) => ({
   setSlippage: (slippage) => set({ slippage }),
   setDeadline: (deadline) => set({ deadline }),
   setRoute: (route) => set({ route }),
-  setIsLoadingRoute: (loading) => set({ isLoadingRoute: loading }),
-  setRouteError: (error) => set({ routeError: error }),
   setIsSwapping: (swapping) => set({ isSwapping: swapping }),
+  setTokenPrices: (prices) => set({ tokenPrices: prices }),
+  updateTokenPrice: (address, price, priceChange24h) =>
+    set((state) => ({
+      tokenPrices: {
+        ...state.tokenPrices,
+        [address]: { price, priceChange24h }
+      }
+    })),
+  setEnableAutoRefresh: (enable) => set({ enableAutoRefresh: enable }),
+  setRefreshInterval: (interval) => set({ refreshInterval: interval }),
+  setLastRefreshTimestamp: (timestamp) => set({ lastRefreshTimestamp: timestamp }),
 
   // Utility actions
   switchTokens: () => {
@@ -96,7 +128,6 @@ const useSwapStore = create<SwapState>((set, get) => ({
     amountIn: "",
     amountOut: "",
     route: null,
-    routeError: null
   }),
 
   reset: () => set({
@@ -106,10 +137,39 @@ const useSwapStore = create<SwapState>((set, get) => ({
     amountOut: "",
     isExactIn: true,
     route: null,
-    isLoadingRoute: false,
-    routeError: null,
     isSwapping: false,
+    tokenPrices: {},
   }),
+
+  // Helper method to get swap parameters for React Query
+  getSwapParams: () => {
+    const { tokenIn, tokenOut, amountIn, amountOut, isExactIn, slippage } = get();
+
+    if (!tokenIn || !tokenOut) return null;
+
+    const amount = isExactIn ? amountIn : amountOut;
+    if (!amount || parseFloat(amount) <= 0) return null;
+
+    // Map native token addresses to WHYPE for API calls
+    const WHYPE_TOKEN_ADDRESS = "0x5555555555555555555555555555555555555555";
+
+    const getApiAddress = (token: any): string => {
+      const address = token.contractAddress;
+      // If token is native (HYPE), use WHYPE address for API
+      if (address === 'native' || address === 'NATIVE' || token.symbol === 'HYPE') {
+        return WHYPE_TOKEN_ADDRESS;
+      }
+      return address;
+    };
+
+    return {
+      tokenInAddress: getApiAddress(tokenIn),
+      tokenOutAddress: getApiAddress(tokenOut),
+      amount,
+      isExactIn,
+      slippage,
+    };
+  },
 }));
 
 export default useSwapStore;

@@ -13,6 +13,7 @@ interface MenuProps {
     arrowLeft?: boolean;
     arrowLeftIcon?: React.ElementType;
     itemClassName?: string;
+    isCentered?: boolean;
   }[];
 }
 
@@ -35,7 +36,8 @@ export const Menu = ({ items }: MenuProps) => {
               <div
                 className={cn(
                   'flex items-center justify-between gap-3 py-4 pr-4 w-full',
-                  item.isLongDescription && 'flex-col items-start'
+                  item.isLongDescription && 'flex-col items-start',
+                  item.isCentered && 'justify-center'
                 )}
               >
                 <p className="text-base font-medium text-left">{item.label}</p>
