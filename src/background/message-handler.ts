@@ -164,6 +164,9 @@ export class MessageHandler {
         case 'EVM_SIGN_TYPED_DATA':
           result = await evmHandler.handleSignTypedData(data, sender);
           break;
+        case 'EVM_SIGN_TRANSACTION':
+          result = await evmHandler.handleSignTransaction(data, sender);
+          break;
         case 'ETH_APPROVE_SIGN':
           result = await evmHandler.handleApproveSign(data);
           break;
@@ -173,11 +176,29 @@ export class MessageHandler {
         case 'EVM_SEND_TRANSACTION':
           result = await evmHandler.handleSendTransaction(data, sender);
           break;
+        case 'ETH_APPROVE_TRANSACTION':
+          result = await evmHandler.handleApproveTransaction(data);
+          break;
+        case 'ETH_REJECT_TRANSACTION':
+          result = await evmHandler.handleRejectTransaction(data);
+          break;
+        case 'EVM_CALL':
+          result = await evmRpcHandler.handleEvmCall(data);
+          break;
+        case 'EVM_GET_BLOCK_NUMBER':
+          result = await evmRpcHandler.handleEvmGetBlockNumber(data);
+          break;
         case 'EVM_ESTIMATE_GAS':
-          result = await evmHandler.estimateTransactionGas(
-            data.transaction,
-            data.chainId
-          );
+          result = await evmRpcHandler.handleEvmEstimateGas(data);
+          break;
+        case 'EVM_GET_GAS_PRICE':
+          result = await evmRpcHandler.handleEvmGetGasPrice(data);
+          break;
+        case 'EVM_GET_TRANSACTION_BY_HASH':
+          result = await evmRpcHandler.handleEvmGetTransactionByHash(data);
+          break;
+        case 'EVM_GET_TRANSACTION_RECEIPT':
+          result = await evmRpcHandler.handleEvmGetTransactionReceipt(data);
           break;
         case 'EVM_SEND_TOKEN':
           result = await evmHandler.handleSendToken(data);
