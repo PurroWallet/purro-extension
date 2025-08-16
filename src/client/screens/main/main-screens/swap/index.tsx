@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react';
 import { Button, Input } from '@/client/components/ui';
 import { ArrowUpDown, ChevronDown, AlertTriangle, Zap } from 'lucide-react';
 import useSwapStore from '@/client/hooks/use-swap-store';
-import useSwapRoute from '@/client/hooks/use-swap-route';
+import { useSwapRoute } from '@/client/hooks/use-swap-route';
 import { SwapTokenSelectorDrawer } from '@/client/components/drawers';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
-import useSwapTimerStore from '@/client/hooks/use-swap-timer-store';
+
 import TokenLogo from '@/client/components/token-logo';
 // Create a comprehensive formatBalance function for display
 const formatBalance = (balance: number): string => {
@@ -39,10 +39,7 @@ import useWalletStore from '@/client/hooks/use-wallet-store';
 import { SwapSuccess } from '@/client/components/dialogs';
 import useDialogStore from '@/client/hooks/use-dialog-store';
 import { fetchBalances } from '@/client/services/liquidswap-api';
-import {
-  fetchTokenPrices,
-  Network,
-} from '@/client/services/gecko-terminal-api';
+
 import { Balance } from '@/client/types/liquidswap-api';
 import { UnifiedToken } from '@/client/components/token-list';
 
@@ -72,9 +69,8 @@ const Swap = () => {
     isExactIn,
     slippage,
     route,
-    isLoadingRoute,
-    routeError,
     isSwapping,
+    tokenPrices,
     setAmountIn,
     setAmountOut,
     setIsExactIn,
@@ -89,39 +85,29 @@ const Swap = () => {
   const { openDialog } = useDialogStore();
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
 
-  // Initialize swap route hook
-  const { refetchRoute } = useSwapRoute();
+  // Initialize swap route hook with React Query
+  const { isLoading: isLoadingRoute, error: routeError } = useSwapRoute();
 
   const [swapError, setSwapError] = useState<string | null>(null);
 
-  // Token price state
-  const [tokenPrices, setTokenPrices] = useState<{
-    [address: string]: {
-      price: number;
-      priceChange24h: number;
-    };
-  }>({});
-
-  // Timer state for route refetching
-  const { startTimer, resetTimer, cleanup } = useSwapTimerStore();
-
-  // Auto-set WHYPE as default output token if no token is selected
+  // Auto-set HYPE (native) as default output token if no token is selected
   useEffect(() => {
     if (!tokenOut) {
-      const whypeUnifiedToken = {
-        contractAddress: DEFAULT_WHYPE_TOKEN.address,
-        symbol: DEFAULT_WHYPE_TOKEN.symbol,
-        name: DEFAULT_WHYPE_TOKEN.name,
-        decimals: DEFAULT_WHYPE_TOKEN.decimals,
+      const nativeHypeToken = {
+        contractAddress: 'native',
+        symbol: 'HYPE',
+        name: 'HYPE',
+        decimals: 18,
         balance: '0',
         chain: 'hyperevm' as const,
         chainName: 'HyperEVM',
-        logo: DEFAULT_WHYPE_TOKEN.logo,
+        logo: DEFAULT_WHYPE_TOKEN.logo, // Use same logo as WHYPE
         balanceFormatted: 0,
         usdValue: 0,
+        isNative: true,
       };
 
-      setTokenOut(whypeUnifiedToken);
+      setTokenOut(nativeHypeToken);
     }
   }, [tokenOut, setTokenOut]);
 
@@ -304,177 +290,11 @@ const Swap = () => {
     tokenIn?.contractAddress,
   ]);
 
-  // Start timer when both tokens are selected and there's an amount, but only after initial route is loaded
-  // Skip timer for wrap/unwrap scenarios
-  useEffect(() => {
-    const isWrapUnwrapScenario = isWrapScenario() || isUnwrapScenario();
+  // Timer is now handled by header using timestamp approach - much simpler!
 
-    if (
-      tokenIn &&
-      tokenOut &&
-      (amountIn || amountOut) &&
-      !isLoadingRoute &&
-      route &&
-      !isWrapUnwrapScenario // Don't start timer for wrap/unwrap
-    ) {
-      // Only start timer if we have a successful route (not immediately after token/amount changes)
-      startTimer(refetchRoute);
-    } else {
-      resetTimer();
-    }
+  // Token prices are now handled by useHyperEvmTokens hook with React Query
 
-    return cleanup;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    tokenIn,
-    tokenOut,
-    amountIn,
-    amountOut,
-    isLoadingRoute,
-    route,
-    startTimer,
-    resetTimer,
-    cleanup,
-    refetchRoute,
-  ]);
-
-  // Fetch token prices when tokens are selected
-  useEffect(() => {
-    const fetchPrices = async () => {
-      const addresses: string[] = [];
-
-      // Add token addresses to fetch prices for
-      if (tokenIn?.contractAddress) {
-        let tokenInAddress = tokenIn.contractAddress;
-
-        if (tokenIn.contractAddress.toLowerCase() === 'native') {
-          tokenInAddress = WHYPE_TOKEN_ADDRESS;
-        }
-        addresses.push(tokenInAddress);
-      }
-      if (tokenOut?.contractAddress) {
-        let tokenOutAddress = tokenOut.contractAddress;
-
-        if (tokenOut.contractAddress.toLowerCase() === 'native') {
-          tokenOutAddress = WHYPE_TOKEN_ADDRESS;
-        }
-        addresses.push(tokenOutAddress);
-      }
-
-      if (addresses.length === 0) return;
-
-      try {
-        console.log('🔄 Fetching token prices for:', addresses);
-
-        // Determine network based on token chain
-        const network: Network =
-          tokenIn?.chain === 'hyperevm' || tokenOut?.chain === 'hyperevm'
-            ? 'hyperevm'
-            : 'eth'; // Default to eth for other chains
-
-        const response = await fetchTokenPrices(network, addresses);
-
-        console.log('📊 Token prices response:', response);
-
-        // Handle new multi-token API response format
-        if (response?.data && Array.isArray(response.data)) {
-          const newTokenPrices: {
-            [address: string]: { price: number; priceChange24h: number };
-          } = {};
-
-          response.data.forEach((tokenData: any) => {
-            const address = tokenData.attributes.address;
-            console.log('🔍 Address:', address);
-            const price = tokenData.attributes.price_usd;
-            console.log('🔍 Price:', price);
-
-            if (price !== undefined) {
-              newTokenPrices[address] = {
-                price: parseFloat(price),
-                priceChange24h: 0, // Price change not available in new format
-              };
-            }
-          });
-
-          // Handle native token
-          const isHaveNativeToken =
-            tokenIn?.contractAddress?.toLowerCase() === 'native' ||
-            tokenOut?.contractAddress?.toLowerCase() === 'native';
-
-          if (isHaveNativeToken) {
-            // Find native token data (usually address 0x0000...)
-            const nativeTokenData = response.data.find((token: any) =>
-              token.attributes.address
-                .toLowerCase()
-                .includes('0000000000000000000000000000000000000000')
-            );
-            if (nativeTokenData) {
-              newTokenPrices['native'] = {
-                price: parseFloat(nativeTokenData.attributes.price_usd),
-                priceChange24h: 0,
-              };
-            }
-          }
-
-          setTokenPrices(newTokenPrices);
-        } else if (response?.data?.attributes) {
-          // Fallback to old format
-          const attributes = response.data.attributes as any;
-          const prices = attributes.token_prices || {};
-          const priceChanges = attributes.h24_price_change_percentage || {};
-
-          const newTokenPrices: {
-            [address: string]: { price: number; priceChange24h: number };
-          } = {};
-
-          addresses.forEach(address => {
-            console.log('🔍 Address:', address);
-            const price = prices[address.toLowerCase()];
-            const priceChange = priceChanges[address.toLowerCase()];
-            console.log('🔍 Price:', price);
-            console.log('🔍 Price Change:', priceChange);
-
-            if (price !== undefined) {
-              newTokenPrices[address] = {
-                price: parseFloat(price),
-                priceChange24h: priceChange ? parseFloat(priceChange) : 0,
-              };
-            }
-
-            const isHaveNativeToken =
-              tokenIn?.contractAddress?.toLowerCase() === 'native' ||
-              tokenOut?.contractAddress?.toLowerCase() === 'native';
-
-            if (isHaveNativeToken && newTokenPrices['native'] === undefined) {
-              newTokenPrices['native'] = {
-                price: parseFloat(price),
-                priceChange24h: priceChange ? parseFloat(priceChange) : 0,
-              };
-            }
-          });
-
-          setTokenPrices(newTokenPrices);
-        }
-
-        console.log('💰 Updated token prices:', tokenPrices);
-      } catch (error) {
-        console.error('❌ Error fetching token prices:', error);
-      }
-    };
-
-    fetchPrices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    tokenIn?.contractAddress,
-    tokenOut?.contractAddress,
-    tokenIn?.chain,
-    tokenOut?.chain,
-  ]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return cleanup;
-  }, [cleanup]);
+  // No cleanup needed - React Query handles cleanup automatically
 
   // Validation
   const inputAmount = parseFloat(amountIn || '0');
@@ -1102,7 +922,7 @@ const Swap = () => {
             <div className="flex items-center gap-2">
               <AlertTriangle className="size-4 text-[var(--button-color-destructive)]" />
               <span className="text-sm text-[var(--button-color-destructive)]">
-                {routeError}
+                {routeError?.message || 'Route error'}
               </span>
             </div>
           </div>

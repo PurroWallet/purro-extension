@@ -10,7 +10,8 @@ import { useMemo } from 'react';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
 import { SwapSettingsDrawer } from '@/client/components/drawers';
 import { CircularTimer } from '@/client/components/ui/circular-timer';
-import useSwapTimerStore from '@/client/hooks/use-swap-timer-store';
+import useSwapStore from '@/client/hooks/use-swap-store';
+import useCountdownTimer from '@/client/hooks/use-countdown-timer';
 
 const MainHeader = ({
   className,
@@ -37,7 +38,28 @@ const MainHeader = ({
   }, [activeAccount, wallets]);
   const isSwapScreen = currentScreen === 'swap';
   const { openDrawer } = useDrawerStore();
-  const { timeLeft, isTimerActive } = useSwapTimerStore();
+
+  // Get swap state for timer
+  const {
+    lastRefreshTimestamp,
+    route,
+    tokenIn,
+    tokenOut,
+    amountIn,
+    amountOut,
+  } = useSwapStore();
+
+  // Calculate countdown timer
+  const timeLeft = useCountdownTimer(lastRefreshTimestamp);
+
+  // Show timer when we have a valid swap route
+  const isTimerActive = !!(
+    route &&
+    tokenIn &&
+    tokenOut &&
+    (amountIn || amountOut) &&
+    lastRefreshTimestamp
+  );
 
   return (
     <div
