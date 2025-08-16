@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import LockDisplay from '@/client/components/display/lock-display';
-import { Button, Dialog, Drawer } from '@/client/components/ui';
+import { Dialog, Drawer } from '@/client/components/ui';
 import useInit from '@/client/hooks/use-init';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -89,7 +89,7 @@ export const MainContent = () => {
       </div>
 
       {isSwapScreen && (
-        <div className="p-4 border-t border-white/10">
+        <div className="p-4">
           <ConfirmSwapButton />
         </div>
       )}

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { Input } from '@/client/components/ui';
 import { ArrowUpDown, ChevronDown, AlertTriangle, Zap } from 'lucide-react';
 import useSwapStore from '@/client/hooks/use-swap-store';
@@ -9,7 +9,6 @@ import useDrawerStore from '@/client/hooks/use-drawer-store';
 import TokenLogo from '@/client/components/token-logo';
 import {
   getTokenBalance,
-  isHypeToken,
   isWrapScenario,
   isUnwrapScenario,
 } from '@/client/utils/swap-utils';
@@ -40,8 +39,9 @@ const formatPriceChange = (change: number): string => {
   return `${sign}${change.toFixed(2)}%`;
 };
 
-import { sendMessage } from '@/client/utils/extension-message-utils';
 import useWalletStore from '@/client/hooks/use-wallet-store';
+import { useNativeBalance } from '@/client/hooks/use-native-balance';
+import useMainSwapStore from '@/client/hooks/use-main-swap-store';
 
 import { fetchBalances } from '@/client/services/liquidswap-api';
 
@@ -75,7 +75,6 @@ const Swap = () => {
     setAmountIn,
     setAmountOut,
     setIsExactIn,
-    setIsSwapping,
     setTokenOut,
     setTokenIn,
     switchTokens,
@@ -83,7 +82,11 @@ const Swap = () => {
 
   const { getActiveAccountWalletObject } = useWalletStore();
   const { openDrawer } = useDrawerStore();
+  const { clearSwapError } = useMainSwapStore();
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
+
+  // Get native token balances
+  const { nativeTokens } = useNativeBalance();
 
   // Initialize swap route hook with React Query
   const { isLoading: isLoadingRoute, error: routeError } = useSwapRoute();
@@ -91,27 +94,67 @@ const Swap = () => {
   // Auto-set HYPE (native) as default output token if no token is selected
   useEffect(() => {
     if (!tokenOut) {
-      const nativeHypeToken = {
+      // Find native HYPE token from native balance hook
+      const nativeHypeToken = nativeTokens.find(
+        token => token.chain === 'hyperevm' && token.symbol === 'HYPE'
+      );
+
+      const defaultNativeHype = {
         contractAddress: 'native',
         symbol: 'HYPE',
         name: 'HYPE',
         decimals: 18,
-        balance: '0',
+        balance: nativeHypeToken?.balance || '0',
         chain: 'hyperevm' as const,
         chainName: 'HyperEVM',
         logo: DEFAULT_WHYPE_TOKEN.logo, // Use same logo as WHYPE
-        balanceFormatted: 0,
-        usdValue: 0,
+        balanceFormatted: nativeHypeToken?.balanceFormatted || 0,
+        usdValue: nativeHypeToken?.usdValue || 0,
+        usdPrice: nativeHypeToken?.usdPrice,
         isNative: true,
       };
 
-      setTokenOut(nativeHypeToken);
+      setTokenOut(defaultNativeHype);
     }
-  }, [tokenOut, setTokenOut]);
+  }, [tokenOut, setTokenOut, nativeTokens]);
 
-  // Get token balances using utility function
-  const tokenInBalance = tokenIn ? getTokenBalance(tokenIn) : 0;
-  const tokenOutBalance = tokenOut ? getTokenBalance(tokenOut) : 0;
+  // Function to get updated native HYPE token data
+  const getNativeHypeWithBalance = useCallback(
+    (baseToken: UnifiedToken) => {
+      const nativeHypeToken = nativeTokens.find(
+        token => token.chain === 'hyperevm' && token.symbol === 'HYPE'
+      );
+
+      if (
+        nativeHypeToken &&
+        baseToken.isNative &&
+        baseToken.symbol === 'HYPE'
+      ) {
+        return {
+          ...baseToken,
+          balance: nativeHypeToken.balance,
+          balanceFormatted: nativeHypeToken.balanceFormatted,
+          usdValue: nativeHypeToken.usdValue || 0,
+          usdPrice: nativeHypeToken.usdPrice,
+        };
+      }
+      return baseToken;
+    },
+    [nativeTokens]
+  );
+
+  // Clear error when user changes input
+  useEffect(() => {
+    clearSwapError();
+  }, [amountIn, amountOut, tokenIn, tokenOut, clearSwapError]);
+
+  // Get token balances using utility function (with updated native balance)
+  const tokenInBalance = tokenIn
+    ? getTokenBalance(getNativeHypeWithBalance(tokenIn))
+    : 0;
+  const tokenOutBalance = tokenOut
+    ? getTokenBalance(getNativeHypeWithBalance(tokenOut))
+    : 0;
 
   useEffect(() => {
     const fetchWHYPEBalance = async () => {

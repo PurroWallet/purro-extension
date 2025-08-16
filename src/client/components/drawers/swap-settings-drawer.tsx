@@ -139,11 +139,7 @@ const SwapSettingsDrawer: React.FC = () => {
 
       {/* Footer */}
       <div className="p-4 border-t border-white/10 bg-[var(--card-color)]/50">
-        <Button
-          onClick={handleSave}
-          variant="primary"
-          className="flex-1 px-4 py-3"
-        >
+        <Button onClick={handleSave} variant="primary" className="w-full">
           Save Settings
         </Button>
       </div>
