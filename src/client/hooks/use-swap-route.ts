@@ -125,7 +125,7 @@ export const useSwapRoute = () => {
     enabled: !!swapParams && parseFloat((swapParams.amountIn || swapParams.amountOut || '0').toString()) > 0,
     refetchInterval: enableAutoRefresh ? refreshInterval : false,
     refetchIntervalInBackground: true,
-    staleTime: 15000, // Consider data stale after 15 seconds
+    staleTime: 0, // Always consider data stale to allow refetch
     gcTime: 30000, // Keep in cache for 30 seconds
     retry: 2,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
@@ -157,6 +157,13 @@ export const useSwapRoute = () => {
       setRoute(null);
     }
   }, [routeData, isExactIn, setRoute, setAmountIn, setAmountOut, setLastRefreshTimestamp]);
+
+  // Update timestamp when refetching (even if data is same)
+  useEffect(() => {
+    if (isRefetching) {
+      setLastRefreshTimestamp(Date.now());
+    }
+  }, [isRefetching, setLastRefreshTimestamp]);
 
   // Manual refresh function
   const refetchRoute = () => {

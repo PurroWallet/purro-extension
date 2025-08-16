@@ -112,7 +112,7 @@ const MainHeader = ({
             <div className="flex items-center justify-center">
               <CircularTimer
                 timeLeft={timeLeft}
-                totalTime={20}
+                totalTime={10}
                 isActive={isTimerActive}
                 size={24}
                 strokeWidth={2}

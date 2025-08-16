@@ -837,15 +837,6 @@ const Swap = () => {
         {/* Route Info - Hide for wrap/unwrap scenarios */}
         {!isWrapScenario() && !isUnwrapScenario() && (
           <>
-            {isLoadingRoute && (
-              <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--primary-color-light)] mr-2"></div>
-                <span className="text-sm text-white/60">
-                  Finding best route...
-                </span>
-              </div>
-            )}
-
             {route && !isLoadingRoute && (
               <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between">

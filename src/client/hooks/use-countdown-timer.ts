@@ -5,13 +5,13 @@ import { useState, useEffect } from 'react';
  */
 export const useCountdownTimer = (
     lastRefreshTimestamp: number,
-    intervalMs: number = 20000 // 20 seconds
+    intervalMs: number = 10000 // 10 seconds
 ) => {
-    const [timeLeft, setTimeLeft] = useState(20);
+    const [timeLeft, setTimeLeft] = useState(10);
 
     useEffect(() => {
         if (!lastRefreshTimestamp) {
-            setTimeLeft(20);
+            setTimeLeft(10);
             return;
         }
 
@@ -19,7 +19,7 @@ export const useCountdownTimer = (
             const now = Date.now();
             const elapsed = now - lastRefreshTimestamp;
             const remaining = Math.max(0, Math.ceil((intervalMs - elapsed) / 1000));
-            setTimeLeft(remaining);
+            setTimeLeft(remaining || 10); // Reset to 10 when reaches 0
         };
 
         // Update immediately

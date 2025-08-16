@@ -86,7 +86,7 @@ const useSwapStore = create<SwapState>((set, get) => ({
   isSwapping: false,
   tokenPrices: {},
   enableAutoRefresh: true,
-  refreshInterval: 20000, // 20 seconds
+  refreshInterval: 10000, // 10 seconds
   lastRefreshTimestamp: 0,
 
   // Actions
