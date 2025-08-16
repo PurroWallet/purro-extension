@@ -120,7 +120,7 @@ const NftInstancesIdDialog = ({
                 rel="noreferrer"
               >
                 <p className="text-base text-center font-semibold text-[var(--primary-color-light)]">
-                  See on Hyperliquid Names
+                  View on Hyperliquid Names
                 </p>
               </a>
             )}
