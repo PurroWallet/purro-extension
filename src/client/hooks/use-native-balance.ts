@@ -267,7 +267,10 @@ export const useNativeBalance = () => {
     queryKey: [QueryKeys.NATIVE_TOKEN_PRICES],
     queryFn: fetchNativeTokenPrices,
     staleTime: 60 * 1000, // 1 minute
-    enabled: balanceQueries.length > 0 && !isDevMode,
+    gcTime: 5 * 60 * 1000, // 5 minutes cache
+    enabled: !isDevMode, // Always fetch prices when not in dev mode
+    retry: 3,
+    retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 5000),
   });
 
   // Process results

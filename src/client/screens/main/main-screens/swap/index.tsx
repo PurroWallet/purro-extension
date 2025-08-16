@@ -6,6 +6,7 @@ import useSwapRoute from '@/client/hooks/use-swap-route';
 import { SwapTokenSelectorDrawer } from '@/client/components/drawers';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
 import useSwapTimerStore from '@/client/hooks/use-swap-timer-store';
+import TokenLogo from '@/client/components/token-logo';
 // Create a comprehensive formatBalance function for display
 const formatBalance = (balance: number): string => {
   if (balance === 0) return '0';
@@ -296,7 +297,7 @@ const Swap = () => {
     ) {
       fetchWHYPEBalance();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     activeAccountAddress,
     tokenOut?.contractAddress,
@@ -323,7 +324,7 @@ const Swap = () => {
     }
 
     return cleanup;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     tokenIn,
     tokenOut,
@@ -375,10 +376,52 @@ const Swap = () => {
 
         console.log('📊 Token prices response:', response);
 
-        if (response?.data?.attributes) {
-          const prices = response.data.attributes.token_prices || {};
-          const priceChanges =
-            response.data.attributes.h24_price_change_percentage || {};
+        // Handle new multi-token API response format
+        if (response?.data && Array.isArray(response.data)) {
+          const newTokenPrices: {
+            [address: string]: { price: number; priceChange24h: number };
+          } = {};
+
+          response.data.forEach((tokenData: any) => {
+            const address = tokenData.attributes.address;
+            console.log('🔍 Address:', address);
+            const price = tokenData.attributes.price_usd;
+            console.log('🔍 Price:', price);
+
+            if (price !== undefined) {
+              newTokenPrices[address] = {
+                price: parseFloat(price),
+                priceChange24h: 0, // Price change not available in new format
+              };
+            }
+          });
+
+          // Handle native token
+          const isHaveNativeToken =
+            tokenIn?.contractAddress?.toLowerCase() === 'native' ||
+            tokenOut?.contractAddress?.toLowerCase() === 'native';
+
+          if (isHaveNativeToken) {
+            // Find native token data (usually address 0x0000...)
+            const nativeTokenData = response.data.find((token: any) =>
+              token.attributes.address
+                .toLowerCase()
+                .includes('0000000000000000000000000000000000000000')
+            );
+            if (nativeTokenData) {
+              newTokenPrices['native'] = {
+                price: parseFloat(nativeTokenData.attributes.price_usd),
+                priceChange24h: 0,
+              };
+            }
+          }
+
+          setTokenPrices(newTokenPrices);
+        } else if (response?.data?.attributes) {
+          // Fallback to old format
+          const attributes = response.data.attributes as any;
+          const prices = attributes.token_prices || {};
+          const priceChanges = attributes.h24_price_change_percentage || {};
 
           const newTokenPrices: {
             [address: string]: { price: number; priceChange24h: number };
@@ -411,44 +454,16 @@ const Swap = () => {
           });
 
           setTokenPrices(newTokenPrices);
-          console.log('💰 Updated token prices:', newTokenPrices);
-
-          // Update token objects with prices
-          if (tokenIn?.contractAddress) {
-            const tokenInAddress =
-              tokenIn.contractAddress.toLowerCase() === 'native'
-                ? WHYPE_TOKEN_ADDRESS
-                : tokenIn.contractAddress;
-
-            if (newTokenPrices[tokenInAddress]) {
-              setTokenIn({
-                ...tokenIn,
-                usdPrice: newTokenPrices[tokenInAddress].price,
-              });
-            }
-          }
-
-          if (tokenOut?.contractAddress) {
-            const tokenOutAddress =
-              tokenOut.contractAddress.toLowerCase() === 'native'
-                ? WHYPE_TOKEN_ADDRESS
-                : tokenOut.contractAddress;
-
-            if (newTokenPrices[tokenOutAddress]) {
-              setTokenOut({
-                ...tokenOut,
-                usdPrice: newTokenPrices[tokenOutAddress].price,
-              });
-            }
-          }
         }
+
+        console.log('💰 Updated token prices:', tokenPrices);
       } catch (error) {
         console.error('❌ Error fetching token prices:', error);
       }
     };
 
     fetchPrices();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     tokenIn?.contractAddress,
     tokenOut?.contractAddress,
@@ -815,20 +830,14 @@ const Swap = () => {
       {token ? (
         <>
           <div className="size-8 flex items-center justify-center rounded-full overflow-hidden flex-shrink-0">
-            {token.logo ? (
-              <img
-                src={token.logo}
-                alt={token.symbol}
-                className="size-6 rounded-full"
-                onError={e => {
-                  e.currentTarget.style.display = 'none';
-                }}
-              />
-            ) : (
-              <span className="text-xs font-medium text-[var(--primary-color-light)]">
-                {token.symbol.slice(0, 3)}
-              </span>
-            )}
+            <TokenLogo
+              symbol={token.symbol}
+              existingLogo={token.logo}
+              networkId={token.chain}
+              tokenAddress={token.contractAddress}
+              className="size-6 rounded-full"
+              fallbackText={token.symbol.slice(0, 3)}
+            />
           </div>
           <span className="text-[var(--text-color)] font-medium text-nowrap">
             {token.symbol}
