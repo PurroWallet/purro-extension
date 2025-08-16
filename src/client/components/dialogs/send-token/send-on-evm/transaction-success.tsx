@@ -54,7 +54,7 @@ const getNetworkDisplayName = (chain: string): string => {
     case 'bsc':
       return 'BNB Smart Chain';
     case 'hyperevm':
-      return 'Hyperliquid EVM';
+      return 'HyperEVM';
     default:
       return chain.charAt(0).toUpperCase() + chain.slice(1);
   }

@@ -160,12 +160,26 @@ export const useHlPortfolioData = (
 
   // Process token prices data
   const tokenPricesData = useMemo(() => {
-    if (!tokenPricesQuery.data?.data?.attributes?.token_prices) {
-      return {};
+    const response = tokenPricesQuery.data;
+
+    // Handle new multi-token API response format
+    if (response?.data && Array.isArray(response.data)) {
+      const pricesMap: { [key: string]: string } = {};
+      response.data.forEach((tokenData: any) => {
+        const address = tokenData.attributes.address.toLowerCase();
+        pricesMap[address] = tokenData.attributes.price_usd;
+      });
+      return pricesMap;
     }
-    return tokenPricesQuery.data.data.attributes.token_prices as {
-      [key: string]: string;
-    };
+
+    // Fallback to old format
+    if (response?.data?.attributes?.token_prices) {
+      return response.data.attributes.token_prices as {
+        [key: string]: string;
+      };
+    }
+
+    return {};
   }, [tokenPricesQuery.data]);
 
   // Calculate EVM tokens value
@@ -176,7 +190,9 @@ export const useHlPortfolioData = (
 
     return evmData.data.tokens.reduce(
       (total: number, token) => {
-        const priceStr = tokenPricesData[token.token];
+        // Try both original address and lowercase for price lookup
+        const tokenAddress = token.token.toLowerCase();
+        const priceStr = tokenPricesData[tokenAddress] || tokenPricesData[token.token];
         const price = priceStr ? parseFloat(priceStr) : 0;
         const balance =
           parseFloat(token.balance) / Math.pow(10, token.decimals);

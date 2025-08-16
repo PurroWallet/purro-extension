@@ -127,7 +127,15 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
 
     if (isHyperliquidActive && evmData?.tokensData?.data?.tokens) {
       evmData.tokensData.data.tokens.forEach((token: any) => {
-        const priceStr = tokenPricesData[token.token];
+        // Skip EVM HYPE token if we already have native HYPE token
+        // This prevents duplicate HYPE tokens in the list
+        if (token.symbol === 'HYPE' && token.token.toLowerCase().includes('native')) {
+          return; // Skip this token
+        }
+
+        // Try both original address and lowercase for price lookup
+        const tokenAddress = token.token.toLowerCase();
+        const priceStr = tokenPricesData[tokenAddress] || tokenPricesData[token.token];
         const price = priceStr ? parseFloat(priceStr) : 0;
         const balance =
           parseFloat(token.balance) / Math.pow(10, token.decimals);
@@ -135,7 +143,7 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
 
         unifiedTokens.push({
           chain: 'hyperevm',
-          chainName: 'Hyperliquid EVM',
+          chainName: 'HyperEVM',
           symbol: token.symbol,
           name: token.name,
           balance: token.balance,

@@ -4,10 +4,11 @@ import TabsError from './tabs-error';
 import { useState, useEffect } from 'react';
 import { AlertTriangle, PlusIcon } from 'lucide-react';
 import { useUnifiedTokens } from '@/client/hooks/use-unified-tokens';
-import TokenList from '@/client/components/token-list';
+import TokenList, { UnifiedToken } from '@/client/components/token-list';
 import useDevModeStore from '@/client/hooks/use-dev-mode';
 import useDialogStore from '@/client/hooks/use-dialog-store';
 import AddTestnetToken from '@/client/components/dialogs/add-testnet-token';
+import TokenInfoDialog from '@/client/components/dialogs/token-info-dialog';
 
 const WalletTabsEVM = () => {
   // Track performance
@@ -35,6 +36,11 @@ const WalletTabsEVM = () => {
       setLoadStartTime(null);
     }
   }, [isAlchemyLoading, loadStartTime, alchemyTokenCount]);
+
+  // Handle token click to open info dialog
+  const handleTokenClick = (token: UnifiedToken) => {
+    openDialog(<TokenInfoDialog token={token} onClose={() => closeDialog()} />);
+  };
 
   if (isLoading) return <TabsLoading />;
 
@@ -79,6 +85,7 @@ const WalletTabsEVM = () => {
       <div>
         <TokenList
           tokens={allUnifiedTokens}
+          onTokenClick={handleTokenClick}
           emptyMessage="No tokens found across all supported chains"
         />
       </div>
