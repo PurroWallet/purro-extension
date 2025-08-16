@@ -31,6 +31,8 @@ const QueryKeys = {
   // LiquidSwap API keys
   LIQUIDSWAP_TOKENS: 'liquidswapTokens',
   LIQUIDSWAP_BALANCES: 'liquidswapBalances',
+  // Detailed token info
+  DETAILED_TOKEN_INFO: 'detailedTokenInfo',
 };
 
 export default QueryKeys;

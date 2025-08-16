@@ -60,11 +60,11 @@ export const fetchTokenPrices = async (
   // If we have 30 or fewer addresses, make a single request
   if (addresses.length <= BATCH_SIZE) {
     const response = await fetch(
-      `${ENDPOINTS.GECKO_TERMINAL}/simple/networks/${network}/token_price/${addresses.join(',')}?include_24hr_price_change=true`,
+      `${ENDPOINTS.GECKO_TERMINAL}/networks/${network}/tokens/multi/${addresses.join(',')}`,
       {
         method: 'GET',
         headers: {
-          Accept: 'application/json;version=20230302',
+          Accept: 'application/json',
         },
       }
     );
@@ -73,7 +73,8 @@ export const fetchTokenPrices = async (
       throw new Error(`Network response was not ok: ${response.status}`);
     }
 
-    return await response.json();
+    const result = await response.json();
+    return transformMultiTokenResponse(result);
   }
 
   // For more than 30 addresses, split into batches
@@ -85,11 +86,11 @@ export const fetchTokenPrices = async (
   // Make all batch requests in parallel
   const batchPromises = batches.map(async batch => {
     const response = await fetch(
-      `${ENDPOINTS.GECKO_TERMINAL}/simple/networks/${network}/token_price/${batch.join(',')}`,
+      `${ENDPOINTS.GECKO_TERMINAL}/networks/${network}/tokens/multi/${batch.join(',')}`,
       {
         method: 'GET',
         headers: {
-          Accept: 'application/json;version=20230302',
+          Accept: 'application/json',
         },
       }
     );
@@ -104,32 +105,21 @@ export const fetchTokenPrices = async (
   // Wait for all requests to complete
   const batchResults = await Promise.all(batchPromises);
 
-  // Merge all token prices from different batches
-  const mergedTokenPrices = {};
-  const mergedMarketCap = {};
-  const mergedVolume = {};
-  const mergedPriceChange = {};
-  const mergedTotalReserve = {};
+  // Merge all token data from different batches
+  const mergedTokenPrices: Record<string, string> = {};
+  const mergedMarketCap: Record<string, string> = {};
+  const mergedVolume: Record<string, string> = {};
+  const mergedTotalReserve: Record<string, string> = {};
 
-  batchResults.forEach(result => {
-    if (result?.data?.attributes) {
-      Object.assign(
-        mergedTokenPrices,
-        result.data.attributes.token_prices || {}
-      );
-      Object.assign(
-        mergedMarketCap,
-        result.data.attributes.market_cap_usd || {}
-      );
-      Object.assign(mergedVolume, result.data.attributes.h24_volume_usd || {});
-      Object.assign(
-        mergedPriceChange,
-        result.data.attributes.h24_price_change_percentage || {}
-      );
-      Object.assign(
-        mergedTotalReserve,
-        result.data.attributes.total_reserve_in_usd || {}
-      );
+  batchResults.forEach((result: any) => {
+    if (result?.data && Array.isArray(result.data)) {
+      result.data.forEach((token: any) => {
+        const address = token.attributes.address.toLowerCase();
+        mergedTokenPrices[address] = token.attributes.price_usd;
+        mergedMarketCap[address] = token.attributes.market_cap_usd;
+        mergedVolume[address] = token.attributes.volume_usd?.h24;
+        mergedTotalReserve[address] = token.attributes.total_reserve_in_usd;
+      });
     }
   });
 
@@ -142,8 +132,38 @@ export const fetchTokenPrices = async (
         token_prices: mergedTokenPrices,
         market_cap_usd: mergedMarketCap,
         h24_volume_usd: mergedVolume,
-        h24_price_change_percentage: mergedPriceChange,
         total_reserve_in_usd: mergedTotalReserve,
+      },
+    },
+  };
+};
+
+// Helper function to transform the new multi-token API response to match the old format
+const transformMultiTokenResponse = (response: any) => {
+  const tokenPrices: Record<string, string> = {};
+  const marketCap: Record<string, string> = {};
+  const volume: Record<string, string> = {};
+  const totalReserve: Record<string, string> = {};
+
+  if (response?.data && Array.isArray(response.data)) {
+    response.data.forEach((token: any) => {
+      const address = token.attributes.address.toLowerCase();
+      tokenPrices[address] = token.attributes.price_usd;
+      marketCap[address] = token.attributes.market_cap_usd;
+      volume[address] = token.attributes.volume_usd?.h24;
+      totalReserve[address] = token.attributes.total_reserve_in_usd;
+    });
+  }
+
+  return {
+    data: {
+      id: 'multi-token-prices',
+      type: 'token_price',
+      attributes: {
+        token_prices: tokenPrices,
+        market_cap_usd: marketCap,
+        h24_volume_usd: volume,
+        total_reserve_in_usd: totalReserve,
       },
     },
   };

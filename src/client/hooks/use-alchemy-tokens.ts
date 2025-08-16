@@ -102,7 +102,7 @@ export const useAlchemyTokens = () => {
         data: [],
         isLoading: false,
         error: null,
-        refetch: () => {},
+        refetch: () => { },
       };
     }
 
@@ -217,6 +217,26 @@ export const useAlchemyTokens = () => {
     queries: priceQueriesConfig,
   });
 
+  // Helper function to extract prices from response
+  const extractPricesFromResponse = (response: any): Record<string, string> => {
+    // Handle new multi-token API response format
+    if (response?.data && Array.isArray(response.data)) {
+      const pricesMap: Record<string, string> = {};
+      response.data.forEach((tokenData: any) => {
+        const address = tokenData.attributes.address.toLowerCase();
+        pricesMap[address] = tokenData.attributes.price_usd;
+      });
+      return pricesMap;
+    }
+
+    // Fallback to old format
+    if (response?.data?.attributes?.token_prices) {
+      return response.data.attributes.token_prices;
+    }
+
+    return {};
+  };
+
   // Combine price data from active networks
   const priceDataByChain = useMemo(() => {
     const priceData = {
@@ -229,20 +249,17 @@ export const useAlchemyTokens = () => {
     let queryIndex = 0;
 
     if (isEthereumActive && priceQueries[queryIndex]) {
-      priceData.ethereum =
-        priceQueries[queryIndex].data?.data?.attributes?.token_prices || {};
+      priceData.ethereum = extractPricesFromResponse(priceQueries[queryIndex].data);
       queryIndex++;
     }
 
     if (isBaseActive && priceQueries[queryIndex]) {
-      priceData.base =
-        priceQueries[queryIndex].data?.data?.attributes?.token_prices || {};
+      priceData.base = extractPricesFromResponse(priceQueries[queryIndex].data);
       queryIndex++;
     }
 
     if (isArbitrumActive && priceQueries[queryIndex]) {
-      priceData.arbitrum =
-        priceQueries[queryIndex].data?.data?.attributes?.token_prices || {};
+      priceData.arbitrum = extractPricesFromResponse(priceQueries[queryIndex].data);
     }
 
     return priceData;
