@@ -112,7 +112,7 @@ export class PurroEVMProvider implements EthereumProvider {
         if (
           this.selectedAddress !== newAddress ||
           JSON.stringify(this.lastEmittedAccounts) !==
-            JSON.stringify(accountsToEmit)
+          JSON.stringify(accountsToEmit)
         ) {
           this.selectedAddress = newAddress;
 
@@ -146,7 +146,7 @@ export class PurroEVMProvider implements EthereumProvider {
         if (
           this.selectedAddress !== newAddress ||
           JSON.stringify(this.lastEmittedAccounts) !==
-            JSON.stringify(accountsToEmit)
+          JSON.stringify(accountsToEmit)
         ) {
           this.selectedAddress = newAddress;
 
@@ -463,6 +463,9 @@ export class PurroEVMProvider implements EthereumProvider {
         case 'eth_getTransactionReceipt':
           return await this.handleGetTransactionReceipt(params);
 
+        case 'eth_getTransactionByHash':
+          return await this.handleGetTransactionByHash(params);
+
         case 'eth_getBlockByNumber':
           return await this.handleGetBlockByNumber(params);
 
@@ -712,7 +715,18 @@ export class PurroEVMProvider implements EthereumProvider {
       transactionData: txObject,
     });
 
-    return result.transactionHash;
+    // Handle response structure from handler
+    if (result?.data) {
+      // If data is a string (transaction hash), return it directly
+      if (typeof result.data === 'string') {
+        return result.data;
+      }
+      // If data has transactionHash property, return that
+      if (result.data.transactionHash) {
+        return result.data.transactionHash;
+      }
+    }
+    return result.transactionHash || result;
   }
 
   private async handleSignTransaction(params: any): Promise<string> {
@@ -874,7 +888,11 @@ export class PurroEVMProvider implements EthereumProvider {
       blockTag,
     });
 
-    return result.data;
+    // Handle response structure from RPC handler
+    if (result?.data?.data) {
+      return result.data.data;
+    }
+    return result.data || result;
   }
 
   private async handleEstimateGas(params: any): Promise<string> {
@@ -888,12 +906,21 @@ export class PurroEVMProvider implements EthereumProvider {
       txObject,
     });
 
-    return result.gasEstimate;
+    // Handle response structure from RPC handler
+    if (result?.data?.gasEstimate) {
+      return result.data.gasEstimate;
+    }
+    return result.gasEstimate || result;
   }
 
   private async handleGetGasPrice(): Promise<string> {
     const result = await this.sendMessage('EVM_GET_GAS_PRICE');
-    return result.gasPrice;
+
+    // Handle response structure from RPC handler
+    if (result?.data?.gasPrice) {
+      return result.data.gasPrice;
+    }
+    return result.gasPrice || result;
   }
 
   private async handleGetTransactionCount(params: any): Promise<string> {
@@ -928,7 +955,42 @@ export class PurroEVMProvider implements EthereumProvider {
       txHash,
     });
 
-    return result.receipt;
+    // Handle response structure from RPC handler
+    if (result?.data !== undefined) {
+      // If data has receipt property, return that (could be null)
+      if ('receipt' in result.data) {
+        return result.data.receipt;
+      }
+      // If data is the receipt itself, return it
+      return result.data;
+    }
+    return result.receipt || result;
+  }
+
+  private async handleGetTransactionByHash(params: any): Promise<any> {
+    if (!params || !Array.isArray(params) || params.length === 0) {
+      throw this.createProviderError(
+        4001,
+        'Invalid transaction hash parameters'
+      );
+    }
+
+    const [txHash] = params;
+
+    const result = await this.sendMessage('EVM_GET_TRANSACTION_BY_HASH', {
+      txHash,
+    });
+
+    // Handle response structure from RPC handler
+    if (result?.data !== undefined) {
+      // If data has transaction property, return that (could be null)
+      if ('transaction' in result.data) {
+        return result.data.transaction;
+      }
+      // If data is the transaction itself, return it
+      return result.data;
+    }
+    return result.transaction || result;
   }
 
   private async handleGetBlockByNumber(params: any): Promise<any> {
@@ -948,7 +1010,12 @@ export class PurroEVMProvider implements EthereumProvider {
 
   private async handleGetBlockNumber(): Promise<string> {
     const result = await this.sendMessage('EVM_GET_BLOCK_NUMBER');
-    return result.blockNumber;
+
+    // Handle response structure from RPC handler
+    if (result?.data?.blockNumber) {
+      return result.data.blockNumber;
+    }
+    return result.blockNumber || result;
   }
 
   private async handleGetCode(params: any): Promise<string> {
