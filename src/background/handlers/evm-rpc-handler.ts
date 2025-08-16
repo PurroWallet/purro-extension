@@ -130,4 +130,243 @@ export const evmRpcHandler = {
       );
     }
   },
+
+  async handleEvmCall(data: {
+    callObject: any;
+    blockTag?: string;
+    chainId?: number | string;
+  }): Promise<MessageResponse> {
+    try {
+      const { callObject, blockTag = 'latest', chainId } = data;
+
+      // Validate call object
+      if (!callObject || typeof callObject !== 'object') {
+        return createErrorResponse('Invalid call object parameter', 4001);
+      }
+
+      // Convert chainId to number if it's a string
+      let targetChainId: number;
+      if (typeof chainId === 'string') {
+        targetChainId = parseInt(chainId, 10);
+        if (isNaN(targetChainId)) {
+          return createErrorResponse(`Invalid chainId: ${chainId}`, 4001);
+        }
+      } else {
+        targetChainId = chainId || (await getCurrentChainId());
+      }
+
+      console.log(
+        `🔗 Making eth_call on chain ${targetChainId}:`,
+        callObject
+      );
+      const result = await makeRpcCall(
+        'eth_call',
+        [callObject, blockTag],
+        targetChainId
+      );
+
+      return createSuccessResponse({ data: result, chainId: targetChainId });
+    } catch (error) {
+      console.error('Error in handleEvmCall:', error);
+      return createErrorResponse(
+        error instanceof Error ? error.message : 'Failed to make call',
+        4001
+      );
+    }
+  },
+
+  async handleEvmGetBlockNumber(data?: {
+    chainId?: number | string;
+  }): Promise<MessageResponse> {
+    try {
+      const { chainId } = data || {};
+
+      // Convert chainId to number if it's a string
+      let targetChainId: number;
+      if (typeof chainId === 'string') {
+        targetChainId = parseInt(chainId, 10);
+        if (isNaN(targetChainId)) {
+          return createErrorResponse(`Invalid chainId: ${chainId}`, 4001);
+        }
+      } else {
+        targetChainId = chainId || (await getCurrentChainId());
+      }
+
+      console.log(`🔗 Getting block number on chain ${targetChainId}`);
+      const blockNumber = await makeRpcCall(
+        'eth_blockNumber',
+        [],
+        targetChainId
+      );
+
+      return createSuccessResponse({ blockNumber, chainId: targetChainId });
+    } catch (error) {
+      console.error('Error in handleEvmGetBlockNumber:', error);
+      return createErrorResponse(
+        error instanceof Error ? error.message : 'Failed to get block number',
+        4001
+      );
+    }
+  },
+
+  async handleEvmEstimateGas(data: {
+    txObject: any;
+    chainId?: number | string;
+  }): Promise<MessageResponse> {
+    try {
+      const { txObject, chainId } = data;
+
+      // Validate transaction object
+      if (!txObject || typeof txObject !== 'object') {
+        return createErrorResponse('Invalid transaction object parameter', 4001);
+      }
+
+      // Convert chainId to number if it's a string
+      let targetChainId: number;
+      if (typeof chainId === 'string') {
+        targetChainId = parseInt(chainId, 10);
+        if (isNaN(targetChainId)) {
+          return createErrorResponse(`Invalid chainId: ${chainId}`, 4001);
+        }
+      } else {
+        targetChainId = chainId || (await getCurrentChainId());
+      }
+
+      console.log(
+        `🔗 Estimating gas on chain ${targetChainId}:`,
+        txObject
+      );
+      const gasEstimate = await makeRpcCall(
+        'eth_estimateGas',
+        [txObject],
+        targetChainId
+      );
+
+      return createSuccessResponse({ gasEstimate, chainId: targetChainId });
+    } catch (error) {
+      console.error('Error in handleEvmEstimateGas:', error);
+      return createErrorResponse(
+        error instanceof Error ? error.message : 'Failed to estimate gas',
+        4001
+      );
+    }
+  },
+
+  async handleEvmGetGasPrice(data?: {
+    chainId?: number | string;
+  }): Promise<MessageResponse> {
+    try {
+      const { chainId } = data || {};
+
+      // Convert chainId to number if it's a string
+      let targetChainId: number;
+      if (typeof chainId === 'string') {
+        targetChainId = parseInt(chainId, 10);
+        if (isNaN(targetChainId)) {
+          return createErrorResponse(`Invalid chainId: ${chainId}`, 4001);
+        }
+      } else {
+        targetChainId = chainId || (await getCurrentChainId());
+      }
+
+      console.log(`🔗 Getting gas price on chain ${targetChainId}`);
+      const gasPrice = await makeRpcCall(
+        'eth_gasPrice',
+        [],
+        targetChainId
+      );
+
+      return createSuccessResponse({ gasPrice, chainId: targetChainId });
+    } catch (error) {
+      console.error('Error in handleEvmGetGasPrice:', error);
+      return createErrorResponse(
+        error instanceof Error ? error.message : 'Failed to get gas price',
+        4001
+      );
+    }
+  },
+
+  async handleEvmGetTransactionByHash(data: {
+    txHash: string;
+    chainId?: number | string;
+  }): Promise<MessageResponse> {
+    try {
+      const { txHash, chainId } = data;
+
+      // Validate transaction hash
+      if (!txHash || typeof txHash !== 'string') {
+        return createErrorResponse('Invalid transaction hash parameter', 4001);
+      }
+
+      // Convert chainId to number if it's a string
+      let targetChainId: number;
+      if (typeof chainId === 'string') {
+        targetChainId = parseInt(chainId, 10);
+        if (isNaN(targetChainId)) {
+          return createErrorResponse(`Invalid chainId: ${chainId}`, 4001);
+        }
+      } else {
+        targetChainId = chainId || (await getCurrentChainId());
+      }
+
+      console.log(
+        `🔗 Getting transaction by hash ${txHash} on chain ${targetChainId}`
+      );
+      const transaction = await makeRpcCall(
+        'eth_getTransactionByHash',
+        [txHash],
+        targetChainId
+      );
+
+      return createSuccessResponse({ transaction, chainId: targetChainId });
+    } catch (error) {
+      console.error('Error in handleEvmGetTransactionByHash:', error);
+      return createErrorResponse(
+        error instanceof Error ? error.message : 'Failed to get transaction',
+        4001
+      );
+    }
+  },
+
+  async handleEvmGetTransactionReceipt(data: {
+    txHash: string;
+    chainId?: number | string;
+  }): Promise<MessageResponse> {
+    try {
+      const { txHash, chainId } = data;
+
+      // Validate transaction hash
+      if (!txHash || typeof txHash !== 'string') {
+        return createErrorResponse('Invalid transaction hash parameter', 4001);
+      }
+
+      // Convert chainId to number if it's a string
+      let targetChainId: number;
+      if (typeof chainId === 'string') {
+        targetChainId = parseInt(chainId, 10);
+        if (isNaN(targetChainId)) {
+          return createErrorResponse(`Invalid chainId: ${chainId}`, 4001);
+        }
+      } else {
+        targetChainId = chainId || (await getCurrentChainId());
+      }
+
+      console.log(
+        `🔗 Getting transaction receipt for ${txHash} on chain ${targetChainId}`
+      );
+      const receipt = await makeRpcCall(
+        'eth_getTransactionReceipt',
+        [txHash],
+        targetChainId
+      );
+
+      return createSuccessResponse({ receipt, chainId: targetChainId });
+    } catch (error) {
+      console.error('Error in handleEvmGetTransactionReceipt:', error);
+      return createErrorResponse(
+        error instanceof Error ? error.message : 'Failed to get transaction receipt',
+        4001
+      );
+    }
+  },
 };
