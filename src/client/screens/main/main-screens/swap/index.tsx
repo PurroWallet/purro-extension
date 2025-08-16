@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Button, Input } from '@/client/components/ui';
+import { useEffect } from 'react';
+import { Input } from '@/client/components/ui';
 import { ArrowUpDown, ChevronDown, AlertTriangle, Zap } from 'lucide-react';
 import useSwapStore from '@/client/hooks/use-swap-store';
 import { useSwapRoute } from '@/client/hooks/use-swap-route';
@@ -7,6 +7,12 @@ import { SwapTokenSelectorDrawer } from '@/client/components/drawers';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
 
 import TokenLogo from '@/client/components/token-logo';
+import {
+  getTokenBalance,
+  isHypeToken,
+  isWrapScenario,
+  isUnwrapScenario,
+} from '@/client/utils/swap-utils';
 // Create a comprehensive formatBalance function for display
 const formatBalance = (balance: number): string => {
   if (balance === 0) return '0';
@@ -36,8 +42,7 @@ const formatPriceChange = (change: number): string => {
 
 import { sendMessage } from '@/client/utils/extension-message-utils';
 import useWalletStore from '@/client/hooks/use-wallet-store';
-import { SwapSuccess } from '@/client/components/dialogs';
-import useDialogStore from '@/client/hooks/use-dialog-store';
+
 import { fetchBalances } from '@/client/services/liquidswap-api';
 
 import { Balance } from '@/client/types/liquidswap-api';
@@ -55,10 +60,7 @@ const DEFAULT_WHYPE_TOKEN = {
   logo: 'https://coin-images.coingecko.com/coins/images/54469/large/_UP3jBsi_400x400.jpg?1739905920',
 };
 
-// HYPE native token identifiers
-const HYPE_NATIVE_IDENTIFIERS = ['HYPE', 'native', 'NATIVE'];
 const WHYPE_TOKEN_ADDRESS = '0x5555555555555555555555555555555555555555';
-const HYPE_DEAD_ADDRESS = '0x000000000000000000000000000000000000dEaD';
 
 const Swap = () => {
   const {
@@ -69,7 +71,6 @@ const Swap = () => {
     isExactIn,
     slippage,
     route,
-    isSwapping,
     tokenPrices,
     setAmountIn,
     setAmountOut,
@@ -82,13 +83,10 @@ const Swap = () => {
 
   const { getActiveAccountWalletObject } = useWalletStore();
   const { openDrawer } = useDrawerStore();
-  const { openDialog } = useDialogStore();
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
 
   // Initialize swap route hook with React Query
   const { isLoading: isLoadingRoute, error: routeError } = useSwapRoute();
-
-  const [swapError, setSwapError] = useState<string | null>(null);
 
   // Auto-set HYPE (native) as default output token if no token is selected
   useEffect(() => {
@@ -111,75 +109,9 @@ const Swap = () => {
     }
   }, [tokenOut, setTokenOut]);
 
-  // Get token balances with proper decimal handling
-  const getTokenBalance = (token: UnifiedToken | null): number => {
-    if (!token?.balance) return 0;
-    try {
-      // Handle both hex string and regular string balances
-      let balanceValue;
-      if (typeof token.balance === 'string' && token.balance.startsWith('0x')) {
-        balanceValue = BigInt(token.balance);
-      } else {
-        balanceValue = BigInt(token.balance || '0');
-      }
-
-      const decimals = token.decimals || 18;
-      const divisor = BigInt(10) ** BigInt(decimals);
-
-      // Convert to number with proper precision
-      const wholePart = balanceValue / divisor;
-      const fractionalPart = balanceValue % divisor;
-
-      return (
-        Number(wholePart) + Number(fractionalPart) / Math.pow(10, decimals)
-      );
-    } catch (error) {
-      console.warn('Error parsing token balance:', error, token);
-      return 0;
-    }
-  };
-
+  // Get token balances using utility function
   const tokenInBalance = tokenIn ? getTokenBalance(tokenIn) : 0;
   const tokenOutBalance = tokenOut ? getTokenBalance(tokenOut) : 0;
-
-  // Helper functions to detect HYPE/WHYPE scenarios
-  const isHypeToken = (token: UnifiedToken | null): boolean => {
-    if (!token) return false;
-    return (
-      token.isNative ||
-      HYPE_NATIVE_IDENTIFIERS.includes(token.symbol) ||
-      HYPE_NATIVE_IDENTIFIERS.includes(token.contractAddress) ||
-      token.contractAddress === 'native' ||
-      token.contractAddress === 'NATIVE' ||
-      token.contractAddress === HYPE_DEAD_ADDRESS
-    );
-  };
-
-  const isWhypeToken = (token: UnifiedToken | null): boolean => {
-    if (!token) return false;
-    return (
-      token.symbol === 'WHYPE' ||
-      token.contractAddress?.toLowerCase() === WHYPE_TOKEN_ADDRESS.toLowerCase()
-    );
-  };
-
-  const isWrapScenario = (): boolean => {
-    return isHypeToken(tokenIn) && isWhypeToken(tokenOut);
-  };
-
-  const isUnwrapScenario = (): boolean => {
-    return isWhypeToken(tokenIn) && isHypeToken(tokenOut);
-  };
-
-  const getActionButtonText = (): string => {
-    if (isWrapScenario()) {
-      return 'Wrap';
-    } else if (isUnwrapScenario()) {
-      return 'Unwrap';
-    } else {
-      return 'Swap';
-    }
-  };
 
   useEffect(() => {
     const fetchWHYPEBalance = async () => {
@@ -296,18 +228,6 @@ const Swap = () => {
 
   // No cleanup needed - React Query handles cleanup automatically
 
-  // Validation
-  const inputAmount = parseFloat(amountIn || '0');
-  const hasInsufficientBalance = inputAmount > tokenInBalance;
-  const isValidSwap =
-    tokenIn &&
-    tokenOut &&
-    amountIn &&
-    amountOut &&
-    !hasInsufficientBalance &&
-    !routeError &&
-    route;
-
   // Handle input changes with decimal validation
   const handleAmountInChange = (value: string) => {
     // Allow empty input
@@ -377,238 +297,6 @@ const Swap = () => {
         .replace(/\.?0+$/, '');
       setAmountIn(halfAmount);
       setIsExactIn(true);
-    }
-  };
-
-  // Handle swap execution with automatic approval
-  const handleSwap = async () => {
-    if (!isValidSwap || !activeAccountAddress || !route) return;
-
-    setIsSwapping(true);
-    setSwapError(null);
-
-    try {
-      const actionType = isWrapScenario()
-        ? 'wrap'
-        : isUnwrapScenario()
-          ? 'unwrap'
-          : 'swap';
-      console.log(`🔄 Starting ${actionType} with automatic approval...`, {
-        tokenIn: tokenIn.symbol,
-        tokenOut: tokenOut.symbol,
-        amountIn,
-        amountOut,
-        route: route.execution,
-        actionType,
-      });
-
-      if (!route.execution) {
-        throw new Error('No execution data in route');
-      }
-
-      // Check if this is a direct wrap/unwrap scenario
-      const isDirectWrapUnwrapScenario = isWrapScenario() || isUnwrapScenario();
-
-      // Determine if we're swapping from native token
-      const isFromNativeToken = isHypeToken(tokenIn);
-
-      // Step 1: Handle approval for ERC20 tokens (skip for direct wrap/unwrap)
-      if (!isFromNativeToken && !isDirectWrapUnwrapScenario) {
-        console.log('🔍 Checking and handling token approval...');
-
-        const spenderAddress = route.execution.to;
-        if (!spenderAddress) {
-          throw new Error('No spender address found in route');
-        }
-
-        // Check current allowance
-        const allowanceData = {
-          tokenAddress: tokenIn.contractAddress,
-          ownerAddress: activeAccountAddress,
-          spenderAddress: spenderAddress,
-          chainId: '0x3e7', // HyperEVM
-        };
-
-        console.log('🔍 Checking token allowance:', allowanceData);
-        const allowanceResult = await sendMessage(
-          'EVM_CHECK_TOKEN_ALLOWANCE',
-          allowanceData
-        );
-
-        if (!allowanceResult.success) {
-          throw new Error(allowanceResult.error || 'Failed to check allowance');
-        }
-
-        const allowance = allowanceResult.data.allowance;
-
-        // Convert current amount to wei for comparison
-        const amountInFloat = parseFloat(amountIn);
-        const decimals = tokenIn.decimals || 18;
-        const amountInWei = BigInt(
-          Math.floor(amountInFloat * Math.pow(10, decimals))
-        );
-        const allowanceWei = BigInt(allowance);
-
-        const needsApproval = allowanceWei < amountInWei;
-
-        console.log('✅ Allowance check result:', {
-          allowance,
-          amountInWei: amountInWei.toString(),
-          needsApproval,
-        });
-
-        // Step 2: Approve if needed
-        if (needsApproval) {
-          console.log('📝 Approving token for swap...');
-
-          // Use a large approval amount (max uint256 is common practice)
-          const maxApproval =
-            '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
-
-          const approvalData = {
-            tokenAddress: tokenIn.contractAddress,
-            spenderAddress: spenderAddress,
-            amount: maxApproval,
-            chainId: '0x3e7', // HyperEVM
-          };
-
-          const approvalResult = await sendMessage(
-            'EVM_APPROVE_TOKEN',
-            approvalData
-          );
-
-          if (!approvalResult.success) {
-            throw new Error(approvalResult.error || 'Token approval failed');
-          }
-
-          console.log('✅ Token approved successfully:', approvalResult.data);
-        }
-      }
-
-      // Step 3: Execute the transaction
-      console.log('🔄 Executing transaction...');
-
-      let transactionData;
-      let result;
-
-      if (isDirectWrapUnwrapScenario) {
-        // Handle direct wrap/unwrap
-        console.log('🔄 Executing direct wrap/unwrap...');
-
-        if (isWrapScenario()) {
-          // HYPE -> WHYPE: Call wrap function on WHYPE contract
-          const amountInFloat = parseFloat(amountIn);
-          const decimals = tokenIn.decimals || 18;
-          const amountInWei = BigInt(
-            Math.floor(amountInFloat * Math.pow(10, decimals))
-          );
-
-          transactionData = {
-            to: WHYPE_TOKEN_ADDRESS,
-            data: '0xd0e30db0', // deposit() function selector for WETH-like contracts
-            value: `0x${amountInWei.toString(16)}`,
-          };
-        } else {
-          // WHYPE -> HYPE: Call unwrap function on WHYPE contract
-          const amountInFloat = parseFloat(amountIn);
-          const decimals = tokenIn.decimals || 18;
-          const amountInWei = BigInt(
-            Math.floor(amountInFloat * Math.pow(10, decimals))
-          );
-
-          // For unwrapping, we need to call withdraw(amount) on WHYPE contract
-          // withdraw(uint256) has selector 0x2e1a7d4d
-          const withdrawSelector = '0x2e1a7d4d';
-          const amountHex = amountInWei.toString(16).padStart(64, '0');
-
-          transactionData = {
-            to: WHYPE_TOKEN_ADDRESS,
-            data: withdrawSelector + amountHex,
-            value: '0x0',
-          };
-        }
-
-        console.log('📝 Direct wrap/unwrap transaction data:', transactionData);
-
-        // Send transaction via background script
-        result = await sendMessage('EVM_SWAP_HYPERLIQUID_TOKEN', {
-          transaction: transactionData,
-        });
-      } else {
-        // Handle regular swap
-        let transactionValue = '0';
-
-        if (isFromNativeToken) {
-          // Convert human-readable amount to wei for native token transfer
-          const amountInFloat = parseFloat(amountIn);
-          const decimals = tokenIn.decimals || 18;
-          const amountInWei = BigInt(
-            Math.floor(amountInFloat * Math.pow(10, decimals))
-          );
-          transactionValue = `0x${amountInWei.toString(16)}`;
-
-          console.log('💰 Native token swap detected:', {
-            symbol: tokenIn.symbol,
-            amountIn,
-            amountInWei: amountInWei.toString(),
-            transactionValue,
-          });
-        }
-
-        // Prepare transaction data
-        transactionData = {
-          to: route.execution.to,
-          data: route.execution.calldata,
-          value: transactionValue,
-        };
-
-        console.log('📝 Swap transaction data:', transactionData);
-
-        // Send transaction via background script
-        result = await sendMessage('EVM_SWAP_HYPERLIQUID_TOKEN', {
-          transaction: transactionData,
-        });
-      }
-
-      if (result.success) {
-        const actionType = isWrapScenario()
-          ? 'Wrap'
-          : isUnwrapScenario()
-            ? 'Unwrap'
-            : 'Swap';
-        console.log(`✅ ${actionType} successful:`, result.data);
-
-        // Show success dialog
-        openDialog(
-          <SwapSuccess
-            transactionHash={result.data}
-            tokenIn={tokenIn}
-            tokenOut={tokenOut}
-            amountIn={amountIn}
-            amountOut={amountOut}
-            chainId={result.data.chainId || '0x3e7'}
-          />
-        );
-      } else {
-        const actionType = isWrapScenario()
-          ? 'Wrap'
-          : isUnwrapScenario()
-            ? 'Unwrap'
-            : 'Swap';
-        throw new Error(result.error || `${actionType} failed`);
-      }
-    } catch (error) {
-      const actionType = isWrapScenario()
-        ? 'Wrap'
-        : isUnwrapScenario()
-          ? 'Unwrap'
-          : 'Swap';
-      console.error(`❌ ${actionType} error:`, error);
-      const errorMessage =
-        error instanceof Error ? error.message : `${actionType} failed`;
-      setSwapError(errorMessage);
-    } finally {
-      setIsSwapping(false);
     }
   };
 
@@ -835,78 +523,82 @@ const Swap = () => {
         </div>
 
         {/* Route Info - Hide for wrap/unwrap scenarios */}
-        {!isWrapScenario() && !isUnwrapScenario() && (
-          <>
-            {route && !isLoadingRoute && (
-              <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Price Impact</span>
-                  <span
-                    className={`text-sm font-medium ${
-                      parseFloat(route.averagePriceImpact) > 5
-                        ? 'text-[var(--button-color-destructive)]'
-                        : parseFloat(route.averagePriceImpact) > 1
-                          ? 'text-[var(--primary-color-light)]'
-                          : 'text-[var(--primary-color)]'
-                    }`}
-                  >
-                    {parseFloat(route.averagePriceImpact).toFixed(2)}%
-                  </span>
-                </div>
+        {!isWrapScenario(tokenIn, tokenOut) &&
+          !isUnwrapScenario(tokenIn, tokenOut) && (
+            <>
+              {route && !isLoadingRoute && (
+                <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white/60">Price Impact</span>
+                    <span
+                      className={`text-sm font-medium ${
+                        parseFloat(route.averagePriceImpact) > 5
+                          ? 'text-[var(--button-color-destructive)]'
+                          : parseFloat(route.averagePriceImpact) > 1
+                            ? 'text-[var(--primary-color-light)]'
+                            : 'text-[var(--primary-color)]'
+                      }`}
+                    >
+                      {parseFloat(route.averagePriceImpact).toFixed(2)}%
+                    </span>
+                  </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">
-                    Slippage Tolerance
-                  </span>
-                  <span className="text-sm text-[var(--text-color)]">
-                    {slippage}%
-                  </span>
-                </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white/60">
+                      Slippage Tolerance
+                    </span>
+                    <span className="text-sm text-[var(--text-color)]">
+                      {slippage}%
+                    </span>
+                  </div>
 
-                {route.execution?.details.hopSwaps &&
-                  route.execution.details.hopSwaps.length > 0 && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-white/60">Route</span>
-                      <div className="flex items-center gap-1">
-                        <Zap className="size-3 text-[var(--primary-color-light)]" />
-                        <span className="text-xs text-white/60">
-                          {route.execution.details.hopSwaps.length} hop
-                          {route.execution.details.hopSwaps.length > 1
-                            ? 's'
-                            : ''}
-                        </span>
+                  {route.execution?.details.hopSwaps &&
+                    route.execution.details.hopSwaps.length > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-white/60">Route</span>
+                        <div className="flex items-center gap-1">
+                          <Zap className="size-3 text-[var(--primary-color-light)]" />
+                          <span className="text-xs text-white/60">
+                            {route.execution.details.hopSwaps.length} hop
+                            {route.execution.details.hopSwaps.length > 1
+                              ? 's'
+                              : ''}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Fee</span>
-                  <div className="flex items-center gap-1">0.2%</div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-white/60">Fee</span>
+                    <div className="flex items-center gap-1">0.2%</div>
+                  </div>
                 </div>
-              </div>
-            )}
-          </>
-        )}
+              )}
+            </>
+          )}
 
         {/* Exchange Rate for Wrap/Unwrap Operations */}
-        {(isWrapScenario() || isUnwrapScenario()) && tokenIn && tokenOut && (
-          <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-white/60">Exchange Rate</span>
-              <span className="text-sm text-[var(--text-color)] font-medium">
-                1 {tokenIn.symbol} = 1 {tokenOut.symbol}
-              </span>
+        {(isWrapScenario(tokenIn, tokenOut) ||
+          isUnwrapScenario(tokenIn, tokenOut)) &&
+          tokenIn &&
+          tokenOut && (
+            <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-white/60">Exchange Rate</span>
+                <span className="text-sm text-[var(--text-color)] font-medium">
+                  1 {tokenIn.symbol} = 1 {tokenOut.symbol}
+                </span>
+              </div>
+              <div className="flex items-center justify-center mt-2">
+                <span className="text-xs text-white/50">
+                  {isWrapScenario(tokenIn, tokenOut)
+                    ? 'Wrapping HYPE to WHYPE'
+                    : 'Unwrapping WHYPE to HYPE'}{' '}
+                  • No fees • Instant
+                </span>
+              </div>
             </div>
-            <div className="flex items-center justify-center mt-2">
-              <span className="text-xs text-white/50">
-                {isWrapScenario()
-                  ? 'Wrapping HYPE to WHYPE'
-                  : 'Unwrapping WHYPE to HYPE'}{' '}
-                • No fees • Instant
-              </span>
-            </div>
-          </div>
-        )}
+          )}
 
         {routeError && (
           <div className="bg-[var(--button-color-destructive)]/10 border border-[var(--button-color-destructive)]/30 rounded-lg p-4">
@@ -918,50 +610,6 @@ const Swap = () => {
             </div>
           </div>
         )}
-
-        {swapError && (
-          <div className="bg-[var(--button-color-destructive)]/10 border border-[var(--button-color-destructive)]/30 rounded-lg p-4">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="size-4 text-[var(--button-color-destructive)]" />
-              <span className="text-sm text-[var(--button-color-destructive)]">
-                {swapError}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          <Button
-            onClick={handleSwap}
-            disabled={!isValidSwap || isSwapping || isLoadingRoute}
-            variant="primary"
-            className="w-full font-medium py-4 text-lg"
-          >
-            {isSwapping ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                {isWrapScenario()
-                  ? 'Wrapping...'
-                  : isUnwrapScenario()
-                    ? 'Unwrapping...'
-                    : 'Swapping...'}
-              </div>
-            ) : !tokenIn || !tokenOut ? (
-              'Select tokens'
-            ) : !amountIn || !amountOut ? (
-              'Enter amount'
-            ) : hasInsufficientBalance ? (
-              `Insufficient ${tokenIn.symbol} balance`
-            ) : routeError ? (
-              'No route available'
-            ) : !route ? (
-              'Finding best route...'
-            ) : (
-              getActionButtonText()
-            )}
-          </Button>
-        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import LockDisplay from '@/client/components/display/lock-display';
-import { Dialog, Drawer } from '@/client/components/ui';
+import { Button, Dialog, Drawer } from '@/client/components/ui';
 import useInit from '@/client/hooks/use-init';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -21,6 +21,7 @@ import NftsAnimationIcon from '@/client/components/animation-icon/nfts';
 import HistoryAnimationIcon from '@/client/components/animation-icon/history';
 import useWalletStore from '@/client/hooks/use-wallet-store';
 import useMainScreenStore from '@/client/hooks/use-main-screen-store';
+import ConfirmSwapButton from '@/client/components/swap-action-button';
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,8 @@ export const MainContent = () => {
     }
   }, [isWatchOnly, mainScreen, setMainScreen]);
 
+  const isSwapScreen = mainScreen === 'swap';
+
   return (
     <div className="size-full relative flex flex-col h-screen">
       <MainHeader
@@ -84,6 +87,12 @@ export const MainContent = () => {
         {mainScreen === 'history' && <History />}
         {mainScreen === 'nft' && <Nft />}
       </div>
+
+      {isSwapScreen && (
+        <div className="p-4 border-t border-white/10">
+          <ConfirmSwapButton />
+        </div>
+      )}
 
       <div
         className={cn(
