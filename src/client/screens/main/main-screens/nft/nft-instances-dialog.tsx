@@ -124,7 +124,7 @@ const NftInstancesDialog = ({
             className="p-2 rounded-full hover:bg-white/10 transition-all duration-300 cursor-pointer"
             onClick={() => {
               window.open(
-                `https://www.hyperscan.com/token/${tokenAddress}`,
+                `https://www.hyperevmscan.io/token/${tokenAddress}`,
                 '_blank'
               );
             }}
