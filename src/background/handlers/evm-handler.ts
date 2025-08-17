@@ -787,11 +787,6 @@ export const evmHandler = {
     message: string;
     address: string;
   }): Promise<MessageResponse> {
-    console.log('[Purro] 🔄 Starting handleApproveSign process...', {
-      origin: data.origin,
-      address: data.address,
-    });
-
     try {
       const { origin, message, address } = data;
 
@@ -806,8 +801,6 @@ export const evmHandler = {
         };
       }
 
-      console.log('[Purro] ✅ Active account found:', activeAccount.id);
-
       // Get wallet to verify address matches
       const wallet = await storageHandler.getWalletById(activeAccount.id);
       if (!wallet || !wallet.eip155) {
@@ -818,8 +811,6 @@ export const evmHandler = {
           code: SIGNING_ERRORS.EVM_WALLET_NOT_FOUND.code,
         };
       }
-
-      console.log('[Purro] ✅ Wallet found:', wallet.eip155.address);
 
       // Verify address matches
       if (wallet.eip155.address.toLowerCase() !== address.toLowerCase()) {
@@ -834,16 +825,12 @@ export const evmHandler = {
         };
       }
 
-      console.log('[Purro] ✅ Address verification passed');
-
       // Get private key for signing with enhanced error handling
       let privateKey: string;
       try {
-        console.log('[Purro] 🔄 Retrieving private key...');
         privateKey = await accountHandler.getPrivateKeyByAccountId(
           activeAccount.id
         );
-        console.log('[Purro] ✅ Private key retrieved successfully');
       } catch (error) {
         console.error('[Purro] ❌ Failed to retrieve private key:', error);
 
@@ -870,7 +857,6 @@ export const evmHandler = {
       let signerWallet: ethers.Wallet;
       try {
         signerWallet = new ethers.Wallet(privateKey);
-        console.log('[Purro] ✅ Signer wallet created');
       } catch (error) {
         console.error('[Purro] ❌ Failed to create signer wallet:', error);
         return {
@@ -879,8 +865,6 @@ export const evmHandler = {
           code: SIGNING_ERRORS.INVALID_PRIVATE_KEY.code,
         };
       }
-
-      console.log('[Purro] 🔍 Approving sign, message payload:', message);
 
       // Handle hex-encoded messages (common in personal_sign)
       let messageToSign = message;
@@ -891,7 +875,7 @@ export const evmHandler = {
           const decodedMessage = Buffer.from(hexWithoutPrefix, 'hex').toString(
             'utf8'
           );
-          console.log('[Purro] 🔍 Decoded hex message to:', decodedMessage);
+
           messageToSign = decodedMessage;
         } catch (decodeError) {
           console.warn(
@@ -915,26 +899,8 @@ export const evmHandler = {
 
         // If first parse results in a string, try parsing again (double-encoded JSON)
         if (typeof parsedTypedData === 'string') {
-          console.log(
-            '[Purro] 🔍 Detected double-encoded JSON, parsing again...'
-          );
           parsedTypedData = JSON.parse(parsedTypedData);
         }
-
-        console.log('[Purro] 🔍 Final parsed data:', {
-          type: typeof parsedTypedData,
-          isObject: parsedTypedData && typeof parsedTypedData === 'object',
-          keys:
-            parsedTypedData && typeof parsedTypedData === 'object'
-              ? Object.keys(parsedTypedData)
-              : [],
-          domain: parsedTypedData?.domain,
-          types: parsedTypedData?.types
-            ? Object.keys(parsedTypedData.types)
-            : undefined,
-          message: parsedTypedData?.message,
-          primaryType: parsedTypedData?.primaryType,
-        });
 
         // More robust EIP-712 detection
         const hasValidStructure =
@@ -950,34 +916,8 @@ export const evmHandler = {
 
         if (hasValidStructure) {
           isEIP712 = true;
-          console.log('[Purro] 🔍 EIP-712 typed data detected:', {
-            domain: parsedTypedData.domain,
-            primaryType: parsedTypedData.primaryType,
-            typesKeys: Object.keys(parsedTypedData.types),
-            messageKeys:
-              typeof parsedTypedData.message === 'object'
-                ? Object.keys(parsedTypedData.message)
-                : 'not-object',
-            signerAddress: wallet.eip155.address,
-          });
-        } else {
-          console.log('[Purro] 🔍 Not valid EIP-712 format, detailed check:', {
-            hasParsedData: !!parsedTypedData,
-            isObject: parsedTypedData && typeof parsedTypedData === 'object',
-            hasDomain: !!parsedTypedData?.domain,
-            hasTypes: !!parsedTypedData?.types,
-            hasMessage: parsedTypedData?.message !== undefined,
-            hasPrimaryType: !!parsedTypedData?.primaryType,
-            hasValidStructure,
-          });
         }
-      } catch (parseError) {
-        console.log(
-          '[Purro] 🔍 JSON parse failed, not EIP-712 data:',
-          parseError instanceof Error
-            ? parseError.message
-            : 'Unknown parse error'
-        );
+      } catch {
         isEIP712 = false;
       }
 
@@ -1001,19 +941,11 @@ export const evmHandler = {
           const typesWithoutDomain = { ...parsedTypedData.types };
           delete typesWithoutDomain.EIP712Domain;
 
-          console.log('[Purro] 🔍 EIP-712 signing with:', {
-            primaryType,
-            domain: parsedTypedData.domain,
-            types: typesWithoutDomain,
-            message: parsedTypedData.message,
-          });
-
           signature = await signerWallet.signTypedData(
             parsedTypedData.domain,
             typesWithoutDomain,
             parsedTypedData.message
           );
-          console.log('[Purro] ✅ EIP-712 signature generated successfully');
         } catch (signError) {
           console.error('[Purro] ❌ EIP-712 signing failed:', signError);
           throw new Error(
@@ -1021,18 +953,9 @@ export const evmHandler = {
           );
         }
       } else {
-        // Personal message signing
-        console.log('[Purro] 🔍 Using personal_sign for message');
         try {
           signature = await signerWallet.signMessage(messageToSign);
-          console.log(
-            '[Purro] ✅ Personal message signature generated successfully'
-          );
         } catch (signError) {
-          console.error(
-            '[Purro] ❌ Personal message signing failed:',
-            signError
-          );
           throw new Error(
             `${SIGNING_ERRORS.SIGNING_FAILED.message}: ${signError instanceof Error ? signError.message : 'Unknown signing error'}`
           );
@@ -1046,7 +969,6 @@ export const evmHandler = {
         if (isEIP712 && parsedTypedData) {
           // Verify EIP-712 signature
           try {
-            console.log('[Purro] 🔍 Verifying EIP-712 signature...');
             const typesWithoutDomain = { ...parsedTypedData.types };
             delete typesWithoutDomain.EIP712Domain;
 
@@ -1056,7 +978,6 @@ export const evmHandler = {
               parsedTypedData.message,
               signature
             );
-            console.log('[Purro] 🔍 EIP-712 verification result:', recovered);
           } catch (verifyErr) {
             console.error('[Purro] ❌ EIP-712 verification error:', verifyErr);
           }
@@ -1064,10 +985,6 @@ export const evmHandler = {
           // Verify personal message signature
           try {
             recovered = ethers.verifyMessage(messageToSign, signature);
-            console.log(
-              '[Purro] 🔍 Personal message verification result:',
-              recovered
-            );
           } catch (personalErr) {
             console.error(
               '[Purro] ❌ Personal message verification error:',
@@ -1075,8 +992,6 @@ export const evmHandler = {
             );
           }
         }
-
-        console.log('[Purro] 🔍 Recovered address from signature:', recovered);
 
         // Verify signature matches expected address
         if (
@@ -1089,7 +1004,6 @@ export const evmHandler = {
             signingMethod: isEIP712 ? 'EIP-712' : 'personal_sign',
           });
         } else if (recovered) {
-          console.log('[Purro] ✅ Signature verification passed');
         }
       } catch (err) {
         console.warn('[Purro] ⚠️ Local verification failed:', err);
@@ -1101,16 +1015,12 @@ export const evmHandler = {
       );
 
       if (pendingSignRequest) {
-        console.log(
-          '[Purro] ✅ Resolving pending sign request for origin:',
-          origin
-        );
         pendingSignRequest.resolve(signature);
         // Remove from pending requests
         for (const [key, req] of pendingSignRequests.entries()) {
           if (req.origin === origin) {
             pendingSignRequests.delete(key);
-            console.log('[Purro] ✅ Removed pending sign request:', key);
+
             break;
           }
         }
@@ -1121,7 +1031,6 @@ export const evmHandler = {
         );
       }
 
-      console.log('[Purro] ✅ Sign approval completed successfully');
       return {
         success: true,
         data: signature,
@@ -1135,7 +1044,6 @@ export const evmHandler = {
       );
 
       if (pendingSignRequest) {
-        console.log('[Purro] 🧹 Cleaning up pending sign request due to error');
         pendingSignRequest.reject(error);
         for (const [key, req] of pendingSignRequests.entries()) {
           if (req.origin === data.origin) {
@@ -1193,8 +1101,6 @@ export const evmHandler = {
     sender: chrome.runtime.MessageSender
   ): Promise<MessageResponse> {
     try {
-      console.log('[Purro] 🔄 Starting handleSendTransaction process...', data.transactionData);
-
       const { transactionData: transaction } = data;
 
       // Minimal validation - only check required fields
@@ -1257,7 +1163,6 @@ export const evmHandler = {
         success: true,
         data: transactionResult, // Return hash directly, not wrapped
       };
-
     } catch (error) {
       console.error('[Purro] ❌ Error in handleSendTransaction:', error);
 
@@ -1274,9 +1179,6 @@ export const evmHandler = {
       ).find(req => req.origin === origin);
 
       if (pendingTransaction) {
-        console.log(
-          '[Purro] 🧹 Cleaning up pending transaction request due to error'
-        );
         pendingTransaction.reject(error);
         for (const [key, req] of pendingTransactionRequests.entries()) {
           if (req.origin === origin) {
@@ -1289,9 +1191,7 @@ export const evmHandler = {
       return {
         success: false,
         error:
-          error instanceof Error
-            ? error.message
-            : 'Failed to send transaction',
+          error instanceof Error ? error.message : 'Failed to send transaction',
         code: 4001,
       };
     }
@@ -1301,10 +1201,6 @@ export const evmHandler = {
     origin: string;
     transaction: TransactionRequest;
   }): Promise<MessageResponse> {
-    console.log('[Purro] 🔄 Starting handleApproveTransaction process...', {
-      origin: data.origin,
-    });
-
     try {
       const { origin, transaction } = data;
 
@@ -1319,8 +1215,6 @@ export const evmHandler = {
         };
       }
 
-      console.log('[Purro] ✅ Active account found:', activeAccount.id);
-
       // Get wallet to verify address matches
       const wallet = await storageHandler.getWalletById(activeAccount.id);
       if (!wallet || !wallet.eip155) {
@@ -1332,8 +1226,6 @@ export const evmHandler = {
         };
       }
 
-      console.log('[Purro] ✅ Wallet found:', wallet.eip155.address);
-
       // Set from address if not provided
       const transactionWithFrom = {
         ...transaction,
@@ -1341,7 +1233,10 @@ export const evmHandler = {
       };
 
       // Verify from address matches wallet if provided
-      if (transactionWithFrom.from.toLowerCase() !== wallet.eip155.address.toLowerCase()) {
+      if (
+        transactionWithFrom.from.toLowerCase() !==
+        wallet.eip155.address.toLowerCase()
+      ) {
         return {
           success: false,
           error: 'From address does not match active account',
@@ -1352,11 +1247,9 @@ export const evmHandler = {
       // Get private key for signing
       let privateKey: string;
       try {
-        console.log('[Purro] 🔄 Retrieving private key...');
         privateKey = await accountHandler.getPrivateKeyByAccountId(
           activeAccount.id
         );
-        console.log('[Purro] ✅ Private key retrieved successfully');
       } catch (error) {
         console.error('[Purro] ❌ Failed to retrieve private key:', error);
         return {
@@ -1388,8 +1281,6 @@ export const evmHandler = {
       const provider = new ethers.JsonRpcProvider(chainInfo.rpcUrls[0]);
       const connectedWallet = signerWallet.connect(provider);
 
-      console.log('[Purro] 🔄 Sending transaction...');
-
       // Send transaction - convert transaction to ethers format
       const ethersTransaction = {
         to: transactionWithFrom.to,
@@ -1399,7 +1290,9 @@ export const evmHandler = {
             : ethers.parseEther(transactionWithFrom.value)
           : undefined,
         data: transactionWithFrom.data,
-        gasLimit: transactionWithFrom.gas ? BigInt(transactionWithFrom.gas) : undefined,
+        gasLimit: transactionWithFrom.gas
+          ? BigInt(transactionWithFrom.gas)
+          : undefined,
         gasPrice: transactionWithFrom.gasPrice
           ? BigInt(transactionWithFrom.gasPrice)
           : undefined,
@@ -1409,8 +1302,12 @@ export const evmHandler = {
         maxPriorityFeePerGas: transactionWithFrom.maxPriorityFeePerGas
           ? BigInt(transactionWithFrom.maxPriorityFeePerGas)
           : undefined,
-        nonce: transactionWithFrom.nonce ? parseInt(transactionWithFrom.nonce, 16) : undefined,
-        type: transactionWithFrom.type ? parseInt(transactionWithFrom.type, 16) : undefined,
+        nonce: transactionWithFrom.nonce
+          ? parseInt(transactionWithFrom.nonce, 16)
+          : undefined,
+        type: transactionWithFrom.type
+          ? parseInt(transactionWithFrom.type, 16)
+          : undefined,
         chainId: transactionWithFrom.chainId
           ? parseInt(transactionWithFrom.chainId, 16)
           : undefined,
@@ -1419,7 +1316,6 @@ export const evmHandler = {
       let txResponse: ethers.TransactionResponse;
       try {
         txResponse = await connectedWallet.sendTransaction(ethersTransaction);
-        console.log('[Purro] ✅ Transaction sent:', txResponse.hash);
       } catch (error) {
         console.error('[Purro] ❌ Transaction failed:', error);
         return {
@@ -1435,16 +1331,11 @@ export const evmHandler = {
       ).find(req => req.origin === origin);
 
       if (pendingTransaction) {
-        console.log(
-          '[Purro] ✅ Resolving pending transaction request for origin:',
-          origin
-        );
         pendingTransaction.resolve(txResponse.hash);
         // Remove from pending requests
         for (const [key, req] of pendingTransactionRequests.entries()) {
           if (req.origin === origin) {
             pendingTransactionRequests.delete(key);
-            console.log('[Purro] ✅ Removed pending transaction request:', key);
             break;
           }
         }
@@ -1455,7 +1346,6 @@ export const evmHandler = {
         );
       }
 
-      console.log('[Purro] ✅ Transaction approval completed successfully');
       return {
         success: true,
         data: txResponse.hash,
@@ -1469,9 +1359,6 @@ export const evmHandler = {
       ).find(req => req.origin === data.origin);
 
       if (pendingTransaction) {
-        console.log(
-          '[Purro] 🧹 Cleaning up pending transaction request due to error'
-        );
         pendingTransaction.reject(error);
         for (const [key, req] of pendingTransactionRequests.entries()) {
           if (req.origin === data.origin) {
@@ -1610,11 +1497,6 @@ export const evmHandler = {
   async handleSendToken(data: {
     transaction: TransactionRequest;
   }): Promise<MessageResponse> {
-    console.log(
-      '[Purro] 🔄 Starting handleSendTransaction process...',
-      data.transaction
-    );
-
     try {
       const { transaction } = data;
 
@@ -1686,7 +1568,6 @@ export const evmHandler = {
       }
       transactionWithFrom.chainId = chainId;
 
-      console.log('[Purro] 🔗 Using chain ID:', chainId);
       const chainInfo = supportedEVMChains[chainId];
 
       if (!chainInfo) {
@@ -1711,11 +1592,9 @@ export const evmHandler = {
 
       let privateKey: string;
       try {
-        console.log('[Purro] 🔄 Retrieving private key...');
         privateKey = await accountHandler.getPrivateKeyByAccountId(
           activeAccount.id
         );
-        console.log('[Purro] ✅ Private key retrieved successfully');
       } catch (error) {
         console.error('[Purro] ❌ Failed to retrieve private key:', error);
 
@@ -1768,7 +1647,6 @@ export const evmHandler = {
       }
 
       const tx = await connectedWallet.sendTransaction(txParams);
-      console.log('[Purro] ✅ Transaction sent:', tx.hash);
 
       return {
         success: true,
@@ -1785,9 +1663,9 @@ export const evmHandler = {
     }
   },
 
-  async handleSwapHyperliquidToken(data: { transaction: TransactionRequest }): Promise<MessageResponse> {
-    console.log('[Purro] 🔄 Starting handleSwapHyperliquidToken process...', data.transaction);
-
+  async handleSwapHyperliquidToken(data: {
+    transaction: TransactionRequest;
+  }): Promise<MessageResponse> {
     try {
       const { transaction } = data;
 
@@ -1796,7 +1674,7 @@ export const evmHandler = {
         return {
           success: false,
           error: TRANSACTION_ERRORS.INVALID_TO_ADDRESS.message,
-          code: TRANSACTION_ERRORS.INVALID_TO_ADDRESS.code
+          code: TRANSACTION_ERRORS.INVALID_TO_ADDRESS.code,
         };
       }
 
@@ -1805,11 +1683,14 @@ export const evmHandler = {
         try {
           ethers.parseEther(transaction.value);
         } catch (error: unknown) {
-          console.error('[Purro] ❌ Error in handleSwapHyperliquidToken:', error);
+          console.error(
+            '[Purro] ❌ Error in handleSwapHyperliquidToken:',
+            error
+          );
           return {
             success: false,
             error: TRANSACTION_ERRORS.INVALID_VALUE.message,
-            code: TRANSACTION_ERRORS.INVALID_VALUE.code
+            code: TRANSACTION_ERRORS.INVALID_VALUE.code,
           };
         }
       }
@@ -1820,7 +1701,7 @@ export const evmHandler = {
         return {
           success: false,
           error: 'No wallet found',
-          code: 4001
+          code: 4001,
         };
       }
 
@@ -1830,7 +1711,7 @@ export const evmHandler = {
         return {
           success: false,
           error: 'No active account found',
-          code: 4001
+          code: 4001,
         };
       }
 
@@ -1840,41 +1721,38 @@ export const evmHandler = {
         return {
           success: false,
           error: 'EVM wallet not found for active account',
-          code: 4001
+          code: 4001,
         };
       }
 
       // Use chainId from transaction if provided, otherwise get from storage
-      let chainId: string = "0x3e7";
-      console.log('[Purro] 🔗 Using chain ID:', chainId);
+      let chainId: string = '0x3e7';
       const chainInfo = supportedEVMChains[chainId];
 
       if (!chainInfo) {
         return {
           success: false,
           error: `Unsupported chain: ${chainId}`,
-          code: 4001
+          code: 4001,
         };
       }
 
       let privateKey: string;
       try {
-        console.log("[Purro] 🔄 Retrieving private key...");
         privateKey = await accountHandler.getPrivateKeyByAccountId(
           activeAccount.id
         );
-        console.log("[Purro] ✅ Private key retrieved successfully");
       } catch (error) {
-        console.error("[Purro] ❌ Failed to retrieve private key:", error);
+        console.error('[Purro] ❌ Failed to retrieve private key:', error);
 
         // Check if it's a session issue
         const session = await authHandler.getSession();
         if (!session) {
-          console.error("[Purro] ❌ Session not found or expired");
+          console.error('[Purro] ❌ Session not found or expired');
           return {
             success: false,
             error: 'Session not found or expired',
-            code: 4001
+            code: 4001,
           };
         }
 
@@ -1882,7 +1760,7 @@ export const evmHandler = {
         return {
           success: false,
           error: 'Failed to retrieve private key',
-          code: 4001
+          code: 4001,
         };
       }
 
@@ -1893,36 +1771,37 @@ export const evmHandler = {
       // Prepare transaction with all parameters from frontend
       const txParams: any = {
         to: transaction.to,
-        value: transaction.value ? (
-          transaction.value.startsWith('0x')
+        value: transaction.value
+          ? transaction.value.startsWith('0x')
             ? BigInt(transaction.value)
             : ethers.parseEther(transaction.value)
-        ) : undefined,
+          : undefined,
         data: transaction.data,
       };
 
       const tx = await connectedWallet.sendTransaction(txParams);
-      console.log('[Purro] ✅ Transaction sent:', tx.hash);
 
       return {
         success: true,
         data: tx.hash,
       };
-
     } catch (error) {
       console.error('[Purro] ❌ Error in handleSendToken:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to send transaction',
-        code: 4001
+        error:
+          error instanceof Error ? error.message : 'Failed to send transaction',
+        code: 4001,
       };
     }
   },
 
-
-  async checkTokenAllowance(data: { tokenAddress: string, ownerAddress: string, spenderAddress: string, chainId: string }): Promise<MessageResponse> {
-    console.log('[Purro] 🔍 Checking token allowance...', data);
-
+  async checkTokenAllowance(data: {
+    tokenAddress: string;
+    ownerAddress: string;
+    spenderAddress: string;
+    chainId: string;
+  }): Promise<MessageResponse> {
     try {
       const { tokenAddress, ownerAddress, spenderAddress, chainId } = data;
 
@@ -1935,36 +1814,38 @@ export const evmHandler = {
       const provider = new ethers.JsonRpcProvider(rpcUrl);
 
       // ERC-20 allowance function ABI
-      const abi = ["function allowance(address owner, address spender) view returns (uint256)"];
+      const abi = [
+        'function allowance(address owner, address spender) view returns (uint256)',
+      ];
       const contract = new ethers.Contract(tokenAddress, abi, provider);
 
       // Check allowance
       const allowance = await contract.allowance(ownerAddress, spenderAddress);
 
-      console.log('[Purro] ✅ Token allowance checked:', {
-        owner: ownerAddress,
-        spender: spenderAddress,
-        allowance: allowance.toString()
-      });
-
       return {
         success: true,
         data: {
-          allowance: allowance.toString()
-        }
+          allowance: allowance.toString(),
+        },
       };
     } catch (error) {
       console.error('[Purro] ❌ Error checking token allowance:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to check token allowance'
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Failed to check token allowance',
       };
     }
   },
 
-  async approveToken(data: { tokenAddress: string, spenderAddress: string, amount: string, chainId: string }): Promise<MessageResponse> {
-    console.log('[Purro] 📝 Approving token...', data);
-
+  async approveToken(data: {
+    tokenAddress: string;
+    spenderAddress: string;
+    amount: string;
+    chainId: string;
+  }): Promise<MessageResponse> {
     try {
       const { tokenAddress, spenderAddress, amount, chainId } = data;
 
@@ -1981,7 +1862,9 @@ export const evmHandler = {
       }
 
       // Get private key for transaction signing
-      const privateKey = await accountHandler.getPrivateKeyByAccountId(activeAccount.id);
+      const privateKey = await accountHandler.getPrivateKeyByAccountId(
+        activeAccount.id
+      );
       if (!privateKey) {
         throw new Error('Failed to retrieve private key');
       }
@@ -1999,22 +1882,16 @@ export const evmHandler = {
       const connectedWallet = signerWallet.connect(provider);
 
       // ERC-20 approve function ABI
-      const abi = ["function approve(address spender, uint256 amount) returns (bool)"];
+      const abi = [
+        'function approve(address spender, uint256 amount) returns (bool)',
+      ];
       const contract = new ethers.Contract(tokenAddress, abi, connectedWallet);
 
       // Send approval transaction
       const transaction = await contract.approve(spenderAddress, amount);
 
-      console.log('[Purro] 📝 Approval transaction sent:', transaction.hash);
-
       // Wait for confirmation
       const receipt = await transaction.wait();
-
-      console.log('[Purro] ✅ Token approval confirmed:', {
-        transactionHash: receipt.hash,
-        blockNumber: receipt.blockNumber,
-        gasUsed: receipt.gasUsed?.toString()
-      });
 
       return {
         success: true,
@@ -2022,14 +1899,15 @@ export const evmHandler = {
           hash: receipt.hash,
           blockNumber: receipt.blockNumber,
           gasUsed: receipt.gasUsed?.toString(),
-          chainId: chainId
-        }
+          chainId: chainId,
+        },
       };
     } catch (error) {
       console.error('[Purro] ❌ Error approving token:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to approve token'
+        error:
+          error instanceof Error ? error.message : 'Failed to approve token',
       };
     }
   },

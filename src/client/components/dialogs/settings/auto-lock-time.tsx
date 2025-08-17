@@ -40,7 +40,7 @@ const AutoLockTime = ({ onBack }: { onBack: () => void }) => {
 
       await updateSessionDuration(selectedDuration);
       onBack(); // Close dialog on success
-    } catch (err) {
+    } catch {
     } finally {
       setSaving(false);
     }

@@ -60,14 +60,6 @@ export const useUnifiedTokensTestnet = (): UseUnifiedTokensTestnetResult => {
       const wallet = getActiveAccountWalletObject();
       const address = wallet?.eip155?.address || null;
 
-      // Only log when address changes or dev mode changes
-      if (address) {
-        console.log(
-          '🔍 Testnet wallet address:',
-          address.substring(0, 8) + '...'
-        );
-      }
-
       return address;
     } catch (error) {
       console.error('Error getting wallet address:', error);
@@ -94,11 +86,6 @@ export const useUnifiedTokensTestnet = (): UseUnifiedTokensTestnetResult => {
 
       const updateBalances = async () => {
         try {
-          console.log(
-            '🚀 Updating testnet balances for',
-            tokensCount,
-            'tokens...'
-          );
           setIsLoading(true);
           setHasError(false);
 
@@ -110,11 +97,7 @@ export const useUnifiedTokensTestnet = (): UseUnifiedTokensTestnetResult => {
                   // Get native HYPE balance
                   const { balance, balanceFormatted } =
                     await getTestnetNativeBalance(walletAddress);
-                  console.log(
-                    `✅ ${token.symbol}:`,
-                    balanceFormatted,
-                    'HYPE'
-                  );
+
                   updateTokenBalance(
                     token.address,
                     balance,
@@ -130,7 +113,6 @@ export const useUnifiedTokensTestnet = (): UseUnifiedTokensTestnetResult => {
                       walletAddress,
                       token.decimals
                     );
-                  console.log(`✅ ${token.symbol}:`, balanceFormatted);
                   updateTokenBalance(
                     token.address,
                     balance,
@@ -147,7 +129,6 @@ export const useUnifiedTokensTestnet = (): UseUnifiedTokensTestnetResult => {
               }
             })
           );
-          console.log('🎉 Testnet balance update completed');
         } catch (error) {
           console.error('❌ Testnet balance update failed:', error);
           setHasError(true);

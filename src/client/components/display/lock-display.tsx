@@ -21,7 +21,7 @@ const LockDisplay = () => {
     try {
       await unlockWallet(password);
       await loadWalletState();
-    } catch (error) {
+    } catch {
       setHasError(true);
     }
   };

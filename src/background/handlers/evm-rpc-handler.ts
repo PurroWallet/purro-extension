@@ -112,9 +112,6 @@ export const evmRpcHandler = {
         targetChainId = chainId || (await getCurrentChainId());
       }
 
-      console.log(
-        `🔗 Getting balance for address ${address} on chain ${targetChainId}`
-      );
       const balance = await makeRpcCall(
         'eth_getBalance',
         [address, blockTag],
@@ -155,10 +152,6 @@ export const evmRpcHandler = {
         targetChainId = chainId || (await getCurrentChainId());
       }
 
-      console.log(
-        `🔗 Making eth_call on chain ${targetChainId}:`,
-        callObject
-      );
       const result = await makeRpcCall(
         'eth_call',
         [callObject, blockTag],
@@ -192,7 +185,6 @@ export const evmRpcHandler = {
         targetChainId = chainId || (await getCurrentChainId());
       }
 
-      console.log(`🔗 Getting block number on chain ${targetChainId}`);
       const blockNumber = await makeRpcCall(
         'eth_blockNumber',
         [],
@@ -218,7 +210,10 @@ export const evmRpcHandler = {
 
       // Validate transaction object
       if (!txObject || typeof txObject !== 'object') {
-        return createErrorResponse('Invalid transaction object parameter', 4001);
+        return createErrorResponse(
+          'Invalid transaction object parameter',
+          4001
+        );
       }
 
       // Convert chainId to number if it's a string
@@ -232,10 +227,6 @@ export const evmRpcHandler = {
         targetChainId = chainId || (await getCurrentChainId());
       }
 
-      console.log(
-        `🔗 Estimating gas on chain ${targetChainId}:`,
-        txObject
-      );
       const gasEstimate = await makeRpcCall(
         'eth_estimateGas',
         [txObject],
@@ -269,12 +260,7 @@ export const evmRpcHandler = {
         targetChainId = chainId || (await getCurrentChainId());
       }
 
-      console.log(`🔗 Getting gas price on chain ${targetChainId}`);
-      const gasPrice = await makeRpcCall(
-        'eth_gasPrice',
-        [],
-        targetChainId
-      );
+      const gasPrice = await makeRpcCall('eth_gasPrice', [], targetChainId);
 
       return createSuccessResponse({ gasPrice, chainId: targetChainId });
     } catch (error) {
@@ -309,9 +295,6 @@ export const evmRpcHandler = {
         targetChainId = chainId || (await getCurrentChainId());
       }
 
-      console.log(
-        `🔗 Getting transaction by hash ${txHash} on chain ${targetChainId}`
-      );
       const transaction = await makeRpcCall(
         'eth_getTransactionByHash',
         [txHash],
@@ -351,9 +334,6 @@ export const evmRpcHandler = {
         targetChainId = chainId || (await getCurrentChainId());
       }
 
-      console.log(
-        `🔗 Getting transaction receipt for ${txHash} on chain ${targetChainId}`
-      );
       const receipt = await makeRpcCall(
         'eth_getTransactionReceipt',
         [txHash],
@@ -364,7 +344,9 @@ export const evmRpcHandler = {
     } catch (error) {
       console.error('Error in handleEvmGetTransactionReceipt:', error);
       return createErrorResponse(
-        error instanceof Error ? error.message : 'Failed to get transaction receipt',
+        error instanceof Error
+          ? error.message
+          : 'Failed to get transaction receipt',
         4001
       );
     }

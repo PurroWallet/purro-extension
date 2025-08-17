@@ -4,9 +4,10 @@ import {
   DialogHeader,
   DialogWrapper,
 } from '@/client/components/ui';
+import { Menu } from '@/client/components/ui/menu';
 import { NFTImage } from '@/client/components/nft-image';
 import { HyperScanNftInstancesItem } from '@/client/types/hyperscan-api';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Hash } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getHLNameByAddress } from '@/client/services/hyperliquid-name-api';
 import useWalletStore from '@/client/hooks/use-wallet-store';
@@ -37,7 +38,6 @@ const NftInstancesIdDialog = ({
             activeAccountWallet.eip155?.address || ''
           );
           setHlName(hlName);
-          console.log(hlName);
         } catch (error) {
           console.error('Error getting HL name:', error);
         } finally {
@@ -47,6 +47,54 @@ const NftInstancesIdDialog = ({
     };
     fetchHLName();
   }, []);
+
+  // Prepare menu items for NFT details
+  const nftDetailsItems = [
+    // Description item (conditional)
+    ...(nftInstance.metadata?.description &&
+    nftInstance.metadata?.description !== ''
+      ? [
+          {
+            label: 'Description',
+            description: nftInstance.metadata?.description,
+            isLongDescription: true,
+          },
+        ]
+      : []),
+    {
+      label: 'Collection',
+      description: `${nftInstance.token?.name || 'Unknown'} (${nftInstance.token?.symbol || 'N/A'})`,
+    },
+    {
+      label: 'Network',
+      description: 'Hyperliquid',
+    },
+    // HL Names link item (conditional)
+    ...(isHlName && hlName && !hlNameLoading
+      ? [
+          {
+            label: 'View on Hyperliquid Names',
+            onClick: () => {
+              window.open(
+                `https://app.hlnames.xyz/profile/${hlName}`,
+                '_blank',
+                'noopener,noreferrer'
+              );
+            },
+            isCentered: true,
+            itemClassName: 'text-[var(--primary-color-light)]',
+          },
+        ]
+      : []),
+  ];
+
+  // Properties items
+  const propertiesItems =
+    nftInstance.metadata?.attributes?.map((attribute: any) => ({
+      icon: Hash,
+      label: attribute.trait_type,
+      description: attribute.value,
+    })) || [];
 
   return (
     <DialogWrapper>
@@ -87,65 +135,18 @@ const NftInstancesIdDialog = ({
               }}
             />
           </div>
-          <div className="rounded-lg overflow-hidden">
-            {nftInstance.metadata?.description &&
-              nftInstance.metadata?.description !== '' && (
-                <div className="w-full bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3">
-                  <p className="text-base w-full text-left font-semibold">
-                    Description
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {nftInstance.metadata?.description}
-                  </p>
-                </div>
-              )}
-            <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
-              <p className="text-base text-left font-semibold">Collection</p>
-              <p className="text-sm text-muted-foreground text-right truncate w-full">
-                {nftInstance.token?.name || 'Unknown'} (
-                {nftInstance.token?.symbol || 'N/A'})
-              </p>
-            </div>
-            <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer p-3 gap-2">
-              <p className="text-base text-left font-semibold">Network</p>
-              <p className="text-sm text-muted-foreground text-right truncate w-full">
-                Hyperliquid
-              </p>
-            </div>
-            {isHlName && hlName && !hlNameLoading && (
-              <a
-                href={`https://app.hlnames.xyz/profile/${hlName}`}
-                target="_blank"
-                className="w-full flex items-center justify-center bg-[var(--card-color)]/80 hover:bg-[var(--card-color)]/60 transition-colors duration-200 cursor-pointer p-3 gap-2"
-                rel="noreferrer"
-              >
-                <p className="text-base text-center font-semibold text-[var(--primary-color-light)]">
-                  View on Hyperliquid Names
-                </p>
-              </a>
-            )}
-          </div>
-          {nftInstance.metadata?.attributes?.length > 0 && (
-            <div>
-              <h3 className="text-base font-semibold mb-1">Properties</h3>
-              <div className="flex flex-col rounded-lg overflow-hidden">
-                {nftInstance.metadata?.attributes?.length > 0 &&
-                  nftInstance.metadata?.attributes?.map((attribute: any) => (
-                    <div
-                      key={attribute.trait_type}
-                      className="flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer p-3 gap-2 border-b border-white/10 last:border-b-0"
-                    >
-                      <p className="text-sm text-muted-foreground truncate w-full">
-                        {attribute.trait_type}
-                      </p>
-                      <p className="text-sm text-muted-foreground truncate w-full">
-                        {attribute.value}
-                      </p>
-                    </div>
-                  ))}
+
+          {/* NFT Details using Menu component */}
+          <Menu items={nftDetailsItems} />
+
+          {/* Properties section */}
+          {nftInstance.metadata?.attributes &&
+            nftInstance.metadata.attributes.length > 0 && (
+              <div>
+                <h3 className="text-base font-semibold mb-1">Properties</h3>
+                <Menu items={propertiesItems} />
               </div>
-            </div>
-          )}
+            )}
         </div>
       </DialogContent>
     </DialogWrapper>

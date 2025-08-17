@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Button,
   DialogContent,
@@ -6,9 +6,9 @@ import {
   DialogHeader,
   DialogWrapper,
   Input,
-} from "@/client/components/ui";
-import { X, Settings, Clock, Percent } from "lucide-react";
-import useSwapStore from "@/client/hooks/use-swap-store";
+} from '@/client/components/ui';
+import { X, Settings, Clock, Percent } from 'lucide-react';
+import useSwapStore from '@/client/hooks/use-swap-store';
 
 interface SwapSettingsProps {
   onClose: () => void;
@@ -29,7 +29,8 @@ const SwapSettings: React.FC<SwapSettingsProps> = ({ onClose }) => {
       setSlippage(newSlippage);
     }
 
-    if (!isNaN(newDeadline) && newDeadline > 0 && newDeadline <= 4320) { // Max 3 days
+    if (!isNaN(newDeadline) && newDeadline > 0 && newDeadline <= 4320) {
+      // Max 3 days
       setDeadline(newDeadline);
     }
 
@@ -55,7 +56,7 @@ const SwapSettings: React.FC<SwapSettingsProps> = ({ onClose }) => {
           </button>
         }
       />
-      
+
       <DialogContent>
         <div className="space-y-6">
           {/* Slippage Tolerance */}
@@ -65,33 +66,34 @@ const SwapSettings: React.FC<SwapSettingsProps> = ({ onClose }) => {
               <h3 className="text-white font-medium">Slippage Tolerance</h3>
             </div>
             <p className="text-sm text-gray-400">
-              Your transaction will revert if the price changes unfavorably by more than this percentage.
+              Your transaction will revert if the price changes unfavorably by
+              more than this percentage.
             </p>
-            
+
             {/* Preset buttons */}
             <div className="flex gap-2">
-              {predefinedSlippages.map((preset) => (
+              {predefinedSlippages.map(preset => (
                 <button
                   key={preset}
                   onClick={() => handleSlippagePreset(preset)}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                     parseFloat(localSlippage) === preset
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                   }`}
                 >
                   {preset}%
                 </button>
               ))}
             </div>
-            
+
             {/* Custom input */}
             <div className="relative">
               <Input
                 type="number"
                 placeholder="0.50"
                 value={localSlippage}
-                onChange={(e) => setLocalSlippage(e.target.value)}
+                onChange={e => setLocalSlippage(e.target.value)}
                 className="pr-8"
                 min="0.01"
                 max="50"
@@ -101,7 +103,7 @@ const SwapSettings: React.FC<SwapSettingsProps> = ({ onClose }) => {
                 %
               </span>
             </div>
-            
+
             {/* Warning for high slippage */}
             {parseFloat(localSlippage) > 5 && (
               <p className="text-xs text-yellow-400">
@@ -117,15 +119,16 @@ const SwapSettings: React.FC<SwapSettingsProps> = ({ onClose }) => {
               <h3 className="text-white font-medium">Transaction Deadline</h3>
             </div>
             <p className="text-sm text-gray-400">
-              Your transaction will revert if it is pending for more than this long.
+              Your transaction will revert if it is pending for more than this
+              long.
             </p>
-            
+
             <div className="relative">
               <Input
                 type="number"
                 placeholder="20"
                 value={localDeadline}
-                onChange={(e) => setLocalDeadline(e.target.value)}
+                onChange={e => setLocalDeadline(e.target.value)}
                 className="pr-20"
                 min="1"
                 max="4320"
@@ -135,20 +138,21 @@ const SwapSettings: React.FC<SwapSettingsProps> = ({ onClose }) => {
                 minutes
               </span>
             </div>
-            
+
             {/* Info for deadline */}
-            <p className="text-xs text-gray-500">
-              Recommended: 20 minutes
-            </p>
+            <p className="text-xs text-gray-500">Recommended: 20 minutes</p>
           </div>
         </div>
       </DialogContent>
-      
+
       <DialogFooter>
         <Button onClick={onClose} variant="secondary" className="flex-1">
           Cancel
         </Button>
-        <Button onClick={handleSave} className="flex-1 bg-blue-600 hover:bg-blue-700">
+        <Button
+          onClick={handleSave}
+          className="flex-1 bg-blue-600 hover:bg-blue-700"
+        >
           Save Settings
         </Button>
       </DialogFooter>

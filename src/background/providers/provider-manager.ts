@@ -127,13 +127,6 @@ export class PurroProviderManager implements PurroProvider {
         this.accountsCache = this.accounts;
         this.accountsCacheTimestamp = Date.now();
 
-        console.log(
-          '🔗 Restoring connection for site:',
-          window.location.origin,
-          'with account:',
-          this.activeAccount
-        );
-
         // Emit events immediately and with retries to ensure dApp receives them
         this.emitConnectionEvents();
       } else {
@@ -143,11 +136,6 @@ export class PurroProviderManager implements PurroProvider {
         this.activeAccount = null;
         this.accountsCache = null;
         this.accountsCacheTimestamp = 0;
-
-        console.log(
-          '🔌 No existing connection for site:',
-          window.location.origin
-        );
 
         // Still emit accountsChanged with empty array to let dApp know we're ready
         this.emitDisconnectedState();

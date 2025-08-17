@@ -4,6 +4,60 @@ import { ENDPOINTS } from './endpoints';
 
 export type Network = 'hyperevm' | 'eth' | 'base' | 'arbitrum';
 
+// TypeScript interfaces for GeckoTerminal API responses
+interface TokenAttributes {
+  address: string;
+  price_usd: string;
+  market_cap_usd: string;
+  volume_usd?: {
+    h24: string;
+  };
+  total_reserve_in_usd: string;
+}
+
+interface TokenData {
+  attributes: TokenAttributes;
+}
+
+interface MultiTokenApiResponse {
+  data: TokenData[];
+}
+
+interface TransformedTokenResponse {
+  data: {
+    id: string;
+    type: string;
+    attributes: {
+      token_prices: Record<string, string>;
+      market_cap_usd: Record<string, string>;
+      h24_volume_usd: Record<string, string>;
+      total_reserve_in_usd: Record<string, string>;
+    };
+  };
+}
+
+interface TokenImageAttributes {
+  image_url: string;
+}
+
+interface TokenImageSuccessResponse {
+  data: {
+    attributes: TokenImageAttributes;
+  };
+}
+
+interface TokenImageErrorResponse {
+  errors: Array<{
+    status: string;
+    title: string;
+  }>;
+  meta: {
+    ref_id: string;
+  };
+}
+
+type TokenImageResponse = TokenImageSuccessResponse | TokenImageErrorResponse;
+
 export const fetchTrendingPools = async (networkId: Network, page: number) => {
   const response = await fetch(
     `${ENDPOINTS.GECKO_TERMINAL}/networks/${networkId}/trending_pools?page=${page}&duration=24h`,
@@ -49,12 +103,23 @@ export const fetchTopPoolsByDex = async (
 export const fetchTokensInfoByAddresses = async (
   network: Network,
   addresses: string[]
-) => {
+): Promise<TransformedTokenResponse> => {
   // GeckoTerminal has a limit of 30 addresses per request
   const BATCH_SIZE = 30;
 
   if (addresses.length === 0) {
-    return { data: { attributes: { token_prices: {} } } };
+    return {
+      data: {
+        id: 'empty-token-prices',
+        type: 'token_price',
+        attributes: {
+          token_prices: {},
+          market_cap_usd: {},
+          h24_volume_usd: {},
+          total_reserve_in_usd: {},
+        },
+      },
+    };
   }
 
   // If we have 30 or fewer addresses, make a single request
@@ -111,13 +176,13 @@ export const fetchTokensInfoByAddresses = async (
   const mergedVolume: Record<string, string> = {};
   const mergedTotalReserve: Record<string, string> = {};
 
-  batchResults.forEach((result: any) => {
+  batchResults.forEach((result: MultiTokenApiResponse) => {
     if (result?.data && Array.isArray(result.data)) {
-      result.data.forEach((token: any) => {
+      result.data.forEach((token: TokenData) => {
         const address = token.attributes.address.toLowerCase();
         mergedTokenPrices[address] = token.attributes.price_usd;
         mergedMarketCap[address] = token.attributes.market_cap_usd;
-        mergedVolume[address] = token.attributes.volume_usd?.h24;
+        mergedVolume[address] = token.attributes.volume_usd?.h24 || '';
         mergedTotalReserve[address] = token.attributes.total_reserve_in_usd;
       });
     }
@@ -139,18 +204,20 @@ export const fetchTokensInfoByAddresses = async (
 };
 
 // Helper function to transform the new multi-token API response to match the old format
-const transformMultiTokenResponse = (response: any) => {
+const transformMultiTokenResponse = (
+  response: MultiTokenApiResponse
+): TransformedTokenResponse => {
   const tokenPrices: Record<string, string> = {};
   const marketCap: Record<string, string> = {};
   const volume: Record<string, string> = {};
   const totalReserve: Record<string, string> = {};
 
   if (response?.data && Array.isArray(response.data)) {
-    response.data.forEach((token: any) => {
+    response.data.forEach((token: TokenData) => {
       const address = token.attributes.address.toLowerCase();
       tokenPrices[address] = token.attributes.price_usd;
       marketCap[address] = token.attributes.market_cap_usd;
-      volume[address] = token.attributes.volume_usd?.h24;
+      volume[address] = token.attributes.volume_usd?.h24 || '';
       totalReserve[address] = token.attributes.total_reserve_in_usd;
     });
   }
@@ -231,7 +298,7 @@ export const fetchTopPoolsForAToken = async (
 export const fetchTokenImage = async (
   networkId: Network,
   tokenAddress: string
-): Promise<{ data: { attributes: { image_url: string } } } | { errors: Array<{ status: string; title: string }>; meta: { ref_id: string } }> => {
+): Promise<TokenImageResponse> => {
   const response = await fetch(
     `${ENDPOINTS.GECKO_TERMINAL}/networks/${networkId}/tokens/${tokenAddress}?include=image_url`,
     {
@@ -248,7 +315,11 @@ export const fetchTokenImage = async (
   // Don't throw immediately, let the caller handle the error response
   if (!response.ok) {
     // Check if it's the specific error format you mentioned
-    if (responseData && typeof responseData === 'object' && 'errors' in responseData) {
+    if (
+      responseData &&
+      typeof responseData === 'object' &&
+      'errors' in responseData
+    ) {
       return responseData; // Return the error response for the caller to handle
     }
 

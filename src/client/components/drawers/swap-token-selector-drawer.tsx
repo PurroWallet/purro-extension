@@ -115,8 +115,6 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
           limit: 200,
         });
 
-        console.log('User tokens - fetchBalances response:', response);
-
         if (response.success) {
           const tokenLogos = await Promise.all(
             response.data.tokens.map(balance =>
@@ -503,8 +501,6 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
       return;
     }
 
-    console.log('🔍 Selected token:', token);
-
     // Don't convert HYPE token address - use the original address
     // The dead address should be preserved for HYPE tokens
     const unifiedToken: UnifiedToken = {
@@ -605,18 +601,15 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
       (currentIsHype && (selectedIsWhype || excludedIsWhype)) ||
       (currentIsWhype && (selectedIsHype || excludedIsHype))
     ) {
-      console.log('🔄 Allowing HYPE/WHYPE combination for wrap/unwrap');
       return false; // Allow HYPE ↔ WHYPE combinations
     }
 
     // Disable same token types to prevent duplicate selection
     if (currentIsHype && (selectedIsHype || excludedIsHype)) {
-      console.log('🚫 Disabling HYPE (already selected)');
       return true; // Disable HYPE if HYPE is already selected
     }
 
     if (currentIsWhype && (selectedIsWhype || excludedIsWhype)) {
-      console.log('🚫 Disabling WHYPE (already selected)');
       return true; // Disable WHYPE if WHYPE is already selected
     }
 

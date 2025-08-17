@@ -45,44 +45,25 @@ class AlchemyCircuitBreaker {
   static shouldAllowRequest(): boolean {
     const now = Date.now();
 
-    // Reset circuit breaker after timeout
-    if (now - this.lastFailureTime > this.RESET_TIMEOUT) {
-      this.failureCount = 0;
-      return true;
-    }
-
-    // Reset service unavailable counter after timeout
-    if (
-      now - this.lastServiceUnavailableTime >
-      this.SERVICE_UNAVAILABLE_RESET_TIMEOUT
-    ) {
-      this.serviceUnavailableCount = 0;
-    }
-
-    // Block requests if we've hit the failure threshold
+    // Check if we're in a failure state
     if (this.failureCount >= this.FAILURE_THRESHOLD) {
-      const timeRemaining = Math.ceil(
-        (this.RESET_TIMEOUT - (now - this.lastFailureTime)) / 1000
-      );
-      console.warn(
-        `🚫 Circuit breaker: API calls blocked due to ${this.failureCount} consecutive failures (${timeRemaining}s remaining)`
-      );
-      return false;
-    }
-
-    // Special handling for service unavailable errors (less aggressive)
-    if (this.serviceUnavailableCount >= this.SERVICE_UNAVAILABLE_THRESHOLD) {
-      const timeRemaining = Math.ceil(
-        (this.SERVICE_UNAVAILABLE_RESET_TIMEOUT -
-          (now - this.lastServiceUnavailableTime)) /
-          1000
-      );
-      if (timeRemaining > 0) {
-        console.warn(
-          `🚫 Circuit breaker: API calls blocked due to service unavailable (${timeRemaining}s remaining)`
-        );
+      if (now - this.lastFailureTime < this.RESET_TIMEOUT) {
         return false;
       }
+      // Reset after timeout
+      this.failureCount = 0;
+    }
+
+    // Check if we're in a service unavailable state
+    if (this.serviceUnavailableCount >= this.SERVICE_UNAVAILABLE_THRESHOLD) {
+      if (
+        now - this.lastServiceUnavailableTime <
+        this.SERVICE_UNAVAILABLE_RESET_TIMEOUT
+      ) {
+        return false;
+      }
+      // Reset after timeout
+      this.serviceUnavailableCount = 0;
     }
 
     return true;
@@ -95,21 +76,11 @@ class AlchemyCircuitBreaker {
     if (isServiceUnavailable) {
       this.serviceUnavailableCount++;
       this.lastServiceUnavailableTime = Date.now();
-      console.warn(
-        `⚠️ Circuit breaker: Service unavailable ${this.serviceUnavailableCount}/${this.SERVICE_UNAVAILABLE_THRESHOLD}, total failures ${this.failureCount}/${this.FAILURE_THRESHOLD}`
-      );
-    } else {
-      console.warn(
-        `⚠️ Circuit breaker: Recorded failure ${this.failureCount}/${this.FAILURE_THRESHOLD}`
-      );
     }
   }
 
   static recordSuccess(): void {
     if (this.failureCount > 0 || this.serviceUnavailableCount > 0) {
-      console.log(
-        `✅ Circuit breaker: Reset after success (was ${this.failureCount} failures, ${this.serviceUnavailableCount} service unavailable)`
-      );
       this.failureCount = 0;
       this.serviceUnavailableCount = 0;
     }
@@ -124,8 +95,6 @@ const fetchAlchemyTokenBalances = async (
 ): Promise<AlchemyTokenBalanceResponse> => {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
-      console.log(`🌐 Fetching token balances (attempt ${attempt}/${retries})`);
-
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -143,9 +112,6 @@ const fetchAlchemyTokenBalances = async (
       if (!response.ok) {
         // Handle specific error codes
         if (response.status === 503) {
-          console.warn(
-            `⚠️ Alchemy API overloaded (503) - attempt ${attempt}/${retries}`
-          );
           if (attempt < retries) {
             // Progressive backoff with jitter: 2s, 4s, 8s, 12s, 16s + random 0-2s
             const baseDelay = Math.min(Math.pow(2, attempt) * 1000, 16000);
@@ -153,16 +119,12 @@ const fetchAlchemyTokenBalances = async (
               crypto.getRandomValues(new Uint32Array(1))[0] /
               (0xffffffff / 2000); // 0-2s random jitter
             const delay = baseDelay + jitter;
-            console.log(
-              `⏳ API overloaded, waiting ${Math.round(delay)}ms before retry...`
-            );
             await new Promise(resolve => setTimeout(resolve, delay));
             continue;
           }
         }
 
         if (response.status === 429) {
-          console.warn(`⚠️ Rate limited (429) - attempt ${attempt}/${retries}`);
           if (attempt < retries) {
             // Longer delay for rate limiting with jitter
             const baseDelay = Math.pow(2, attempt + 1) * 1000; // 4s, 8s, 16s, 32s, 64s
@@ -170,16 +132,12 @@ const fetchAlchemyTokenBalances = async (
               crypto.getRandomValues(new Uint32Array(1))[0] /
               (0xffffffff / 1000); // 0-1s random jitter
             const delay = baseDelay + jitter;
-            console.log(`⏳ Rate limited, waiting ${Math.round(delay)}ms...`);
             await new Promise(resolve => setTimeout(resolve, delay));
             continue;
           }
         }
 
         if (response.status >= 500) {
-          console.warn(
-            `⚠️ Server error (${response.status}) - attempt ${attempt}/${retries}`
-          );
           if (attempt < retries) {
             // Server error backoff with jitter
             const baseDelay = Math.pow(2, attempt) * 1000;
@@ -187,9 +145,6 @@ const fetchAlchemyTokenBalances = async (
               crypto.getRandomValues(new Uint32Array(1))[0] /
               (0xffffffff / 1000);
             const delay = baseDelay + jitter;
-            console.log(
-              `⏳ Server error, waiting ${Math.round(delay)}ms before retry...`
-            );
             await new Promise(resolve => setTimeout(resolve, delay));
             continue;
           }
@@ -209,18 +164,11 @@ const fetchAlchemyTokenBalances = async (
           data.error.message.includes('overloaded') ||
           data.error.message.includes('unavailable')
         ) {
-          console.warn(
-            `⚠️ Alchemy API temporary error - attempt ${attempt}/${retries}:`,
-            data.error.message
-          );
           if (attempt < retries) {
             const delay =
               Math.pow(2, attempt) * 1000 +
               crypto.getRandomValues(new Uint32Array(1))[0] /
                 (0xffffffff / 1000);
-            console.log(
-              `⏳ Temporary error, waiting ${Math.round(delay)}ms before retry...`
-            );
             await new Promise(resolve => setTimeout(resolve, delay));
             continue;
           }
@@ -228,13 +176,8 @@ const fetchAlchemyTokenBalances = async (
         throw new Error(`Alchemy API error: ${data.error.message}`);
       }
 
-      console.log(
-        `✅ Successfully fetched token balances on attempt ${attempt}`
-      );
       return data.result;
     } catch (error) {
-      console.error(`❌ Attempt ${attempt} failed:`, error);
-
       if (attempt === retries) {
         // Last attempt failed, throw the error
         throw error;
@@ -242,16 +185,12 @@ const fetchAlchemyTokenBalances = async (
 
       // Wait before next attempt for network errors
       if (error instanceof TypeError && error.message.includes('fetch')) {
-        console.log(`🌐 Network error, waiting 3s before retry...`);
         await new Promise(resolve => setTimeout(resolve, 3000));
       } else {
         // General error backoff
         const delay =
           Math.pow(2, attempt - 1) * 1000 +
           crypto.getRandomValues(new Uint32Array(1))[0] / (0xffffffff / 1000);
-        console.log(
-          `⏳ General error, waiting ${Math.round(delay)}ms before retry...`
-        );
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
@@ -305,9 +244,8 @@ export const fetchSingleTokenMetadataFast = async (
       decimals: result?.decimals || 18,
       logo: result?.logo || undefined,
     };
-  } catch (error) {
+  } catch {
     // Fast fallback - no retry, no logging spam
-    console.warn(`Failed to fetch token metadata for ${contractAddress}:`, error);
     return {
       name: 'Unknown Token',
       symbol: 'UNKNOWN',
@@ -324,98 +262,74 @@ const getTokensMetadata = async (
 ): Promise<{ [address: string]: TokenMetadata }> => {
   if (contractAddresses.length === 0) return {};
 
-  console.log(
-    `🔍 Getting metadata for ${contractAddresses.length} tokens on chain ${chainId}`
-  );
-
   // Step 1: Get cached metadata
   const cachedMetadata = await TokenMetadataCacheLib.getMultipleCachedMetadata(
     chainId,
     contractAddresses
   );
 
-  const cacheHits = Object.keys(cachedMetadata).length;
-  console.log(`💾 Cache hits: ${cacheHits}/${contractAddresses.length} tokens`);
-
   // Step 2: Find missing addresses (not in cache)
-  const missingAddresses = await TokenMetadataCacheLib.getMissingAddresses(
-    chainId,
-    contractAddresses
+  const missingAddresses = contractAddresses.filter(
+    address => !cachedMetadata[address]
   );
-
-  console.log(`🌐 Need to fetch: ${missingAddresses.length} tokens from API`);
 
   // Step 3: Fetch missing metadata from API
   const newMetadata: { [address: string]: TokenMetadata } = {};
 
   if (missingAddresses.length > 0) {
-    console.log(
-      `🚀 Fast batch fetching ${missingAddresses.length} token metadata...`
-    );
-
     // Create all fetch promises at once - no batching, no delays
     const fetchPromises = missingAddresses.map(async address => {
-      const metadata = await fetchSingleTokenMetadataFast(endpoint, address);
-      return { address: address.toLowerCase(), metadata };
-    });
-
-    // Execute ALL fetches simultaneously with timeout
-    const startTime = Date.now();
-    try {
-      // Set a global timeout for all fetches
-      const results = (await Promise.race([
-        Promise.all(fetchPromises),
-        new Promise(
-          (_, reject) =>
-            setTimeout(() => reject(new Error('Batch timeout')), 8000) // 8 second max for all
-        ),
-      ])) as Array<{ address: string; metadata: TokenMetadata }>;
-
-      const endTime = Date.now();
-      console.log(`⚡ Batch fetch completed in ${endTime - startTime}ms`);
-
-      // Process results
-      for (const result of results) {
-        newMetadata[result.address] = result.metadata;
-      }
-
-      // Count successful vs fallback
-      const successCount = Object.values(newMetadata).filter(
-        m => m.symbol !== 'UNKNOWN'
-      ).length;
-      const fallbackCount = Object.values(newMetadata).filter(
-        m => m.symbol === 'UNKNOWN'
-      ).length;
-
-      if (fallbackCount > 0) {
-        console.warn(
-          `⚠️ ${fallbackCount}/${missingAddresses.length} tokens used fallback metadata (API errors/timeouts)`
-        );
-      }
-      console.log(
-        `✅ Successfully fetched ${successCount}/${missingAddresses.length} token metadata`
-      );
-    } catch (error) {
-      console.error(
-        '❌ Batch fetch failed or timed out, using fallback for all:',
-        error
-      );
-      // If batch fails, use fallback for all missing addresses
-      for (const address of missingAddresses) {
-        newMetadata[address.toLowerCase()] = {
-          name: 'Unknown Token',
-          symbol: 'UNKNOWN',
-          decimals: 18,
+      try {
+        const metadata = await fetchSingleTokenMetadataFast(endpoint, address);
+        return { address, metadata };
+      } catch {
+        // Use fallback metadata for failed fetches
+        return {
+          address,
+          metadata: {
+            name: 'Unknown Token',
+            symbol: '???',
+            decimals: 18,
+            logo: undefined,
+          },
         };
       }
-    }
+    });
 
-    // Step 4: Cache the new metadata (including fallbacks)
-    if (Object.keys(newMetadata).length > 0) {
-      await TokenMetadataCacheLib.cacheMultipleMetadata(chainId, newMetadata);
-      console.log(
-        `💾 Cached ${Object.keys(newMetadata).length} metadata entries`
-      );
+    try {
+      // Set a global timeout for all fetches
+      const results = await Promise.allSettled(fetchPromises);
+
+      // Process results
+      let _fallbackCount = 0;
+
+      results.forEach(result => {
+        if (result.status === 'fulfilled') {
+          const { address, metadata } = result.value;
+          newMetadata[address] = metadata;
+          if (metadata.name === 'Unknown Token') {
+            _fallbackCount++;
+          }
+        } else {
+          // Handle rejected promises
+          _fallbackCount++;
+        }
+      });
+
+      // Cache the new metadata
+      if (Object.keys(newMetadata).length > 0) {
+        await TokenMetadataCacheLib.cacheMultipleMetadata(chainId, newMetadata);
+      }
+    } catch {
+      // If batch fails, use fallback for all missing addresses
+      for (const address of missingAddresses) {
+        newMetadata[address] = {
+          name: 'Unknown Token',
+          symbol: '???',
+          decimals: 18,
+          logo: undefined,
+        };
+      }
     }
   }
 
@@ -428,11 +342,8 @@ export const fetchEthereumTokensOptimized = async (
   address: string
 ): Promise<ChainTokenData> => {
   try {
-    console.log('🔵 Fetching Ethereum tokens with cache optimization...');
-
     // Check circuit breaker
     if (!AlchemyCircuitBreaker.shouldAllowRequest()) {
-      console.warn('🚫 Ethereum: Circuit breaker active, skipping API calls');
       return { chain: 'ethereum', tokens: [] };
     }
 
@@ -450,7 +361,6 @@ export const fetchEthereumTokensOptimized = async (
     );
 
     if (nonZeroBalances.length === 0) {
-      console.log('✅ Ethereum: No tokens found');
       return { chain: 'ethereum', tokens: [] };
     }
 
@@ -473,9 +383,6 @@ export const fetchEthereumTokensOptimized = async (
 
           // Ensure we have valid metadata
           if (!metadata) {
-            console.warn(
-              `No metadata found for token ${token.contractAddress}`
-            );
             return {
               contractAddress: token.contractAddress,
               balance: token.tokenBalance,
@@ -498,11 +405,7 @@ export const fetchEthereumTokensOptimized = async (
               logo: metadata.logo,
             },
           };
-        } catch (error) {
-          console.error(
-            `Error processing token ${token.contractAddress}:`,
-            error
-          );
+        } catch {
           return {
             contractAddress: token.contractAddress,
             balance: token.tokenBalance,
@@ -516,10 +419,8 @@ export const fetchEthereumTokensOptimized = async (
       })
       .filter(token => token !== null); // Remove any null entries
 
-    console.log(`✅ Ethereum: ${tokensWithMetadata.length} tokens processed`);
     return { chain: 'ethereum', tokens: tokensWithMetadata };
   } catch (error) {
-    console.error('Error fetching Ethereum tokens:', error);
     const isServiceUnavailable =
       error instanceof Error &&
       (error.message.includes('503') ||
@@ -535,11 +436,8 @@ export const fetchBaseTokensOptimized = async (
   address: string
 ): Promise<ChainTokenData> => {
   try {
-    console.log('🔵 Fetching Base tokens with cache optimization...');
-
     // Check circuit breaker
     if (!AlchemyCircuitBreaker.shouldAllowRequest()) {
-      console.warn('🚫 Base: Circuit breaker active, skipping API calls');
       return { chain: 'base', tokens: [] };
     }
 
@@ -555,7 +453,6 @@ export const fetchBaseTokensOptimized = async (
     );
 
     if (nonZeroBalances.length === 0) {
-      console.log('✅ Base: No tokens found');
       return { chain: 'base', tokens: [] };
     }
 
@@ -576,9 +473,6 @@ export const fetchBaseTokensOptimized = async (
 
           // Ensure we have valid metadata
           if (!metadata) {
-            console.warn(
-              `No metadata found for token ${token.contractAddress}`
-            );
             return {
               contractAddress: token.contractAddress,
               balance: token.tokenBalance,
@@ -601,11 +495,7 @@ export const fetchBaseTokensOptimized = async (
               logo: metadata.logo,
             },
           };
-        } catch (error) {
-          console.error(
-            `Error processing token ${token.contractAddress}:`,
-            error
-          );
+        } catch {
           return {
             contractAddress: token.contractAddress,
             balance: token.tokenBalance,
@@ -619,10 +509,8 @@ export const fetchBaseTokensOptimized = async (
       })
       .filter(token => token !== null); // Remove any null entries
 
-    console.log(`✅ Base: ${tokensWithMetadata.length} tokens processed`);
     return { chain: 'base', tokens: tokensWithMetadata };
   } catch (error) {
-    console.error('Error fetching Base tokens:', error);
     const isServiceUnavailable =
       error instanceof Error &&
       (error.message.includes('503') ||
@@ -638,11 +526,8 @@ export const fetchArbitrumTokensOptimized = async (
   address: string
 ): Promise<ChainTokenData> => {
   try {
-    console.log('🔵 Fetching Arbitrum tokens with cache optimization...');
-
     // Check circuit breaker
     if (!AlchemyCircuitBreaker.shouldAllowRequest()) {
-      console.warn('🚫 Arbitrum: Circuit breaker active, skipping API calls');
       return { chain: 'arbitrum', tokens: [] };
     }
 
@@ -658,7 +543,6 @@ export const fetchArbitrumTokensOptimized = async (
     );
 
     if (nonZeroBalances.length === 0) {
-      console.log('✅ Arbitrum: No tokens found');
       return { chain: 'arbitrum', tokens: [] };
     }
 
@@ -679,9 +563,6 @@ export const fetchArbitrumTokensOptimized = async (
 
           // Ensure we have valid metadata
           if (!metadata) {
-            console.warn(
-              `No metadata found for token ${token.contractAddress}`
-            );
             return {
               contractAddress: token.contractAddress,
               balance: token.tokenBalance,
@@ -704,11 +585,7 @@ export const fetchArbitrumTokensOptimized = async (
               logo: metadata.logo,
             },
           };
-        } catch (error) {
-          console.error(
-            `Error processing token ${token.contractAddress}:`,
-            error
-          );
+        } catch {
           return {
             contractAddress: token.contractAddress,
             balance: token.tokenBalance,
@@ -722,10 +599,8 @@ export const fetchArbitrumTokensOptimized = async (
       })
       .filter(token => token !== null); // Remove any null entries
 
-    console.log(`✅ Arbitrum: ${tokensWithMetadata.length} tokens processed`);
     return { chain: 'arbitrum', tokens: tokensWithMetadata };
   } catch (error) {
-    console.error('Error fetching Arbitrum tokens:', error);
     const isServiceUnavailable =
       error instanceof Error &&
       (error.message.includes('503') ||
@@ -741,29 +616,14 @@ export const fetchAllEvmTokensOptimized = async (
   address: string
 ): Promise<ChainTokenData[]> => {
   try {
-    console.log('🚀 Fetching all EVM tokens with optimized caching...');
-
-    const startTime = Date.now();
-
     const [ethereumTokens, baseTokens, arbitrumTokens] = await Promise.all([
       fetchEthereumTokensOptimized(address),
       fetchBaseTokensOptimized(address),
       fetchArbitrumTokensOptimized(address),
     ]);
 
-    const endTime = Date.now();
-    const totalTokens =
-      ethereumTokens.tokens.length +
-      baseTokens.tokens.length +
-      arbitrumTokens.tokens.length;
-
-    console.log(
-      `✅ Fetched ${totalTokens} tokens across all chains in ${endTime - startTime}ms`
-    );
-
     return [ethereumTokens, baseTokens, arbitrumTokens];
-  } catch (error) {
-    console.error('Error fetching all EVM tokens:', error);
+  } catch {
     return [];
   }
 };
@@ -789,5 +649,4 @@ export const clearAllTokenCache = async () => {
 // Utility function to reset the circuit breaker (for debugging/admin purposes)
 export const resetAlchemyCircuitBreaker = () => {
   AlchemyCircuitBreaker.recordSuccess();
-  console.log('🔄 Circuit breaker manually reset');
 };

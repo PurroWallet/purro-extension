@@ -40,7 +40,7 @@ export const Menu = ({ items }: MenuProps) => {
                   item.isCentered && 'justify-center'
                 )}
               >
-                <p className="text-base font-medium text-left">{item.label}</p>
+                <p className="text-base text-left">{item.label}</p>
                 <div
                   className={cn(
                     'flex items-center gap-2',

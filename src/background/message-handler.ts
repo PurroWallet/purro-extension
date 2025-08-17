@@ -50,7 +50,10 @@ export class MessageHandler {
           result = await storageHandler.getConnectedSites(data.accountId);
           break;
         case 'DELETE_CONNECTED_SITE':
-          result = await storageHandler.deleteConnectedSite(data.accountId, data.origin);
+          result = await storageHandler.deleteConnectedSite(
+            data.accountId,
+            data.origin
+          );
           break;
         case 'DELETE_ALL_CONNECTED_SITES':
           result = await storageHandler.deleteAllConnectedSites(data.accountId);

@@ -9,7 +9,9 @@ const MainContent = ({
   className?: string;
 }) => {
   return (
-    <div className={cn('flex-1 overflow-y-auto pb-16', className)}>{children}</div>
+    <div className={cn('flex-1 overflow-y-auto pb-16', className)}>
+      {children}
+    </div>
   );
 };
 

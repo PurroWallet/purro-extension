@@ -187,7 +187,7 @@ export class TokenMetadataCacheLib {
    * Clean oldest entries when cache is full (based on cachedAt, not expiration)
    */
   private static async cleanOldestEntries(
-    chainId: string,
+    _chainId: string,
     chainCache: TokenMetadataCache[string]
   ): Promise<void> {
     try {
@@ -202,10 +202,6 @@ export class TokenMetadataCacheLib {
       for (let i = 0; i < entriesToRemove; i++) {
         delete chainCache[entries[i][0]];
       }
-
-      console.log(
-        `🧹 Cleaned ${entriesToRemove} oldest token metadata entries for chain ${chainId} (cache size management)`
-      );
     } catch (error) {
       console.error('Failed to clean oldest entries:', error);
     }

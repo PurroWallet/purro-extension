@@ -36,7 +36,11 @@ const useHyperscan = () => {
     return useQuery({
       queryKey: [QueryKeys.HYPER_EVM_NFTS_COLLECTIONS, address, nextPageParams],
       queryFn: () =>
-        fetchHyperEvmNftsCollection(address as string, isDevMode, nextPageParams),
+        fetchHyperEvmNftsCollection(
+          address as string,
+          isDevMode,
+          nextPageParams
+        ),
       staleTime: 60 * 1000 * 10, // 10 minutes
       enabled: isValidAddress(address),
     });
@@ -45,7 +49,8 @@ const useHyperscan = () => {
   const useNFTs = (nextPageParams?: HyperScanNftNextPageParams) => {
     return useQuery({
       queryKey: [QueryKeys.HYPER_EVM_NFTS, address, nextPageParams],
-      queryFn: () => fetchHyperEvmNfts(address as string, isDevMode, nextPageParams),
+      queryFn: () =>
+        fetchHyperEvmNfts(address as string, isDevMode, nextPageParams),
       staleTime: 60 * 1000 * 10, // 10 minutes
       enabled: isValidAddress(address),
     });
@@ -97,7 +102,12 @@ const useHyperscan = () => {
         nextPageParams,
       ],
       queryFn: () =>
-        fetchHyperEvmTokenTransfers(address as string, filter, isDevMode, nextPageParams),
+        fetchHyperEvmTokenTransfers(
+          address as string,
+          filter,
+          isDevMode,
+          nextPageParams
+        ),
       staleTime: 60 * 1000 * 5, // 5 minutes
       enabled: isValidAddress(address) && enabled,
     });

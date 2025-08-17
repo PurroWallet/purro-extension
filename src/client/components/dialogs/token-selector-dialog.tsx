@@ -330,8 +330,6 @@ export const TokenSelectorDialog: React.FC<TokenSelectorDialogProps> = ({
       return;
     }
 
-    console.log('🔄 Setting token as output for swap:', token.symbol);
-
     const unifiedToken: UnifiedToken = {
       contractAddress: token.address,
       symbol: token.symbol,
