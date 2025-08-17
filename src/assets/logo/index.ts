@@ -9,3 +9,8 @@ export { default as hyperSwapLogo } from './hyperswap.svg';
 export { default as kittenswapLogo } from './kittenswap.jpg';
 export { default as laminarLogo } from './laminar.png';
 export { default as liquidSwapLogo } from './liquid-swap-logo.png';
+export { default as stakedHypeLogo } from './staked-hype-logo.svg';
+export { default as liquidLaunchLogo } from './liquidlaunch-logo.png';
+export { default as hpumpLogo } from './hypurr-pump-logo.png';
+export { default as hyperlendLogo } from './hyperlend-logo.svg';
+export { default as hyperevmscanLogo } from './hyperevmscan-logo.svg';

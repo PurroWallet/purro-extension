@@ -19,6 +19,8 @@ import HistoryAnimationIcon from '@/client/components/animation-icon/history';
 import useWalletStore from '@/client/hooks/use-wallet-store';
 import useMainScreenStore from '@/client/hooks/use-main-screen-store';
 import ConfirmSwapButton from '@/client/components/swap-action-button';
+import Explorer from './main-screens/explorer';
+import { Search } from 'lucide-react';
 
 const queryClient = new QueryClient();
 
@@ -69,7 +71,7 @@ export const MainContent = () => {
       <div className={cn('flex-1 overflow-y-auto transition-all duration-300')}>
         {mainScreen === 'home' && <Home />}
         {mainScreen === 'swap' && <Swap />}
-        {/* {mainScreen === "explore" && <Explore />} */}
+        {mainScreen === 'explore' && <Explorer />}
         {mainScreen === 'history' && <History />}
         {mainScreen === 'nft' && <Nft />}
       </div>
@@ -83,7 +85,7 @@ export const MainContent = () => {
       <div
         className={cn(
           'grid w-full border-t border-white/10',
-          isWatchOnly ? 'grid-cols-3' : 'grid-cols-4'
+          isWatchOnly ? 'grid-cols-4' : 'grid-cols-5'
         )}
       >
         <MainScreenTabButton
@@ -145,17 +147,19 @@ export const MainContent = () => {
             />
           }
         />
-        {/* <MainScreenTabButton
-          isActive={mainScreen === "explore"}
-          onClick={() => setMainScreen("explore")}
+        <MainScreenTabButton
+          isActive={mainScreen === 'explore'}
+          onClick={() => setMainScreen('explore')}
+          onMouseEnter={() => setButtonHovered('explore')}
+          onMouseLeave={() => setButtonHovered(null)}
           icon={
             <Search
               className={cn(
-                mainScreen === "explore" && "text-[var(--primary-color-light)]"
+                mainScreen === 'explore' && 'text-[var(--primary-color-light)]'
               )}
             />
           }
-        /> */}
+        />
       </div>
     </div>
   );
