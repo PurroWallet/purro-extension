@@ -5,6 +5,7 @@ import useSwapStore from '@/client/hooks/use-swap-store';
 import { useSwapRoute } from '@/client/hooks/use-swap-route';
 import { SwapTokenSelectorDrawer } from '@/client/components/drawers';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
+import { fetchHyperEvmTokenPrices } from '@/client/services/gecko-terminal-api';
 
 import TokenLogo from '@/client/components/token-logo';
 import {
@@ -61,6 +62,34 @@ const DEFAULT_WHYPE_TOKEN = {
 
 const WHYPE_TOKEN_ADDRESS = '0x5555555555555555555555555555555555555555';
 
+// Helper function to get token price with proper fallbacks
+const getTokenPrice = (
+  token: any,
+  tokenPrices: Record<string, { price: number; priceChange24h: number }>
+): number => {
+  if (!token) return 0;
+
+  // For native HYPE tokens, use WHYPE price
+  if (token.contractAddress === 'native') {
+    const whypePrice = tokenPrices[WHYPE_TOKEN_ADDRESS.toLowerCase()]?.price;
+    if (whypePrice) return whypePrice;
+  }
+
+  // Try lowercase address first
+  const normalizedAddress = token.contractAddress?.toLowerCase();
+  if (normalizedAddress && tokenPrices[normalizedAddress]?.price) {
+    return tokenPrices[normalizedAddress].price;
+  }
+
+  // Try original address
+  if (token.contractAddress && tokenPrices[token.contractAddress]?.price) {
+    return tokenPrices[token.contractAddress].price;
+  }
+
+  // Fallback to token's own usdPrice
+  return token.usdPrice || 0;
+};
+
 const Swap = () => {
   const {
     tokenIn,
@@ -71,6 +100,7 @@ const Swap = () => {
     slippage,
     route,
     tokenPrices,
+    updateTokenPrice,
     setAmountIn,
     setAmountOut,
     setIsExactIn,
@@ -116,6 +146,54 @@ const Swap = () => {
       setTokenOut(defaultNativeHype);
     }
   }, [tokenOut, setTokenOut, nativeTokens]);
+
+  // Fetch token prices when tokens are selected
+  useEffect(() => {
+    const fetchTokenPrices = async () => {
+      const addressesToFetch: string[] = [];
+
+      // Add tokenIn address if it exists and not native
+      if (tokenIn?.contractAddress && tokenIn.contractAddress !== 'native') {
+        addressesToFetch.push(tokenIn.contractAddress);
+      }
+
+      // Add tokenOut address if it exists and not native
+      if (tokenOut?.contractAddress && tokenOut.contractAddress !== 'native') {
+        addressesToFetch.push(tokenOut.contractAddress);
+      }
+
+      // Add WHYPE address for native HYPE tokens
+      if (
+        tokenIn?.contractAddress === 'native' ||
+        tokenOut?.contractAddress === 'native'
+      ) {
+        addressesToFetch.push(WHYPE_TOKEN_ADDRESS);
+      }
+
+      if (addressesToFetch.length > 0) {
+        try {
+          console.log('🔍 Fetching token prices for swap:', addressesToFetch);
+          const response = await fetchHyperEvmTokenPrices(addressesToFetch);
+
+          if (response?.data?.attributes?.token_prices) {
+            Object.entries(response.data.attributes.token_prices).forEach(
+              ([address, priceStr]) => {
+                const price = parseFloat(priceStr as string);
+                if (!isNaN(price)) {
+                  updateTokenPrice(address.toLowerCase(), price, 0); // No price change data from this API
+                  console.log(`✅ Updated price for ${address}: $${price}`);
+                }
+              }
+            );
+          }
+        } catch (error) {
+          console.error('❌ Error fetching token prices:', error);
+        }
+      }
+    };
+
+    fetchTokenPrices();
+  }, [tokenIn?.contractAddress, tokenOut?.contractAddress, updateTokenPrice]);
 
   // Function to get updated native HYPE token data
   const getNativeHypeWithBalance = useCallback(
@@ -459,7 +537,8 @@ const Swap = () => {
                   <span className="text-xs text-white/60">
                     ~ $
                     {(
-                      (parseFloat(amountIn) || 0) * (tokenIn.usdPrice || 0)
+                      (parseFloat(amountIn) || 0) *
+                      getTokenPrice(tokenIn, tokenPrices)
                     ).toFixed(2)}
                   </span>
                   {tokenIn.contractAddress &&
@@ -536,7 +615,8 @@ const Swap = () => {
                   <span className="text-xs text-white/60">
                     ~ $
                     {(
-                      (parseFloat(amountOut) || 0) * (tokenOut.usdPrice || 0)
+                      (parseFloat(amountOut) || 0) *
+                      getTokenPrice(tokenOut, tokenPrices)
                     ).toFixed(2)}
                   </span>
                   {tokenOut.contractAddress &&
