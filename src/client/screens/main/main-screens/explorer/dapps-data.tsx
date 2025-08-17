@@ -9,6 +9,7 @@ import {
   hpumpLogo,
   hyperlendLogo,
   hyperevmscanLogo,
+  driptradeLogo,
 } from '@/assets/logo';
 
 export interface DApp {
@@ -31,7 +32,7 @@ export const DAPPS_DATA: DApp[] = [
   {
     id: 'hyperunit',
     name: 'HyperUnit',
-    category: 'DeFi',
+    category: 'Bridge',
     url: 'https://app.hyperunit.xyz',
     logo: hyperUnit,
   },
@@ -49,19 +50,20 @@ export const DAPPS_DATA: DApp[] = [
     url: 'https://app.hyperswap.exchange',
     logo: hyperSwapLogo,
   },
-  {
-    id: 'debridge',
-    name: 'DeBridge',
-    category: 'Bridge',
-    url: 'https://app.debridge.finance/?inputChain=8453&outputChain=999',
-    logo: deBridgeLogo,
-  },
+
   {
     id: 'liquidlaunch',
     name: 'LiquidLaunch',
     category: 'Launchpad',
     url: 'https://liquidlaunch.app/',
     logo: liquidLaunchLogo,
+  },
+  {
+    id: 'hyperlend',
+    name: 'HyperLend',
+    category: 'Lending',
+    url: 'https://hyperlend.finance/',
+    logo: hyperlendLogo,
   },
   {
     id: 'hpump',
@@ -82,20 +84,21 @@ export const DAPPS_DATA: DApp[] = [
     name: 'Drip.Trade',
     category: 'NFT',
     url: 'https://drip.trade/',
-    logo: hyperliquidLogo, // No specific logo found, using placeholder
+    logo: driptradeLogo,
   },
-  {
-    id: 'hyperlend',
-    name: 'HyperLend',
-    category: 'Lending',
-    url: 'https://hyperlend.finance/',
-    logo: hyperlendLogo,
-  },
+
   {
     id: 'stakedhype',
     name: 'StakedHype',
     category: 'Staking',
     url: 'https://www.stakedhype.fi/',
     logo: stakedHypeLogo,
+  },
+  {
+    id: 'debridge',
+    name: 'DeBridge',
+    category: 'Bridge',
+    url: 'https://app.debridge.finance/?inputChain=8453&outputChain=999',
+    logo: deBridgeLogo,
   },
 ];
