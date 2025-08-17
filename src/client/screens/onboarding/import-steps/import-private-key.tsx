@@ -4,76 +4,12 @@ import { Check, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import useWallet from '@/client/hooks/use-wallet';
 import useWalletStore from '@/client/hooks/use-wallet-store';
-import {
-  evmWalletKeyUtils,
-  solanaWalletKeyUtils,
-  suiWalletKeyUtils,
-} from '@/background/utils/keys';
+import { validatePrivateKeyFormat } from '@/client/utils/private-key-validation';
 
 // Constants for easy customization
-const VALIDATION_CONFIG = {
-  EVM_CHAINS: ['ethereum', 'hyperevm', 'base', 'arbitrum'],
-  ERROR_MESSAGES: {
-    INVALID_PRIVATE_KEY: 'Invalid private key. Please try again.',
-    ALREADY_IMPORTED: 'This private key is already imported.',
-  },
+const COMPONENT_CONFIG = {
   ACCOUNT_NAME_PREFIX: 'Account',
 } as const;
-
-// Utility function to validate private key and get address
-const validatePrivateKeyFormat = (
-  privateKeyValue: string,
-  chain: string | null
-) => {
-  if (!privateKeyValue.trim() || !chain) {
-    return { isValid: false, address: '' };
-  }
-
-  try {
-    let isValid = false;
-    let walletAddress = '';
-
-    if (
-      VALIDATION_CONFIG.EVM_CHAINS.includes(
-        chain as (typeof VALIDATION_CONFIG.EVM_CHAINS)[number]
-      )
-    ) {
-      try {
-        isValid = evmWalletKeyUtils.isValidPrivateKey(privateKeyValue);
-        if (isValid) {
-          const wallet = evmWalletKeyUtils.fromPrivateKey(privateKeyValue);
-          walletAddress = wallet.address;
-        }
-      } catch {
-        isValid = false;
-      }
-    } else if (chain === 'solana') {
-      try {
-        isValid = solanaWalletKeyUtils.isValidPrivateKey(privateKeyValue);
-        if (isValid) {
-          const wallet = solanaWalletKeyUtils.fromPrivateKey(privateKeyValue);
-          walletAddress = wallet.address;
-        }
-      } catch {
-        isValid = false;
-      }
-    } else if (chain === 'sui') {
-      try {
-        isValid = suiWalletKeyUtils.isValidPrivateKey(privateKeyValue);
-        if (isValid) {
-          const wallet = suiWalletKeyUtils.fromPrivateKey(privateKeyValue);
-          walletAddress = wallet.address;
-        }
-      } catch {
-        isValid = false;
-      }
-    }
-
-    return { isValid, address: walletAddress };
-  } catch {
-    return { isValid: false, address: '' };
-  }
-};
 
 const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
   const { chain, privateKey, setPrivateKey, accountName, setAccountName } =
@@ -87,7 +23,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
   useEffect(() => {
     if (!accountName && initialized) {
       setAccountName(
-        `${VALIDATION_CONFIG.ACCOUNT_NAME_PREFIX} ${accounts.length > 0 ? accounts.length + 1 : 1}`
+        `${COMPONENT_CONFIG.ACCOUNT_NAME_PREFIX} ${accounts.length > 0 ? accounts.length + 1 : 1}`
       );
     }
   }, [accounts, accountName, setAccountName, initialized]);
@@ -102,7 +38,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
       const validation = validatePrivateKeyFormat(privateKey, chain ?? null);
 
       if (!validation.isValid) {
-        throw new Error(VALIDATION_CONFIG.ERROR_MESSAGES.INVALID_PRIVATE_KEY);
+        throw new Error('Invalid private key. Please try again.');
       }
 
       // Set the address for display
@@ -113,7 +49,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
         const exists = await checkPrivateKeyExists(privateKey);
 
         if (exists) {
-          setError(VALIDATION_CONFIG.ERROR_MESSAGES.ALREADY_IMPORTED);
+          setError('This private key is already imported.');
           return false;
         }
       } catch {
@@ -122,7 +58,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
 
       return true;
     } catch {
-      setError(VALIDATION_CONFIG.ERROR_MESSAGES.INVALID_PRIVATE_KEY);
+      setError('Invalid private key. Please try again.');
       setAddress(null);
       return false;
     }
@@ -132,15 +68,9 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
     <div className="flex flex-col items-center justify-center size-full p-4">
       <div className="flex-1 size-full gap-4 space-y-2">
         <div className="space-y-1">
-          <h1 className="text-xl font-bold text-center">Import Private Key</h1>
+          <h1 className="text-xl font-bold text-center">Import private key</h1>
           <p className="text-base text-gray-500 text-center">
-            {chain == null && 'Select the chain'}
-            {chain === 'ethereum' && 'Enter your Ethereum private key'}
-            {chain === 'solana' && 'Enter your Solana private key'}
-            {chain === 'sui' && 'Enter your Sui private key'}
-            {chain === 'hyperevm' && 'Enter your Hyperliquid private key'}
-            {chain === 'base' && 'Enter your Base private key'}
-            {chain === 'arbitrum' && 'Enter your Arbitrum private key'}
+            Enter your private key to import the wallet
           </p>
         </div>
         {chain != null && (
@@ -181,7 +111,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
 
             <input
               type="text"
-              placeholder={`${VALIDATION_CONFIG.ACCOUNT_NAME_PREFIX} ${accounts.length > 0 ? accounts.length + 1 : 1}`}
+              placeholder={`${COMPONENT_CONFIG.ACCOUNT_NAME_PREFIX} ${accounts.length > 0 ? accounts.length + 1 : 1}`}
               value={accountName ?? ''}
               onChange={e => setAccountName(e.target.value)}
               className="w-full px-4 py-3 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color-light)] bg-[var(--card-color)] text-white placeholder-gray-400 text-base"
@@ -194,25 +124,27 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
               </div>
             )}
             {address && (
-              <div className="text-[var(--primary-color-light)] mt-2 text-sm flex items-center gap-1 break-all">
+              <div className="text-green-500 mt-2 text-base flex items-center gap-1">
                 <Check />
-                {address}
+                <span className="text-sm break-all">{address}</span>
               </div>
             )}
           </div>
         )}
       </div>
-      <Button
-        className="w-full"
-        disabled={!privateKey}
-        onClick={async () => {
-          if (await validatePrivateKey()) {
-            onNext();
-          }
-        }}
-      >
-        Import
-      </Button>
+      <div className="p-4 w-full">
+        <Button
+          onClick={async () => {
+            if (await validatePrivateKey()) {
+              onNext();
+            }
+          }}
+          className="w-full"
+          disabled={!privateKey || !chain}
+        >
+          Continue
+        </Button>
+      </div>
     </div>
   );
 };
