@@ -1260,7 +1260,7 @@ const emojiCategories = {
 const EditIcon = ({ onBack }: { onBack: () => void }) => {
   const { changeAccountIcon } = useWallet();
   const { selectedAccountId } = useEditAccountStore();
-  const { accounts, getAccountWalletObject } = useWalletStore();
+  const { getAccountWalletObject } = useWalletStore();
   const [selectedEmoji, setSelectedEmoji] = useState<string>('');
   const [activeCategory, setActiveCategory] =
     useState<string>('Smileys & People');
@@ -1271,7 +1271,6 @@ const EditIcon = ({ onBack }: { onBack: () => void }) => {
   const [loadingProfile, setLoadingProfile] = useState<boolean>(false);
 
   // Get account and wallet info
-  const account = accounts.find(account => account.id === selectedAccountId);
   const accountWallet = selectedAccountId
     ? getAccountWalletObject(selectedAccountId)
     : null;
