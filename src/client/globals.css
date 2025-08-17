@@ -2,15 +2,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300..900;1,300..900&family=Livvic:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,900&display=swap');
 
 :root {
-  --primary-color: #088b88;
+  --primary-color: #009487;
   --primary-color-light: #00f7da;
-  --primary-color-dark: #166260;
-  --background-color: #0f1a1f;
+  --primary-color-dark: #01695f;
+  --background-color: #0f1b1f;
   --text-color: #f1f7f6;
   --button-color: #00f7da;
   --button-color-secondary: #163737;
   --button-color-destructive: #ffa48f;
-  --card-color: #163737;
+  --card-color: #103a39;
 
   /* Chặn select text cho toàn bộ app */
   user-select: none;
