@@ -12,6 +12,9 @@ import {
   getTokenBalance,
   isWrapScenario,
   isUnwrapScenario,
+  getMaxSpendableBalance,
+  hasEnoughBalanceWithGas,
+  estimateGasCost,
 } from '@/client/utils/swap-utils';
 // Create a comprehensive formatBalance function for display
 const formatBalance = (balance: number): string => {
@@ -233,6 +236,14 @@ const Swap = () => {
     ? getTokenBalance(getNativeHypeWithBalance(tokenOut))
     : 0;
 
+  const tokenInBalanceCheck = tokenIn
+    ? hasEnoughBalanceWithGas(
+        getNativeHypeWithBalance(tokenIn),
+        amountIn,
+        estimateGasCost(tokenIn, 'swap')
+      )
+    : { hasEnough: true, shortfall: 0, details: '' };
+
   useEffect(() => {
     const fetchWHYPEBalance = async () => {
       if (!activeAccountAddress) return;
@@ -397,26 +408,45 @@ const Swap = () => {
 
   const handleMaxClick = () => {
     if (tokenIn && tokenInBalance > 0) {
-      // Format max amount with appropriate precision
-      const decimals = tokenIn.decimals || 18;
-      const maxDecimals = Math.min(decimals, 8); // Limit display decimals
-      const maxAmount = tokenInBalance
-        .toFixed(maxDecimals)
-        .replace(/\.?0+$/, '');
-      setAmountIn(maxAmount);
-      setIsExactIn(true);
+      // Use enhanced max balance calculation that considers gas fees for native tokens
+      const maxAmount = getMaxSpendableBalance(
+        getNativeHypeWithBalance(tokenIn),
+        {
+          reserveGas: true, // Always reserve gas for native tokens
+          gasBuffer: 0.1, // 10% buffer
+          customGasEstimate: estimateGasCost(tokenIn, 'swap'), // Use swap gas estimate
+        }
+      );
+
+      if (parseFloat(maxAmount) > 0) {
+        setAmountIn(maxAmount);
+        setIsExactIn(true);
+      }
     }
   };
 
   const handleHalfClick = () => {
     if (tokenIn && tokenInBalance > 0) {
-      const decimals = tokenIn.decimals || 18;
-      const maxDecimals = Math.min(decimals, 8);
-      const halfAmount = (tokenInBalance / 2)
-        .toFixed(maxDecimals)
-        .replace(/\.?0+$/, '');
-      setAmountIn(halfAmount);
-      setIsExactIn(true);
+      // Use enhanced max balance calculation and take half of it
+      const maxAmount = getMaxSpendableBalance(
+        getNativeHypeWithBalance(tokenIn),
+        {
+          reserveGas: true,
+          gasBuffer: 0.1,
+          customGasEstimate: estimateGasCost(tokenIn, 'swap'),
+        }
+      );
+
+      const halfAmount = parseFloat(maxAmount) / 2;
+      if (halfAmount > 0) {
+        const decimals = tokenIn.decimals || 18;
+        const maxDecimals = Math.min(decimals, 8);
+        const formattedHalf = halfAmount
+          .toFixed(maxDecimals)
+          .replace(/\.?0+$/, '');
+        setAmountIn(formattedHalf);
+        setIsExactIn(true);
+      }
     }
   };
 
@@ -495,9 +525,11 @@ const Swap = () => {
               <h1 className="text-white/60 font-medium">Sell</h1>
               {tokenIn && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-white/60">
-                    {formatBalance(tokenInBalance)} {tokenIn.symbol}
-                  </span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-xs text-white/60">
+                      {formatBalance(tokenInBalance)} {tokenIn.symbol}
+                    </span>
+                  </div>
                   <button
                     onClick={handleHalfClick}
                     className="text-xs text-[var(--primary-color-light)] hover:text-[var(--primary-color)] transition-all duration-300"
@@ -732,6 +764,25 @@ const Swap = () => {
             </div>
           </div>
         )}
+
+        {/* Enhanced balance error with gas fee information */}
+        {!tokenInBalanceCheck.hasEnough &&
+          amountIn &&
+          parseFloat(amountIn) > 0 && (
+            <div className="bg-[var(--button-color-destructive)]/10 border border-[var(--button-color-destructive)]/30 rounded-lg p-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="size-4 text-[var(--button-color-destructive)]" />
+                <div className="flex flex-col">
+                  <span className="text-sm text-[var(--button-color-destructive)]">
+                    Insufficient balance
+                  </span>
+                  <span className="text-xs text-[var(--button-color-destructive)]/70">
+                    {tokenInBalanceCheck.details}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
       </div>
     </div>
   );

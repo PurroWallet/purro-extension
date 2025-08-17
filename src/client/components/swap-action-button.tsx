@@ -7,11 +7,12 @@ import useDialogStore from '@/client/hooks/use-dialog-store';
 import useMainSwapStore from '@/client/hooks/use-main-swap-store';
 import { SwapSuccess } from '@/client/components/dialogs';
 import {
-  getTokenBalance,
+  validateSwap,
+  hasEnoughBalanceWithGas,
+  estimateGasCost,
   isWrapScenario,
   isUnwrapScenario,
   getActionButtonText,
-  validateSwap,
 } from '@/client/utils/swap-utils';
 import { executeSwapTransaction } from '@/client/utils/swap-transaction-handler';
 import { useHyperEvmTokens } from '@/client/hooks/use-hyper-evm-tokens';
@@ -90,11 +91,13 @@ const ConfirmSwapButton = () => {
   );
 
   // Validation
-  const tokenInBalance = tokenIn
-    ? getTokenBalance(getNativeHypeWithBalance(tokenIn))
-    : 0;
-  const inputAmount = parseFloat(amountIn || '0');
-  const hasInsufficientBalance = inputAmount > tokenInBalance;
+  // Enhanced balance validation that considers gas fees for native tokens
+  const balanceCheck = hasEnoughBalanceWithGas(
+    tokenIn ? getNativeHypeWithBalance(tokenIn) : null,
+    amountIn,
+    tokenIn ? estimateGasCost(tokenIn, 'swap') : undefined
+  );
+  const hasInsufficientBalance = !balanceCheck.hasEnough;
 
   const isValidSwap = validateSwap(
     tokenIn,

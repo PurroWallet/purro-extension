@@ -44,6 +44,26 @@ const MAX_DEADLINE = 4320; // 3 days
 const MIN_REFRESH_INTERVAL = 1000; // 1 second
 const MAX_REFRESH_INTERVAL = 60000; // 1 minute
 
+// Gas estimation constants
+const GAS_BUFFER_PERCENTAGE = 0.1; // 10% buffer for gas estimation
+const DEFAULT_GAS_LIMIT = 21000; // Standard ETH transfer
+const DEFAULT_GAS_PRICE = 20e9; // 20 Gwei in wei
+const NATIVE_TOKEN_GAS_RESERVE = 0.001; // Reserve 0.001 ETH/HYPE for gas fees
+
+// Gas estimation types
+interface GasEstimate {
+  gasLimit: number;
+  gasPrice: number; // in wei
+  gasCostEth: number;
+  gasCostUsd: number;
+}
+
+interface MaxBalanceOptions {
+  includeGasFees?: boolean;
+  customGasEstimate?: GasEstimate;
+  gasBuffer?: number; // percentage (0.1 = 10%)
+}
+
 export interface SwapState {
   // Token selection
   tokenIn: UnifiedToken | null;
@@ -112,6 +132,12 @@ export interface SwapState {
     isExactIn: boolean;
     slippage: number;
   } | null;
+
+  // Gas estimation and max balance methods
+  isNativeToken: (token: UnifiedToken) => boolean;
+  estimateGas: (token: UnifiedToken) => Promise<GasEstimate | null>;
+  getMaxBalance: (token: UnifiedToken, options?: MaxBalanceOptions) => Promise<string>;
+  getMaxBalanceSync: (token: UnifiedToken, options?: MaxBalanceOptions) => string;
 }
 
 const useSwapStore = create<SwapState>()(
@@ -225,6 +251,146 @@ const useSwapStore = create<SwapState>()(
           isExactIn,
           slippage,
         };
+      },
+
+      // Gas estimation and max balance methods
+      isNativeToken: (token: UnifiedToken): boolean => {
+        if (!token) return false;
+        return (
+          token.isNative ||
+          token.contractAddress === 'native' ||
+          token.contractAddress === 'NATIVE' ||
+          token.symbol === 'ETH' ||
+          token.symbol === 'HYPE' ||
+          token.symbol === 'BNB' ||
+          token.symbol === 'MATIC'
+        );
+      },
+
+      estimateGas: async (token: UnifiedToken): Promise<GasEstimate | null> => {
+        try {
+          const { isNativeToken } = get();
+
+          if (!isNativeToken(token)) {
+            // For ERC-20 tokens, use higher gas limit
+            return {
+              gasLimit: 65000, // Standard ERC-20 transfer
+              gasPrice: DEFAULT_GAS_PRICE,
+              gasCostEth: (65000 * DEFAULT_GAS_PRICE) / 1e18,
+              gasCostUsd: ((65000 * DEFAULT_GAS_PRICE) / 1e18) * (token.usdPrice || 3000),
+            };
+          } else {
+            // For native tokens, use standard gas limit
+            return {
+              gasLimit: DEFAULT_GAS_LIMIT,
+              gasPrice: DEFAULT_GAS_PRICE,
+              gasCostEth: (DEFAULT_GAS_LIMIT * DEFAULT_GAS_PRICE) / 1e18,
+              gasCostUsd: ((DEFAULT_GAS_LIMIT * DEFAULT_GAS_PRICE) / 1e18) * (token.usdPrice || 3000),
+            };
+          }
+        } catch (error) {
+          console.error('Gas estimation failed:', error);
+          return null;
+        }
+      },
+
+      getMaxBalance: async (token: UnifiedToken, options: MaxBalanceOptions = {}): Promise<string> => {
+        const { isNativeToken, estimateGas } = get();
+
+        if (!token?.balance) return '0';
+
+        const {
+          includeGasFees = true,
+          customGasEstimate,
+          gasBuffer = GAS_BUFFER_PERCENTAGE
+        } = options;
+
+        try {
+          // Parse token balance
+          let balanceValue: bigint;
+          if (typeof token.balance === 'string' && token.balance.startsWith('0x')) {
+            balanceValue = BigInt(token.balance);
+          } else {
+            balanceValue = BigInt(token.balance || '0');
+          }
+
+          const decimals = token.decimals || 18;
+          const balanceEth = Number(balanceValue) / Math.pow(10, decimals);
+
+          // For non-native tokens, return full balance
+          if (!isNativeToken(token)) {
+            return balanceEth.toString();
+          }
+
+          // For native tokens, consider gas fees
+          if (!includeGasFees) {
+            return balanceEth.toString();
+          }
+
+          // Get gas estimate
+          const gasEstimate = customGasEstimate || await estimateGas(token);
+          if (!gasEstimate) {
+            // Fallback: reserve default amount
+            const maxBalance = Math.max(0, balanceEth - NATIVE_TOKEN_GAS_RESERVE);
+            return maxBalance.toString();
+          }
+
+          // Calculate gas cost with buffer
+          const gasBufferMultiplier = 1 + gasBuffer;
+          const gasCostWithBuffer = gasEstimate.gasCostEth * gasBufferMultiplier;
+
+          // Calculate max spendable amount
+          const maxBalance = Math.max(0, balanceEth - gasCostWithBuffer);
+
+          return maxBalance.toString();
+        } catch (error) {
+          console.error('Max balance calculation failed:', error);
+          return '0';
+        }
+      },
+
+      getMaxBalanceSync: (token: UnifiedToken, options: MaxBalanceOptions = {}): string => {
+        const { isNativeToken } = get();
+
+        if (!token?.balance) return '0';
+
+        const {
+          includeGasFees = true,
+          gasBuffer = GAS_BUFFER_PERCENTAGE
+        } = options;
+
+        try {
+          // Parse token balance
+          let balanceValue: bigint;
+          if (typeof token.balance === 'string' && token.balance.startsWith('0x')) {
+            balanceValue = BigInt(token.balance);
+          } else {
+            balanceValue = BigInt(token.balance || '0');
+          }
+
+          const decimals = token.decimals || 18;
+          const balanceEth = Number(balanceValue) / Math.pow(10, decimals);
+
+          // For non-native tokens, return full balance
+          if (!isNativeToken(token)) {
+            return balanceEth.toString();
+          }
+
+          // For native tokens, consider gas fees
+          if (!includeGasFees) {
+            return balanceEth.toString();
+          }
+
+          // Use default gas estimation for sync calculation
+          const gasBufferMultiplier = 1 + gasBuffer;
+          const reserveAmount = NATIVE_TOKEN_GAS_RESERVE * gasBufferMultiplier;
+          const maxBalance = Math.max(0, balanceEth - reserveAmount);
+
+          return maxBalance.toString();
+        } catch (error) {
+          console.error('Sync max balance calculation failed:', error);
+          return '0';
+        }
       },
     }),
     {
