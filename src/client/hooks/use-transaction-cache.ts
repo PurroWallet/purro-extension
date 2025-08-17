@@ -383,32 +383,45 @@ export const useCachedInfiniteTransactions = (
             endBlock: 'latest',
           });
           
-          if (enableCache && result.transactions.length > 0) {
-            // Cache the new transactions
-            const lastTransaction = result.transactions[result.transactions.length - 1];
-            const newLastBlock = lastTransaction.blockNumber;
-            
+          if (enableCache) {
             const cached = await TransactionCacheLib.getCachedTransactions(address, chainId);
-            if (cached) {
-              await TransactionCacheLib.appendTransactions(
-                address,
-                chainId,
-                result.transactions,
-                newLastBlock
-              );
-              
-              // Get updated cache for return
-              const updatedCache = await TransactionCacheLib.getCachedTransactions(address, chainId);
-              if (updatedCache) {
-                result.transactions = updatedCache.transactions;
+
+            if (result.transactions.length > 0) {
+              // Cache the new transactions
+              const lastTransaction = result.transactions[result.transactions.length - 1];
+              const newLastBlock = lastTransaction.blockNumber;
+
+              if (cached) {
+                await TransactionCacheLib.appendTransactions(
+                  address,
+                  chainId,
+                  result.transactions,
+                  newLastBlock
+                );
+
+                // Get updated cache for return
+                const updatedCache = await TransactionCacheLib.getCachedTransactions(address, chainId);
+                if (updatedCache) {
+                  result.transactions = updatedCache.transactions;
+                }
+              } else {
+                await TransactionCacheLib.cacheTransactions(
+                  address,
+                  chainId,
+                  result.transactions,
+                  newLastBlock
+                );
               }
-            } else {
-              await TransactionCacheLib.cacheTransactions(
-                address,
+            } else if (cached && cached.transactions.length > 0) {
+              // No new transactions found, but we have cached data - use it
+              console.log(`📋 NO NEW TRANSACTIONS [Chain ${chainId}]: Using existing cache`, {
+                address: address.slice(0, 8) + '...',
                 chainId,
-                result.transactions,
-                newLastBlock
-              );
+                cachedTransactions: cached.transactions.length,
+                lastBlock: cached.lastBlock,
+              });
+
+              result.transactions = cached.transactions;
             }
           }
           
@@ -424,6 +437,31 @@ export const useCachedInfiniteTransactions = (
           }
         } catch (error) {
           console.warn(`Failed to fetch transactions for chain ${chainId}:`, error);
+
+          // If fetch failed but we have cached data, use the cached data as fallback
+          if (enableCache) {
+            const cached = await TransactionCacheLib.getCachedTransactions(address, chainId);
+            if (cached && cached.transactions.length > 0) {
+              console.log(`🔄 FALLBACK TO CACHE [Chain ${chainId}]: Using cached data after API failure`, {
+                address: address.slice(0, 8) + '...',
+                chainId,
+                cachedTransactions: cached.transactions.length,
+                lastBlock: cached.lastBlock,
+                cacheAge: Math.round((Date.now() - cached.lastFetch) / 1000) + 's ago',
+              });
+
+              results.push({
+                chainId,
+                transactions: cached.transactions,
+                nextPageParam: undefined,
+                hasMore: false,
+              });
+              continue;
+            }
+          }
+
+          // No cached data available, return empty result
+          console.log(`❌ NO FALLBACK [Chain ${chainId}]: No cached data available after API failure`);
           results.push({
             chainId,
             transactions: [],
