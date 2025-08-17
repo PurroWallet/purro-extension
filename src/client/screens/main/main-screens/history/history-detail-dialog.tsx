@@ -5,9 +5,18 @@ import {
   DialogWrapper,
 } from '@/client/components/ui';
 import { Button } from '@/client/components/ui';
+import { Menu } from '@/client/components/ui/menu';
 import type { TransactionWithChain } from './types';
 import useDialogStore from '@/client/hooks/use-dialog-store';
-import { ArrowUp, ArrowDown } from 'lucide-react';
+import {
+  ArrowUp,
+  ArrowDown,
+  Hash,
+  Calendar,
+  Globe,
+  DollarSign,
+  ArrowUpDown,
+} from 'lucide-react';
 import { truncateAddress } from '@/client/utils/formatters';
 import TokenLogo from '@/client/components/token-logo';
 import { getChainType } from './utils/transaction-utils';
@@ -93,6 +102,65 @@ const HistoryDetailDialog = ({
     return null;
   };
 
+  // Prepare menu items for transaction details
+  const transactionDetailsItems = [
+    {
+      icon: isSend ? ArrowUp : ArrowDown,
+      label: isSend ? 'To' : 'From',
+      description: isSend
+        ? truncateAddress(transaction.to)
+        : truncateAddress(transaction.from),
+    },
+    {
+      icon: DollarSign,
+      label: 'Amount',
+      description: formatAmount(),
+    },
+    // Add output amount for swaps
+    ...(isSwap && formatOutputAmount()
+      ? [
+          {
+            icon: ArrowUpDown,
+            label: 'Received',
+            description: formatOutputAmount() || undefined,
+          },
+        ]
+      : []),
+    {
+      icon: Globe,
+      label: 'Network',
+      description:
+        transaction.chainName === 'hyperevm'
+          ? 'HyperEVM'
+          : transaction.chainName,
+    },
+    {
+      icon: Hash,
+      label: 'Transaction Hash',
+      description: truncateAddress(transaction.hash),
+    },
+    {
+      icon: Hash,
+      label: 'Block Number',
+      description: transaction.blockNumber.toString(),
+    },
+    {
+      icon: Calendar,
+      label: 'Date',
+      description: new Date(
+        parseInt(transaction.timeStamp) * 1000
+      ).toLocaleString(),
+    },
+    {
+      label: getExplorerName(),
+      onClick: () => {
+        window.open(getExplorerUrl(), '_blank', 'noopener,noreferrer');
+      },
+      isCentered: true,
+      itemClassName: 'text-[var(--primary-color-light)]',
+    },
+  ];
+
   return (
     <DialogWrapper>
       <DialogHeader title="Transaction Details" onClose={() => closeDialog()} />
@@ -147,88 +215,9 @@ const HistoryDetailDialog = ({
             )}
           </div>
 
-          <div className="rounded-lg overflow-hidden w-full">
-            {/* From/To Address */}
-            <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
-              <p className="text-base text-left font-semibold">
-                {isSend ? 'To' : 'From'}
-              </p>
-              <div className="flex flex-col items-end">
-                <p className="text-sm text-muted-foreground text-right truncate w-full">
-                  {isSend
-                    ? truncateAddress(transaction.to)
-                    : truncateAddress(transaction.from)}
-                </p>
-              </div>
-            </div>
-
-            {/* Amount */}
-            <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
-              <p className="text-base text-left font-semibold">Amount</p>
-              <p className="text-sm text-muted-foreground text-right truncate w-full">
-                {formatAmount()}
-              </p>
-            </div>
-
-            {/* Output Amount for Swaps */}
-            {isSwap && formatOutputAmount() && (
-              <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
-                <p className="text-base text-left font-semibold">Received</p>
-                <p className="text-sm text-muted-foreground text-right truncate w-full">
-                  {formatOutputAmount()}
-                </p>
-              </div>
-            )}
-
-            {/* Network */}
-            <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
-              <p className="text-base text-left font-semibold">Network</p>
-              <p className="text-sm text-muted-foreground text-right truncate w-full">
-                {transaction.chainName === 'hyperevm'
-                  ? 'HyperEVM'
-                  : transaction.chainName}
-              </p>
-            </div>
-
-            {/* Transaction Hash */}
-            <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
-              <p className="text-base text-left font-semibold flex-1 whitespace-nowrap">
-                Transaction Hash
-              </p>
-              <p className="text-sm text-muted-foreground text-right truncate w-full">
-                {truncateAddress(transaction.hash)}
-              </p>
-            </div>
-
-            {/* Block Number */}
-            <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
-              <p className="text-base text-left font-semibold">Block Number</p>
-              <p className="text-sm text-muted-foreground text-right truncate w-full">
-                {transaction.blockNumber}
-              </p>
-            </div>
-
-            {/* Date */}
-            <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
-              <p className="text-base text-left font-semibold">Date</p>
-              <p className="text-sm text-muted-foreground text-right truncate w-full">
-                {new Date(
-                  parseInt(transaction.timeStamp) * 1000
-                ).toLocaleString()}
-              </p>
-            </div>
-
-            {/* Explorer Link */}
-            <div className="w-full flex items-center justify-center bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer p-3 gap-2">
-              <a
-                className="text-base text-center font-semibold text-[var(--primary-color-light)]"
-                href={getExplorerUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {getExplorerName()}
-              </a>
-            </div>
+          {/* Transaction Details using Menu component */}
+          <div className="space-y-4 w-full">
+            <Menu items={transactionDetailsItems} />
           </div>
         </div>
       </DialogContent>

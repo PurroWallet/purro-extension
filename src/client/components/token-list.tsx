@@ -43,7 +43,6 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
     token.logo || null
   );
 
-  console.log("token", token, tokenLogoSrc);
   const networkIconSrc = getNetworkIcon(token.chain as ChainType);
 
   const [tokenImageError, setTokenImageError] = useState(!token.logo);
@@ -52,7 +51,7 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
   useEffect(() => {
     if (!token.logo) {
       getTokenLogo(safeSymbol, token.chain, token.contractAddress).then(
-        (logoUrl) => {
+        logoUrl => {
           setTokenLogoSrc(logoUrl);
           setTokenImageError(false);
           if (!logoUrl) {
