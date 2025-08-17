@@ -246,7 +246,7 @@ window.addEventListener('eip6963:announceProvider', (event) => {
 });
 window.dispatchEvent(new CustomEvent('eip6963:requestProvider'));
 
-const purroProvider = providers.find(p => p.info.rdns === 'com.purro.wallet');
+const purroProvider = providers.find(p => p.info.rdns === 'xyz.purro.app');
 if (purroProvider) {
   const accounts = await purroProvider.provider.request({ method: 'eth_requestAccounts' });
 }
@@ -258,12 +258,12 @@ if (purroProvider) {
 function getProvider() {
   // Try EIP-6963 first
   const providers = getEIP6963Providers();
-  const purro = providers.find(p => p.info.rdns === 'com.purro.wallet');
+  const purro = providers.find(p => p.info.rdns === 'xyz.purro.app');
   if (purro) return purro.provider;
   
   // Fallback to legacy
   if (window.purro) return window.purro;
-  if (window.ethereum?.info?.rdns === 'com.purro.wallet') return window.ethereum;
+  if (window.ethereum?.info?.rdns === 'xyz.purro.app') return window.ethereum;
   
   throw new Error('Purro Wallet not found');
 }
