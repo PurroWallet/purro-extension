@@ -3,6 +3,7 @@ import { formatCurrency } from '../utils/formatters';
 import { ChainType } from '../types/wallet';
 import { getTokenLogo } from '../utils/icons';
 import { getNetworkIcon } from '@/utils/network-icons';
+import { AlertTriangle } from 'lucide-react';
 
 interface UnifiedToken {
   chain: ChainType;
@@ -31,6 +32,171 @@ interface TokenItemProps {
   onClick?: (token: UnifiedToken) => void;
 }
 
+interface ScamAlert {
+  isScam: boolean;
+  riskLevel: 'high' | 'medium' | 'low';
+  reasons: string[];
+}
+
+const checkAlertScanToken = (
+  token: UnifiedToken,
+  hasTokenLogo: boolean = false
+): ScamAlert => {
+  const reasons: string[] = [];
+  let riskLevel: 'high' | 'medium' | 'low' = 'low';
+
+  const name = token.name?.toLowerCase() || '';
+  const symbol = token.symbol?.toLowerCase() || '';
+
+  // Debug logging for legitimate tokens that might be flagged
+  if (['eth', 'usdc', 'usdt', 'arb', 'btc', 'bnb'].includes(symbol.trim())) {
+    console.log('🔍 CHECKING LEGITIMATE TOKEN:', {
+      originalName: token.name,
+      originalSymbol: token.symbol,
+      processedName: name,
+      processedSymbol: symbol,
+      symbolTrimmed: symbol.trim(),
+      hasSpaces: symbol !== symbol.trim(),
+    });
+  }
+
+  // High-risk indicators
+  const highRiskPatterns = [
+    // Airdrop/claim scams
+    /airdrop/i,
+    /claim/i,
+    /distribution/i,
+    /round\s*\d+/i,
+    /visit.*claim/i,
+    /claim.*until/i,
+
+    // Telegram/social media indicators
+    /t\.me/i,
+    /telegram/i,
+    /\*visit/i,
+    /\*claim/i,
+
+    // Suspicious symbols and characters
+    /[✅⚡🎁💰🚀]/u,
+    /[\u0400-\u04FF]/, // Cyrillic characters (like UЅDС)
+    /[\u2000-\u206F]/, // General punctuation (invisible chars)
+
+    // Impersonation attempts
+    /official/i,
+    /verified/i,
+    /authentic/i,
+  ];
+
+  // Medium-risk indicators
+  const mediumRiskPatterns = [
+    // Suspicious naming patterns
+    /token.*distribution/i,
+    /free.*token/i,
+    /bonus.*token/i,
+  ];
+
+  // Common token impersonation with suspicious spacing/characters
+  // Only flag if the symbol/name is EXACTLY these tokens but with suspicious spacing
+  const suspiciousTokenPatterns = [
+    // Exact matches with leading/trailing spaces or multiple spaces
+    /^\s+arb\s*$/i, // " ARB" or " ARB "
+    /^\s*arb\s+$/i, // "ARB " or " ARB "
+    /^\s+usdc\s*$/i, // " USDC" or " USDC "
+    /^\s*usdc\s+$/i, // "USDC " or " USDC "
+    /^\s+usdt\s*$/i, // " USDT" or " USDT "
+    /^\s*usdt\s+$/i, // "USDT " or " USDT "
+    /^\s+eth\s*$/i, // " ETH" or " ETH "
+    /^\s*eth\s+$/i, // "ETH " or " ETH "
+    /^\s+btc\s*$/i, // " BTC" or " BTC "
+    /^\s*btc\s+$/i, // "BTC " or " BTC "
+    /^\s+bnb\s*$/i, // " BNB" or " BNB "
+    /^\s*bnb\s+$/i, // "BNB " or " BNB "
+  ];
+
+  // Check high-risk patterns
+  for (const pattern of highRiskPatterns) {
+    if (pattern.test(name) || pattern.test(symbol)) {
+      reasons.push(`Suspicious pattern detected: ${pattern.source}`);
+      riskLevel = 'high';
+    }
+  }
+
+  // Check suspicious token impersonation patterns (only if not already high risk)
+  if (riskLevel !== 'high') {
+    for (const pattern of suspiciousTokenPatterns) {
+      if (pattern.test(name) || pattern.test(symbol)) {
+        reasons.push(`Suspicious token name with spacing/characters`);
+        riskLevel = 'medium';
+      }
+    }
+  }
+
+  // Check medium-risk patterns (only if not already high risk)
+  if (riskLevel !== 'high') {
+    for (const pattern of mediumRiskPatterns) {
+      if (pattern.test(name) || pattern.test(symbol)) {
+        reasons.push(`Suspicious naming pattern: ${pattern.source}`);
+        riskLevel = 'medium';
+      }
+    }
+  }
+
+  // Check for suspicious character combinations
+  if (
+    name.includes('✅') &&
+    (name.includes('airdrop') || name.includes('distribution'))
+  ) {
+    reasons.push('Checkmark + airdrop/distribution pattern');
+    riskLevel = 'high';
+  }
+
+  // Check for Cyrillic character impersonation (like UЅDС vs USDC)
+  const cyrillicChars =
+    name.match(/[\u0400-\u04FF]/g) || symbol.match(/[\u0400-\u04FF]/g);
+  if (cyrillicChars) {
+    reasons.push(`Contains Cyrillic characters: ${cyrillicChars.join(', ')}`);
+    riskLevel = 'high';
+  }
+
+  // Check for URL patterns in name/symbol
+  if (
+    name.includes('t.me') ||
+    symbol.includes('t.me') ||
+    name.includes('http') ||
+    symbol.includes('http')
+  ) {
+    reasons.push('Contains URL/social media links');
+    riskLevel = 'high';
+  }
+
+  // Check for excessive special characters
+  const specialCharCount = (name.match(/[^a-zA-Z0-9\s]/g) || []).length;
+  if (specialCharCount > 3) {
+    reasons.push(`Excessive special characters (${specialCharCount})`);
+    if (riskLevel === 'low') riskLevel = 'medium';
+  }
+
+  // Check for missing logo ONLY if there are already other warning signs
+  const hasOtherWarnings = reasons.length > 0;
+  if (hasOtherWarnings && !hasTokenLogo) {
+    reasons.push('No token logo available');
+    // Upgrade risk level if missing logo + other warnings
+    if (riskLevel === 'medium') {
+      riskLevel = 'high';
+    } else if (riskLevel === 'low') {
+      riskLevel = 'medium';
+    }
+  }
+
+  const isScam = reasons.length > 0;
+
+  return {
+    isScam,
+    riskLevel,
+    reasons,
+  };
+};
+
 const TokenItem = ({ token, onClick }: TokenItemProps) => {
   // Safely handle potential null/undefined values
   const safeSymbol = token.symbol || 'UNKNOWN';
@@ -47,6 +213,10 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
 
   const [tokenImageError, setTokenImageError] = useState(!token.logo);
 
+  // Check for scam token indicators
+  const hasTokenLogo = !tokenImageError && !!tokenLogoSrc;
+  const scamAlert = checkAlertScanToken(token, hasTokenLogo);
+
   // Load token logo asynchronously if not provided
   useEffect(() => {
     if (!token.logo) {
@@ -60,7 +230,7 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
         }
       );
     }
-  }, [token.logo, safeSymbol]);
+  }, [token.logo, safeSymbol, token.chain, token.contractAddress]);
 
   const handleClick = () => {
     if (onClick) {
@@ -68,9 +238,23 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
     }
   };
 
+  // Get scam warning styles
+  const getScamWarningStyles = () => {
+    if (!scamAlert.isScam) return '';
+
+    switch (scamAlert.riskLevel) {
+      case 'high':
+        return 'border-2 border-amber-500/50 bg-amber-500/5';
+      case 'medium':
+        return 'border-2 border-yellow-500/50 bg-yellow-500/5';
+      default:
+        return 'border border-orange-500/30 bg-orange-500/5';
+    }
+  };
+
   return (
     <div
-      className={`bg-[var(--card-color)] rounded-lg p-3 flex items-center gap-3 ${
+      className={`bg-[var(--card-color)] rounded-lg p-3 flex items-center gap-3 relative ${getScamWarningStyles()} ${
         onClick
           ? 'cursor-pointer hover:bg-[var(--card-color)]/80 transition-colors'
           : ''
@@ -87,8 +271,16 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
               onError={() => setTokenImageError(true)}
             />
           ) : (
-            <div className="size-12 bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-lg border border-[var(--primary-color)]/20">
-              {safeSymbol.charAt(0).toUpperCase()}
+            <div className={`size-12 rounded-full flex items-center justify-center font-bold text-lg border ${
+              scamAlert.isScam
+                ? 'bg-gradient-to-br from-orange-500/20 to-orange-500/10 text-orange-600 border-orange-500/20'
+                : 'bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 text-[var(--primary-color)] border-[var(--primary-color)]/20'
+            }`}>
+              {scamAlert.isScam ? (
+                <AlertTriangle className="w-6 h-6" />
+              ) : (
+                safeSymbol.charAt(0).toUpperCase()
+              )}
             </div>
           )}
         </div>
@@ -104,7 +296,7 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
         )}
       </div>
 
-      <div className="flex-1 flex items-center justify-between min-w-0">
+      <div className="flex-1 flex items-center justify-between min-w-0 relative">
         <div className="overflow-hidden min-w-0 flex-1 pr-3">
           <div
             className="text-base font-medium truncate w-full"
@@ -120,12 +312,15 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
             <span className="font-medium">{safeSymbol}</span>
           </div>
         </div>
+
         <div className="text-right flex-shrink-0">
           <span className="text-lg font-medium whitespace-nowrap">
             {formatCurrency(safeValue)}
           </span>
         </div>
       </div>
+
+
     </div>
   );
 };

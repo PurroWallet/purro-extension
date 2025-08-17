@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   DialogContent,
   DialogHeader,
@@ -16,6 +16,9 @@ import {
   BarChart3,
   Coins,
   Activity,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { UnifiedToken } from '@/client/components/token-list';
 import { formatCurrency } from '@/client/utils/formatters';
@@ -29,10 +32,123 @@ import {
 import useMainScreenStore from '@/client/hooks/use-main-screen-store';
 import useSwapStore from '@/client/hooks/use-swap-store';
 
+interface ScamAlert {
+  isScam: boolean;
+  riskLevel: 'high' | 'medium' | 'low';
+  reasons: string[];
+}
+
 interface TokenInfoDialogProps {
   token: UnifiedToken;
   onClose: () => void;
 }
+
+const checkAlertScanToken = (token: UnifiedToken, hasTokenLogo: boolean = false): ScamAlert => {
+  const reasons: string[] = [];
+  let riskLevel: 'high' | 'medium' | 'low' = 'low';
+
+  const name = token.name?.toLowerCase() || '';
+  const symbol = token.symbol?.toLowerCase() || '';
+
+  // High-risk indicators
+  const highRiskPatterns = [
+    // Airdrop/claim scams
+    /airdrop/i,
+    /claim/i,
+    /distribution/i,
+    /round\s*\d+/i,
+    /visit.*claim/i,
+    /claim.*until/i,
+
+    // Telegram/social media indicators
+    /t\.me/i,
+    /telegram/i,
+    /\*visit/i,
+    /\*claim/i,
+
+    // Suspicious symbols and characters
+    /[✅⚡🎁💰🚀]/u,
+    /[\u0400-\u04FF]/, // Cyrillic characters (like UЅDС)
+    /[\u2000-\u206F]/, // General punctuation (invisible chars)
+
+    // Impersonation attempts
+    /official/i,
+    /verified/i,
+    /authentic/i,
+  ];
+
+  // Medium-risk indicators
+  const mediumRiskPatterns = [
+    // Suspicious naming patterns
+    /token.*distribution/i,
+    /free.*token/i,
+    /bonus.*token/i,
+  ];
+
+  // Check high-risk patterns
+  for (const pattern of highRiskPatterns) {
+    if (pattern.test(name) || pattern.test(symbol)) {
+      reasons.push(`Suspicious pattern detected: ${pattern.source}`);
+      riskLevel = 'high';
+    }
+  }
+
+  // Check medium-risk patterns (only if not already high risk)
+  if (riskLevel !== 'high') {
+    for (const pattern of mediumRiskPatterns) {
+      if (pattern.test(name) || pattern.test(symbol)) {
+        reasons.push(`Suspicious naming pattern: ${pattern.source}`);
+        riskLevel = 'medium';
+      }
+    }
+  }
+
+  // Check for suspicious character combinations
+  if (name.includes('✅') && (name.includes('airdrop') || name.includes('distribution'))) {
+    reasons.push('Checkmark + airdrop/distribution pattern');
+    riskLevel = 'high';
+  }
+
+  // Check for Cyrillic character impersonation (like UЅDС vs USDC)
+  const cyrillicChars = name.match(/[\u0400-\u04FF]/g) || symbol.match(/[\u0400-\u04FF]/g);
+  if (cyrillicChars) {
+    reasons.push(`Contains Cyrillic characters: ${cyrillicChars.join(', ')}`);
+    riskLevel = 'high';
+  }
+
+  // Check for URL patterns in name/symbol
+  if (name.includes('t.me') || symbol.includes('t.me') || name.includes('http') || symbol.includes('http')) {
+    reasons.push('Contains URL/social media links');
+    riskLevel = 'high';
+  }
+
+  // Check for excessive special characters
+  const specialCharCount = (name.match(/[^a-zA-Z0-9\s]/g) || []).length;
+  if (specialCharCount > 3) {
+    reasons.push(`Excessive special characters (${specialCharCount})`);
+    if (riskLevel === 'low') riskLevel = 'medium';
+  }
+
+  // Check for missing logo ONLY if there are already other warning signs
+  const hasOtherWarnings = reasons.length > 0;
+  if (hasOtherWarnings && !hasTokenLogo) {
+    reasons.push('No token logo available');
+    // Upgrade risk level if missing logo + other warnings
+    if (riskLevel === 'medium') {
+      riskLevel = 'high';
+    } else if (riskLevel === 'low') {
+      riskLevel = 'medium';
+    }
+  }
+
+  const isScam = reasons.length > 0;
+
+  return {
+    isScam,
+    riskLevel,
+    reasons
+  };
+};
 
 const TokenInfoDialog: React.FC<TokenInfoDialogProps> = ({
   token,
@@ -53,6 +169,26 @@ const TokenInfoDialog: React.FC<TokenInfoDialogProps> = ({
 
   // Check if token is on HyperEVM network
   const isHyperEvmToken = token.chain === 'hyperevm';
+
+  // Check for scam token indicators
+  const hasTokenLogo = !!token.logo;
+  const scamAlert = checkAlertScanToken(token, hasTokenLogo);
+
+  // Collapsible state for security warning
+  const [isWarningExpanded, setIsWarningExpanded] = useState(false);
+
+  // Log scam detection for debugging
+  if (scamAlert.isScam) {
+    console.warn('🚨 POTENTIAL SCAM TOKEN IN DIALOG:', {
+      name: token.name,
+      symbol: token.symbol,
+      riskLevel: scamAlert.riskLevel,
+      reasons: scamAlert.reasons,
+      hasLogo: hasTokenLogo,
+      contractAddress: token.contractAddress,
+      chain: token.chain,
+    });
+  }
 
   // Handle swap button click
   const handleSwapClick = () => {
@@ -115,6 +251,52 @@ const TokenInfoDialog: React.FC<TokenInfoDialogProps> = ({
               <p className="text-sm text-white/40">{token.chainName}</p>
             </div>
           </div>
+
+          {/* Scam Warning Alert */}
+          {scamAlert.isScam && (
+            <div className={`p-3 rounded-lg border ${
+              scamAlert.riskLevel === 'high'
+                ? 'bg-amber-500/10 border-amber-500/30'
+                : scamAlert.riskLevel === 'medium'
+                ? 'bg-yellow-500/10 border-yellow-500/30'
+                : 'bg-orange-500/10 border-orange-500/30'
+            }`}>
+              {/* Collapsible Header */}
+              <div
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={() => setIsWarningExpanded(!isWarningExpanded)}
+              >
+                <AlertTriangle className={`w-4 h-4 flex-shrink-0 ${
+                  scamAlert.riskLevel === 'high'
+                    ? 'text-amber-400'
+                    : scamAlert.riskLevel === 'medium'
+                    ? 'text-yellow-400'
+                    : 'text-orange-400'
+                }`} />
+                <h4 className={`font-semibold text-sm flex-1 ${
+                  scamAlert.riskLevel === 'high'
+                    ? 'text-amber-400'
+                    : scamAlert.riskLevel === 'medium'
+                    ? 'text-yellow-400'
+                    : 'text-orange-400'
+                }`}>
+                  Security Warning - {scamAlert.riskLevel.toUpperCase()} Risk
+                </h4>
+                {isWarningExpanded ? (
+                  <ChevronUp className="w-4 h-4 text-white/60" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-white/60" />
+                )}
+              </div>
+
+              {/* Collapsible Content */}
+              {isWarningExpanded && (
+                <div className="mt-3">
+                  <p className="text-sm text-white/70">Verify this token carefully before transactions.</p>
+                </div>
+              )}
+            </div>
+          )}
 
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
@@ -205,6 +387,28 @@ const TokenInfoDialog: React.FC<TokenInfoDialogProps> = ({
 
       {/* Actions moved to footer */}
       <DialogFooter className="flex-col">
+        {/* Swap button - only show for HyperEVM tokens */}
+        {isHyperEvmToken && (
+          <Button
+            variant={scamAlert.isScam ? "secondary" : "primary"}
+            className={`w-full flex items-center gap-2 ${
+              scamAlert.isScam
+                ? 'border-amber-500/50 text-amber-400 hover:bg-amber-500/10'
+                : ''
+            }`}
+            onClick={handleSwapClick}
+            disabled={scamAlert.riskLevel === 'high'}
+          >
+            <ArrowUpDown className="size-4" />
+            {scamAlert.riskLevel === 'high'
+              ? `⚠️ High Risk - Swap Disabled`
+              : scamAlert.isScam
+              ? `⚠️ Swap ${token.symbol} (Use Caution)`
+              : `Swap ${token.symbol}`
+            }
+          </Button>
+        )}
+
         {getTokenExplorerUrl(
           token.chain,
           token.contractAddress,
