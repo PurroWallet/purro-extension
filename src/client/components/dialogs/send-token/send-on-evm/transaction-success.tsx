@@ -10,7 +10,7 @@ import useSendTokenStore from '@/client/hooks/use-send-token-store';
 import useDialogStore from '@/client/hooks/use-dialog-store';
 import { CheckCircle2, X, Copy, Check } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getAddressByDomain } from '@/client/services/hyperliquid-name-api';
 import { formatTokenAmount, truncateAddress } from '@/client/utils/formatters';
 

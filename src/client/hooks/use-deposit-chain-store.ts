@@ -6,7 +6,9 @@ interface DepositChainState {
   txHash: string | null;
   error: string | null;
   isLoading: boolean;
-  setStep: (step: 'input' | 'confirm' | 'pending' | 'success' | 'error') => void;
+  setStep: (
+    step: 'input' | 'confirm' | 'pending' | 'success' | 'error'
+  ) => void;
   setAmount: (amount: string) => void;
   setTxHash: (txHash: string | null) => void;
   setError: (error: string | null) => void;

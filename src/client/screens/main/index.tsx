@@ -154,10 +154,10 @@ export const MainContent = () => {
           onMouseLeave={() => setButtonHovered(null)}
           icon={
             <ExploreAnimationIcon
-            className={cn(
-              mainScreen === 'explore' && 'text-[var(--primary-color-light)]'
-            )}
-            isHovered={buttonHovered === 'explore'}
+              className={cn(
+                mainScreen === 'explore' && 'text-[var(--primary-color-light)]'
+              )}
+              isHovered={buttonHovered === 'explore'}
             />
           }
         />

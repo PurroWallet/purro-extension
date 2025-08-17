@@ -98,7 +98,8 @@ const Pending = () => {
               Transaction Pending
             </h3>
             <p className="text-gray-300">
-              Your {formatCurrency(parseFloat(amount), 2, 'USDC')} deposit is being processed.
+              Your {formatCurrency(parseFloat(amount), 2, 'USDC')} deposit is
+              being processed.
             </p>
             <p className="text-sm text-gray-400">
               Time elapsed: {formatTime(timeElapsed)}
@@ -113,7 +114,7 @@ const Pending = () => {
                 {formatCurrency(parseFloat(amount), 2, 'USDC')}
               </span>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-400">Network:</span>
               <span className="text-sm font-medium text-white">Arbitrum</span>
@@ -121,7 +122,9 @@ const Pending = () => {
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-400">Status:</span>
-              <span className="text-sm font-medium text-yellow-400">Pending</span>
+              <span className="text-sm font-medium text-yellow-400">
+                Pending
+              </span>
             </div>
 
             {txHash && (
@@ -155,8 +158,9 @@ const Pending = () => {
             <div className="flex flex-col gap-2 text-sm">
               <p className="text-blue-400 font-medium">Processing</p>
               <p className="text-gray-300">
-                Your transaction is being confirmed on the Arbitrum network. 
-                Once confirmed, your USDC will be credited to your Hyperliquid account within 1 minute.
+                Your transaction is being confirmed on the Arbitrum network.
+                Once confirmed, your USDC will be credited to your Hyperliquid
+                account within 1 minute.
               </p>
             </div>
           </div>

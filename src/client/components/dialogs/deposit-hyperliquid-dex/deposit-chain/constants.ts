@@ -1,8 +1,10 @@
 // Hyperliquid Bridge2 Constants
-export const BRIDGE_CONTRACT_ADDRESS = '0x2df1c51e09aecf9cacb7bc98cb1742757f163df7';
+export const BRIDGE_CONTRACT_ADDRESS =
+  '0x2df1c51e09aecf9cacb7bc98cb1742757f163df7';
 export const MIN_DEPOSIT_AMOUNT = 5; // USDC
 export const ARBITRUM_CHAIN_ID = 42161;
-export const USDC_CONTRACT_ADDRESS = '0xaf88d065e77c8cC2239327C5EDb3A432268e5831'; // USDC on Arbitrum
+export const USDC_CONTRACT_ADDRESS =
+  '0xaf88d065e77c8cC2239327C5EDb3A432268e5831'; // USDC on Arbitrum
 
 // Bridge Information
 export const BRIDGE_INFO = {
@@ -15,7 +17,8 @@ export const BRIDGE_INFO = {
   minDeposit: MIN_DEPOSIT_AMOUNT,
   maxProcessingTime: '1 minute',
   explorerUrl: 'https://arbiscan.io',
-  githubUrl: 'https://github.com/hyperliquid-dex/contracts/blob/master/Bridge2.sol',
+  githubUrl:
+    'https://github.com/hyperliquid-dex/contracts/blob/master/Bridge2.sol',
 } as const;
 
 // Transaction Status

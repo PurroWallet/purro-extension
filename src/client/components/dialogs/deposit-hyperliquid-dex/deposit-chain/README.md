@@ -7,6 +7,7 @@ This directory contains the implementation of the Hyperliquid Bridge2 deposit fu
 The Bridge2 is the official bridge between Hyperliquid and Arbitrum. Users can send native USDC to the bridge contract, and it gets credited to their Hyperliquid account in less than 1 minute.
 
 ### Key Information
+
 - **Bridge Contract**: `0x2df1c51e09aecf9cacb7bc98cb1742757f163df7`
 - **Source Chain**: Arbitrum
 - **Destination**: Hyperliquid
@@ -51,24 +52,28 @@ interface DepositChainState {
 ## Features
 
 ### Input Validation
+
 - Minimum deposit amount (5 USDC)
 - Maximum amount based on user's USDC balance
 - Real-time balance fetching from Arbitrum
 - Clear error messages for invalid inputs
 
 ### Transaction Monitoring
+
 - Real-time transaction status checking
 - Automatic progression from pending to success
 - Transaction hash display with copy/view functionality
 - Elapsed time tracking
 
 ### User Experience
+
 - Clear visual feedback for each state
 - Informational cards explaining the process
 - Warning about minimum deposit requirements
 - Links to block explorer for transaction verification
 
 ### Error Handling
+
 - Comprehensive error messages
 - Retry functionality for failed transactions
 - Common issues explanation
@@ -103,11 +108,13 @@ The component communicates with the backend through extension messages:
 ## Security Considerations
 
 ### Validation
+
 - Client-side validation for amount limits
 - Server-side validation should mirror client rules
 - Transaction hash verification
 
 ### User Safety
+
 - Clear warnings about minimum deposit
 - Prominent display of bridge contract address
 - Transaction confirmation before submission
@@ -128,6 +135,7 @@ const renderDepositDialog = () => {
 ## Styling
 
 The component uses the project's design system:
+
 - CSS custom properties for theming
 - Consistent spacing and typography
 - Responsive design patterns
@@ -136,16 +144,19 @@ The component uses the project's design system:
 ## Testing Considerations
 
 ### Unit Tests
+
 - State management logic
 - Validation functions
 - Error handling scenarios
 
 ### Integration Tests
+
 - Backend message communication
 - Transaction flow end-to-end
 - Error recovery scenarios
 
 ### Manual Testing
+
 - Test with various amounts (below/above minimum)
 - Test with insufficient balance
 - Test transaction failures
@@ -171,6 +182,7 @@ The component uses the project's design system:
 ### Debug Information
 
 The component logs relevant information to the console for debugging:
+
 - Balance fetch errors
 - Transaction submission results
 - Status check responses

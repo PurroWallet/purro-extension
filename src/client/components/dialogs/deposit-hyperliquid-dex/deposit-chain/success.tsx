@@ -48,7 +48,8 @@ const Success = () => {
               Deposit Successful!
             </h3>
             <p className="text-gray-300">
-              Your {formatCurrency(parseFloat(amount), 2, 'USDC')} deposit has been submitted to the Hyperliquid bridge.
+              Your {formatCurrency(parseFloat(amount), 2, 'USDC')} deposit has
+              been submitted to the Hyperliquid bridge.
             </p>
           </div>
 
@@ -97,8 +98,8 @@ const Success = () => {
             <div className="flex flex-col gap-2 text-sm">
               <p className="text-blue-400 font-medium">What&apos;s Next?</p>
               <p className="text-gray-300">
-                Your USDC will be credited to your Hyperliquid account within 1 minute.
-                You can check your balance in the Hyperliquid interface.
+                Your USDC will be credited to your Hyperliquid account within 1
+                minute. You can check your balance in the Hyperliquid interface.
               </p>
             </div>
           </div>
@@ -112,10 +113,7 @@ const Success = () => {
       </DialogContent>
 
       <DialogFooter>
-        <Button
-          onClick={handleClose}
-          className="w-full"
-        >
+        <Button onClick={handleClose} className="w-full">
           Done
         </Button>
       </DialogFooter>

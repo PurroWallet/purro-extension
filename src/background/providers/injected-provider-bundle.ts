@@ -96,8 +96,6 @@ try {
   const providerManager = new PurroProviderManager();
   const evmProvider = new PurroEVMProvider(providerManager);
 
-
-
   // Expose providers to window object
   (window as any).purro = providerManager;
 
@@ -127,7 +125,6 @@ try {
       detail: evmProvider,
     })
   );
-
 } catch (error) {
   console.error('❌ Purro: Error initializing providers:', error);
 }

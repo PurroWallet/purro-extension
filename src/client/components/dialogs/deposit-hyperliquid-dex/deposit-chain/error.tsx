@@ -52,7 +52,8 @@ const Error = () => {
               Transaction Failed
             </h3>
             <p className="text-gray-300">
-              Your {formatCurrency(parseFloat(amount || '0'), 2, 'USDC')} deposit could not be processed.
+              Your {formatCurrency(parseFloat(amount || '0'), 2, 'USDC')}{' '}
+              deposit could not be processed.
             </p>
           </div>
 
@@ -61,7 +62,8 @@ const Error = () => {
             <div className="flex flex-col gap-2 text-sm">
               <p className="text-red-400 font-medium">Error Details</p>
               <p className="text-gray-300 text-left">
-                {error || 'An unknown error occurred while processing your transaction.'}
+                {error ||
+                  'An unknown error occurred while processing your transaction.'}
               </p>
             </div>
           </div>
@@ -77,7 +79,7 @@ const Error = () => {
                   </span>
                 </div>
               )}
-              
+
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-400">Network:</span>
                 <span className="text-sm font-medium text-white">Arbitrum</span>
@@ -143,10 +145,7 @@ const Error = () => {
         >
           Close
         </Button>
-        <Button
-          onClick={handleTryAgain}
-          className="flex-1"
-        >
+        <Button onClick={handleTryAgain} className="flex-1">
           Try Again
         </Button>
       </DialogFooter>

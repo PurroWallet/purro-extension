@@ -24,12 +24,8 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "<all_urls>"
-      ],
-      "js": [
-        "contentScript.js"
-      ],
+      "matches": ["<all_urls>"],
+      "js": ["contentScript.js"],
       "run_at": "document_start",
       "type": "module"
     }
@@ -46,9 +42,7 @@
         "injectedProviderBundle.js",
         "purro-icon.js"
       ],
-      "matches": [
-        "<all_urls>"
-      ]
+      "matches": ["<all_urls>"]
     }
   ],
   "icons": {
@@ -65,7 +59,5 @@
     "alarms",
     "offscreen"
   ],
-  "host_permissions": [
-    "https://*/*"
-  ]
+  "host_permissions": ["https://*/*"]
 }

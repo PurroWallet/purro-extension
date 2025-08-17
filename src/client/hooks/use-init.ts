@@ -30,12 +30,21 @@ const useInit = () => {
     }
 
     // Handle onboarding flow after state is loaded
-    const isOnboardingPage = window.location.pathname.includes('onboarding') ||
+    const isOnboardingPage =
+      window.location.pathname.includes('onboarding') ||
       window.location.href.includes('onboarding.html');
-    const isImportPage = window.location.pathname.includes('import') ||
+    const isImportPage =
+      window.location.pathname.includes('import') ||
       window.location.href.includes('import.html');
 
-    if (initialized && !loading && !hasWallet && !isOnboardingPage && !isImportPage && !isOnboardingWindowOpen) {
+    if (
+      initialized &&
+      !loading &&
+      !hasWallet &&
+      !isOnboardingPage &&
+      !isImportPage &&
+      !isOnboardingWindowOpen
+    ) {
       // Debounce the onboarding window opening
       onboardingTimeoutRef.current = setTimeout(() => {
         if (!isOnboardingWindowOpen) {

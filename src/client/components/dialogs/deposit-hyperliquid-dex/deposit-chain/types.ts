@@ -97,7 +97,7 @@ export interface BridgeConfig {
 }
 
 // Error Types
-export type DepositError = 
+export type DepositError =
   | 'INSUFFICIENT_BALANCE'
   | 'BELOW_MINIMUM'
   | 'ABOVE_MAXIMUM'

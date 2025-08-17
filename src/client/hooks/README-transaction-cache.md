@@ -28,7 +28,10 @@ import { useCachedInfiniteTransactions } from '@/client/hooks/use-transaction-ca
 ### Basic Usage
 
 ```typescript
-import { useCachedTransactions, useCachedInfiniteTransactions } from '@/client/hooks/use-transaction-cache';
+import {
+  useCachedTransactions,
+  useCachedInfiniteTransactions,
+} from '@/client/hooks/use-transaction-cache';
 
 // Single chain with caching
 const { data, isLoading, error } = useCachedTransactions(
@@ -43,22 +46,17 @@ const { data, isLoading, error } = useCachedTransactions(
 );
 
 // Multi-chain with caching
-const { 
-  data, 
-  fetchNextPage, 
-  hasNextPage, 
-  isLoading, 
-  error 
-} = useCachedInfiniteTransactions(
-  address,
-  [1, 42161, 8453, 999], // Multiple chains
-  {
-    enabled: !!address,
-    enableCache: true, // Enable caching
-    sort: 'desc',
-    offset: 50,
-  }
-);
+const { data, fetchNextPage, hasNextPage, isLoading, error } =
+  useCachedInfiniteTransactions(
+    address,
+    [1, 42161, 8453, 999], // Multiple chains
+    {
+      enabled: !!address,
+      enableCache: true, // Enable caching
+      sort: 'desc',
+      offset: 50,
+    }
+  );
 ```
 
 ## API Reference
@@ -76,6 +74,7 @@ useCachedTransactions(
 ```
 
 **Parameters:**
+
 - `address`: Wallet address to fetch transactions for
 - `chainId`: Chain ID (1 = Ethereum, 42161 = Arbitrum, etc.)
 - `options`: Configuration options
@@ -85,6 +84,7 @@ useCachedTransactions(
   - `offset`: Number of transactions per page (default: 1000)
 
 **Returns:**
+
 - `data`: TransactionPage with transactions array
 - `isLoading`: Loading state
 - `error`: Error state
@@ -103,11 +103,13 @@ useCachedInfiniteTransactions(
 ```
 
 **Parameters:**
+
 - `address`: Wallet address to fetch transactions for
 - `chainIds`: Array of chain IDs to fetch from
 - `options`: Same as `useCachedTransactions`
 
 **Returns:**
+
 - `data`: Infinite query data with pages
 - `fetchNextPage`: Function to load more data
 - `hasNextPage`: Boolean indicating if more data is available
@@ -125,13 +127,26 @@ Low-level cache management utilities:
 import { TransactionCacheLib } from '@/client/hooks/use-transaction-cache';
 
 // Get cached transactions
-const cached = await TransactionCacheLib.getCachedTransactions(address, chainId);
+const cached = await TransactionCacheLib.getCachedTransactions(
+  address,
+  chainId
+);
 
 // Cache transactions manually
-await TransactionCacheLib.cacheTransactions(address, chainId, transactions, lastBlock);
+await TransactionCacheLib.cacheTransactions(
+  address,
+  chainId,
+  transactions,
+  lastBlock
+);
 
 // Append new transactions
-await TransactionCacheLib.appendTransactions(address, chainId, newTransactions, newLastBlock);
+await TransactionCacheLib.appendTransactions(
+  address,
+  chainId,
+  newTransactions,
+  newLastBlock
+);
 
 // Clear cache
 await TransactionCacheLib.clearCache(address, chainId);
@@ -140,11 +155,13 @@ await TransactionCacheLib.clearCache(address, chainId);
 ## How It Works
 
 ### 1. First Load
+
 - Checks for existing cached data
 - If no cache exists, fetches from block 0
 - Caches all transactions with the last block number
 
 ### 2. Subsequent Loads
+
 - Checks cache freshness (5-minute expiry)
 - If fresh, returns cached data immediately
 - If stale, fetches only new transactions from last cached block + 1
@@ -152,6 +169,7 @@ await TransactionCacheLib.clearCache(address, chainId);
 - Updates cache with new last block number
 
 ### 3. Cache Storage
+
 - Uses Chrome extension storage API
 - Stores up to 5000 transactions per chain per address
 - Automatically removes oldest transactions when limit is reached
@@ -194,10 +212,10 @@ const { data, fetchNextPage, hasNextPage } = useInfiniteTransactions(
 const { data, fetchNextPage, hasNextPage } = useCachedInfiniteTransactions(
   address,
   chainIds,
-  { 
-    sort: 'desc', 
+  {
+    sort: 'desc',
     offset: 100,
-    enableCache: true // Add this line
+    enableCache: true, // Add this line
   }
 );
 ```
@@ -208,14 +226,14 @@ const { data, fetchNextPage, hasNextPage } = useCachedInfiniteTransactions(
 // Before
 const { data } = useTransactions(address, chainId, {
   sort: 'desc',
-  offset: 100
+  offset: 100,
 });
 
 // After
 const { data } = useCachedTransactions(address, chainId, {
   sort: 'desc',
   offset: 100,
-  enableCache: true // Add this line
+  enableCache: true, // Add this line
 });
 ```
 
@@ -237,15 +255,18 @@ const { data } = useCachedTransactions(address, chainId, {
 ## Troubleshooting
 
 ### Cache Not Working
+
 - Check if `enableCache: true` is set
 - Verify Chrome storage permissions
 - Check browser console for errors
 
 ### Stale Data
+
 - Cache expires after 5 minutes automatically
 - Clear cache manually if needed: `TransactionCacheLib.clearCache(address, chainId)`
 
 ### Storage Issues
+
 - Cache is limited to 5000 transactions per chain
 - Oldest transactions are automatically removed
 - Clear all cache: `TransactionCacheLib.clearCache(address)`

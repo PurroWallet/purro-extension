@@ -12,6 +12,7 @@ Now you can see exactly when the cache is working! Open your browser's Developer
 ## 📋 **Log Types & What They Mean**
 
 ### ⚡ **CACHE HIT** - Data Loaded from Cache
+
 ```
 ⚡ CACHE HIT: Using cached transactions
 {
@@ -23,9 +24,11 @@ Now you can see exactly when the cache is working! Open your browser's Developer
   timestamp: "2:30:15 PM"
 }
 ```
+
 **Meaning**: Found fresh cached data (< 5 minutes old), loading instantly without API call.
 
 ### 🔄 **CACHE MISS** - Fetching New Data
+
 ```
 🔄 CACHE MISS: Fetching new transactions
 {
@@ -39,9 +42,11 @@ Now you can see exactly when the cache is working! Open your browser's Developer
   timestamp: "2:30:15 PM"
 }
 ```
+
 **Meaning**: Cache is stale (> 5 minutes) or no cache exists, fetching only new transactions from last cached block.
 
 ### ✅ **NEW TRANSACTIONS FOUND**
+
 ```
 ✅ NEW TRANSACTIONS FOUND:
 {
@@ -53,9 +58,11 @@ Now you can see exactly when the cache is working! Open your browser's Developer
   timestamp: "2:30:16 PM"
 }
 ```
+
 **Meaning**: Found new transactions since last cache, will append to existing cache.
 
 ### 🔄 **CACHE UPDATED**
+
 ```
 🔄 CACHE UPDATED: Appended new transactions
 {
@@ -66,9 +73,11 @@ Now you can see exactly when the cache is working! Open your browser's Developer
   timestamp: "2:30:16 PM"
 }
 ```
+
 **Meaning**: Successfully merged new transactions with existing cache.
 
 ### 💾 **CACHE CREATED**
+
 ```
 💾 CACHE CREATED: First time caching
 {
@@ -79,9 +88,11 @@ Now you can see exactly when the cache is working! Open your browser's Developer
   timestamp: "2:30:15 PM"
 }
 ```
+
 **Meaning**: No previous cache existed, created new cache with fetched transactions.
 
 ### 📋 **NO NEW TRANSACTIONS**
+
 ```
 📋 NO NEW TRANSACTIONS: Using existing cache
 {
@@ -92,11 +103,13 @@ Now you can see exactly when the cache is working! Open your browser's Developer
   timestamp: "2:30:15 PM"
 }
 ```
+
 **Meaning**: No new transactions since last cache, returning existing cached data.
 
 ## 🌐 **Multi-Chain Logs**
 
 ### ⚡ **Multi-Chain Cache Hit**
+
 ```
 ⚡ MULTI-CHAIN CACHE HIT [Chain 1]:
 {
@@ -109,6 +122,7 @@ Now you can see exactly when the cache is working! Open your browser's Developer
 ```
 
 ### 🔄 **Multi-Chain Incremental Fetch**
+
 ```
 🔄 MULTI-CHAIN INCREMENTAL [Chain 42161]:
 {
@@ -121,6 +135,7 @@ Now you can see exactly when the cache is working! Open your browser's Developer
 ```
 
 ### 🆕 **Multi-Chain First Fetch**
+
 ```
 🆕 MULTI-CHAIN FIRST FETCH [Chain 8453]:
 {
@@ -131,6 +146,7 @@ Now you can see exactly when the cache is working! Open your browser's Developer
 ```
 
 ### 📊 **Multi-Chain Summary**
+
 ```
 📊 MULTI-CHAIN SUMMARY:
 {
@@ -149,6 +165,7 @@ Now you can see exactly when the cache is working! Open your browser's Developer
 ```
 
 ## 🔄 **History Screen Summary Log**
+
 ```
 🔄 Transaction Cache Status:
 {
@@ -164,33 +181,39 @@ Now you can see exactly when the cache is working! Open your browser's Developer
 ## 🧪 **Testing Cache Behavior**
 
 ### **Test 1: First Load (No Cache)**
+
 1. Clear browser cache or use new address
 2. Navigate to history
 3. **Expected logs**: `CACHE MISS` → `NEW TRANSACTIONS FOUND` → `CACHE CREATED`
 
 ### **Test 2: Second Load (Fresh Cache)**
+
 1. Refresh page within 5 minutes
 2. Navigate to history
 3. **Expected logs**: `CACHE HIT` (instant loading)
 
 ### **Test 3: Stale Cache**
+
 1. Wait 6+ minutes or manually set old timestamp
-2. Navigate to history  
+2. Navigate to history
 3. **Expected logs**: `CACHE MISS` → `NEW TRANSACTIONS FOUND` → `CACHE UPDATED`
 
 ### **Test 4: No New Transactions**
+
 1. Load history twice quickly
 2. **Expected logs**: `CACHE MISS` → `NO NEW TRANSACTIONS`
 
 ## 🎯 **Performance Indicators**
 
 ### **Good Performance Signs**:
+
 - ⚡ Frequent `CACHE HIT` messages
 - 🔄 `CACHE UPDATED` with small numbers of new transactions
 - 📋 `NO NEW TRANSACTIONS` messages
 - Fast loading times
 
 ### **Expected Behavior**:
+
 - **First visit**: Full fetch from block 0
 - **Within 5 minutes**: Instant cache hit
 - **After 5 minutes**: Incremental fetch from last block
@@ -199,11 +222,13 @@ Now you can see exactly when the cache is working! Open your browser's Developer
 ## 🛠️ **Troubleshooting**
 
 ### **If you don't see cache hits**:
+
 - Check if `enableCache: true` is set
 - Verify browser storage permissions
 - Look for error messages in console
 
 ### **If cache seems broken**:
+
 - Clear cache manually: `TransactionCacheLib.clearCache(address)`
 - Check for storage quota exceeded errors
 - Verify network connectivity
@@ -211,6 +236,7 @@ Now you can see exactly when the cache is working! Open your browser's Developer
 ## 📈 **Performance Comparison**
 
 ### **Without Cache** (Original):
+
 ```
 🔄 Fetching 1000 transactions from block 0...
 ⏱️ API call: 2.5s
@@ -218,14 +244,16 @@ Now you can see exactly when the cache is working! Open your browser's Developer
 ```
 
 ### **With Cache** (First Load):
+
 ```
 🔄 CACHE MISS: Fetching new transactions (first time)
-⏱️ API call: 2.5s  
+⏱️ API call: 2.5s
 💾 CACHE CREATED: 1000 transactions
 📊 Total: 1000 transactions
 ```
 
 ### **With Cache** (Subsequent Loads):
+
 ```
 ⚡ CACHE HIT: Using cached transactions
 ⏱️ Load time: <100ms
@@ -233,10 +261,11 @@ Now you can see exactly when the cache is working! Open your browser's Developer
 ```
 
 ### **With Cache** (After New Activity):
+
 ```
 🔄 CACHE MISS: Fetching new transactions
 ⏱️ API call: 0.3s (only 50 new transactions)
-🔄 CACHE UPDATED: 1050 total transactions  
+🔄 CACHE UPDATED: 1050 total transactions
 📊 Total: 1050 transactions (1000 cached + 50 new)
 ```
 

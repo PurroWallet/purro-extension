@@ -5,6 +5,7 @@ This guide shows how to update the existing history screen to use the new cached
 ## Current Implementation
 
 The history screen currently uses:
+
 ```typescript
 import { useInfiniteTransactions } from '@/client/hooks/use-etherscan-transactions';
 
@@ -102,16 +103,19 @@ useEffect(() => {
 ## Benefits After Integration
 
 ### Performance Improvements
+
 - **Faster Initial Load**: Cached transactions load instantly
 - **Reduced API Calls**: Only fetches new transactions since last cache
 - **Better Rate Limiting**: Fewer API requests means less chance of hitting limits
 
 ### User Experience
+
 - **Instant Results**: Users see transaction history immediately
 - **Smoother Scrolling**: Infinite scroll works faster with cached data
 - **Reduced Loading**: Less time spent waiting for API responses
 
 ### Technical Benefits
+
 - **Backward Compatible**: Can be disabled by setting `enableCache: false`
 - **Automatic Management**: Cache handles deduplication and storage limits
 - **Multi-Chain Aware**: Works seamlessly with all supported chains
@@ -119,6 +123,7 @@ useEffect(() => {
 ## Testing the Integration
 
 ### 1. Test Cache Behavior
+
 ```typescript
 // First load - should fetch from API and cache
 // Subsequent loads within 5 minutes - should load from cache instantly
@@ -126,6 +131,7 @@ useEffect(() => {
 ```
 
 ### 2. Test Cache Disable
+
 ```typescript
 // Set enableCache: false to verify original behavior still works
 const { data } = useCachedInfiniteTransactions(address, chainIds, {
@@ -134,6 +140,7 @@ const { data } = useCachedInfiniteTransactions(address, chainIds, {
 ```
 
 ### 3. Test Multi-Chain
+
 ```typescript
 // Verify that each chain maintains its own cache
 // Switch between different chain filters to test cache per chain
@@ -163,6 +170,7 @@ const { data, fetchNextPage, hasNextPage, isLoading, error } =
 ## Monitoring and Debugging
 
 ### Cache Statistics
+
 ```typescript
 import { TransactionCacheLib } from '@/client/hooks/use-transaction-cache';
 
@@ -172,6 +180,7 @@ console.log('Cache stats:', stats);
 ```
 
 ### Clear Cache for Testing
+
 ```typescript
 // Clear cache for specific address/chain
 await TransactionCacheLib.clearCache(address, chainId);
@@ -181,21 +190,27 @@ await TransactionCacheLib.clearCache(address);
 ```
 
 ### Debug Cache Behavior
+
 ```typescript
 // Check if data exists in cache
-const cached = await TransactionCacheLib.getCachedTransactions(address, chainId);
+const cached = await TransactionCacheLib.getCachedTransactions(
+  address,
+  chainId
+);
 console.log('Cached data:', cached);
 ```
 
 ## Expected Results
 
 After integration, you should see:
+
 - History screen loads much faster on subsequent visits
 - Smooth infinite scrolling with cached data
 - Reduced network activity in browser dev tools
 - Better performance especially for users with many transactions
 
 The cache will automatically handle:
+
 - Fetching only new transactions
 - Merging with existing cache
 - Deduplication of transactions
