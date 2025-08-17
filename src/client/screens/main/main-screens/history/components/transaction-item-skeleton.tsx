@@ -1,4 +1,3 @@
-import { Network } from 'lucide-react';
 import { SKELETON } from '../constants';
 
 export const TransactionItemSkeleton = () => {

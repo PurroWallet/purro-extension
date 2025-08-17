@@ -128,9 +128,7 @@ const ConfirmSwapButton = () => {
         tokenIn,
         tokenOut,
         amountIn,
-        amountOut,
         route,
-        activeAccountAddress,
       });
 
       if (result.success) {

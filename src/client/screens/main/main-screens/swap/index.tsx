@@ -175,7 +175,6 @@ const Swap = () => {
 
       if (addressesToFetch.length > 0) {
         try {
-          console.log('🔍 Fetching token prices for swap:', addressesToFetch);
           const response = await fetchHyperEvmTokenPrices(addressesToFetch);
 
           if (response?.data?.attributes?.token_prices) {
@@ -184,7 +183,6 @@ const Swap = () => {
                 const price = parseFloat(priceStr as string);
                 if (!isNaN(price)) {
                   updateTokenPrice(address.toLowerCase(), price, 0); // No price change data from this API
-                  console.log(`✅ Updated price for ${address}: $${price}`);
                 }
               }
             );
@@ -255,26 +253,19 @@ const Swap = () => {
       }
 
       try {
-        console.log('🔄 Fetching WHYPE balance for:', activeAccountAddress);
-
         const balance = await fetchBalances({
           wallet: activeAccountAddress || '',
           limit: 1000,
         });
 
-        console.log('📊 Full balance response:', balance);
-
         // Check if balance response has the expected structure
         if (!balance?.data?.tokens || !Array.isArray(balance.data.tokens)) {
-          console.log('❌ Invalid balance response structure');
           return;
         }
 
         const whypeBalance = balance.data.tokens.find(
           (token: Balance) => token.token === WHYPE_TOKEN_ADDRESS
         );
-
-        console.log('🔍 WHYPE balance found:', whypeBalance);
 
         if (whypeBalance && whypeBalance.balance !== undefined) {
           // Create a temporary token object to use getTokenBalance function
@@ -292,10 +283,7 @@ const Swap = () => {
           };
           const formattedBalance = getTokenBalance(tempToken);
 
-          console.log('💰 Formatted WHYPE balance:', formattedBalance);
-
           if (tokenOut?.contractAddress === WHYPE_TOKEN_ADDRESS) {
-            console.log('🔄 Updating tokenOut with WHYPE balance');
             setTokenOut({
               ...tokenOut,
               balance: whypeBalance.balance,
@@ -303,7 +291,6 @@ const Swap = () => {
               usdValue: formattedBalance * (tokenOut?.usdPrice || 0),
             });
           } else if (tokenIn?.contractAddress === WHYPE_TOKEN_ADDRESS) {
-            console.log('🔄 Updating tokenIn with WHYPE balance');
             setTokenIn({
               ...tokenIn,
               balance: whypeBalance.balance,
@@ -312,11 +299,8 @@ const Swap = () => {
             });
           }
         } else {
-          console.log('❌ No WHYPE balance found in response');
-
           // Set default balance of 0 for WHYPE tokens if not found
           if (tokenOut?.contractAddress === WHYPE_TOKEN_ADDRESS) {
-            console.log('🔄 Setting default WHYPE balance for tokenOut');
             setTokenOut({
               ...tokenOut,
               balance: '0',
@@ -324,7 +308,6 @@ const Swap = () => {
               usdValue: 0,
             });
           } else if (tokenIn?.contractAddress === WHYPE_TOKEN_ADDRESS) {
-            console.log('🔄 Setting default WHYPE balance for tokenIn');
             setTokenIn({
               ...tokenIn,
               balance: '0',

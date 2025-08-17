@@ -52,7 +52,6 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
             walletAddress = wallet.address;
           }
         } catch (evmError) {
-          console.error(`❌ EVM validation error for ${chain}:`, evmError);
           isValid = false;
         }
       } else if (chain === 'solana') {
@@ -64,7 +63,6 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
             walletAddress = wallet.address;
           }
         } catch (solanaError) {
-          console.error('❌ Solana validation error:', solanaError);
           isValid = false;
         }
       } else if (chain === 'sui') {
@@ -76,13 +74,11 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
             walletAddress = wallet.address;
           }
         } catch (suiError) {
-          console.error('❌ Sui validation error:', suiError);
           isValid = false;
         }
       }
 
       if (!isValid) {
-        console.error(`❌ Private key validation failed for chain: ${chain}`);
         throw new Error('Invalid private key. Please try again.');
       }
 
@@ -94,25 +90,15 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
         const exists = await checkPrivateKeyExists(privateKey);
 
         if (exists) {
-          console.warn('⚠️ Private key already exists in wallet');
           setError('This private key is already imported.');
           return false;
         }
       } catch (checkError) {
-        console.error('❌ Error checking private key existence:', checkError);
         // Continue with import even if check fails
       }
 
       return true;
     } catch (error) {
-      console.error('❌ Private key validation failed with error:', error);
-      console.error('📊 Error details:', {
-        message: error instanceof Error ? error.message : String(error),
-        chain,
-        privateKeyLength: privateKey?.length || 0,
-        stack: error instanceof Error ? error.stack : undefined,
-      });
-
       setError('Invalid private key. Please try again.');
       setAddress(null);
       return false;
