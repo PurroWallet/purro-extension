@@ -19,8 +19,8 @@ import HistoryAnimationIcon from '@/client/components/animation-icon/history';
 import useWalletStore from '@/client/hooks/use-wallet-store';
 import useMainScreenStore from '@/client/hooks/use-main-screen-store';
 import ConfirmSwapButton from '@/client/components/swap-action-button';
+import ExploreAnimationIcon from '@/client/components/animation-icon/explore';
 import Explorer from './main-screens/explorer';
-import { Search } from 'lucide-react';
 
 const queryClient = new QueryClient();
 
@@ -153,10 +153,11 @@ export const MainContent = () => {
           onMouseEnter={() => setButtonHovered('explore')}
           onMouseLeave={() => setButtonHovered(null)}
           icon={
-            <Search
-              className={cn(
-                mainScreen === 'explore' && 'text-[var(--primary-color-light)]'
-              )}
+            <ExploreAnimationIcon
+            className={cn(
+              mainScreen === 'explore' && 'text-[var(--primary-color-light)]'
+            )}
+            isHovered={buttonHovered === 'explore'}
             />
           }
         />
