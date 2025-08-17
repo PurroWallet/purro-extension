@@ -3,14 +3,17 @@ import { hyperliquidLogo } from '@/assets/logo';
 import { AccountIcon, AccountName } from '@/client/components/account';
 import { openSidePanel } from '@/client/lib/utils';
 import { cn } from '@/client/lib/utils';
-import { Settings, X } from 'lucide-react';
+import { Settings, X, SearchIcon } from 'lucide-react';
 import useWalletStore from '@/client/hooks/use-wallet-store';
 import useAccountSheetStore from '@/client/hooks/use-account-sheet-store';
 import { useMemo } from 'react';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
 import { SwapSettingsDrawer } from '@/client/components/drawers';
 import { CircularTimer } from '@/client/components/ui/circular-timer';
-import useSwapTimerStore from '@/client/hooks/use-swap-timer-store';
+import useSwapStore from '@/client/hooks/use-swap-store';
+import useCountdownTimer from '@/client/hooks/use-countdown-timer';
+import { TokenSelectorDialog } from '@/client/components/dialogs';
+import useDialogStore from '@/client/hooks/use-dialog-store';
 
 const MainHeader = ({
   className,
@@ -32,12 +35,34 @@ const MainHeader = ({
   const isSidepanel = window.location.pathname.includes('sidepanel.html');
   const isNftScreen = currentScreen === 'nft';
   const isHistoryScreen = currentScreen === 'history';
+  const isHomeScreen = currentScreen === 'home';
   const activeAccountAddress = useMemo(() => {
     return wallets[activeAccount?.id as string]?.eip155?.address;
   }, [activeAccount, wallets]);
   const isSwapScreen = currentScreen === 'swap';
   const { openDrawer } = useDrawerStore();
-  const { timeLeft, isTimerActive } = useSwapTimerStore();
+  const { openDialog } = useDialogStore();
+  // Get swap state for timer
+  const {
+    lastRefreshTimestamp,
+    route,
+    tokenIn,
+    tokenOut,
+    amountIn,
+    amountOut,
+  } = useSwapStore();
+
+  // Calculate countdown timer
+  const timeLeft = useCountdownTimer(lastRefreshTimestamp);
+
+  // Show timer when we have a valid swap route
+  const isTimerActive = !!(
+    route &&
+    tokenIn &&
+    tokenOut &&
+    (amountIn || amountOut) &&
+    lastRefreshTimestamp
+  );
 
   return (
     <div
@@ -59,14 +84,29 @@ const MainHeader = ({
         />
       </div>
 
-      {!isSidepanel && !isNftScreen && !isHistoryScreen && !isSwapScreen && (
-        <div
-          className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
-          onClick={async () => {
-            await openSidePanel();
-          }}
-        >
-          <DockToLeftIcon className="size-5 text-white/90" />
+      {isHomeScreen && (
+        <div className="flex items-center">
+          <div
+            className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
+            onClick={async () => {
+              openDialog(<TokenSelectorDialog />);
+            }}
+          >
+            <SearchIcon className="size-5 text-white/90" />
+          </div>
+          {!isSidepanel &&
+            !isNftScreen &&
+            !isHistoryScreen &&
+            !isSwapScreen && (
+              <div
+                className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
+                onClick={async () => {
+                  await openSidePanel();
+                }}
+              >
+                <DockToLeftIcon className="size-5 text-white/90" />
+              </div>
+            )}
         </div>
       )}
 
@@ -90,7 +130,7 @@ const MainHeader = ({
             <div className="flex items-center justify-center">
               <CircularTimer
                 timeLeft={timeLeft}
-                totalTime={20}
+                totalTime={10}
                 isActive={isTimerActive}
                 size={24}
                 strokeWidth={2}

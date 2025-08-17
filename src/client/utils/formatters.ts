@@ -63,3 +63,37 @@ export const convertToWeiHex = (amount: string) => {
 export const hexToNumber = (hexValue: string) => {
   return parseInt(hexValue, 16);
 };
+
+// Format token amounts with appropriate decimal places and K/M/B suffixes
+export const formatTokenAmount = (value: string | number, maxDecimals = 6): string => {
+  const num = typeof value === 'string' ? parseFloat(value) : value;
+
+  if (isNaN(num) || num === 0) {
+    return '0';
+  }
+
+  // For very large numbers, use K/M/B notation
+  if (num >= 1000000000) {
+    return `${(num / 1000000000).toFixed(2)}B`;
+  } else if (num >= 1000000) {
+    return `${(num / 1000000).toFixed(2)}M`;
+  } else if (num >= 1000) {
+    return `${(num / 1000).toFixed(2)}K`;
+  }
+
+  // For smaller numbers, show appropriate decimal places
+  if (num >= 1) {
+    // For numbers >= 1, limit to reasonable decimal places
+    const decimals = Math.min(maxDecimals, 4);
+    return num.toFixed(decimals).replace(/\.?0+$/, '');
+  } else if (num >= 0.01) {
+    // For numbers >= 0.01, show up to 4 decimal places
+    return num.toFixed(4).replace(/\.?0+$/, '');
+  } else if (num >= 0.0001) {
+    // For very small numbers, show up to 6 decimal places
+    return num.toFixed(6).replace(/\.?0+$/, '');
+  } else {
+    // For extremely small numbers, use scientific notation
+    return num.toExponential(3);
+  }
+};

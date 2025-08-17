@@ -56,6 +56,12 @@ export interface UseUnifiedTokensResult {
 
   // Network state
   isHyperliquidActive: boolean;
+
+  // Refetch functions
+  refetchAll: () => void;
+  refetchAlchemy: () => void;
+  refetchNative: () => void;
+  refetchHyperliquid: () => void;
 }
 
 export const useUnifiedTokens = (): UseUnifiedTokensResult => {
@@ -66,7 +72,7 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
   const { isNetworkActive } = useNetworkSettingsStore();
   const isHyperliquidActive = isNetworkActive('hyperevm');
 
-  const { evmData, isEvmLoading, evmError, evmValue } = useHlPortfolioData({
+  const { evmData, isEvmLoading, evmError, evmValue, refetchEvm } = useHlPortfolioData({
     fetchSpot: false,
     fetchPerps: false,
     fetchEvm: isHyperliquidActive && !isDevMode,
@@ -78,6 +84,7 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
     totalUsdValue: alchemyTotalValue,
     isLoading: isAlchemyLoading,
     hasError: hasAlchemyError,
+    refetch: refetchAlchemyTokens,
   } = useAlchemyTokens();
 
   const {
@@ -86,6 +93,7 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
     totalUsdValue: nativeTotalValue,
     isLoading: isNativeLoading,
     hasError: hasNativeError,
+    refetch: refetchNativeTokens,
   } = useNativeBalance();
 
   const tokenPricesData: TokenPricesData = evmData?.tokenPricesData || {};
@@ -196,6 +204,13 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
       hasAlchemyError: false,
       hasNativeError: testnetResult.hasError,
       isHyperliquidActive: true,
+      // Refetch functions (dev mode uses testnet)
+      refetchAll: () => {
+        refetchNativeTokens();
+      },
+      refetchAlchemy: () => { }, // No alchemy in dev mode
+      refetchNative: refetchNativeTokens,
+      refetchHyperliquid: () => { },
     };
   }
 
@@ -224,5 +239,16 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
     hasAlchemyError,
     hasNativeError,
     isHyperliquidActive,
+    // Refetch functions
+    refetchAll: () => {
+      refetchAlchemyTokens();
+      refetchNativeTokens();
+      if (isHyperliquidActive) {
+        refetchEvm();
+      }
+    },
+    refetchAlchemy: refetchAlchemyTokens,
+    refetchNative: refetchNativeTokens,
+    refetchHyperliquid: refetchEvm,
   };
 };
