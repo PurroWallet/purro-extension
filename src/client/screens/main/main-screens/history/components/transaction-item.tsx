@@ -13,8 +13,11 @@ import {
   METHOD_LABELS,
   METHOD_COLORS,
   METHOD_INDICATOR_COLORS,
-  LOADING_UI,
 } from '../constants';
+import {
+  TransactionItemSkeleton,
+  SwapTransactionItemSkeleton,
+} from './transaction-item-skeleton';
 
 interface TransactionItemProps {
   transaction: TransactionWithChain;
@@ -85,20 +88,23 @@ export const TransactionItem = ({
       transaction.outputTokenInfo?.symbol === LOADING_STATES.TOKEN_SYMBOL);
   const isLoading = isTokenLoading || isSwapLoading;
 
-  // Handle click with loading check
+  // Show skeleton if loading
+  if (isLoading) {
+    return transaction.method === 'swap' ? (
+      <SwapTransactionItemSkeleton />
+    ) : (
+      <TransactionItemSkeleton />
+    );
+  }
+
+  // Handle click
   const handleClick = () => {
-    if (!isLoading) {
-      onTransactionClick(transaction);
-    }
+    onTransactionClick(transaction);
   };
 
   return (
     <div
-      className={`flex items-center gap-3 p-4 rounded-lg transition-colors duration-200 ${
-        isLoading
-          ? `${LOADING_UI.OPACITY} ${LOADING_UI.CURSOR}`
-          : 'hover:bg-[var(--card-color)]/80 cursor-pointer'
-      }`}
+      className="flex items-center gap-3 p-4 rounded-lg hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer"
       onClick={handleClick}
     >
       {/* Special UI for Swap transactions */}
@@ -106,63 +112,44 @@ export const TransactionItem = ({
         <div className="flex items-center relative mr-4 pb-4">
           {/* Input Token Icon */}
           <div className="flex items-center justify-center w-8 h-8 rounded-full bg-[var(--primary-color)]/10 relative">
-            {transaction.tokenInfo?.symbol === LOADING_STATES.TOKEN_SYMBOL ? (
-              <div
-                className={`${LOADING_UI.SPINNER_SIZE.SMALL} border border-[var(--primary-color)] border-t-transparent rounded-full animate-spin`}
-              ></div>
-            ) : (
-              <TokenLogo
-                symbol={transaction.tokenInfo?.symbol || LOADING_STATES.UNKNOWN}
-                existingLogo={transaction.tokenInfo?.logo}
-                networkId={getChainType(transaction.chainId)}
-                tokenAddress={transaction.tokenInfo?.address}
-                className="w-8 h-8 rounded-full"
-                fallbackText={transaction.tokenInfo?.symbol?.charAt(0) || 'T'}
-              />
-            )}
+            <TokenLogo
+              symbol={transaction.tokenInfo?.symbol || LOADING_STATES.UNKNOWN}
+              existingLogo={transaction.tokenInfo?.logo}
+              networkId={getChainType(transaction.chainId)}
+              tokenAddress={transaction.tokenInfo?.address}
+              className="w-8 h-8 rounded-full"
+              fallbackText={transaction.tokenInfo?.symbol?.charAt(0) || 'T'}
+            />
           </div>
 
           {/* Output Token Icon */}
           <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[var(--primary-color)]/10 absolute top-3 left-3">
-            {transaction.outputTokenInfo?.symbol ===
-            LOADING_STATES.TOKEN_SYMBOL ? (
-              <div
-                className={`${LOADING_UI.SPINNER_SIZE.SMALL} border border-green-600 border-t-transparent rounded-full animate-spin`}
-              ></div>
-            ) : (
-              <TokenLogo
-                symbol={
-                  transaction.outputTokenInfo?.symbol || LOADING_STATES.UNKNOWN
-                }
-                existingLogo={transaction.outputTokenInfo?.logo}
-                networkId={getChainType(transaction.chainId)}
-                tokenAddress={transaction.outputTokenInfo?.address}
-                className="w-8 h-8 rounded-full"
-                fallbackText={
-                  transaction.outputTokenInfo?.symbol?.charAt(0) || 'T'
-                }
-              />
-            )}
+            <TokenLogo
+              symbol={
+                transaction.outputTokenInfo?.symbol || LOADING_STATES.UNKNOWN
+              }
+              existingLogo={transaction.outputTokenInfo?.logo}
+              networkId={getChainType(transaction.chainId)}
+              tokenAddress={transaction.outputTokenInfo?.address}
+              className="w-8 h-8 rounded-full"
+              fallbackText={
+                transaction.outputTokenInfo?.symbol?.charAt(0) || 'T'
+              }
+            />
           </div>
         </div>
       ) : (
         /* Regular UI for non-swap transactions */
         <div className="flex items-center justify-center w-10 h-10 rounded-full bg-[var(--primary-color)]/10 relative me-1">
           {transaction.isTokenTransfer ? (
-            transaction.tokenInfo?.symbol === LOADING_STATES.TOKEN_SYMBOL ? (
-              <div
-                className={`${LOADING_UI.SPINNER_SIZE.MEDIUM} border-2 border-[var(--primary-color)] border-t-transparent rounded-full animate-spin`}
-              ></div>
-            ) : (
-              <TokenLogo
-                symbol={transaction.tokenInfo?.symbol || LOADING_STATES.UNKNOWN}
-                existingLogo={transaction.tokenInfo?.logo}
-                networkId={getChainType(transaction.chainId)}
-                tokenAddress={transaction.tokenInfo?.address}
-                className="w-10 h-10 rounded-full"
-                fallbackText={transaction.tokenInfo?.symbol?.charAt(0) || 'T'}
-              />
-            )
+            <TokenLogo
+              symbol={transaction.tokenInfo?.symbol || LOADING_STATES.UNKNOWN}
+              existingLogo={transaction.tokenInfo?.logo}
+              networkId={getChainType(transaction.chainId)}
+              tokenAddress={transaction.tokenInfo?.address}
+              className="w-10 h-10 rounded-full"
+              fallbackText={transaction.tokenInfo?.symbol?.charAt(0) || 'T'}
+            />
           ) : (
             // ETH icon
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-blue-600/10 flex items-center justify-center font-bold text-blue-600 text-sm border border-blue-500/20">
@@ -199,27 +186,17 @@ export const TransactionItem = ({
           <p className={`font-semibold text-sm ${methodInfo.color}`}>
             {methodInfo.label}
           </p>
-          {isLoading && (
-            <span className="text-xs text-muted-foreground">
-              {LOADING_UI.LOADING_TEXT}
-            </span>
-          )}
         </div>
 
         {/* Token/Asset name - Special handling for swaps */}
         {transaction.method === 'swap' && transaction.outputTokenInfo ? (
           <p className="text-sm font-medium text-foreground mb-1">
-            {transaction.tokenInfo?.symbol === LOADING_STATES.TOKEN_SYMBOL ||
-            transaction.outputTokenInfo?.symbol === LOADING_STATES.TOKEN_SYMBOL
-              ? LOADING_STATES.SWAP_INFO
-              : `${transaction.tokenInfo?.symbol || LOADING_STATES.UNKNOWN} → ${transaction.outputTokenInfo?.symbol || LOADING_STATES.UNKNOWN}`}
+            {`${transaction.tokenInfo?.symbol || LOADING_STATES.UNKNOWN} → ${transaction.outputTokenInfo?.symbol || LOADING_STATES.UNKNOWN}`}
           </p>
         ) : (
           <p className="text-sm font-medium text-foreground mb-1">
             {transaction.isTokenTransfer && transaction.tokenInfo
-              ? transaction.tokenInfo.symbol === LOADING_STATES.TOKEN_SYMBOL
-                ? LOADING_STATES.TOKEN_INFO
-                : `${transaction.tokenInfo.symbol} (${transaction.tokenInfo.name})`
+              ? `${transaction.tokenInfo.symbol} (${transaction.tokenInfo.name})`
               : 'Ethereum (ETH)'}
           </p>
         )}
@@ -241,9 +218,7 @@ export const TransactionItem = ({
               transaction.tokenInfo &&
               transaction.tokenInfo.symbol !== LOADING_STATES.TOKEN_SYMBOL
                 ? `${formatTokenAmount(transaction.tokenAmount, transaction.tokenInfo.decimals)} ${transaction.tokenInfo.symbol}`
-                : transaction.tokenInfo?.symbol === LOADING_STATES.TOKEN_SYMBOL
-                  ? LOADING_STATES.AMOUNT
-                  : `${formatValue(transaction.value)} ETH`}
+                : `${formatValue(transaction.value)} ETH`}
             </p>
             <p className="font-semibold text-sm text-green-400">
               +
@@ -251,10 +226,7 @@ export const TransactionItem = ({
               transaction.outputTokenInfo &&
               transaction.outputTokenInfo.symbol !== LOADING_STATES.TOKEN_SYMBOL
                 ? `${formatTokenAmount(transaction.outputTokenAmount, transaction.outputTokenInfo.decimals)} ${transaction.outputTokenInfo.symbol}`
-                : transaction.outputTokenInfo?.symbol ===
-                    LOADING_STATES.TOKEN_SYMBOL
-                  ? LOADING_STATES.AMOUNT
-                  : LOADING_STATES.UNKNOWN}
+                : LOADING_STATES.UNKNOWN}
             </p>
           </div>
         ) : (
@@ -271,10 +243,7 @@ export const TransactionItem = ({
             transaction.tokenInfo &&
             transaction.tokenInfo.symbol !== LOADING_STATES.TOKEN_SYMBOL
               ? `${formatTokenAmount(transaction.tokenAmount, transaction.tokenInfo.decimals)} ${transaction.tokenInfo.symbol}`
-              : transaction.isTokenTransfer &&
-                  transaction.tokenInfo?.symbol === LOADING_STATES.TOKEN_SYMBOL
-                ? LOADING_STATES.AMOUNT
-                : `${formatValue(transaction.value)} ETH`}
+              : `${formatValue(transaction.value)} ETH`}
           </p>
         )}
         {/* Chain badge */}

@@ -7,10 +7,8 @@ import {
 import { Button } from '@/client/components/ui';
 import type { TransactionWithChain } from './types';
 import useDialogStore from '@/client/hooks/use-dialog-store';
-import useWalletStore from '@/client/hooks/use-wallet-store';
-import { ArrowUp, ArrowDown, Network } from 'lucide-react';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 import { truncateAddress } from '@/client/utils/formatters';
-import { NETWORK_ICONS } from '@/utils/network-icons';
 import TokenLogo from '@/client/components/token-logo';
 import { getChainType } from './utils/transaction-utils';
 import { formatValue, formatTokenAmount } from './utils/formatting-utils';
@@ -27,9 +25,6 @@ const HistoryDetailDialog = ({
   transaction: TransactionWithChain;
 }) => {
   const { closeDialog } = useDialogStore();
-  const { getActiveAccountWalletObject } = useWalletStore();
-  const activeAccount = getActiveAccountWalletObject();
-  const userAddress = activeAccount?.eip155?.address?.toLowerCase();
 
   // Determine transaction direction based on method
   const isSend =
@@ -54,17 +49,6 @@ const HistoryDetailDialog = ({
       default:
         return METHOD_LABELS.DEFAULT;
     }
-  };
-
-  // Get chain icon helper
-  const getChainIcon = (chainName: string) => {
-    const iconMap: Record<string, string> = {
-      ethereum: NETWORK_ICONS.ethereum,
-      arbitrum: NETWORK_ICONS.arbitrum,
-      base: NETWORK_ICONS.base,
-      hyperevm: NETWORK_ICONS.hyperevm,
-    };
-    return iconMap[chainName.toLowerCase()] || null;
   };
 
   // Get explorer URL helper
@@ -200,7 +184,9 @@ const HistoryDetailDialog = ({
             <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
               <p className="text-base text-left font-semibold">Network</p>
               <p className="text-sm text-muted-foreground text-right truncate w-full">
-                {transaction.chainName}
+                {transaction.chainName === 'hyperevm'
+                  ? 'HyperEVM'
+                  : transaction.chainName}
               </p>
             </div>
 

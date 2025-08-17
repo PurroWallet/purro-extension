@@ -48,6 +48,26 @@ export const LOADING_UI = {
     },
 } as const;
 
+// Skeleton constants
+export const SKELETON = {
+    ANIMATION: 'animate-pulse',
+    COLORS: {
+        LIGHT: 'bg-gray-300',
+        DARK: 'dark:bg-gray-600',
+        INDICATOR_LIGHT: 'bg-gray-400',
+        INDICATOR_DARK: 'dark:bg-gray-500',
+    },
+    SIZES: {
+        METHOD_LABEL: 'h-4 w-16',
+        TOKEN_NAME: 'h-4 w-32',
+        TIME: 'h-3 w-20',
+        AMOUNT: 'h-4 w-24',
+        SWAP_AMOUNT: 'h-4 w-20',
+        SWAP_INFO: 'h-4 w-40',
+        CHAIN_NAME: 'h-3 w-12',
+    },
+} as const;
+
 // Explorer URLs
 export const EXPLORER_URLS = {
     ethereum: 'https://etherscan.io',
