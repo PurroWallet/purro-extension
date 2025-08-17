@@ -12,7 +12,8 @@ const ResetWallet = ({ onBack }: { onBack: () => void }) => {
 
   const handleReset = async () => {
     await resetWallet();
-    window.open('/html/onboarding.html', '_blank');
+    // Note: onboarding window will be automatically opened by use-init hook
+    // when it detects hasWallet = false, so no need to manually open it here
   };
 
   return (

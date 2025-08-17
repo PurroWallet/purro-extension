@@ -78,6 +78,14 @@ const createSuccessResponse = (data: any): MessageResponse => {
   };
 };
 
+// Helper function to parse chainId from string to number
+const parseChainId = (chainId: string): number => {
+  // Handle both hex (0x...) and decimal string formats
+  return chainId.startsWith('0x')
+    ? parseInt(chainId, 16)
+    : parseInt(chainId, 10);
+};
+
 // Helper function to create error response
 const createErrorResponse = (error: string, code?: number): MessageResponse => {
   return {
@@ -104,7 +112,7 @@ export const evmRpcHandler = {
       // Convert chainId to number if it's a string
       let targetChainId: number;
       if (typeof chainId === 'string') {
-        targetChainId = parseInt(chainId, 10);
+        targetChainId = parseChainId(chainId);
         if (isNaN(targetChainId)) {
           return createErrorResponse(`Invalid chainId: ${chainId}`, 4001);
         }
@@ -144,7 +152,7 @@ export const evmRpcHandler = {
       // Convert chainId to number if it's a string
       let targetChainId: number;
       if (typeof chainId === 'string') {
-        targetChainId = parseInt(chainId, 10);
+        targetChainId = parseChainId(chainId);
         if (isNaN(targetChainId)) {
           return createErrorResponse(`Invalid chainId: ${chainId}`, 4001);
         }
@@ -177,7 +185,7 @@ export const evmRpcHandler = {
       // Convert chainId to number if it's a string
       let targetChainId: number;
       if (typeof chainId === 'string') {
-        targetChainId = parseInt(chainId, 10);
+        targetChainId = parseChainId(chainId);
         if (isNaN(targetChainId)) {
           return createErrorResponse(`Invalid chainId: ${chainId}`, 4001);
         }
@@ -219,7 +227,10 @@ export const evmRpcHandler = {
       // Convert chainId to number if it's a string
       let targetChainId: number;
       if (typeof chainId === 'string') {
-        targetChainId = parseInt(chainId, 10);
+        // Handle both hex (0x...) and decimal string formats
+        targetChainId = chainId.startsWith('0x')
+          ? parseInt(chainId, 16)
+          : parseChainId(chainId);
         if (isNaN(targetChainId)) {
           return createErrorResponse(`Invalid chainId: ${chainId}`, 4001);
         }
@@ -252,7 +263,10 @@ export const evmRpcHandler = {
       // Convert chainId to number if it's a string
       let targetChainId: number;
       if (typeof chainId === 'string') {
-        targetChainId = parseInt(chainId, 10);
+        // Handle both hex (0x...) and decimal string formats
+        targetChainId = chainId.startsWith('0x')
+          ? parseInt(chainId, 16)
+          : parseChainId(chainId);
         if (isNaN(targetChainId)) {
           return createErrorResponse(`Invalid chainId: ${chainId}`, 4001);
         }
@@ -287,7 +301,7 @@ export const evmRpcHandler = {
       // Convert chainId to number if it's a string
       let targetChainId: number;
       if (typeof chainId === 'string') {
-        targetChainId = parseInt(chainId, 10);
+        targetChainId = parseChainId(chainId);
         if (isNaN(targetChainId)) {
           return createErrorResponse(`Invalid chainId: ${chainId}`, 4001);
         }
@@ -326,7 +340,7 @@ export const evmRpcHandler = {
       // Convert chainId to number if it's a string
       let targetChainId: number;
       if (typeof chainId === 'string') {
-        targetChainId = parseInt(chainId, 10);
+        targetChainId = parseChainId(chainId);
         if (isNaN(targetChainId)) {
           return createErrorResponse(`Invalid chainId: ${chainId}`, 4001);
         }
