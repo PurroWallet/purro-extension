@@ -34,6 +34,7 @@ const MainHeader = ({
   const isNftScreen = currentScreen === 'nft';
   const isHistoryScreen = currentScreen === 'history';
   const isHomeScreen = currentScreen === 'home';
+  const isExploreScreen = currentScreen === 'explore';
   const activeAccountAddress = useMemo(() => {
     return wallets[activeAccount?.id as string]?.eip155?.address;
   }, [activeAccount, wallets]);
@@ -86,31 +87,33 @@ const MainHeader = ({
         />
       </div>
 
-      {isHomeScreen && (
-        <div className="flex items-center">
-          <div
-            className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
-            onClick={async () => {
-              openDialog(<TokenSelectorDialog />);
-            }}
-          >
-            <SearchIcon className="size-5 text-white/90" />
+      {isHomeScreen ||
+        (isExploreScreen && (
+          <div className="flex items-center">
+            <div
+              className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
+              onClick={async () => {
+                openDialog(<TokenSelectorDialog />);
+              }}
+            >
+              <SearchIcon className="size-5 text-white/90" />
+            </div>
+            {!isSidepanel &&
+              !isNftScreen &&
+              !isHistoryScreen &&
+              !isSwapScreen &&
+              !isExploreScreen && (
+                <div
+                  className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
+                  onClick={async () => {
+                    await openSidePanel();
+                  }}
+                >
+                  <DockToLeftIcon className="size-5 text-white/90" />
+                </div>
+              )}
           </div>
-          {!isSidepanel &&
-            !isNftScreen &&
-            !isHistoryScreen &&
-            !isSwapScreen && (
-              <div
-                className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
-                onClick={async () => {
-                  await openSidePanel();
-                }}
-              >
-                <DockToLeftIcon className="size-5 text-white/90" />
-              </div>
-            )}
-        </div>
-      )}
+        ))}
 
       {isNftScreen && (
         <div
