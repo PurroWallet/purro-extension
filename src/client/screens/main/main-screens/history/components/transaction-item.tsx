@@ -71,6 +71,22 @@ const getChainIcon = (chainName: string) => {
   return NETWORK_ICONS[chainName as keyof typeof NETWORK_ICONS] || '';
 };
 
+// Helper function to get native token info for each chain
+const getNativeTokenInfo = (chainId: number) => {
+  switch (chainId) {
+    case 1: // Ethereum
+      return { symbol: 'ETH', name: 'Ethereum' };
+    case 42161: // Arbitrum
+      return { symbol: 'ETH', name: 'Ethereum' };
+    case 8453: // Base
+      return { symbol: 'ETH', name: 'Ethereum' };
+    case 999: // HyperEVM
+      return { symbol: 'HYPE', name: 'HyperEVM' };
+    default:
+      return { symbol: 'ETH', name: 'Ethereum' };
+  }
+};
+
 export const TransactionItem = ({
   transaction,
   onTransactionClick,
@@ -151,12 +167,13 @@ export const TransactionItem = ({
               fallbackText={transaction.tokenInfo?.symbol?.charAt(0) || 'T'}
             />
           ) : (
-            // ETH icon
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-blue-600/10 flex items-center justify-center font-bold text-blue-600 text-sm border border-blue-500/20">
+            // Native token icon
+            <div className="w-10 h-10 rounded-full bg-[var(--primary-color)]/10 flex items-center justify-center font-bold text-blue-600 text-sm">
               <TokenLogo
-                symbol={'eth'}
-                className="w-8 h-8 rounded-full"
-                fallbackText={'T'}
+                symbol={getNativeTokenInfo(transaction.chainId).symbol.toLowerCase()}
+                networkId={getChainType(transaction.chainId)}
+                className="w-9 h-9 rounded-full"
+                fallbackText={getNativeTokenInfo(transaction.chainId).symbol.charAt(0)}
               />
             </div>
           )}
@@ -197,7 +214,7 @@ export const TransactionItem = ({
           <p className="text-sm font-medium text-foreground mb-1">
             {transaction.isTokenTransfer && transaction.tokenInfo
               ? `${transaction.tokenInfo.symbol} (${transaction.tokenInfo.name})`
-              : 'Ethereum (ETH)'}
+              : `${getNativeTokenInfo(transaction.chainId).name} (${getNativeTokenInfo(transaction.chainId).symbol})`}
           </p>
         )}
 
@@ -218,7 +235,7 @@ export const TransactionItem = ({
               transaction.tokenInfo &&
               transaction.tokenInfo.symbol !== LOADING_STATES.TOKEN_SYMBOL
                 ? `${formatTokenAmount(transaction.tokenAmount, transaction.tokenInfo.decimals)} ${transaction.tokenInfo.symbol}`
-                : `${formatValue(transaction.value)} ETH`}
+                : `${formatValue(transaction.value)} ${getNativeTokenInfo(transaction.chainId).symbol}`}
             </p>
             <p className="font-semibold text-sm text-green-400">
               +
@@ -243,7 +260,7 @@ export const TransactionItem = ({
             transaction.tokenInfo &&
             transaction.tokenInfo.symbol !== LOADING_STATES.TOKEN_SYMBOL
               ? `${formatTokenAmount(transaction.tokenAmount, transaction.tokenInfo.decimals)} ${transaction.tokenInfo.symbol}`
-              : `${formatValue(transaction.value)} ETH`}
+              : `${formatValue(transaction.value)} ${getNativeTokenInfo(transaction.chainId).symbol}`}
           </p>
         )}
         {/* Chain badge */}

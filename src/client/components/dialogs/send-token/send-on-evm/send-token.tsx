@@ -270,15 +270,17 @@ const SendToken = () => {
         {token && (
           <>
             {/* Token Display */}
-            <div className="flex items-center justify-center size-24 bg-[var(--card-color)] rounded-full relative mx-auto mb-6">
+            <div className="flex items-center justify-center size-24 bg-[var(--card-color)] rounded-full relative mx-auto">
               <TokenLogo
                 symbol={token.symbol}
+                networkId={token.chain}
                 existingLogo={token.logo}
-                className="size-24 rounded-full object-cover p-1"
+                tokenAddress={token.contractAddress}
+                className="size-24 rounded-full object-cover"
                 fallbackText={token.symbol.charAt(0).toUpperCase()}
               />
               {token.chain && (
-                <div className="absolute bottom-0 p-1 right-0 flex items-center justify-center bg-white/90 rounded-full">
+                <div className="absolute bottom-0 right-0 flex items-center justify-center bg-[var(--card-color)] rounded-full">
                   <img
                     src={getNetworkIcon(token.chain)}
                     alt={token.chain}
