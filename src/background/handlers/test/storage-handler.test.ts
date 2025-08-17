@@ -109,7 +109,11 @@ export const runStorageHandlerTests = async () => {
   await runTest('Save and get seed phrase', async () => {
     await clearStorage();
 
-    const seedPhraseData = { ...createTestSeedPhraseData(), data: createTestDataEncryption(), name: 'Test Seed Phrase' };
+    const seedPhraseData = {
+      ...createTestSeedPhraseData(),
+      data: createTestDataEncryption(),
+      name: 'Test Seed Phrase',
+    };
     await storageHandler.saveSeedPhrase(TEST_SEED_PHRASE_ID, seedPhraseData);
 
     const retrievedSeedPhrase =
@@ -117,7 +121,7 @@ export const runStorageHandlerTests = async () => {
     if (
       !retrievedSeedPhrase ||
       retrievedSeedPhrase.currentDerivationIndex !==
-      seedPhraseData.currentDerivationIndex
+        seedPhraseData.currentDerivationIndex
     ) {
       throw new Error('Seed phrase not saved or retrieved correctly');
     }
@@ -166,7 +170,11 @@ export const runStorageHandlerTests = async () => {
   await runTest('Update seed phrase', async () => {
     await clearStorage();
 
-    const seedPhraseData = { ...createTestSeedPhraseData(), data: createTestDataEncryption(), name: 'Test Seed Phrase' };
+    const seedPhraseData = {
+      ...createTestSeedPhraseData(),
+      data: createTestDataEncryption(),
+      name: 'Test Seed Phrase',
+    };
     await storageHandler.saveSeedPhrase(TEST_SEED_PHRASE_ID, seedPhraseData);
 
     const updatedData = { ...seedPhraseData, currentDerivationIndex: 5 };
@@ -216,7 +224,11 @@ export const runStorageHandlerTests = async () => {
     await storageHandler.saveAccountById(TEST_ACCOUNT_ID, accountData);
     await storageHandler.saveAccounts(TEST_ACCOUNT_ID);
 
-    const seedPhraseData = { ...createTestSeedPhraseData(), data: createTestDataEncryption(), name: 'Test Seed Phrase' };
+    const seedPhraseData = {
+      ...createTestSeedPhraseData(),
+      data: createTestDataEncryption(),
+      name: 'Test Seed Phrase',
+    };
     await storageHandler.saveSeedPhrase(TEST_SEED_PHRASE_ID, seedPhraseData);
 
     const allSeedPhrases = await storageHandler.getAllSeedPhrases();

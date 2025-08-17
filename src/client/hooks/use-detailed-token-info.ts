@@ -1,5 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchTokensInfoByAddresses, Network } from '@/client/services/gecko-terminal-api';
+import {
+  fetchTokensInfoByAddresses,
+  Network,
+} from '@/client/services/gecko-terminal-api';
 import QueryKeys from '@/client/utils/query-keys';
 import { ChainType } from '@/client/types/wallet';
 
@@ -73,12 +76,16 @@ export const useDetailedTokenInfo = ({
     queryKey: [QueryKeys.DETAILED_TOKEN_INFO, network, tokenAddress],
     queryFn: async (): Promise<DetailedTokenInfo | null> => {
       try {
-        const response = await fetchTokensInfoByAddresses(network, [tokenAddress]);
+        const response = await fetchTokensInfoByAddresses(network, [
+          tokenAddress,
+        ]);
 
         // Handle new multi-token API response format
         if (response?.data && Array.isArray(response.data)) {
-          const tokenData = response.data.find((token: any) =>
-            token.attributes.address.toLowerCase() === tokenAddress.toLowerCase()
+          const tokenData = response.data.find(
+            (token: any) =>
+              token.attributes.address.toLowerCase() ===
+              tokenAddress.toLowerCase()
           );
 
           if (tokenData && tokenData.attributes) {
@@ -136,7 +143,7 @@ export const useDetailedTokenInfo = ({
     gcTime: 5 * 60 * 1000, // 5 minutes
     enabled: enabled && !!contractAddress && !!chain,
     retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   return {
@@ -149,7 +156,10 @@ export const useDetailedTokenInfo = ({
 };
 
 // Helper function to format large numbers
-export const formatTokenNumber = (value: string | number, prefix = '$'): string => {
+export const formatTokenNumber = (
+  value: string | number,
+  prefix = '$'
+): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value;
   if (isNaN(num) || num === 0) return 'N/A';
 
@@ -169,15 +179,26 @@ export const formatTokenNumber = (value: string | number, prefix = '$'): string 
 };
 
 // Helper function to calculate price change percentage
-export const calculatePriceChange = (current: number, previous: number): number => {
+export const calculatePriceChange = (
+  current: number,
+  previous: number
+): number => {
   if (previous === 0) return 0;
   return ((current - previous) / previous) * 100;
 };
 
 // Helper function to get explorer URL
-export const getTokenExplorerUrl = (chain: ChainType, contractAddress: string, isNative?: boolean): string | null => {
+export const getTokenExplorerUrl = (
+  chain: ChainType,
+  contractAddress: string,
+  isNative?: boolean
+): string | null => {
   // For native tokens, return price chart URLs instead of token contract URLs
-  if (isNative || contractAddress === 'NATIVE' || contractAddress.toLowerCase().includes('native')) {
+  if (
+    isNative ||
+    contractAddress === 'NATIVE' ||
+    contractAddress.toLowerCase().includes('native')
+  ) {
     switch (chain) {
       case 'hyperevm':
         return 'https://hyperevmscan.io/chart/hypeprice';
@@ -206,7 +227,10 @@ export const getTokenExplorerUrl = (chain: ChainType, contractAddress: string, i
 };
 
 // Helper function to get GeckoTerminal URL
-export const getGeckoTerminalUrl = (chain: ChainType, contractAddress: string): string => {
+export const getGeckoTerminalUrl = (
+  chain: ChainType,
+  contractAddress: string
+): string => {
   const networkMap: Partial<Record<ChainType, string>> = {
     hyperevm: 'hyperevm',
     ethereum: 'eth',

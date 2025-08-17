@@ -214,7 +214,7 @@ const HeaderChainFilter = ({
                   </div>
                 </div>
                 {selectedFilter === 'all' && (
-                  <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                  <div className="w-2 h-2 bg-[var(--primary-color-light)] rounded-full" />
                 )}
               </button>
 
@@ -240,7 +240,7 @@ const HeaderChainFilter = ({
                       </div>
                     </div>
                     {selectedFilter === slug && (
-                      <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                      <div className="w-2 h-2 bg-[var(--primary-color-light)] rounded-full" />
                     )}
                   </button>
                 );

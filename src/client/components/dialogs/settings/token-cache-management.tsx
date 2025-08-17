@@ -47,7 +47,6 @@ const TokenCacheManagement = ({ onBack }: { onBack: () => void }) => {
       setClearing(chain);
       await clearChainTokenCache(chain);
       await loadStats(); // Reload stats
-      console.log(`✅ Cleared ${chain} token cache`);
     } catch (error) {
       console.error(`Failed to clear ${chain} cache:`, error);
     } finally {
@@ -60,7 +59,6 @@ const TokenCacheManagement = ({ onBack }: { onBack: () => void }) => {
       setClearing('all');
       await clearAllTokenCache();
       await loadStats(); // Reload stats
-      console.log('✅ Cleared all token cache');
     } catch (error) {
       console.error('Failed to clear all cache:', error);
     } finally {

@@ -20,20 +20,12 @@ const useDevModeStore = create<DevModeStore>()(
         }
 
         try {
-          console.log(
-            '🔧 Dev mode changing:',
-            currentState.isDevMode,
-            '->',
-            isDevMode
-          );
-
           // Set changing state first
           set({ isChanging: true });
 
           // Small delay to prevent race conditions
           setTimeout(() => {
             set({ isDevMode, isChanging: false });
-            console.log('✅ Dev mode changed successfully');
           }, 50);
         } catch (error) {
           console.error('❌ Error setting dev mode:', error);
@@ -47,9 +39,8 @@ const useDevModeStore = create<DevModeStore>()(
     {
       name: 'dev-mode-storage',
       version: 1,
-      onRehydrateStorage: () => state => {
-        console.log('🔄 Dev mode store rehydrated:', state?.isDevMode);
-      },
+      // onRehydrateStorage: () => state => {
+      // },
     }
   )
 );

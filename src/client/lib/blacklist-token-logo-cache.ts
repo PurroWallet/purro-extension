@@ -24,21 +24,21 @@ export class BlacklistTokenLogoCacheLib {
     try {
       const blacklist = this.getBlacklist();
       const key = `${networkId}:${tokenAddress.toLowerCase()}`;
-      
+
       // Check if already blacklisted
-      const exists = blacklist.some(entry => 
-        `${entry.networkId}:${entry.tokenAddress.toLowerCase()}` === key
+      const exists = blacklist.some(
+        entry =>
+          `${entry.networkId}:${entry.tokenAddress.toLowerCase()}` === key
       );
-      
+
       if (!exists) {
         blacklist.push({
           networkId,
           tokenAddress: tokenAddress.toLowerCase(),
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
-        
+
         localStorage.setItem(BLACKLIST_STORAGE_KEY, JSON.stringify(blacklist));
-        console.log(`Added token to blacklist: ${networkId}:${tokenAddress}`);
       }
     } catch (error) {
       console.error('Error adding token to blacklist:', error);
@@ -50,9 +50,10 @@ export class BlacklistTokenLogoCacheLib {
     try {
       const blacklist = this.getBlacklist();
       const key = `${networkId}:${tokenAddress.toLowerCase()}`;
-      
-      return blacklist.some(entry => 
-        `${entry.networkId}:${entry.tokenAddress.toLowerCase()}` === key
+
+      return blacklist.some(
+        entry =>
+          `${entry.networkId}:${entry.tokenAddress.toLowerCase()}` === key
       );
     } catch (error) {
       console.error('Error checking blacklist:', error);
@@ -64,13 +65,12 @@ export class BlacklistTokenLogoCacheLib {
   static cleanBlacklist(): void {
     try {
       const blacklist = this.getBlacklist();
-      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-      
+      const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+
       const cleaned = blacklist.filter(entry => entry.timestamp > sevenDaysAgo);
-      
+
       if (cleaned.length !== blacklist.length) {
         localStorage.setItem(BLACKLIST_STORAGE_KEY, JSON.stringify(cleaned));
-        console.log(`Cleaned ${blacklist.length - cleaned.length} old blacklist entries`);
       }
     } catch (error) {
       console.error('Error cleaning blacklist:', error);
@@ -82,14 +82,14 @@ export class BlacklistTokenLogoCacheLib {
     try {
       const blacklist = this.getBlacklist();
       const key = `${networkId}:${tokenAddress.toLowerCase()}`;
-      
-      const filtered = blacklist.filter(entry => 
-        `${entry.networkId}:${entry.tokenAddress.toLowerCase()}` !== key
+
+      const filtered = blacklist.filter(
+        entry =>
+          `${entry.networkId}:${entry.tokenAddress.toLowerCase()}` !== key
       );
-      
+
       if (filtered.length !== blacklist.length) {
         localStorage.setItem(BLACKLIST_STORAGE_KEY, JSON.stringify(filtered));
-        console.log(`Removed token from blacklist: ${networkId}:${tokenAddress}`);
       }
     } catch (error) {
       console.error('Error removing token from blacklist:', error);
@@ -100,27 +100,30 @@ export class BlacklistTokenLogoCacheLib {
   static clearBlacklist(): void {
     try {
       localStorage.removeItem(BLACKLIST_STORAGE_KEY);
-      console.log('Cleared entire token logo blacklist');
     } catch (error) {
       console.error('Error clearing blacklist:', error);
     }
   }
 
   // Get blacklist statistics
-  static getBlacklistStats(): { total: number; oldestEntry: number | null; newestEntry: number | null } {
+  static getBlacklistStats(): {
+    total: number;
+    oldestEntry: number | null;
+    newestEntry: number | null;
+  } {
     try {
       const blacklist = this.getBlacklist();
-      
+
       if (blacklist.length === 0) {
         return { total: 0, oldestEntry: null, newestEntry: null };
       }
-      
+
       const timestamps = blacklist.map(entry => entry.timestamp);
-      
+
       return {
         total: blacklist.length,
         oldestEntry: Math.min(...timestamps),
-        newestEntry: Math.max(...timestamps)
+        newestEntry: Math.max(...timestamps),
       };
     } catch (error) {
       console.error('Error getting blacklist stats:', error);

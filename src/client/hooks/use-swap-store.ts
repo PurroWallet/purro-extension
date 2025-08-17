@@ -1,27 +1,27 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import { UnifiedToken } from "@/client/components/token-list";
-import { SwapRouteV2Response } from "@/client/types/liquidswap-api";
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { UnifiedToken } from '@/client/components/token-list';
+import { SwapRouteV2Response } from '@/client/types/liquidswap-api';
 
 /**
  * Swap Store with Persistence
- * 
+ *
  * This store manages swap-related state and persists user settings across extension sessions.
- * 
+ *
  * Persisted Settings (Simple Approach):
  * - slippage: User's preferred slippage tolerance (0.01% - 50%)
  * - deadline: Transaction deadline in minutes (1 - 4320 minutes)
  * - enableAutoRefresh: Whether to auto-refresh swap routes
  * - refreshInterval: Auto-refresh interval in milliseconds (1000ms - 60000ms)
- * 
+ *
  * Non-Persisted State (Resets each session):
  * - tokenIn/tokenOut: Selected tokens (fresh selection each time)
- * - amountIn/amountOut: Current swap amounts 
+ * - amountIn/amountOut: Current swap amounts
  * - route: Current swap route data
  * - isSwapping: Transaction state
  * - tokenPrices: Current token prices
  * - lastRefreshTimestamp: Refresh timing
- * 
+ *
  * This simple approach ensures that only user preferences are saved while
  * token selections and balances are always fresh when the extension opens.
  */
@@ -113,8 +113,14 @@ export interface SwapState {
   setDeadline: (deadline: number) => void;
   setRoute: (route: SwapRouteV2Response | null) => void;
   setIsSwapping: (swapping: boolean) => void;
-  setTokenPrices: (prices: { [address: string]: { price: number; priceChange24h: number; } }) => void;
-  updateTokenPrice: (address: string, price: number, priceChange24h: number) => void;
+  setTokenPrices: (prices: {
+    [address: string]: { price: number; priceChange24h: number };
+  }) => void;
+  updateTokenPrice: (
+    address: string,
+    price: number,
+    priceChange24h: number
+  ) => void;
   setEnableAutoRefresh: (enable: boolean) => void;
   setRefreshInterval: (interval: number) => void;
   setLastRefreshTimestamp: (timestamp: number) => void;
@@ -136,8 +142,14 @@ export interface SwapState {
   // Gas estimation and max balance methods
   isNativeToken: (token: UnifiedToken) => boolean;
   estimateGas: (token: UnifiedToken) => Promise<GasEstimate | null>;
-  getMaxBalance: (token: UnifiedToken, options?: MaxBalanceOptions) => Promise<string>;
-  getMaxBalanceSync: (token: UnifiedToken, options?: MaxBalanceOptions) => string;
+  getMaxBalance: (
+    token: UnifiedToken,
+    options?: MaxBalanceOptions
+  ) => Promise<string>;
+  getMaxBalanceSync: (
+    token: UnifiedToken,
+    options?: MaxBalanceOptions
+  ) => string;
 }
 
 const useSwapStore = create<SwapState>()(
@@ -147,8 +159,8 @@ const useSwapStore = create<SwapState>()(
       tokenIn: null,
       tokenOut: null,
       showTokenSelector: null,
-      amountIn: "",
-      amountOut: "",
+      amountIn: '',
+      amountOut: '',
       isExactIn: true,
       slippage: DEFAULT_SLIPPAGE,
       deadline: DEFAULT_DEADLINE,
@@ -160,39 +172,49 @@ const useSwapStore = create<SwapState>()(
       lastRefreshTimestamp: 0,
 
       // Actions
-      setTokenIn: (token) => set({ tokenIn: token }),
-      setTokenOut: (token) => set({ tokenOut: token }),
-      setShowTokenSelector: (show) => set({ showTokenSelector: show }),
-      setAmountIn: (amount) => set({ amountIn: amount }),
-      setAmountOut: (amount) => set({ amountOut: amount }),
-      setIsExactIn: (isExactIn) => set({ isExactIn }),
-      setSlippage: (slippage) => {
+      setTokenIn: token => set({ tokenIn: token }),
+      setTokenOut: token => set({ tokenOut: token }),
+      setShowTokenSelector: show => set({ showTokenSelector: show }),
+      setAmountIn: amount => set({ amountIn: amount }),
+      setAmountOut: amount => set({ amountOut: amount }),
+      setIsExactIn: isExactIn => set({ isExactIn }),
+      setSlippage: slippage => {
         // Validate slippage value
-        const validSlippage = Math.max(MIN_SLIPPAGE, Math.min(MAX_SLIPPAGE, slippage));
+        const validSlippage = Math.max(
+          MIN_SLIPPAGE,
+          Math.min(MAX_SLIPPAGE, slippage)
+        );
         set({ slippage: validSlippage });
       },
-      setDeadline: (deadline) => {
+      setDeadline: deadline => {
         // Validate deadline value
-        const validDeadline = Math.max(MIN_DEADLINE, Math.min(MAX_DEADLINE, deadline));
+        const validDeadline = Math.max(
+          MIN_DEADLINE,
+          Math.min(MAX_DEADLINE, deadline)
+        );
         set({ deadline: validDeadline });
       },
-      setRoute: (route) => set({ route }),
-      setIsSwapping: (swapping) => set({ isSwapping: swapping }),
-      setTokenPrices: (prices) => set({ tokenPrices: prices }),
+      setRoute: route => set({ route }),
+      setIsSwapping: swapping => set({ isSwapping: swapping }),
+      setTokenPrices: prices => set({ tokenPrices: prices }),
       updateTokenPrice: (address, price, priceChange24h) =>
-        set((state) => ({
+        set(state => ({
           tokenPrices: {
             ...state.tokenPrices,
-            [address]: { price, priceChange24h }
-          }
+            [address]: { price, priceChange24h },
+          },
         })),
-      setEnableAutoRefresh: (enable) => set({ enableAutoRefresh: enable }),
-      setRefreshInterval: (interval) => {
+      setEnableAutoRefresh: enable => set({ enableAutoRefresh: enable }),
+      setRefreshInterval: interval => {
         // Validate refresh interval
-        const validInterval = Math.max(MIN_REFRESH_INTERVAL, Math.min(MAX_REFRESH_INTERVAL, interval));
+        const validInterval = Math.max(
+          MIN_REFRESH_INTERVAL,
+          Math.min(MAX_REFRESH_INTERVAL, interval)
+        );
         set({ refreshInterval: validInterval });
       },
-      setLastRefreshTimestamp: (timestamp) => set({ lastRefreshTimestamp: timestamp }),
+      setLastRefreshTimestamp: timestamp =>
+        set({ lastRefreshTimestamp: timestamp }),
 
       // Utility actions
       switchTokens: () => {
@@ -206,26 +228,29 @@ const useSwapStore = create<SwapState>()(
         });
       },
 
-      resetAmounts: () => set({
-        amountIn: "",
-        amountOut: "",
-        route: null,
-      }),
+      resetAmounts: () =>
+        set({
+          amountIn: '',
+          amountOut: '',
+          route: null,
+        }),
 
-      reset: () => set({
-        tokenIn: null,
-        tokenOut: null,
-        amountIn: "",
-        amountOut: "",
-        isExactIn: true,
-        route: null,
-        isSwapping: false,
-        tokenPrices: {},
-      }),
+      reset: () =>
+        set({
+          tokenIn: null,
+          tokenOut: null,
+          amountIn: '',
+          amountOut: '',
+          isExactIn: true,
+          route: null,
+          isSwapping: false,
+          tokenPrices: {},
+        }),
 
       // Helper method to get swap parameters for React Query
       getSwapParams: () => {
-        const { tokenIn, tokenOut, amountIn, amountOut, isExactIn, slippage } = get();
+        const { tokenIn, tokenOut, amountIn, amountOut, isExactIn, slippage } =
+          get();
 
         if (!tokenIn || !tokenOut) return null;
 
@@ -233,12 +258,17 @@ const useSwapStore = create<SwapState>()(
         if (!amount || parseFloat(amount) <= 0) return null;
 
         // Map native token addresses to WHYPE for API calls
-        const WHYPE_TOKEN_ADDRESS = "0x5555555555555555555555555555555555555555";
+        const WHYPE_TOKEN_ADDRESS =
+          '0x5555555555555555555555555555555555555555';
 
         const getApiAddress = (token: any): string => {
           const address = token.contractAddress;
           // If token is native (HYPE), use WHYPE address for API
-          if (address === 'native' || address === 'NATIVE' || token.symbol === 'HYPE') {
+          if (
+            address === 'native' ||
+            address === 'NATIVE' ||
+            token.symbol === 'HYPE'
+          ) {
             return WHYPE_TOKEN_ADDRESS;
           }
           return address;
@@ -277,7 +307,8 @@ const useSwapStore = create<SwapState>()(
               gasLimit: 65000, // Standard ERC-20 transfer
               gasPrice: DEFAULT_GAS_PRICE,
               gasCostEth: (65000 * DEFAULT_GAS_PRICE) / 1e18,
-              gasCostUsd: ((65000 * DEFAULT_GAS_PRICE) / 1e18) * (token.usdPrice || 3000),
+              gasCostUsd:
+                ((65000 * DEFAULT_GAS_PRICE) / 1e18) * (token.usdPrice || 3000),
             };
           } else {
             // For native tokens, use standard gas limit
@@ -285,7 +316,9 @@ const useSwapStore = create<SwapState>()(
               gasLimit: DEFAULT_GAS_LIMIT,
               gasPrice: DEFAULT_GAS_PRICE,
               gasCostEth: (DEFAULT_GAS_LIMIT * DEFAULT_GAS_PRICE) / 1e18,
-              gasCostUsd: ((DEFAULT_GAS_LIMIT * DEFAULT_GAS_PRICE) / 1e18) * (token.usdPrice || 3000),
+              gasCostUsd:
+                ((DEFAULT_GAS_LIMIT * DEFAULT_GAS_PRICE) / 1e18) *
+                (token.usdPrice || 3000),
             };
           }
         } catch (error) {
@@ -294,7 +327,10 @@ const useSwapStore = create<SwapState>()(
         }
       },
 
-      getMaxBalance: async (token: UnifiedToken, options: MaxBalanceOptions = {}): Promise<string> => {
+      getMaxBalance: async (
+        token: UnifiedToken,
+        options: MaxBalanceOptions = {}
+      ): Promise<string> => {
         const { isNativeToken, estimateGas } = get();
 
         if (!token?.balance) return '0';
@@ -302,13 +338,16 @@ const useSwapStore = create<SwapState>()(
         const {
           includeGasFees = true,
           customGasEstimate,
-          gasBuffer = GAS_BUFFER_PERCENTAGE
+          gasBuffer = GAS_BUFFER_PERCENTAGE,
         } = options;
 
         try {
           // Parse token balance
           let balanceValue: bigint;
-          if (typeof token.balance === 'string' && token.balance.startsWith('0x')) {
+          if (
+            typeof token.balance === 'string' &&
+            token.balance.startsWith('0x')
+          ) {
             balanceValue = BigInt(token.balance);
           } else {
             balanceValue = BigInt(token.balance || '0');
@@ -328,16 +367,20 @@ const useSwapStore = create<SwapState>()(
           }
 
           // Get gas estimate
-          const gasEstimate = customGasEstimate || await estimateGas(token);
+          const gasEstimate = customGasEstimate || (await estimateGas(token));
           if (!gasEstimate) {
             // Fallback: reserve default amount
-            const maxBalance = Math.max(0, balanceEth - NATIVE_TOKEN_GAS_RESERVE);
+            const maxBalance = Math.max(
+              0,
+              balanceEth - NATIVE_TOKEN_GAS_RESERVE
+            );
             return maxBalance.toString();
           }
 
           // Calculate gas cost with buffer
           const gasBufferMultiplier = 1 + gasBuffer;
-          const gasCostWithBuffer = gasEstimate.gasCostEth * gasBufferMultiplier;
+          const gasCostWithBuffer =
+            gasEstimate.gasCostEth * gasBufferMultiplier;
 
           // Calculate max spendable amount
           const maxBalance = Math.max(0, balanceEth - gasCostWithBuffer);
@@ -349,20 +392,24 @@ const useSwapStore = create<SwapState>()(
         }
       },
 
-      getMaxBalanceSync: (token: UnifiedToken, options: MaxBalanceOptions = {}): string => {
+      getMaxBalanceSync: (
+        token: UnifiedToken,
+        options: MaxBalanceOptions = {}
+      ): string => {
         const { isNativeToken } = get();
 
         if (!token?.balance) return '0';
 
-        const {
-          includeGasFees = true,
-          gasBuffer = GAS_BUFFER_PERCENTAGE
-        } = options;
+        const { includeGasFees = true, gasBuffer = GAS_BUFFER_PERCENTAGE } =
+          options;
 
         try {
           // Parse token balance
           let balanceValue: bigint;
-          if (typeof token.balance === 'string' && token.balance.startsWith('0x')) {
+          if (
+            typeof token.balance === 'string' &&
+            token.balance.startsWith('0x')
+          ) {
             balanceValue = BigInt(token.balance);
           } else {
             balanceValue = BigInt(token.balance || '0');
@@ -397,7 +444,7 @@ const useSwapStore = create<SwapState>()(
       name: SWAP_STORAGE_NAME,
       version: SWAP_STORAGE_VERSION,
       // Only persist user settings that should survive across sessions
-      partialize: (state) => ({
+      partialize: state => ({
         // Only persist user settings
         slippage: state.slippage,
         deadline: state.deadline,
@@ -406,14 +453,6 @@ const useSwapStore = create<SwapState>()(
         // Don't persist anything else - keep it simple
         // tokenIn, tokenOut, amounts, route, etc. will reset on each session
       }),
-      onRehydrateStorage: () => (state) => {
-        console.log('🔄 Swap store rehydrated - settings only:', {
-          slippage: state?.slippage,
-          deadline: state?.deadline,
-          enableAutoRefresh: state?.enableAutoRefresh,
-          refreshInterval: state?.refreshInterval,
-        });
-      },
     }
   )
 );

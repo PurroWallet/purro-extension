@@ -86,11 +86,8 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
         setLoading(true);
         setError(null);
 
-        console.log('Loading image with CID:', cid);
-
         // Check if it's a data URI first (base64 encoded image)
         if (isDataUri(cid)) {
-          console.log('Using data URI directly:', cid.substring(0, 50) + '...');
           setImageUri(cid);
           onLoad?.();
           return;
@@ -98,7 +95,6 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
 
         // Check if it's a regular HTTP URL
         if (isHttpUrl(cid)) {
-          console.log('Using HTTP URL directly:', cid);
           setImageUri(cid);
           onLoad?.();
           return;
@@ -106,10 +102,8 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
 
         // Check if it's an IPFS URL
         if (isIpfsUrl(cid)) {
-          console.log('Processing IPFS URL:', cid);
           // Extract CID from URL if needed
           const actualCid = extractCidFromUrl(cid);
-          console.log('Extracted CID:', actualCid);
 
           const response = await fetchWithFallback(actualCid);
 
@@ -130,7 +124,6 @@ export const IpfsImage: React.FC<IpfsImageProps> = ({
           onLoad?.();
         } else {
           // If it's neither HTTP nor IPFS, try to use it as a direct CID
-          console.log('Treating as direct CID:', cid);
           const response = await fetchWithFallback(cid);
           const blob = await response.blob();
           const uri = URL.createObjectURL(blob);

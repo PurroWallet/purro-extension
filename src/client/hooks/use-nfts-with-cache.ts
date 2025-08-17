@@ -21,7 +21,11 @@ const useNFTsWithCache = (
     queryFn: async () => {
       if (!address) throw new Error('No active address');
 
-      const result = await fetchHyperEvmNftsCollection(address, isDevMode, pageParams);
+      const result = await fetchHyperEvmNftsCollection(
+        address,
+        isDevMode,
+        pageParams
+      );
 
       // Cache the result
       setNFTData(address, page, pageParams, result);

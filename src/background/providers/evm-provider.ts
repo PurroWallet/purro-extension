@@ -104,15 +104,10 @@ export class PurroEVMProvider implements EthereumProvider {
         const newAddress = this.providerManager.activeAccount;
         const accountsToEmit = this.providerManager.accounts || [newAddress];
 
-        console.log(
-          '🔗 EVMProvider: Using existing connection from ProviderManager:',
-          newAddress
-        );
-
         if (
           this.selectedAddress !== newAddress ||
           JSON.stringify(this.lastEmittedAccounts) !==
-          JSON.stringify(accountsToEmit)
+            JSON.stringify(accountsToEmit)
         ) {
           this.selectedAddress = newAddress;
 
@@ -138,15 +133,10 @@ export class PurroEVMProvider implements EthereumProvider {
         const newAddress = result.address;
         const accountsToEmit = [newAddress];
 
-        console.log(
-          '🔗 EVMProvider: Found connection via direct check:',
-          newAddress
-        );
-
         if (
           this.selectedAddress !== newAddress ||
           JSON.stringify(this.lastEmittedAccounts) !==
-          JSON.stringify(accountsToEmit)
+            JSON.stringify(accountsToEmit)
         ) {
           this.selectedAddress = newAddress;
 
@@ -176,9 +166,6 @@ export class PurroEVMProvider implements EthereumProvider {
         this.selectedAddress !== null ||
         this.lastEmittedAccounts.length > 0
       ) {
-        console.log(
-          '🔌 EVMProvider: No connection found, emitting empty state'
-        );
         this.selectedAddress = null;
         this.emit('accountsChanged', []);
         this.lastEmittedAccounts = [];
@@ -210,11 +197,6 @@ export class PurroEVMProvider implements EthereumProvider {
       this.lastEmittedAccounts = data.accounts || [];
       this.lastEmitTime = now;
 
-      console.log(
-        '🔗 EVMProvider: Emitting connect event from ProviderManager:',
-        data
-      );
-
       this.emit('connect', data);
       this.emit('accountsChanged', data.accounts || []);
       // Emit chainChanged to ensure dApp has correct network info
@@ -225,10 +207,6 @@ export class PurroEVMProvider implements EthereumProvider {
       this.selectedAddress = null;
       this.lastEmittedAccounts = [];
       this.lastEmitTime = Date.now();
-
-      console.log(
-        '🔌 EVMProvider: Emitting disconnect event from ProviderManager'
-      );
 
       this.emit('disconnect');
       this.emit('accountsChanged', []);
@@ -251,11 +229,6 @@ export class PurroEVMProvider implements EthereumProvider {
       this.selectedAddress = accounts[0] || null;
       this.lastEmittedAccounts = accounts;
       this.lastEmitTime = now;
-
-      console.log(
-        '🔄 EVMProvider: Emitting accountsChanged from ProviderManager:',
-        accounts
-      );
 
       this.emit('accountsChanged', accounts);
     });
@@ -280,11 +253,6 @@ export class PurroEVMProvider implements EthereumProvider {
       this.selectedAddress = account;
       this.lastEmittedAccounts = accountsToEmit;
       this.lastEmitTime = now;
-
-      console.log(
-        '🔄 EVMProvider: Emitting accountChanged from ProviderManager:',
-        account
-      );
 
       this.emit('accountsChanged', accountsToEmit);
     });
@@ -586,8 +554,6 @@ export class PurroEVMProvider implements EthereumProvider {
 
   private async handleGetAccounts(): Promise<string[]> {
     try {
-      console.log('🔍 EVMProvider: handleGetAccounts called');
-
       // Check if ProviderManager already has connection state
       if (
         this.providerManager.isConnected &&
@@ -596,19 +562,11 @@ export class PurroEVMProvider implements EthereumProvider {
         const accounts = this.providerManager.accounts;
         this.selectedAddress = accounts[0];
 
-        console.log(
-          '🔗 EVMProvider: Returning accounts from ProviderManager:',
-          accounts
-        );
         return accounts;
       }
 
       // Fast path: return selectedAddress if already set and valid
       if (this.selectedAddress) {
-        console.log(
-          '🔗 EVMProvider: Returning cached selectedAddress:',
-          this.selectedAddress
-        );
         return [this.selectedAddress];
       }
 
@@ -618,8 +576,6 @@ export class PurroEVMProvider implements EthereumProvider {
       if (result && result.address) {
         const newAddress = result.address;
         const accountsToReturn = [newAddress];
-
-        console.log('🔗 EVMProvider: Found connection in storage:', newAddress);
 
         this.selectedAddress = newAddress;
 
@@ -650,11 +606,6 @@ export class PurroEVMProvider implements EthereumProvider {
       const accounts = await this.providerManager.getAccounts();
 
       if (accounts.length > 0) {
-        console.log(
-          '🔗 EVMProvider: Got accounts from ProviderManager fallback:',
-          accounts
-        );
-
         if (this.selectedAddress !== accounts[0]) {
           this.selectedAddress = accounts[0];
 
@@ -674,8 +625,6 @@ export class PurroEVMProvider implements EthereumProvider {
         return accounts;
       }
 
-      // No connection found
-      console.log('🔌 EVMProvider: No connection found');
       if (this.selectedAddress !== null) {
         this.selectedAddress = null;
 

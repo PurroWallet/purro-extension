@@ -72,11 +72,12 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
   const { isNetworkActive } = useNetworkSettingsStore();
   const isHyperliquidActive = isNetworkActive('hyperevm');
 
-  const { evmData, isEvmLoading, evmError, evmValue, refetchEvm } = useHlPortfolioData({
-    fetchSpot: false,
-    fetchPerps: false,
-    fetchEvm: isHyperliquidActive && !isDevMode,
-  });
+  const { evmData, isEvmLoading, evmError, evmValue, refetchEvm } =
+    useHlPortfolioData({
+      fetchSpot: false,
+      fetchPerps: false,
+      fetchEvm: isHyperliquidActive && !isDevMode,
+    });
 
   const {
     allTokens: alchemyTokens,
@@ -137,13 +138,17 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
       evmData.tokensData.data.tokens.forEach((token: any) => {
         // Skip EVM HYPE token if we already have native HYPE token
         // This prevents duplicate HYPE tokens in the list
-        if (token.symbol === 'HYPE' && token.token.toLowerCase().includes('native')) {
+        if (
+          token.symbol === 'HYPE' &&
+          token.token.toLowerCase().includes('native')
+        ) {
           return; // Skip this token
         }
 
         // Try both original address and lowercase for price lookup
         const tokenAddress = token.token.toLowerCase();
-        const priceStr = tokenPricesData[tokenAddress] || tokenPricesData[token.token];
+        const priceStr =
+          tokenPricesData[tokenAddress] || tokenPricesData[token.token];
         const price = priceStr ? parseFloat(priceStr) : 0;
         const balance =
           parseFloat(token.balance) / Math.pow(10, token.decimals);
@@ -208,9 +213,9 @@ export const useUnifiedTokens = (): UseUnifiedTokensResult => {
       refetchAll: () => {
         refetchNativeTokens();
       },
-      refetchAlchemy: () => { }, // No alchemy in dev mode
+      refetchAlchemy: () => {}, // No alchemy in dev mode
       refetchNative: refetchNativeTokens,
-      refetchHyperliquid: () => { },
+      refetchHyperliquid: () => {},
     };
   }
 

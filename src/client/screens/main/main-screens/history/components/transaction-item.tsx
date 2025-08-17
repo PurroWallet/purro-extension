@@ -170,10 +170,14 @@ export const TransactionItem = ({
             // Native token icon
             <div className="w-10 h-10 rounded-full bg-[var(--primary-color)]/10 flex items-center justify-center font-bold text-blue-600 text-sm">
               <TokenLogo
-                symbol={getNativeTokenInfo(transaction.chainId).symbol.toLowerCase()}
+                symbol={getNativeTokenInfo(
+                  transaction.chainId
+                ).symbol.toLowerCase()}
                 networkId={getChainType(transaction.chainId)}
                 className="w-9 h-9 rounded-full"
-                fallbackText={getNativeTokenInfo(transaction.chainId).symbol.charAt(0)}
+                fallbackText={getNativeTokenInfo(
+                  transaction.chainId
+                ).symbol.charAt(0)}
               />
             </div>
           )}
@@ -266,7 +270,9 @@ export const TransactionItem = ({
         {/* Chain badge */}
         <div className="flex items-center justify-center gap-2">
           <p className="text-xs text-muted-foreground capitalize">
-            {transaction.chainName}
+            {transaction.chainName === 'hyperevm'
+              ? 'HyperEVM'
+              : transaction.chainName}
           </p>
           <div className="size-4 rounded-full bg-[var(--background-color)] flex items-center justify-center">
             {getChainIcon(transaction.chainName) ? (

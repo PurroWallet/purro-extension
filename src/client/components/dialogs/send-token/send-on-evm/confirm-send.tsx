@@ -65,14 +65,6 @@ const estimateGas = async (
   nativeTokens: NativeToken[]
 ) => {
   try {
-    console.log('🔍 Estimating gas for transaction:', {
-      token: token.symbol,
-      amount,
-      recipient,
-      senderAddress,
-      chain: token.chain,
-    });
-
     // Prepare transaction object
     let txObject: any;
     if (
@@ -88,10 +80,7 @@ const estimateGas = async (
         value: convertToWeiHex(amount), // Convert to wei hex
       };
     } else {
-      // ERC-20 token transfer
-      console.log('🔍 Ensuring token decimals for gas estimation...');
       const tokenDecimals = await ensureTokenDecimals(token);
-      console.log(`✅ Token decimals confirmed: ${tokenDecimals}`);
 
       const transferMethodId = '0xa9059cbb';
       const paddedRecipient = recipient.slice(2).padStart(64, '0');
@@ -107,23 +96,16 @@ const estimateGas = async (
       };
     }
 
-    console.log('📝 Transaction object:', txObject, getChainId(token.chain));
-
     // Get gas estimate
     const gasEstimateResponse = await sendMessage('EVM_ESTIMATE_GAS', {
       transaction: txObject,
       chainId: getChainId(token.chain),
     });
 
-    console.log('⛽ Gas estimation response:', gasEstimateResponse);
-
     // Access the nested data properly (backend wraps response in data field)
     // First try the direct path, then fallback to nested path
     const estimateData =
       gasEstimateResponse.data || gasEstimateResponse.data?.data;
-    console.log('📊 Estimate data:', estimateData);
-    console.log('📊 Full response structure:', gasEstimateResponse);
-
     const gasLimit = parseInt(estimateData.gas, 16);
 
     // Handle both legacy and EIP-1559 transactions
@@ -133,35 +115,22 @@ const estimateGas = async (
     if (estimateData.gasPrice) {
       // Legacy transaction (type 0x0)
       effectiveGasPrice = parseInt(estimateData.gasPrice, 16);
-      console.log('📊 Using legacy gas pricing:', { effectiveGasPrice });
+
       gasPriceGwei = effectiveGasPrice / 1e9;
-      console.log('📊 Using legacy gas pricing:', {
-        effectiveGasPrice,
-        gasPriceGwei,
-      });
     } else if (estimateData.maxFeePerGas) {
       // EIP-1559 transaction (type 0x2)
       effectiveGasPrice = parseInt(estimateData.maxFeePerGas, 16);
       gasPriceGwei = effectiveGasPrice / 1e9;
-      console.log('📊 Using EIP-1559 gas pricing:', {
-        effectiveGasPrice,
-        gasPriceGwei,
-      });
 
       // Log additional EIP-1559 info if available
-      if (estimateData.maxPriorityFeePerGas) {
-        const priorityFeeGwei = Math.round(
-          parseInt(estimateData.maxPriorityFeePerGas, 16) / 1e9
-        );
-        console.log(`💡 Priority fee: ${priorityFeeGwei} Gwei`);
-      }
+      // if (estimateData.maxPriorityFeePerGas) {
+      //   const priorityFeeGwei = Math.round(
+      //     parseInt(estimateData.maxPriorityFeePerGas, 16) / 1e9
+      //   );
+      // }
     } else {
       // Fallback if neither is available
       console.warn('⚠️ No gas price data in response, using fallback');
-      console.log(
-        '📊 Available keys in estimateData:',
-        Object.keys(estimateData)
-      );
       effectiveGasPrice = 20e9; // 20 Gwei fallback
       gasPriceGwei = 20;
     }
@@ -180,24 +149,6 @@ const estimateGas = async (
     const gasCostUsd = gasCostEth * nativeTokenPrice;
     const tokenTotalCostUsd = parseFloat(amount) * (token.usdPrice || 0);
     const totalCostUsd = tokenTotalCostUsd + gasCostUsd;
-
-    console.log('✅ Gas estimation successful:', {
-      gasLimit,
-      effectiveGasPrice,
-      effectiveGasPriceGwei: effectiveGasPrice / 1e9,
-      gasPriceGwei,
-      gasCostEth,
-      gasCostUsd,
-      totalCostUsd,
-      calculationCheck: {
-        manualGasCostWei: gasLimit * effectiveGasPrice,
-        manualGasCostEth: (gasLimit * effectiveGasPrice) / 1e18,
-        returnedGasCostEth: gasCostEth,
-        pricesMatch:
-          Math.abs((gasLimit * effectiveGasPrice) / 1e18 - gasCostEth) <
-          0.000001,
-      },
-    });
 
     return {
       gasLimit: gasLimit.toString(),
@@ -221,7 +172,6 @@ const estimateGas = async (
 
     console.warn('⚠️ Using fallback gas estimation');
     const tokenTotalCostUsd = parseFloat(amount) * (token.usdPrice || 0);
-    console.log('🔍 Token total cost USD:', tokenTotalCostUsd);
     return {
       gasLimit: fallbackGasLimit,
       gasPrice: fallbackGasPrice,
@@ -526,7 +476,6 @@ const ConfirmSend = () => {
 
       // Only refresh if enough time has passed and we're not currently estimating
       if (timeSinceLastUpdate >= GAS_REFRESH_INTERVAL && !isEstimatingGas) {
-        console.log('🔄 Auto-refreshing gas estimate...');
         setGasRefreshCounter(prev => prev + 1);
         setLastGasUpdate(Date.now());
       }
@@ -632,9 +581,7 @@ const ConfirmSend = () => {
           };
         } else {
           // ERC-20 token transfer
-          console.log('🔍 Ensuring token decimals for transaction...');
           const tokenDecimals = await ensureTokenDecimals(token);
-          console.log(`✅ Using ${tokenDecimals} decimals for transaction`);
 
           const transferMethodId = '0xa9059cbb';
 
@@ -699,8 +646,6 @@ const ConfirmSend = () => {
         const result = await sendMessage('EVM_SEND_TOKEN', {
           transaction: transactionData,
         });
-
-        console.log('✅ Transaction sent successfully:', result);
 
         // Store transaction hash and navigate to success page
         const txHash = result.data || 'Processing...';

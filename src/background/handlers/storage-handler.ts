@@ -108,7 +108,7 @@ export const storageHandler = {
     ]);
     return (
       result[
-      STORAGE_KEYS.ACCOUNT_SEED_PHRASE_BY_ID.replace('id', seedPhraseId)
+        STORAGE_KEYS.ACCOUNT_SEED_PHRASE_BY_ID.replace('id', seedPhraseId)
       ] || null
     );
   },
@@ -121,7 +121,7 @@ export const storageHandler = {
     ]);
     return (
       result[
-      STORAGE_KEYS.ACCOUNT_PRIVATE_KEY_BY_ID.replace('id', privateKeyId)
+        STORAGE_KEYS.ACCOUNT_PRIVATE_KEY_BY_ID.replace('id', privateKeyId)
       ] || null
     );
   },

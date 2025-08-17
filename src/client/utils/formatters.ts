@@ -65,7 +65,10 @@ export const hexToNumber = (hexValue: string) => {
 };
 
 // Format token amounts with appropriate decimal places and K/M/B suffixes
-export const formatTokenAmount = (value: string | number, maxDecimals = 6): string => {
+export const formatTokenAmount = (
+  value: string | number,
+  maxDecimals = 6
+): string => {
   const num = typeof value === 'string' ? parseFloat(value) : value;
 
   if (isNaN(num) || num === 0) {

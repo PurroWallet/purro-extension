@@ -81,8 +81,6 @@ const WalletTabsPerps = () => {
     return parseFloat(szi) > 0;
   };
 
-  console.log(perpsData);
-
   return (
     <div className="space-y-6 p-2">
       {/* <div className='absolute top-2 right-2 z-10'>

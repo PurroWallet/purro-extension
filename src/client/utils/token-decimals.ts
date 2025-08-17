@@ -1,5 +1,20 @@
 import { ethers } from 'ethers';
 
+// Constants for better code organization
+const DECIMALS_CACHE_TIMEOUT = 5000; // 5 seconds
+const DEFAULT_DECIMALS = 18;
+const MAX_VALID_DECIMALS = 30;
+const NATIVE_TOKEN_DECIMALS = 18;
+
+// Token interface for type safety
+interface TokenForDecimals {
+  symbol?: string;
+  contractAddress?: string;
+  chain?: string;
+  decimals?: number;
+  isNative?: boolean;
+}
+
 // Cache để tránh gọi contract nhiều lần cho cùng 1 token
 const decimalsCache = new Map<string, number>();
 
@@ -44,11 +59,8 @@ export const fetchTokenDecimals = async (
 
     // Kiểm tra cache trước
     if (decimalsCache.has(cacheKey)) {
-      console.log(`📦 Using cached decimals for ${contractAddress}`);
       return decimalsCache.get(cacheKey)!;
     }
-
-    console.log(`🔍 Fetching decimals for ${contractAddress} on ${chain}`);
 
     // Tạo provider cho chain
     const rpcUrl = getRpcUrl(chain);
@@ -64,32 +76,29 @@ export const fetchTokenDecimals = async (
     // Gọi decimals() với timeout
     const decimalsPromise = contract.decimals();
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Timeout')), 5000)
+      setTimeout(() => reject(new Error('Timeout')), DECIMALS_CACHE_TIMEOUT)
     );
 
     const decimals = (await Promise.race([
       decimalsPromise,
       timeoutPromise,
-    ])) as bigint;
+    ])) as unknown as bigint;
     const decimalsNumber = Number(decimals);
 
     // Validate decimals (thường từ 0-18, có thể lên 24)
-    if (decimalsNumber < 0 || decimalsNumber > 30) {
+    if (decimalsNumber < 0 || decimalsNumber > MAX_VALID_DECIMALS) {
       throw new Error(`Invalid decimals value: ${decimalsNumber}`);
     }
 
     // Lưu vào cache
     decimalsCache.set(cacheKey, decimalsNumber);
 
-    console.log(`✅ Token ${contractAddress} has ${decimalsNumber} decimals`);
     return decimalsNumber;
   } catch (error) {
     console.warn(`❌ Failed to fetch decimals for ${contractAddress}:`, error);
 
     // Fallback về 18 (most common)
-    const fallbackDecimals = 18;
-    console.log(`🔄 Using fallback decimals: ${fallbackDecimals}`);
-    return fallbackDecimals;
+    return DEFAULT_DECIMALS;
   }
 };
 
@@ -98,7 +107,9 @@ export const fetchTokenDecimals = async (
  * @param token - Token object
  * @returns Promise<number> - Decimals đã được validate
  */
-export const ensureTokenDecimals = async (token: any): Promise<number> => {
+export const ensureTokenDecimals = async (
+  token: TokenForDecimals
+): Promise<number> => {
   // Nếu đã có decimals và hợp lệ, return luôn
   if (
     token.decimals &&
@@ -116,7 +127,7 @@ export const ensureTokenDecimals = async (token: any): Promise<number> => {
     token.contractAddress === 'NATIVE' ||
     token.isNative
   ) {
-    return 18;
+    return NATIVE_TOKEN_DECIMALS;
   }
 
   // Fetch decimals từ contract
@@ -136,7 +147,7 @@ export const ensureTokenDecimals = async (token: any): Promise<number> => {
 
   // Fallback cuối cùng
   console.warn('⚠️ Could not determine token decimals, using fallback 18');
-  return 18;
+  return DEFAULT_DECIMALS;
 };
 
 /**
@@ -144,7 +155,6 @@ export const ensureTokenDecimals = async (token: any): Promise<number> => {
  */
 export const clearDecimalsCache = (): void => {
   decimalsCache.clear();
-  console.log('🗑️ Decimals cache cleared');
 };
 
 /**
