@@ -60,7 +60,6 @@ export const useUnifiedTokensTestnet = (): UseUnifiedTokensTestnetResult => {
       const wallet = getActiveAccountWalletObject();
       const address = wallet?.eip155?.address || null;
 
-
       return address;
     } catch (error) {
       console.error('Error getting wallet address:', error);
@@ -87,7 +86,6 @@ export const useUnifiedTokensTestnet = (): UseUnifiedTokensTestnetResult => {
 
       const updateBalances = async () => {
         try {
-
           setIsLoading(true);
           setHasError(false);
 

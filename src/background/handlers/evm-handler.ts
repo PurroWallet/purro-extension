@@ -787,7 +787,6 @@ export const evmHandler = {
     message: string;
     address: string;
   }): Promise<MessageResponse> {
-
     try {
       const { origin, message, address } = data;
 
@@ -813,7 +812,6 @@ export const evmHandler = {
         };
       }
 
-
       // Verify address matches
       if (wallet.eip155.address.toLowerCase() !== address.toLowerCase()) {
         console.error('[Purro] ❌ Address mismatch:', {
@@ -827,14 +825,12 @@ export const evmHandler = {
         };
       }
 
-
       // Get private key for signing with enhanced error handling
       let privateKey: string;
       try {
         privateKey = await accountHandler.getPrivateKeyByAccountId(
           activeAccount.id
         );
-
       } catch (error) {
         console.error('[Purro] ❌ Failed to retrieve private key:', error);
 
@@ -861,7 +857,6 @@ export const evmHandler = {
       let signerWallet: ethers.Wallet;
       try {
         signerWallet = new ethers.Wallet(privateKey);
-
       } catch (error) {
         console.error('[Purro] ❌ Failed to create signer wallet:', error);
         return {
@@ -870,8 +865,6 @@ export const evmHandler = {
           code: SIGNING_ERRORS.INVALID_PRIVATE_KEY.code,
         };
       }
-
-
 
       // Handle hex-encoded messages (common in personal_sign)
       let messageToSign = message;
@@ -906,11 +899,8 @@ export const evmHandler = {
 
         // If first parse results in a string, try parsing again (double-encoded JSON)
         if (typeof parsedTypedData === 'string') {
-
           parsedTypedData = JSON.parse(parsedTypedData);
         }
-
-
 
         // More robust EIP-712 detection
         const hasValidStructure =
@@ -926,7 +916,6 @@ export const evmHandler = {
 
         if (hasValidStructure) {
           isEIP712 = true;
-
         }
       } catch {
         isEIP712 = false;
@@ -952,14 +941,11 @@ export const evmHandler = {
           const typesWithoutDomain = { ...parsedTypedData.types };
           delete typesWithoutDomain.EIP712Domain;
 
-
-
           signature = await signerWallet.signTypedData(
             parsedTypedData.domain,
             typesWithoutDomain,
             parsedTypedData.message
           );
-
         } catch (signError) {
           console.error('[Purro] ❌ EIP-712 signing failed:', signError);
           throw new Error(
@@ -967,10 +953,8 @@ export const evmHandler = {
           );
         }
       } else {
-
         try {
           signature = await signerWallet.signMessage(messageToSign);
-
         } catch (signError) {
           throw new Error(
             `${SIGNING_ERRORS.SIGNING_FAILED.message}: ${signError instanceof Error ? signError.message : 'Unknown signing error'}`
@@ -985,7 +969,6 @@ export const evmHandler = {
         if (isEIP712 && parsedTypedData) {
           // Verify EIP-712 signature
           try {
-
             const typesWithoutDomain = { ...parsedTypedData.types };
             delete typesWithoutDomain.EIP712Domain;
 
@@ -995,7 +978,6 @@ export const evmHandler = {
               parsedTypedData.message,
               signature
             );
-
           } catch (verifyErr) {
             console.error('[Purro] ❌ EIP-712 verification error:', verifyErr);
           }
@@ -1003,7 +985,6 @@ export const evmHandler = {
           // Verify personal message signature
           try {
             recovered = ethers.verifyMessage(messageToSign, signature);
-
           } catch (personalErr) {
             console.error(
               '[Purro] ❌ Personal message verification error:',
@@ -1023,7 +1004,6 @@ export const evmHandler = {
             signingMethod: isEIP712 ? 'EIP-712' : 'personal_sign',
           });
         } else if (recovered) {
-
         }
       } catch (err) {
         console.warn('[Purro] ⚠️ Local verification failed:', err);
@@ -1035,7 +1015,6 @@ export const evmHandler = {
       );
 
       if (pendingSignRequest) {
-
         pendingSignRequest.resolve(signature);
         // Remove from pending requests
         for (const [key, req] of pendingSignRequests.entries()) {
@@ -1122,8 +1101,6 @@ export const evmHandler = {
     sender: chrome.runtime.MessageSender
   ): Promise<MessageResponse> {
     try {
-
-
       const { transactionData: transaction } = data;
 
       // Minimal validation - only check required fields
@@ -1186,7 +1163,6 @@ export const evmHandler = {
         success: true,
         data: transactionResult, // Return hash directly, not wrapped
       };
-
     } catch (error) {
       console.error('[Purro] ❌ Error in handleSendTransaction:', error);
 
@@ -1215,9 +1191,7 @@ export const evmHandler = {
       return {
         success: false,
         error:
-          error instanceof Error
-            ? error.message
-            : 'Failed to send transaction',
+          error instanceof Error ? error.message : 'Failed to send transaction',
         code: 4001,
       };
     }
@@ -1227,8 +1201,6 @@ export const evmHandler = {
     origin: string;
     transaction: TransactionRequest;
   }): Promise<MessageResponse> {
-
-
     try {
       const { origin, transaction } = data;
 
@@ -1243,7 +1215,6 @@ export const evmHandler = {
         };
       }
 
-
       // Get wallet to verify address matches
       const wallet = await storageHandler.getWalletById(activeAccount.id);
       if (!wallet || !wallet.eip155) {
@@ -1255,7 +1226,6 @@ export const evmHandler = {
         };
       }
 
-
       // Set from address if not provided
       const transactionWithFrom = {
         ...transaction,
@@ -1263,7 +1233,10 @@ export const evmHandler = {
       };
 
       // Verify from address matches wallet if provided
-      if (transactionWithFrom.from.toLowerCase() !== wallet.eip155.address.toLowerCase()) {
+      if (
+        transactionWithFrom.from.toLowerCase() !==
+        wallet.eip155.address.toLowerCase()
+      ) {
         return {
           success: false,
           error: 'From address does not match active account',
@@ -1308,7 +1281,6 @@ export const evmHandler = {
       const provider = new ethers.JsonRpcProvider(chainInfo.rpcUrls[0]);
       const connectedWallet = signerWallet.connect(provider);
 
-
       // Send transaction - convert transaction to ethers format
       const ethersTransaction = {
         to: transactionWithFrom.to,
@@ -1318,7 +1290,9 @@ export const evmHandler = {
             : ethers.parseEther(transactionWithFrom.value)
           : undefined,
         data: transactionWithFrom.data,
-        gasLimit: transactionWithFrom.gas ? BigInt(transactionWithFrom.gas) : undefined,
+        gasLimit: transactionWithFrom.gas
+          ? BigInt(transactionWithFrom.gas)
+          : undefined,
         gasPrice: transactionWithFrom.gasPrice
           ? BigInt(transactionWithFrom.gasPrice)
           : undefined,
@@ -1328,8 +1302,12 @@ export const evmHandler = {
         maxPriorityFeePerGas: transactionWithFrom.maxPriorityFeePerGas
           ? BigInt(transactionWithFrom.maxPriorityFeePerGas)
           : undefined,
-        nonce: transactionWithFrom.nonce ? parseInt(transactionWithFrom.nonce, 16) : undefined,
-        type: transactionWithFrom.type ? parseInt(transactionWithFrom.type, 16) : undefined,
+        nonce: transactionWithFrom.nonce
+          ? parseInt(transactionWithFrom.nonce, 16)
+          : undefined,
+        type: transactionWithFrom.type
+          ? parseInt(transactionWithFrom.type, 16)
+          : undefined,
         chainId: transactionWithFrom.chainId
           ? parseInt(transactionWithFrom.chainId, 16)
           : undefined,
@@ -1353,7 +1331,6 @@ export const evmHandler = {
       ).find(req => req.origin === origin);
 
       if (pendingTransaction) {
-
         pendingTransaction.resolve(txResponse.hash);
         // Remove from pending requests
         for (const [key, req] of pendingTransactionRequests.entries()) {
@@ -1520,8 +1497,6 @@ export const evmHandler = {
   async handleSendToken(data: {
     transaction: TransactionRequest;
   }): Promise<MessageResponse> {
-
-
     try {
       const { transaction } = data;
 
@@ -1688,8 +1663,9 @@ export const evmHandler = {
     }
   },
 
-  async handleSwapHyperliquidToken(data: { transaction: TransactionRequest }): Promise<MessageResponse> {
-
+  async handleSwapHyperliquidToken(data: {
+    transaction: TransactionRequest;
+  }): Promise<MessageResponse> {
     try {
       const { transaction } = data;
 
@@ -1698,7 +1674,7 @@ export const evmHandler = {
         return {
           success: false,
           error: TRANSACTION_ERRORS.INVALID_TO_ADDRESS.message,
-          code: TRANSACTION_ERRORS.INVALID_TO_ADDRESS.code
+          code: TRANSACTION_ERRORS.INVALID_TO_ADDRESS.code,
         };
       }
 
@@ -1707,11 +1683,14 @@ export const evmHandler = {
         try {
           ethers.parseEther(transaction.value);
         } catch (error: unknown) {
-          console.error('[Purro] ❌ Error in handleSwapHyperliquidToken:', error);
+          console.error(
+            '[Purro] ❌ Error in handleSwapHyperliquidToken:',
+            error
+          );
           return {
             success: false,
             error: TRANSACTION_ERRORS.INVALID_VALUE.message,
-            code: TRANSACTION_ERRORS.INVALID_VALUE.code
+            code: TRANSACTION_ERRORS.INVALID_VALUE.code,
           };
         }
       }
@@ -1722,7 +1701,7 @@ export const evmHandler = {
         return {
           success: false,
           error: 'No wallet found',
-          code: 4001
+          code: 4001,
         };
       }
 
@@ -1732,7 +1711,7 @@ export const evmHandler = {
         return {
           success: false,
           error: 'No active account found',
-          code: 4001
+          code: 4001,
         };
       }
 
@@ -1742,19 +1721,19 @@ export const evmHandler = {
         return {
           success: false,
           error: 'EVM wallet not found for active account',
-          code: 4001
+          code: 4001,
         };
       }
 
       // Use chainId from transaction if provided, otherwise get from storage
-      let chainId: string = "0x3e7";
+      let chainId: string = '0x3e7';
       const chainInfo = supportedEVMChains[chainId];
 
       if (!chainInfo) {
         return {
           success: false,
           error: `Unsupported chain: ${chainId}`,
-          code: 4001
+          code: 4001,
         };
       }
 
@@ -1764,16 +1743,16 @@ export const evmHandler = {
           activeAccount.id
         );
       } catch (error) {
-        console.error("[Purro] ❌ Failed to retrieve private key:", error);
+        console.error('[Purro] ❌ Failed to retrieve private key:', error);
 
         // Check if it's a session issue
         const session = await authHandler.getSession();
         if (!session) {
-          console.error("[Purro] ❌ Session not found or expired");
+          console.error('[Purro] ❌ Session not found or expired');
           return {
             success: false,
             error: 'Session not found or expired',
-            code: 4001
+            code: 4001,
           };
         }
 
@@ -1781,7 +1760,7 @@ export const evmHandler = {
         return {
           success: false,
           error: 'Failed to retrieve private key',
-          code: 4001
+          code: 4001,
         };
       }
 
@@ -1792,11 +1771,11 @@ export const evmHandler = {
       // Prepare transaction with all parameters from frontend
       const txParams: any = {
         to: transaction.to,
-        value: transaction.value ? (
-          transaction.value.startsWith('0x')
+        value: transaction.value
+          ? transaction.value.startsWith('0x')
             ? BigInt(transaction.value)
             : ethers.parseEther(transaction.value)
-        ) : undefined,
+          : undefined,
         data: transaction.data,
       };
 
@@ -1806,20 +1785,23 @@ export const evmHandler = {
         success: true,
         data: tx.hash,
       };
-
     } catch (error) {
       console.error('[Purro] ❌ Error in handleSendToken:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to send transaction',
-        code: 4001
+        error:
+          error instanceof Error ? error.message : 'Failed to send transaction',
+        code: 4001,
       };
     }
   },
 
-
-  async checkTokenAllowance(data: { tokenAddress: string, ownerAddress: string, spenderAddress: string, chainId: string }): Promise<MessageResponse> {
-
+  async checkTokenAllowance(data: {
+    tokenAddress: string;
+    ownerAddress: string;
+    spenderAddress: string;
+    chainId: string;
+  }): Promise<MessageResponse> {
     try {
       const { tokenAddress, ownerAddress, spenderAddress, chainId } = data;
 
@@ -1832,31 +1814,38 @@ export const evmHandler = {
       const provider = new ethers.JsonRpcProvider(rpcUrl);
 
       // ERC-20 allowance function ABI
-      const abi = ["function allowance(address owner, address spender) view returns (uint256)"];
+      const abi = [
+        'function allowance(address owner, address spender) view returns (uint256)',
+      ];
       const contract = new ethers.Contract(tokenAddress, abi, provider);
 
       // Check allowance
       const allowance = await contract.allowance(ownerAddress, spenderAddress);
 
-
-
       return {
         success: true,
         data: {
-          allowance: allowance.toString()
-        }
+          allowance: allowance.toString(),
+        },
       };
     } catch (error) {
       console.error('[Purro] ❌ Error checking token allowance:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to check token allowance'
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Failed to check token allowance',
       };
     }
   },
 
-  async approveToken(data: { tokenAddress: string, spenderAddress: string, amount: string, chainId: string }): Promise<MessageResponse> {
-
+  async approveToken(data: {
+    tokenAddress: string;
+    spenderAddress: string;
+    amount: string;
+    chainId: string;
+  }): Promise<MessageResponse> {
     try {
       const { tokenAddress, spenderAddress, amount, chainId } = data;
 
@@ -1873,7 +1862,9 @@ export const evmHandler = {
       }
 
       // Get private key for transaction signing
-      const privateKey = await accountHandler.getPrivateKeyByAccountId(activeAccount.id);
+      const privateKey = await accountHandler.getPrivateKeyByAccountId(
+        activeAccount.id
+      );
       if (!privateKey) {
         throw new Error('Failed to retrieve private key');
       }
@@ -1891,13 +1882,13 @@ export const evmHandler = {
       const connectedWallet = signerWallet.connect(provider);
 
       // ERC-20 approve function ABI
-      const abi = ["function approve(address spender, uint256 amount) returns (bool)"];
+      const abi = [
+        'function approve(address spender, uint256 amount) returns (bool)',
+      ];
       const contract = new ethers.Contract(tokenAddress, abi, connectedWallet);
 
       // Send approval transaction
       const transaction = await contract.approve(spenderAddress, amount);
-
-
 
       // Wait for confirmation
       const receipt = await transaction.wait();
@@ -1908,14 +1899,15 @@ export const evmHandler = {
           hash: receipt.hash,
           blockNumber: receipt.blockNumber,
           gasUsed: receipt.gasUsed?.toString(),
-          chainId: chainId
-        }
+          chainId: chainId,
+        },
       };
     } catch (error) {
       console.error('[Purro] ❌ Error approving token:', error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to approve token'
+        error:
+          error instanceof Error ? error.message : 'Failed to approve token',
       };
     }
   },

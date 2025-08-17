@@ -202,7 +202,6 @@ const useNetworkSettingsStore = create<NetworkSettingsState>()(
       name: 'network-settings-storage',
       version: 3, // Increment version to handle hyperevm migration
       migrate: (persistedState: any, _version: number) => {
-
         const migrated = mergeWithDefaults(persistedState);
         return migrated;
       },

@@ -100,6 +100,7 @@ export interface UseCachedTransactionsOptions extends UseTransactionsOptions {
   enableCache?: boolean;
 }
 
-export interface UseCachedInfiniteTransactionsOptions extends UseInfiniteTransactionsOptions {
+export interface UseCachedInfiniteTransactionsOptions
+  extends UseInfiniteTransactionsOptions {
   enableCache?: boolean;
 }

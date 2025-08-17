@@ -26,15 +26,16 @@ export class BlacklistTokenLogoCacheLib {
       const key = `${networkId}:${tokenAddress.toLowerCase()}`;
 
       // Check if already blacklisted
-      const exists = blacklist.some(entry =>
-        `${entry.networkId}:${entry.tokenAddress.toLowerCase()}` === key
+      const exists = blacklist.some(
+        entry =>
+          `${entry.networkId}:${entry.tokenAddress.toLowerCase()}` === key
       );
 
       if (!exists) {
         blacklist.push({
           networkId,
           tokenAddress: tokenAddress.toLowerCase(),
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
 
         localStorage.setItem(BLACKLIST_STORAGE_KEY, JSON.stringify(blacklist));
@@ -50,8 +51,9 @@ export class BlacklistTokenLogoCacheLib {
       const blacklist = this.getBlacklist();
       const key = `${networkId}:${tokenAddress.toLowerCase()}`;
 
-      return blacklist.some(entry =>
-        `${entry.networkId}:${entry.tokenAddress.toLowerCase()}` === key
+      return blacklist.some(
+        entry =>
+          `${entry.networkId}:${entry.tokenAddress.toLowerCase()}` === key
       );
     } catch (error) {
       console.error('Error checking blacklist:', error);
@@ -63,7 +65,7 @@ export class BlacklistTokenLogoCacheLib {
   static cleanBlacklist(): void {
     try {
       const blacklist = this.getBlacklist();
-      const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
 
       const cleaned = blacklist.filter(entry => entry.timestamp > sevenDaysAgo);
 
@@ -81,8 +83,9 @@ export class BlacklistTokenLogoCacheLib {
       const blacklist = this.getBlacklist();
       const key = `${networkId}:${tokenAddress.toLowerCase()}`;
 
-      const filtered = blacklist.filter(entry =>
-        `${entry.networkId}:${entry.tokenAddress.toLowerCase()}` !== key
+      const filtered = blacklist.filter(
+        entry =>
+          `${entry.networkId}:${entry.tokenAddress.toLowerCase()}` !== key
       );
 
       if (filtered.length !== blacklist.length) {
@@ -103,7 +106,11 @@ export class BlacklistTokenLogoCacheLib {
   }
 
   // Get blacklist statistics
-  static getBlacklistStats(): { total: number; oldestEntry: number | null; newestEntry: number | null } {
+  static getBlacklistStats(): {
+    total: number;
+    oldestEntry: number | null;
+    newestEntry: number | null;
+  } {
     try {
       const blacklist = this.getBlacklist();
 
@@ -116,7 +123,7 @@ export class BlacklistTokenLogoCacheLib {
       return {
         total: blacklist.length,
         oldestEntry: Math.min(...timestamps),
-        newestEntry: Math.max(...timestamps)
+        newestEntry: Math.max(...timestamps),
       };
     } catch (error) {
       console.error('Error getting blacklist stats:', error);

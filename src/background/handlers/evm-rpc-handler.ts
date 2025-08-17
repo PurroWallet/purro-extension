@@ -210,7 +210,10 @@ export const evmRpcHandler = {
 
       // Validate transaction object
       if (!txObject || typeof txObject !== 'object') {
-        return createErrorResponse('Invalid transaction object parameter', 4001);
+        return createErrorResponse(
+          'Invalid transaction object parameter',
+          4001
+        );
       }
 
       // Convert chainId to number if it's a string
@@ -257,11 +260,7 @@ export const evmRpcHandler = {
         targetChainId = chainId || (await getCurrentChainId());
       }
 
-      const gasPrice = await makeRpcCall(
-        'eth_gasPrice',
-        [],
-        targetChainId
-      );
+      const gasPrice = await makeRpcCall('eth_gasPrice', [], targetChainId);
 
       return createSuccessResponse({ gasPrice, chainId: targetChainId });
     } catch (error) {
@@ -345,7 +344,9 @@ export const evmRpcHandler = {
     } catch (error) {
       console.error('Error in handleEvmGetTransactionReceipt:', error);
       return createErrorResponse(
-        error instanceof Error ? error.message : 'Failed to get transaction receipt',
+        error instanceof Error
+          ? error.message
+          : 'Failed to get transaction receipt',
         4001
       );
     }

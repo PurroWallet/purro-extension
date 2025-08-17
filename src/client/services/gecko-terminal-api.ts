@@ -116,9 +116,9 @@ export const fetchTokensInfoByAddresses = async (
           token_prices: {},
           market_cap_usd: {},
           h24_volume_usd: {},
-          total_reserve_in_usd: {}
-        }
-      }
+          total_reserve_in_usd: {},
+        },
+      },
     };
   }
 
@@ -204,7 +204,9 @@ export const fetchTokensInfoByAddresses = async (
 };
 
 // Helper function to transform the new multi-token API response to match the old format
-const transformMultiTokenResponse = (response: MultiTokenApiResponse): TransformedTokenResponse => {
+const transformMultiTokenResponse = (
+  response: MultiTokenApiResponse
+): TransformedTokenResponse => {
   const tokenPrices: Record<string, string> = {};
   const marketCap: Record<string, string> = {};
   const volume: Record<string, string> = {};
@@ -313,7 +315,11 @@ export const fetchTokenImage = async (
   // Don't throw immediately, let the caller handle the error response
   if (!response.ok) {
     // Check if it's the specific error format you mentioned
-    if (responseData && typeof responseData === 'object' && 'errors' in responseData) {
+    if (
+      responseData &&
+      typeof responseData === 'object' &&
+      'errors' in responseData
+    ) {
       return responseData; // Return the error response for the caller to handle
     }
 

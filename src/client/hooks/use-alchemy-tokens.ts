@@ -102,7 +102,7 @@ export const useAlchemyTokens = () => {
         data: [],
         isLoading: false,
         error: null,
-        refetch: () => { },
+        refetch: () => {},
       };
     }
 
@@ -249,7 +249,9 @@ export const useAlchemyTokens = () => {
     let queryIndex = 0;
 
     if (isEthereumActive && priceQueries[queryIndex]) {
-      priceData.ethereum = extractPricesFromResponse(priceQueries[queryIndex].data);
+      priceData.ethereum = extractPricesFromResponse(
+        priceQueries[queryIndex].data
+      );
       queryIndex++;
     }
 
@@ -259,7 +261,9 @@ export const useAlchemyTokens = () => {
     }
 
     if (isArbitrumActive && priceQueries[queryIndex]) {
-      priceData.arbitrum = extractPricesFromResponse(priceQueries[queryIndex].data);
+      priceData.arbitrum = extractPricesFromResponse(
+        priceQueries[queryIndex].data
+      );
     }
 
     return priceData;

@@ -56,7 +56,10 @@ class AlchemyCircuitBreaker {
 
     // Check if we're in a service unavailable state
     if (this.serviceUnavailableCount >= this.SERVICE_UNAVAILABLE_THRESHOLD) {
-      if (now - this.lastServiceUnavailableTime < this.SERVICE_UNAVAILABLE_RESET_TIMEOUT) {
+      if (
+        now - this.lastServiceUnavailableTime <
+        this.SERVICE_UNAVAILABLE_RESET_TIMEOUT
+      ) {
         return false;
       }
       // Reset after timeout
@@ -165,7 +168,7 @@ const fetchAlchemyTokenBalances = async (
             const delay =
               Math.pow(2, attempt) * 1000 +
               crypto.getRandomValues(new Uint32Array(1))[0] /
-              (0xffffffff / 1000);
+                (0xffffffff / 1000);
             await new Promise(resolve => setTimeout(resolve, delay));
             continue;
           }

@@ -1,12 +1,12 @@
-import hyperliquidLogo from "@/assets/logo/hl-mint-logo.png";
-import ethereumLogo from "@/assets/logo/ethereum-eth-logo.png";
-import baseLogo from "@/assets/logo/base-logo-in-blue.svg";
-import arbitrumLogo from "@/assets/logo/arbitrum-arb-logo.png";
-import usdcLogo from "@/assets/logo/usdc.svg";
-import { ChainType } from "@/client/types/wallet";
-import { fetchTokenImage, Network } from "../services/gecko-terminal-api";
-import { TokenLogoCacheLib } from "../lib/token-logo-cache";
-import { BlacklistTokenLogoCacheLib } from "../lib/blacklist-token-logo-cache";
+import hyperliquidLogo from '@/assets/logo/hl-mint-logo.png';
+import ethereumLogo from '@/assets/logo/ethereum-eth-logo.png';
+import baseLogo from '@/assets/logo/base-logo-in-blue.svg';
+import arbitrumLogo from '@/assets/logo/arbitrum-arb-logo.png';
+import usdcLogo from '@/assets/logo/usdc.svg';
+import { ChainType } from '@/client/types/wallet';
+import { fetchTokenImage, Network } from '../services/gecko-terminal-api';
+import { TokenLogoCacheLib } from '../lib/token-logo-cache';
+import { BlacklistTokenLogoCacheLib } from '../lib/blacklist-token-logo-cache';
 
 export const NETWORK_ICONS: Record<ChainType, string> = {
   hyperevm: hyperliquidLogo,
@@ -61,7 +61,10 @@ export const getTokenLogoFromAddress = async (
     }
 
     // Check cache first
-    const cachedLogo = await TokenLogoCacheLib.getCachedLogo(networkId, tokenAddress);
+    const cachedLogo = await TokenLogoCacheLib.getCachedLogo(
+      networkId,
+      tokenAddress
+    );
     if (cachedLogo !== null) {
       return cachedLogo;
     }
@@ -72,7 +75,10 @@ export const getTokenLogoFromAddress = async (
     // Check if the response contains error data indicating 404
     if (tokenInfo && typeof tokenInfo === 'object' && 'errors' in tokenInfo) {
       const errors = tokenInfo.errors;
-      if (Array.isArray(errors) && errors.some(error => error.status === "404")) {
+      if (
+        Array.isArray(errors) &&
+        errors.some(error => error.status === '404')
+      ) {
         BlacklistTokenLogoCacheLib.addToBlacklist(networkId, tokenAddress);
 
         // Cache the null result to avoid repeated failed requests
@@ -84,7 +90,6 @@ export const getTokenLogoFromAddress = async (
 
     // Check if response has the expected data structure
     if (!('data' in tokenInfo) || !tokenInfo.data?.attributes?.image_url) {
-
       // Cache the null result
       await TokenLogoCacheLib.cacheLogo(networkId, tokenAddress, null);
 
@@ -98,7 +103,7 @@ export const getTokenLogoFromAddress = async (
 
     return imageUrl;
   } catch (error) {
-    console.error("Error fetching token image:", error);
+    console.error('Error fetching token image:', error);
 
     // Check if it's a 404 error and add to blacklist
     if (error instanceof Error && error.message.includes('404')) {

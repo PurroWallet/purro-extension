@@ -19,7 +19,11 @@ export const sendMessage = async (type: string, data?: any): Promise<any> => {
       clearTimeout(timeoutId);
 
       if (chrome.runtime.lastError) {
-        reject(new Error(chrome.runtime.lastError.message || ERROR_MESSAGES.UNKNOWN_ERROR));
+        reject(
+          new Error(
+            chrome.runtime.lastError.message || ERROR_MESSAGES.UNKNOWN_ERROR
+          )
+        );
         return;
       }
 

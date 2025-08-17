@@ -62,7 +62,6 @@ export const fetchTokenDecimals = async (
       return decimalsCache.get(cacheKey)!;
     }
 
-
     // Tạo provider cho chain
     const rpcUrl = getRpcUrl(chain);
     const provider = new ethers.JsonRpcProvider(rpcUrl);
@@ -108,7 +107,9 @@ export const fetchTokenDecimals = async (
  * @param token - Token object
  * @returns Promise<number> - Decimals đã được validate
  */
-export const ensureTokenDecimals = async (token: TokenForDecimals): Promise<number> => {
+export const ensureTokenDecimals = async (
+  token: TokenForDecimals
+): Promise<number> => {
   // Nếu đã có decimals và hợp lệ, return luôn
   if (
     token.decimals &&

@@ -1,27 +1,27 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo } from "react";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
 import {
   SwapRouteV2Request,
   SwapRouteV2Response,
-} from "@/client/types/liquidswap-api";
-import { routeFinding } from "@/client/services/liquidswap-api";
-import useSwapStore from "./use-swap-store";
-import useDebounce from "./use-debounce";
+} from '@/client/types/liquidswap-api';
+import { routeFinding } from '@/client/services/liquidswap-api';
+import useSwapStore from './use-swap-store';
+import useDebounce from './use-debounce';
 
-const feeRecipient = "0x490BF4E4425092382612aE7f88D5D98b5029C1aF";
+const feeRecipient = '0x490BF4E4425092382612aE7f88D5D98b5029C1aF';
 const feeBps = 20;
 
 // Token addresses for wrap/unwrap detection
-const WHYPE_TOKEN_ADDRESS = "0x5555555555555555555555555555555555555555";
-const HYPE_DEAD_ADDRESS = "0x000000000000000000000000000000000000dEaD";
+const WHYPE_TOKEN_ADDRESS = '0x5555555555555555555555555555555555555555';
+const HYPE_DEAD_ADDRESS = '0x000000000000000000000000000000000000dEaD';
 
 // Helper functions to detect HYPE/WHYPE tokens
 const isHypeToken = (token: any): boolean => {
   if (!token) return false;
   return (
-    token.symbol === "HYPE" ||
-    token.contractAddress === "native" ||
-    token.contractAddress === "NATIVE" ||
+    token.symbol === 'HYPE' ||
+    token.contractAddress === 'native' ||
+    token.contractAddress === 'NATIVE' ||
     token.contractAddress === HYPE_DEAD_ADDRESS
   );
 };
@@ -29,7 +29,7 @@ const isHypeToken = (token: any): boolean => {
 const isWhypeToken = (token: any): boolean => {
   if (!token) return false;
   return (
-    token.symbol === "WHYPE" ||
+    token.symbol === 'WHYPE' ||
     token.contractAddress?.toLowerCase() === WHYPE_TOKEN_ADDRESS.toLowerCase()
   );
 };
@@ -37,17 +37,19 @@ const isWhypeToken = (token: any): boolean => {
 // Query key factory for swap routes
 export const swapRouteKeys = {
   all: ['swapRoute'] as const,
-  route: (params: SwapRouteV2Request) => [...swapRouteKeys.all, 'route', params] as const,
+  route: (params: SwapRouteV2Request) =>
+    [...swapRouteKeys.all, 'route', params] as const,
 };
 
 // Fetch function for swap route
-const fetchSwapRoute = async (params: SwapRouteV2Request): Promise<SwapRouteV2Response> => {
-
+const fetchSwapRoute = async (
+  params: SwapRouteV2Request
+): Promise<SwapRouteV2Response> => {
   try {
     const result = await routeFinding(params);
     return result;
   } catch (error) {
-    console.error("❌ Error fetching swap route:", error);
+    console.error('❌ Error fetching swap route:', error);
     throw error;
   }
 };
@@ -81,7 +83,13 @@ export const useSwapRoute = () => {
     const params = getSwapParams();
     if (!params) return null;
 
-    const { tokenInAddress, tokenOutAddress, amount, isExactIn: exactIn, slippage: slippagePercent } = params;
+    const {
+      tokenInAddress,
+      tokenOutAddress,
+      amount,
+      isExactIn: exactIn,
+      slippage: slippagePercent,
+    } = params;
 
     // Check for direct wrap/unwrap scenarios (currently handled in component)
     // const isDirectWrapUnwrap = (): boolean => {
@@ -108,7 +116,15 @@ export const useSwapRoute = () => {
     }
 
     return requestParams;
-  }, [tokenIn, tokenOut, debouncedAmountIn, debouncedAmountOut, isExactIn, slippage, getSwapParams]);
+  }, [
+    tokenIn,
+    tokenOut,
+    debouncedAmountIn,
+    debouncedAmountOut,
+    isExactIn,
+    slippage,
+    getSwapParams,
+  ]);
 
   // React Query for swap route
   const {
@@ -118,15 +134,21 @@ export const useSwapRoute = () => {
     refetch,
     isRefetching,
   } = useQuery({
-    queryKey: swapParams ? swapRouteKeys.route(swapParams) : ['swapRoute', 'disabled'],
+    queryKey: swapParams
+      ? swapRouteKeys.route(swapParams)
+      : ['swapRoute', 'disabled'],
     queryFn: () => fetchSwapRoute(swapParams!),
-    enabled: !!swapParams && parseFloat((swapParams.amountIn || swapParams.amountOut || '0').toString()) > 0,
+    enabled:
+      !!swapParams &&
+      parseFloat(
+        (swapParams.amountIn || swapParams.amountOut || '0').toString()
+      ) > 0,
     refetchInterval: enableAutoRefresh ? refreshInterval : false,
     refetchIntervalInBackground: true,
     staleTime: 0, // Always consider data stale to allow refetch
     gcTime: 30000, // Keep in cache for 30 seconds
     retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Update store when route data changes
@@ -139,13 +161,17 @@ export const useSwapRoute = () => {
       if (routeData.amountIn && routeData.amountOut) {
         if (isExactIn && routeData.amountOut) {
           // User input amountIn, update amountOut from route
-          const formattedAmountOut = parseFloat(routeData.amountOut.toString()).toString();
+          const formattedAmountOut = parseFloat(
+            routeData.amountOut.toString()
+          ).toString();
           if (formattedAmountOut !== amountOut) {
             setAmountOut(formattedAmountOut);
           }
         } else if (!isExactIn && routeData.amountIn) {
           // User input amountOut, update amountIn from route
-          const formattedAmountIn = parseFloat(routeData.amountIn.toString()).toString();
+          const formattedAmountIn = parseFloat(
+            routeData.amountIn.toString()
+          ).toString();
           if (formattedAmountIn !== amountIn) {
             setAmountIn(formattedAmountIn);
           }
@@ -154,7 +180,14 @@ export const useSwapRoute = () => {
     } else {
       setRoute(null);
     }
-  }, [routeData, isExactIn, setRoute, setAmountIn, setAmountOut, setLastRefreshTimestamp]);
+  }, [
+    routeData,
+    isExactIn,
+    setRoute,
+    setAmountIn,
+    setAmountOut,
+    setLastRefreshTimestamp,
+  ]);
 
   // Update timestamp when refetching (even if data is same)
   useEffect(() => {
@@ -177,13 +210,15 @@ export const useSwapRoute = () => {
 
   // Helper functions for wrap/unwrap detection
   const isWrapScenario = (): boolean => {
-    return tokenIn && tokenOut ?
-      isHypeToken(tokenIn) && isWhypeToken(tokenOut) : false;
+    return tokenIn && tokenOut
+      ? isHypeToken(tokenIn) && isWhypeToken(tokenOut)
+      : false;
   };
 
   const isUnwrapScenario = (): boolean => {
-    return tokenIn && tokenOut ?
-      isWhypeToken(tokenIn) && isHypeToken(tokenOut) : false;
+    return tokenIn && tokenOut
+      ? isWhypeToken(tokenIn) && isHypeToken(tokenOut)
+      : false;
   };
 
   const isDirectWrapUnwrap = (): boolean => {

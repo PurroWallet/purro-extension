@@ -20,8 +20,6 @@ const useDevModeStore = create<DevModeStore>()(
         }
 
         try {
-
-
           // Set changing state first
           set({ isChanging: true });
 

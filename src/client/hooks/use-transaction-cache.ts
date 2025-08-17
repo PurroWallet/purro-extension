@@ -58,7 +58,9 @@ export class TransactionCacheLib {
       }
 
       // Limit transactions to prevent storage bloat
-      const limitedTransactions = transactions.slice(-MAX_TRANSACTIONS_PER_CHAIN);
+      const limitedTransactions = transactions.slice(
+        -MAX_TRANSACTIONS_PER_CHAIN
+      );
 
       cache[address.toLowerCase()][chainId.toString()] = {
         transactions: limitedTransactions,
@@ -86,15 +88,25 @@ export class TransactionCacheLib {
       const cached = await this.getCachedTransactions(address, chainId);
       if (!cached) {
         // No existing cache, create new one
-        await this.cacheTransactions(address, chainId, newTransactions, newLastBlock);
+        await this.cacheTransactions(
+          address,
+          chainId,
+          newTransactions,
+          newLastBlock
+        );
         return;
       }
 
       // Merge transactions, avoiding duplicates
       const existingHashes = new Set(cached.transactions.map(tx => tx.hash));
-      const uniqueNewTransactions = newTransactions.filter(tx => !existingHashes.has(tx.hash));
+      const uniqueNewTransactions = newTransactions.filter(
+        tx => !existingHashes.has(tx.hash)
+      );
 
-      const allTransactions = [...cached.transactions, ...uniqueNewTransactions];
+      const allTransactions = [
+        ...cached.transactions,
+        ...uniqueNewTransactions,
+      ];
 
       // Sort by block number and transaction index to maintain order
       allTransactions.sort((a, b) => {
@@ -103,7 +115,12 @@ export class TransactionCacheLib {
         return parseInt(a.transactionIndex) - parseInt(b.transactionIndex);
       });
 
-      await this.cacheTransactions(address, chainId, allTransactions, newLastBlock);
+      await this.cacheTransactions(
+        address,
+        chainId,
+        allTransactions,
+        newLastBlock
+      );
     } catch (error) {
       console.error('Failed to append transactions:', error);
     }
@@ -149,10 +166,22 @@ export const useCachedTransactions = (
   chainId: number,
   options?: UseInfiniteTransactionsOptions & { enableCache?: boolean }
 ) => {
-  const { enabled = true, sort = 'asc', offset = 1000, enableCache = true } = options || {};
+  const {
+    enabled = true,
+    sort = 'asc',
+    offset = 1000,
+    enableCache = true,
+  } = options || {};
 
   return useQuery({
-    queryKey: ['cached-transactions', address, chainId, sort, offset, enableCache],
+    queryKey: [
+      'cached-transactions',
+      address,
+      chainId,
+      sort,
+      offset,
+      enableCache,
+    ],
     queryFn: async (): Promise<TransactionPage> => {
       if (!enableCache) {
         // Fallback to original logic if cache is disabled
@@ -167,11 +196,12 @@ export const useCachedTransactions = (
       }
 
       // Get cached data
-      const cached = await TransactionCacheLib.getCachedTransactions(address, chainId);
+      const cached = await TransactionCacheLib.getCachedTransactions(
+        address,
+        chainId
+      );
 
       if (cached && TransactionCacheLib.isCacheFresh(cached)) {
-
-
         return {
           transactions: cached.transactions,
           nextPageParam: undefined, // No pagination for cached data
@@ -180,8 +210,9 @@ export const useCachedTransactions = (
       }
 
       // Determine start block for fetching
-      const startBlock = cached ? (parseInt(cached.lastBlock) + 1).toString() : '0';
-
+      const startBlock = cached
+        ? (parseInt(cached.lastBlock) + 1).toString()
+        : '0';
 
       // Fetch new transactions
       const result = await fetchTransactionsForChain({
@@ -195,9 +226,9 @@ export const useCachedTransactions = (
 
       if (result.transactions.length > 0) {
         // Get the last block number from new transactions
-        const lastTransaction = result.transactions[result.transactions.length - 1];
+        const lastTransaction =
+          result.transactions[result.transactions.length - 1];
         const newLastBlock = lastTransaction.blockNumber;
-
 
         if (cached) {
           // Append to existing cache
@@ -208,10 +239,11 @@ export const useCachedTransactions = (
             newLastBlock
           );
 
-
-
           // Return combined data
-          const updatedCache = await TransactionCacheLib.getCachedTransactions(address, chainId);
+          const updatedCache = await TransactionCacheLib.getCachedTransactions(
+            address,
+            chainId
+          );
           return {
             transactions: updatedCache?.transactions || result.transactions,
             nextPageParam: result.nextPageParam,
@@ -226,12 +258,9 @@ export const useCachedTransactions = (
             newLastBlock
           );
 
-
           return result;
         }
       } else if (cached) {
-
-
         return {
           transactions: cached.transactions,
           nextPageParam: undefined,
@@ -256,15 +285,31 @@ export const useCachedInfiniteTransactions = (
   chainIds: number[],
   options?: UseInfiniteTransactionsOptions & { enableCache?: boolean }
 ) => {
-  const { enabled = true, sort = 'asc', offset = 1000, enableCache = true } = options || {};
+  const {
+    enabled = true,
+    sort = 'asc',
+    offset = 1000,
+    enableCache = true,
+  } = options || {};
 
-  return useInfiniteQuery<MultiChainTransactionPage, Error, MultiChainTransactionPage[], unknown[], Record<number, string> | undefined>({
-    queryKey: ['cached-infinite-transactions', address, chainIds, sort, offset, enableCache],
+  return useInfiniteQuery<
+    MultiChainTransactionPage,
+    Error,
+    MultiChainTransactionPage[],
+    unknown[],
+    Record<number, string> | undefined
+  >({
+    queryKey: [
+      'cached-infinite-transactions',
+      address,
+      chainIds,
+      sort,
+      offset,
+      enableCache,
+    ],
     queryFn: async ({ pageParam }) => {
       const results: ChainTransactionResult[] = [];
       const nextLastBlocks: Record<number, string> = {};
-
-
 
       for (const chainId of chainIds) {
         try {
@@ -272,11 +317,12 @@ export const useCachedInfiniteTransactions = (
 
           if (enableCache) {
             // Get cached data
-            const cached = await TransactionCacheLib.getCachedTransactions(address, chainId);
+            const cached = await TransactionCacheLib.getCachedTransactions(
+              address,
+              chainId
+            );
 
             if (cached && TransactionCacheLib.isCacheFresh(cached)) {
-
-
               results.push({
                 chainId,
                 transactions: cached.transactions,
@@ -308,11 +354,15 @@ export const useCachedInfiniteTransactions = (
           });
 
           if (enableCache) {
-            const cached = await TransactionCacheLib.getCachedTransactions(address, chainId);
+            const cached = await TransactionCacheLib.getCachedTransactions(
+              address,
+              chainId
+            );
 
             if (result.transactions.length > 0) {
               // Cache the new transactions
-              const lastTransaction = result.transactions[result.transactions.length - 1];
+              const lastTransaction =
+                result.transactions[result.transactions.length - 1];
               const newLastBlock = lastTransaction.blockNumber;
 
               if (cached) {
@@ -324,7 +374,11 @@ export const useCachedInfiniteTransactions = (
                 );
 
                 // Get updated cache for return
-                const updatedCache = await TransactionCacheLib.getCachedTransactions(address, chainId);
+                const updatedCache =
+                  await TransactionCacheLib.getCachedTransactions(
+                    address,
+                    chainId
+                  );
                 if (updatedCache) {
                   result.transactions = updatedCache.transactions;
                 }
@@ -337,7 +391,6 @@ export const useCachedInfiniteTransactions = (
                 );
               }
             } else if (cached && cached.transactions.length > 0) {
-
               result.transactions = cached.transactions;
             }
           }
@@ -353,14 +406,18 @@ export const useCachedInfiniteTransactions = (
             nextLastBlocks[chainId] = result.nextPageParam;
           }
         } catch (error) {
-          console.warn(`Failed to fetch transactions for chain ${chainId}:`, error);
+          console.warn(
+            `Failed to fetch transactions for chain ${chainId}:`,
+            error
+          );
 
           // If fetch failed but we have cached data, use the cached data as fallback
           if (enableCache) {
-            const cached = await TransactionCacheLib.getCachedTransactions(address, chainId);
+            const cached = await TransactionCacheLib.getCachedTransactions(
+              address,
+              chainId
+            );
             if (cached && cached.transactions.length > 0) {
-
-
               results.push({
                 chainId,
                 transactions: cached.transactions,
@@ -370,7 +427,6 @@ export const useCachedInfiniteTransactions = (
               continue;
             }
           }
-
 
           results.push({
             chainId,
@@ -383,11 +439,13 @@ export const useCachedInfiniteTransactions = (
 
       return {
         results,
-        nextLastBlocks: Object.keys(nextLastBlocks).length > 0 ? nextLastBlocks : undefined,
+        nextLastBlocks:
+          Object.keys(nextLastBlocks).length > 0 ? nextLastBlocks : undefined,
       };
     },
     initialPageParam: undefined,
-    getNextPageParam: (lastPage: MultiChainTransactionPage) => lastPage.nextLastBlocks,
+    getNextPageParam: (lastPage: MultiChainTransactionPage) =>
+      lastPage.nextLastBlocks,
     enabled: enabled && !!address && chainIds.length > 0,
     staleTime: CACHE_EXPIRY_TIME,
     gcTime: 10 * 60 * 1000, // 10 minutes

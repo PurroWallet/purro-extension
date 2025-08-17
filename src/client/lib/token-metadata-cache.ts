@@ -202,8 +202,6 @@ export class TokenMetadataCacheLib {
       for (let i = 0; i < entriesToRemove; i++) {
         delete chainCache[entries[i][0]];
       }
-
-
     } catch (error) {
       console.error('Failed to clean oldest entries:', error);
     }

@@ -22,7 +22,7 @@ let isProcessingQueue = false;
 
 const processQueue = async () => {
   if (isProcessingQueue || rateLimitQueue.length === 0) return;
-  
+
   isProcessingQueue = true;
   while (rateLimitQueue.length > 0) {
     const nextCall = rateLimitQueue.shift();
@@ -66,11 +66,11 @@ const callEtherscan = async (
 const splitChainIds = (chainIds: number[]): number[][] => {
   const groups: number[][] = [];
   const groupSize = 5; // Max 5 chains per group to stay within rate limits
-  
+
   for (let i = 0; i < chainIds.length; i += groupSize) {
     groups.push(chainIds.slice(i, i + groupSize));
   }
-  
+
   return groups;
 };
 
@@ -78,10 +78,19 @@ const splitChainIds = (chainIds: number[]): number[][] => {
 const fetchTransactionsForChain = async (
   params: TransactionParams & { pageParam?: number }
 ): Promise<TransactionPage> => {
-  const { address, chainId, startBlock = '0', endBlock = 'latest', sort = 'asc', offset = 1000, page = 1, pageParam } = params;
-  
+  const {
+    address,
+    chainId,
+    startBlock = '0',
+    endBlock = 'latest',
+    sort = 'asc',
+    offset = 1000,
+    page = 1,
+    pageParam,
+  } = params;
+
   const currentPage = pageParam || page;
-  
+
   const searchParams = {
     chainid: chainId.toString(),
     address,
@@ -92,16 +101,21 @@ const fetchTransactionsForChain = async (
     offset: offset.toString(),
   };
 
-  const response = await callEtherscan(ACTIONS.get_list_normal_txs, searchParams);
+  const response = await callEtherscan(
+    ACTIONS.get_list_normal_txs,
+    searchParams
+  );
 
   // Handle various non-error responses that should return empty results
   if (response.status !== '1') {
     const message = response.message?.toLowerCase() || '';
 
     // These are valid responses that just mean no data, not errors
-    if (message.includes('no transactions found') ||
-        message.includes('no records found') ||
-        message.includes('no data found')) {
+    if (
+      message.includes('no transactions found') ||
+      message.includes('no records found') ||
+      message.includes('no data found')
+    ) {
       return {
         transactions: [],
         nextPageParam: undefined,
@@ -114,10 +128,10 @@ const fetchTransactionsForChain = async (
   }
 
   const transactions = response.result || [];
-  
+
   // Determine next page parameter
   let nextPageParam: string | undefined;
-  
+
   if (transactions.length === offset) {
     // If we got the max number of records, there might be more
     const lastTransaction = transactions[transactions.length - 1];
@@ -140,22 +154,40 @@ export const useInfiniteTransactions = (
   chainIds: number[],
   options?: UseInfiniteTransactionsOptions
 ) => {
-  const { enabled = true, sort = 'asc', offset = 1000, lastBlocks = {} } = options || {};
-  
+  const {
+    enabled = true,
+    sort = 'asc',
+    offset = 1000,
+    lastBlocks = {},
+  } = options || {};
+
   // Split chains into groups for rate limiting
   const chainGroups = splitChainIds(chainIds);
-  
-  return useInfiniteQuery<MultiChainTransactionPage, Error, MultiChainTransactionPage[], unknown[], Record<number, string> | undefined>({
-    queryKey: ['transactions', address, chainIds, sort, offset, JSON.stringify(lastBlocks)],
+
+  return useInfiniteQuery<
+    MultiChainTransactionPage,
+    Error,
+    MultiChainTransactionPage[],
+    unknown[],
+    Record<number, string> | undefined
+  >({
+    queryKey: [
+      'transactions',
+      address,
+      chainIds,
+      sort,
+      offset,
+      JSON.stringify(lastBlocks),
+    ],
     queryFn: async ({ pageParam }) => {
       const currentLastBlocks = pageParam || lastBlocks;
       const results: ChainTransactionResult[] = [];
       const nextLastBlocks: Record<number, string> = {};
-      
+
       // Process each chain group sequentially to respect rate limits
       for (const chainGroup of chainGroups) {
         // Process chains in parallel within each group (max 5)
-        const groupPromises = chainGroup.map(async (chainId) => {
+        const groupPromises = chainGroup.map(async chainId => {
           try {
             const startBlock = currentLastBlocks[chainId] || '0';
 
@@ -177,7 +209,10 @@ export const useInfiniteTransactions = (
             };
           } catch (error) {
             // Log the error but don't fail the entire query
-            console.warn(`Failed to fetch transactions for chain ${chainId}:`, error);
+            console.warn(
+              `Failed to fetch transactions for chain ${chainId}:`,
+              error
+            );
 
             // Return empty result for this chain
             return {
@@ -188,10 +223,10 @@ export const useInfiniteTransactions = (
             };
           }
         });
-        
+
         const groupResults = await Promise.all(groupPromises);
         results.push(...groupResults);
-        
+
         // Update nextLastBlocks for chains that have more data
         groupResults.forEach(result => {
           if (result.nextPageParam) {
@@ -199,14 +234,16 @@ export const useInfiniteTransactions = (
           }
         });
       }
-      
+
       return {
         results,
-        nextLastBlocks: Object.keys(nextLastBlocks).length > 0 ? nextLastBlocks : undefined,
+        nextLastBlocks:
+          Object.keys(nextLastBlocks).length > 0 ? nextLastBlocks : undefined,
       };
     },
     initialPageParam: undefined,
-    getNextPageParam: (lastPage: MultiChainTransactionPage) => lastPage.nextLastBlocks,
+    getNextPageParam: (lastPage: MultiChainTransactionPage) =>
+      lastPage.nextLastBlocks,
     enabled: enabled && !!address && chainIds.length > 0,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
@@ -219,18 +256,18 @@ export const useTransactions = (
   chainId: number,
   options?: UseTransactionsOptions
 ) => {
-  const { 
-    enabled = true, 
-    sort = 'asc', 
+  const {
+    enabled = true,
+    sort = 'asc',
     offset = 1000,
     startBlock = '0',
     endBlock = 'latest',
-    page = 1
+    page = 1,
   } = options || {};
-  
+
   return useQuery<TransactionPage, Error>({
-    queryKey: ['transactions-single', address, chainId, sort, offset, startBlock, endBlock, page],
-    queryFn: () => fetchTransactionsForChain({
+    queryKey: [
+      'transactions-single',
       address,
       chainId,
       sort,
@@ -238,7 +275,17 @@ export const useTransactions = (
       startBlock,
       endBlock,
       page,
-    }),
+    ],
+    queryFn: () =>
+      fetchTransactionsForChain({
+        address,
+        chainId,
+        sort,
+        offset,
+        startBlock,
+        endBlock,
+        page,
+      }),
     enabled: enabled && !!address && !!chainId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes

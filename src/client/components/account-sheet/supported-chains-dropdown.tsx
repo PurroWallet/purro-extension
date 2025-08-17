@@ -21,7 +21,7 @@ const SupportedChainsDropdown = ({
   className,
 }: SupportedChainsDropdownProps) => {
   // Currently selected chainId (hex string) – default to Ethereum Mainnet (value unused, only setter kept)
-   
+
   const [, setSelectedChain] = useState<string>('0x1');
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);

@@ -9,12 +9,9 @@ const GATEWAY_PRIORITY = [
 ];
 
 export async function fetchWithFallback(cid: string) {
-
   for (let i = 0; i < GATEWAY_PRIORITY.length; i++) {
     const gateway = GATEWAY_PRIORITY[i];
     try {
-
-
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000); // Increased timeout
 

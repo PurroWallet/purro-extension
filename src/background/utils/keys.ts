@@ -96,10 +96,10 @@ export const evmWalletKeyUtils = {
 
       return Boolean(
         normalizedInput.toLowerCase() === normalizedWallet.toLowerCase() &&
-        address &&
-        address.length > 0 &&
-        publicKey &&
-        publicKey.length > 0
+          address &&
+          address.length > 0 &&
+          publicKey &&
+          publicKey.length > 0
       );
     } catch {
       return false;

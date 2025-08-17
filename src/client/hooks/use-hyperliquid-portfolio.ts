@@ -78,7 +78,7 @@ export const useHlPortfolioData = (
       queryFn: async () => {
         const response = await fetchBalances({
           wallet: userAddress,
-          limit: 200
+          limit: 200,
         });
         return response;
       },
@@ -144,11 +144,7 @@ export const useHlPortfolioData = (
   const tokenAddresses = useMemo(() => {
     if (!fetchEvm) return [];
     const evmData = evmTokensQuery.data as FetchBalancesResponse | null;
-    return (
-      evmData?.data?.tokens?.map(
-        (token) => token.token
-      ) || []
-    );
+    return evmData?.data?.tokens?.map(token => token.token) || [];
   }, [fetchEvm, evmTokensQuery.data]);
 
   const tokenPricesQuery = useQuery({
@@ -188,18 +184,15 @@ export const useHlPortfolioData = (
     const evmData = evmTokensQuery.data as FetchBalancesResponse | null;
     if (!evmData?.data?.tokens) return 0;
 
-    return evmData.data.tokens.reduce(
-      (total: number, token) => {
-        // Try both original address and lowercase for price lookup
-        const tokenAddress = token.token.toLowerCase();
-        const priceStr = tokenPricesData[tokenAddress] || tokenPricesData[token.token];
-        const price = priceStr ? parseFloat(priceStr) : 0;
-        const balance =
-          parseFloat(token.balance) / Math.pow(10, token.decimals);
-        return total + balance * price;
-      },
-      0
-    );
+    return evmData.data.tokens.reduce((total: number, token) => {
+      // Try both original address and lowercase for price lookup
+      const tokenAddress = token.token.toLowerCase();
+      const priceStr =
+        tokenPricesData[tokenAddress] || tokenPricesData[token.token];
+      const price = priceStr ? parseFloat(priceStr) : 0;
+      const balance = parseFloat(token.balance) / Math.pow(10, token.decimals);
+      return total + balance * price;
+    }, 0);
   }, [fetchEvm, evmTokensQuery.data, tokenPricesData]);
 
   // Calculate perps value

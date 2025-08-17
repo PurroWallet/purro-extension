@@ -160,7 +160,6 @@ export const useNativeBalance = () => {
   const isArbitrumActive = isNetworkActive('arbitrum');
   const isHyperliquidActive = isNetworkActive('hyperevm');
 
-
   // Build queries only for active networks
   const activeChains = useMemo(
     () => [
@@ -260,7 +259,8 @@ export const useNativeBalance = () => {
     gcTime: 5 * 60 * 1000, // 5 minutes cache
     enabled: !isDevMode, // Always fetch prices when not in dev mode
     retry: 3,
-    retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    retryDelay: (attemptIndex: number) =>
+      Math.min(1000 * 2 ** attemptIndex, 5000),
   });
 
   // Process results
@@ -271,8 +271,6 @@ export const useNativeBalance = () => {
     if (!balanceResults || !Array.isArray(balanceResults)) {
       return tokens;
     }
-
-
 
     let resultIndex = 0;
 
@@ -286,8 +284,6 @@ export const useNativeBalance = () => {
       const messageResponse = result?.data as any;
       const hasValidBalance =
         messageResponse?.success && messageResponse?.data?.balance;
-
-
 
       if (hasValidBalance) {
         const tokenInfo = getNativeTokenInfo(chain);
@@ -328,7 +324,6 @@ export const useNativeBalance = () => {
       // If no USD values, sort by chain
       return a.chain.localeCompare(b.chain);
     });
-
 
     return sortedTokens;
   }, [balanceResults, pricesQuery.data, activeChains]);
