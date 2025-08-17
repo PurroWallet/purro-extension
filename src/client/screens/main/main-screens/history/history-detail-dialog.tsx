@@ -5,104 +5,55 @@ import {
   DialogWrapper,
 } from '@/client/components/ui';
 import { Button } from '@/client/components/ui';
-import { HyperScanTokenTransfersItems } from '@/client/types/hyperscan-api';
-import { EtherscanTransaction } from '@/client/types/etherscan-api';
+import type { TransactionWithChain } from './types';
 import useDialogStore from '@/client/hooks/use-dialog-store';
 import useWalletStore from '@/client/hooks/use-wallet-store';
 import { ArrowUp, ArrowDown, Network } from 'lucide-react';
 import { truncateAddress } from '@/client/utils/formatters';
 import { NETWORK_ICONS } from '@/utils/network-icons';
-
-// Extended transaction type for the history screen
-interface TransactionWithChain extends EtherscanTransaction {
-  chainId: number;
-  chainName: string;
-  type: 'send' | 'receive';
-}
-
-// Union type for both transaction types
-type TransactionType = HyperScanTokenTransfersItems | TransactionWithChain;
-
-// Type guard functions
-const isHyperScanTransaction = (
-  tx: TransactionType
-): tx is HyperScanTokenTransfersItems => {
-  return 'token' in tx && 'total' in tx;
-};
-
-const isEtherscanTransaction = (
-  tx: TransactionType
-): tx is TransactionWithChain => {
-  return 'chainId' in tx && 'chainName' in tx;
-};
+import TokenLogo from '@/client/components/token-logo';
+import { getChainType } from './utils/transaction-utils';
+import { formatValue, formatTokenAmount } from './utils/formatting-utils';
+import {
+  METHOD_LABELS,
+  EXPLORER_URLS,
+  EXPLORER_NAMES,
+  LOADING_STATES,
+} from './constants';
 
 const HistoryDetailDialog = ({
   transaction,
-  hlNames = [],
 }: {
-  transaction: TransactionType;
-  hlNames?: Record<string, string | null>[];
+  transaction: TransactionWithChain;
 }) => {
   const { closeDialog } = useDialogStore();
   const { getActiveAccountWalletObject } = useWalletStore();
   const activeAccount = getActiveAccountWalletObject();
   const userAddress = activeAccount?.eip155?.address?.toLowerCase();
 
-  // Extract addresses based on transaction type
-  const toAddress = isHyperScanTransaction(transaction)
-    ? transaction.to.hash?.toLowerCase()
-    : transaction.to?.toLowerCase();
-  const fromAddress = isHyperScanTransaction(transaction)
-    ? transaction.from.hash?.toLowerCase()
-    : transaction.from?.toLowerCase();
+  // Determine transaction direction based on method
+  const isSend =
+    transaction.method === 'send' || transaction.method === 'withdraw';
+  const isReceive =
+    transaction.method === 'receive' || transaction.method === 'deposit';
+  const isSwap = transaction.method === 'swap';
 
-  // Determine transaction direction
-  const isReceive = isHyperScanTransaction(transaction)
-    ? toAddress === userAddress
-    : transaction.type === 'receive';
-  const isSend = isHyperScanTransaction(transaction)
-    ? fromAddress === userAddress
-    : transaction.type === 'send';
-
-  // Token-specific flags (only for HyperScan transactions)
-  const isTokenMinting =
-    isHyperScanTransaction(transaction) &&
-    transaction.type.includes('token_minting');
-  const isTokenBurning =
-    isHyperScanTransaction(transaction) &&
-    transaction.type.includes('token_burning');
-  const isTokenTransfer =
-    isHyperScanTransaction(transaction) &&
-    transaction.type.includes('token_transfer');
-
-  const formatTokenAmount = (amount: number): string => {
-    const absAmount = Math.abs(amount);
-
-    // For very large numbers, use scientific notation or compact format
-    if (absAmount >= 1e12) {
-      return (amount / 1e12).toFixed(2) + 'T';
-    } else if (absAmount >= 1e9) {
-      return (amount / 1e9).toFixed(2) + 'B';
-    } else if (absAmount >= 1e6) {
-      return (amount / 1e6).toFixed(2) + 'M';
-    } else if (absAmount >= 1e3) {
-      return (amount / 1e3).toFixed(2) + 'K';
-    } else if (absAmount >= 1) {
-      return amount.toFixed(4);
-    } else if (absAmount >= 0.0001) {
-      return amount.toFixed(6);
-    } else {
-      // For very small numbers, use scientific notation
-      return amount.toExponential(2);
+  // Get method display info
+  const getMethodLabel = () => {
+    switch (transaction.method) {
+      case 'swap':
+        return METHOD_LABELS.SWAP;
+      case 'send':
+        return METHOD_LABELS.SEND;
+      case 'withdraw':
+        return METHOD_LABELS.WITHDRAW;
+      case 'deposit':
+        return METHOD_LABELS.DEPOSIT;
+      case 'receive':
+        return METHOD_LABELS.RECEIVE;
+      default:
+        return METHOD_LABELS.DEFAULT;
     }
-  };
-
-  const formatEthAmount = (weiValue: string): string => {
-    const ethValue = parseFloat(weiValue) / 1e18;
-    if (ethValue === 0) return '0';
-    if (ethValue < 0.0001) return ethValue.toExponential(2);
-    if (ethValue < 1) return ethValue.toFixed(6);
-    return ethValue.toFixed(4);
   };
 
   // Get chain icon helper
@@ -117,37 +68,45 @@ const HistoryDetailDialog = ({
   };
 
   // Get explorer URL helper
-  const getExplorerUrl = (tx: TransactionType): string => {
-    if (isHyperScanTransaction(tx)) {
-      return `https://hyperevmscan.io/tx/${tx.transaction_hash}`;
-    }
-
-    const explorerMap: Record<string, string> = {
-      ethereum: 'https://etherscan.io',
-      arbitrum: 'https://arbiscan.io',
-      base: 'https://basescan.org',
-      hyperevm: 'https://hyperevmscan.io',
-    };
-
+  const getExplorerUrl = (): string => {
     const baseUrl =
-      explorerMap[tx.chainName.toLowerCase()] || 'https://etherscan.io';
-    return `${baseUrl}/tx/${tx.hash}`;
+      EXPLORER_URLS[
+        transaction.chainName.toLowerCase() as keyof typeof EXPLORER_URLS
+      ] || EXPLORER_URLS.ethereum;
+    return `${baseUrl}/tx/${transaction.hash}`;
   };
 
   // Get explorer name helper
-  const getExplorerName = (tx: TransactionType): string => {
-    if (isHyperScanTransaction(tx)) {
-      return 'View on Explorer';
+  const getExplorerName = (): string => {
+    return (
+      EXPLORER_NAMES[
+        transaction.chainName.toLowerCase() as keyof typeof EXPLORER_NAMES
+      ] || 'View on Explorer'
+    );
+  };
+
+  // Format amount based on transaction type
+  const formatAmount = () => {
+    if (
+      transaction.isTokenTransfer &&
+      transaction.tokenAmount &&
+      transaction.tokenInfo
+    ) {
+      return `${formatTokenAmount(transaction.tokenAmount, transaction.tokenInfo.decimals)} ${transaction.tokenInfo.symbol}`;
     }
+    return `${formatValue(transaction.value)} ETH`;
+  };
 
-    const explorerNames: Record<string, string> = {
-      ethereum: 'View on Etherscan',
-      arbitrum: 'View on Arbiscan',
-      base: 'View on BaseScan',
-      hyperevm: 'View on HyperScan',
-    };
-
-    return explorerNames[tx.chainName.toLowerCase()] || 'View on Explorer';
+  // Format output amount for swaps
+  const formatOutputAmount = () => {
+    if (
+      isSwap &&
+      transaction.outputTokenAmount &&
+      transaction.outputTokenInfo
+    ) {
+      return `${formatTokenAmount(transaction.outputTokenAmount, transaction.outputTokenInfo.decimals)} ${transaction.outputTokenInfo.symbol}`;
+    }
+    return null;
   };
 
   return (
@@ -156,71 +115,42 @@ const HistoryDetailDialog = ({
       <DialogContent>
         <div className="flex flex-col items-center gap-4">
           <h2 className="text-lg font-bold">
-            {isSend && !isTokenMinting && !isTokenBurning && !isTokenTransfer
-              ? 'Sent'
-              : isReceive &&
-                  !isTokenMinting &&
-                  !isTokenBurning &&
-                  !isTokenTransfer
-                ? 'Received'
-                : isTokenMinting
-                  ? 'Minted'
-                  : isTokenBurning
-                    ? 'Burned'
-                    : 'Transferred'}
-            {isHyperScanTransaction(transaction) && (
+            {getMethodLabel()}
+            {transaction.isTokenTransfer && transaction.tokenInfo && (
               <>
-                {transaction.token.type === 'ERC-20' && ' Token'}
-                {transaction.token.type === 'ERC-721' && ' NFT'}
-                {transaction.token.type === 'ERC-1155' && ' NFT'}
-                {transaction.token.type === 'ERC-404' && ' Token'}
+                {transaction.tokenInfo.symbol &&
+                  transaction.tokenInfo.symbol !==
+                    LOADING_STATES.TOKEN_SYMBOL &&
+                  ` ${transaction.tokenInfo.symbol}`}
+                {(!transaction.tokenInfo.symbol ||
+                  transaction.tokenInfo.symbol ===
+                    LOADING_STATES.TOKEN_SYMBOL) &&
+                  ' Token'}
               </>
             )}
-            {isEtherscanTransaction(transaction) && ' ETH'}
+            {!transaction.isTokenTransfer && ' ETH'}
           </h2>
+
           <div className="flex items-center justify-center size-24 rounded-full bg-[var(--primary-color)]/10 relative">
-            {isHyperScanTransaction(transaction) ? (
-              <>
-                {transaction.token.icon_url && (
-                  <img
-                    src={transaction.token.icon_url || ''}
-                    alt="logo"
-                    className="size-full rounded-full"
-                    onError={e => {
-                      e.currentTarget.style.display = 'none';
-                      const parent = e.currentTarget.parentElement;
-                      if (parent) {
-                        const fallbackDiv = document.createElement('div');
-                        fallbackDiv.className =
-                          'size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-2xl border border-[var(--primary-color)]/20';
-                        fallbackDiv.textContent =
-                          transaction.token.symbol?.charAt(0).toUpperCase() ||
-                          '';
-                        parent.insertBefore(fallbackDiv, e.currentTarget);
-                      }
-                    }}
-                  />
-                )}
-                {!transaction.token.icon_url && (
-                  <div className="size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-2xl border border-[var(--primary-color)]/20">
-                    {transaction.token.symbol?.charAt(0).toUpperCase() || '?'}
-                  </div>
-                )}
-              </>
+            {transaction.isTokenTransfer &&
+            transaction.tokenInfo &&
+            transaction.tokenInfo.symbol !== LOADING_STATES.TOKEN_SYMBOL ? (
+              <TokenLogo
+                symbol={transaction.tokenInfo.symbol || LOADING_STATES.UNKNOWN}
+                existingLogo={transaction.tokenInfo.logo}
+                networkId={getChainType(transaction.chainId)}
+                tokenAddress={transaction.tokenInfo.address}
+                className="size-24 rounded-full"
+                fallbackText={transaction.tokenInfo.symbol?.charAt(0) || 'T'}
+              />
             ) : (
-              // For Etherscan transactions, show chain icon
-              <>
-                {getChainIcon(transaction.chainName) ? (
-                  <img
-                    src={getChainIcon(transaction.chainName)!}
-                    alt={transaction.chainName}
-                    className="size-12 rounded-full"
-                  />
-                ) : (
-                  <Network className="size-12 text-[var(--primary-color)]" />
-                )}
-              </>
+              // ETH icon
+              <div className="size-16 rounded-full bg-gradient-to-br from-blue-500/20 to-blue-600/10 flex items-center justify-center font-bold text-blue-600 text-2xl border border-blue-500/20">
+                ETH
+              </div>
             )}
+
+            {/* Method indicator */}
             {isSend && (
               <div className="absolute top-0 right-0 size-8 bg-red-500 rounded-full flex items-center justify-center font-bold text-red-200 text-lg border border-red-500/20">
                 <ArrowUp className="size-4 text-red-200" strokeWidth={3} />
@@ -232,7 +162,9 @@ const HistoryDetailDialog = ({
               </div>
             )}
           </div>
+
           <div className="rounded-lg overflow-hidden w-full">
+            {/* From/To Address */}
             <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
               <p className="text-base text-left font-semibold">
                 {isSend ? 'To' : 'From'}
@@ -240,89 +172,75 @@ const HistoryDetailDialog = ({
               <div className="flex flex-col items-end">
                 <p className="text-sm text-muted-foreground text-right truncate w-full">
                   {isSend
-                    ? truncateAddress(toAddress || '')
-                    : truncateAddress(fromAddress || '')}
+                    ? truncateAddress(transaction.to)
+                    : truncateAddress(transaction.from)}
                 </p>
-                {isHyperScanTransaction(transaction) && (
-                  <p className="text-xs text-muted-foreground text-right truncate w-full">
-                    {
-                      hlNames.find(hlName =>
-                        isSend
-                          ? hlName[transaction.to.hash]
-                          : hlName[transaction.from.hash]
-                      )?.[isSend ? transaction.to.hash : transaction.from.hash]
-                    }
-                  </p>
-                )}
               </div>
             </div>
+
+            {/* Amount */}
             <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
               <p className="text-base text-left font-semibold">Amount</p>
               <p className="text-sm text-muted-foreground text-right truncate w-full">
-                {isHyperScanTransaction(transaction) ? (
-                  <>
-                    {formatTokenAmount(
-                      Number(transaction.total?.value || '0') /
-                        10 ** Number(transaction.total?.decimals || '0')
-                    )}{' '}
-                    {transaction.token.symbol &&
-                    transaction.token.symbol.length > 6
-                      ? `${transaction.token.symbol.substring(0, 6)}...`
-                      : transaction.token.symbol || 'Unknown'}
-                  </>
-                ) : (
-                  `${formatEthAmount(transaction.value)} ETH`
-                )}
+                {formatAmount()}
               </p>
             </div>
+
+            {/* Output Amount for Swaps */}
+            {isSwap && formatOutputAmount() && (
+              <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
+                <p className="text-base text-left font-semibold">Received</p>
+                <p className="text-sm text-muted-foreground text-right truncate w-full">
+                  {formatOutputAmount()}
+                </p>
+              </div>
+            )}
+
+            {/* Network */}
             <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
               <p className="text-base text-left font-semibold">Network</p>
               <p className="text-sm text-muted-foreground text-right truncate w-full">
-                {isHyperScanTransaction(transaction)
-                  ? 'HyperEVM'
-                  : transaction.chainName}
+                {transaction.chainName}
               </p>
             </div>
+
+            {/* Transaction Hash */}
             <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
               <p className="text-base text-left font-semibold flex-1 whitespace-nowrap">
                 Transaction Hash
               </p>
               <p className="text-sm text-muted-foreground text-right truncate w-full">
-                {truncateAddress(
-                  isHyperScanTransaction(transaction)
-                    ? transaction.transaction_hash
-                    : transaction.hash
-                )}
+                {truncateAddress(transaction.hash)}
               </p>
             </div>
-            {isEtherscanTransaction(transaction) && (
-              <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
-                <p className="text-base text-left font-semibold">
-                  Block Number
-                </p>
-                <p className="text-sm text-muted-foreground text-right truncate w-full">
-                  {transaction.blockNumber}
-                </p>
-              </div>
-            )}
-            {isEtherscanTransaction(transaction) && (
-              <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
-                <p className="text-base text-left font-semibold">Date</p>
-                <p className="text-sm text-muted-foreground text-right truncate w-full">
-                  {new Date(
-                    parseInt(transaction.timeStamp) * 1000
-                  ).toLocaleString()}
-                </p>
-              </div>
-            )}
+
+            {/* Block Number */}
+            <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
+              <p className="text-base text-left font-semibold">Block Number</p>
+              <p className="text-sm text-muted-foreground text-right truncate w-full">
+                {transaction.blockNumber}
+              </p>
+            </div>
+
+            {/* Date */}
+            <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
+              <p className="text-base text-left font-semibold">Date</p>
+              <p className="text-sm text-muted-foreground text-right truncate w-full">
+                {new Date(
+                  parseInt(transaction.timeStamp) * 1000
+                ).toLocaleString()}
+              </p>
+            </div>
+
+            {/* Explorer Link */}
             <div className="w-full flex items-center justify-center bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer p-3 gap-2">
               <a
                 className="text-base text-center font-semibold text-[var(--primary-color-light)]"
-                href={getExplorerUrl(transaction)}
+                href={getExplorerUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {getExplorerName(transaction)}
+                {getExplorerName()}
               </a>
             </div>
           </div>
