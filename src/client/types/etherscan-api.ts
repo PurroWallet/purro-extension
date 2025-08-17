@@ -81,3 +81,25 @@ export interface MultiChainTransactionPage {
   results: ChainTransactionResult[];
   nextLastBlocks?: Record<number, string>;
 }
+
+// Transaction cache types
+export interface CachedTransactionData {
+  transactions: EtherscanTransaction[];
+  lastBlock: string;
+  lastFetch: number;
+  chainId: number;
+}
+
+export interface TransactionCache {
+  [address: string]: {
+    [chainId: string]: CachedTransactionData;
+  };
+}
+
+export interface UseCachedTransactionsOptions extends UseTransactionsOptions {
+  enableCache?: boolean;
+}
+
+export interface UseCachedInfiniteTransactionsOptions extends UseInfiniteTransactionsOptions {
+  enableCache?: boolean;
+}

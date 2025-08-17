@@ -46,7 +46,7 @@ export const fetchTopPoolsByDex = async (
 };
 
 // Generic function to fetch token prices for any network
-export const fetchTokenPrices = async (
+export const fetchTokensInfoByAddresses = async (
   network: Network,
   addresses: string[]
 ) => {
@@ -171,19 +171,19 @@ const transformMultiTokenResponse = (response: any) => {
 
 // Specific functions for each network (backward compatibility)
 export const fetchHyperEvmTokenPrices = async (addresses: string[]) => {
-  return fetchTokenPrices('hyperevm', addresses);
+  return fetchTokensInfoByAddresses('hyperevm', addresses);
 };
 
 export const fetchEthereumTokenPrices = async (addresses: string[]) => {
-  return fetchTokenPrices('eth', addresses);
+  return fetchTokensInfoByAddresses('eth', addresses);
 };
 
 export const fetchBaseTokenPrices = async (addresses: string[]) => {
-  return fetchTokenPrices('base', addresses);
+  return fetchTokensInfoByAddresses('base', addresses);
 };
 
 export const fetchArbitrumTokenPrices = async (addresses: string[]) => {
-  return fetchTokenPrices('arbitrum', addresses);
+  return fetchTokensInfoByAddresses('arbitrum', addresses);
 };
 
 export const fetchPoolTokenInfo = async (

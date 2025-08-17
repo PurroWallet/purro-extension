@@ -40,7 +40,7 @@ import { SwapSuccess } from '@/client/components/dialogs';
 import useDialogStore from '@/client/hooks/use-dialog-store';
 import { fetchBalances } from '@/client/services/liquidswap-api';
 import {
-  fetchTokenPrices,
+  fetchTokensInfoByAddresses,
   Network,
 } from '@/client/services/gecko-terminal-api';
 import { Balance } from '@/client/types/liquidswap-api';
@@ -372,7 +372,7 @@ const Swap = () => {
             ? 'hyperevm'
             : 'eth'; // Default to eth for other chains
 
-        const response = await fetchTokenPrices(network, addresses);
+        const response = await fetchTokensInfoByAddresses(network, addresses);
 
         console.log('📊 Token prices response:', response);
 
