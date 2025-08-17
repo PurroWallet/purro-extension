@@ -87,33 +87,45 @@ const MainHeader = ({
         />
       </div>
 
-      {isHomeScreen ||
-        (isExploreScreen && (
-          <div className="flex items-center">
-            <div
-              className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
-              onClick={async () => {
-                openDialog(<TokenSelectorDialog />);
-              }}
-            >
-              <SearchIcon className="size-5 text-white/90" />
-            </div>
-            {!isSidepanel &&
-              !isNftScreen &&
-              !isHistoryScreen &&
-              !isSwapScreen &&
-              !isExploreScreen && (
-                <div
-                  className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
-                  onClick={async () => {
-                    await openSidePanel();
-                  }}
-                >
-                  <DockToLeftIcon className="size-5 text-white/90" />
-                </div>
-              )}
+      {isHomeScreen && (
+        <div className="flex items-center">
+          <div
+            className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
+            onClick={async () => {
+              openDialog(<TokenSelectorDialog />);
+            }}
+          >
+            <SearchIcon className="size-5 text-white/90" />
           </div>
-        ))}
+          {!isSidepanel &&
+            !isNftScreen &&
+            !isHistoryScreen &&
+            !isSwapScreen &&
+            !isExploreScreen && (
+              <div
+                className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
+                onClick={async () => {
+                  await openSidePanel();
+                }}
+              >
+                <DockToLeftIcon className="size-5 text-white/90" />
+              </div>
+            )}
+        </div>
+      )}
+
+      {isExploreScreen && (
+        <div className="flex items-center">
+          <div
+            className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
+            onClick={async () => {
+              openDialog(<TokenSelectorDialog />);
+            }}
+          >
+            <SearchIcon className="size-5 text-white/90" />
+          </div>
+        </div>
+      )}
 
       {isNftScreen && (
         <div
