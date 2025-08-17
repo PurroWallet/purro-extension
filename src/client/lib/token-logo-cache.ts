@@ -198,7 +198,7 @@ export class TokenLogoCacheLib {
      * Clean oldest entries when cache is full (based on cachedAt, not expiration)
      */
     private static async cleanOldestEntries(
-        chainId: string,
+        _chainId: string,
         chainCache: TokenLogoCache[string]
     ): Promise<void> {
         try {
@@ -214,7 +214,6 @@ export class TokenLogoCacheLib {
                 delete chainCache[entries[i][0]];
             }
 
-            console.log(`🧹 Cleaned ${entriesToRemove} oldest token logo entries for chain ${chainId} (cache size management)`);
         } catch (error) {
             console.error('Failed to clean oldest entries:', error);
         }

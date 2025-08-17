@@ -75,30 +75,22 @@ const NftInstancesDialog = ({
 
   // Handle page navigation
   const goToNextPage = () => {
-    console.log('Going to next page, current:', currentPage);
     if (nftInstances?.next_page_params) {
       setCurrentPage(prev => {
         const nextPage = prev + 1;
-        console.log('Next page will be:', nextPage);
         return nextPage;
       });
     }
   };
 
   const goToPrevPage = () => {
-    console.log('Going to previous page, current:', currentPage);
     if (currentPage > 1) {
       setCurrentPage(prev => {
         const prevPage = prev - 1;
-        console.log('Previous page will be:', prevPage);
         return prevPage;
       });
     }
   };
-
-  console.log('nftInstances', nftInstances);
-  console.log('currentPage', currentPage);
-  console.log('pageParams', pageParams);
 
   const openNftInstanceDialog = (nftInstance: HyperScanNftInstancesItem) => {
     setSelectedInstance(nftInstance);

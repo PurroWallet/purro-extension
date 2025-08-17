@@ -203,9 +203,7 @@ export class TokenMetadataCacheLib {
         delete chainCache[entries[i][0]];
       }
 
-      console.log(
-        `🧹 Cleaned ${entriesToRemove} oldest token metadata entries for chain ${chainId} (cache size management)`
-      );
+
     } catch (error) {
       console.error('Failed to clean oldest entries:', error);
     }

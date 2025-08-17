@@ -406,14 +406,6 @@ const useSwapStore = create<SwapState>()(
         // Don't persist anything else - keep it simple
         // tokenIn, tokenOut, amounts, route, etc. will reset on each session
       }),
-      onRehydrateStorage: () => (state) => {
-        console.log('🔄 Swap store rehydrated - settings only:', {
-          slippage: state?.slippage,
-          deadline: state?.deadline,
-          enableAutoRefresh: state?.enableAutoRefresh,
-          refreshInterval: state?.refreshInterval,
-        });
-      },
     }
   )
 );

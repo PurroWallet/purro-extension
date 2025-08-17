@@ -54,7 +54,6 @@ const ConfirmSend = () => {
     if (token && recipient && amount) {
       try {
         setIsLoading(true);
-        console.log('🚀 Starting transaction send process...');
 
         // Send transaction through the Hyperliquid handler
         const result = await sendMessage('HYPERLIQUID_SEND_TOKEN', {

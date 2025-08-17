@@ -57,7 +57,6 @@ export const getTokenLogoFromAddress = async (
 
     // Check if token is blacklisted first
     if (BlacklistTokenLogoCacheLib.isBlacklisted(networkId, tokenAddress)) {
-      console.log(`Token is blacklisted, skipping fetch: ${networkId}:${tokenAddress}`);
       return null;
     }
 
@@ -74,7 +73,6 @@ export const getTokenLogoFromAddress = async (
     if (tokenInfo && typeof tokenInfo === 'object' && 'errors' in tokenInfo) {
       const errors = tokenInfo.errors;
       if (Array.isArray(errors) && errors.some(error => error.status === "404")) {
-        console.log(`Token returned 404, adding to blacklist: ${networkId}:${tokenAddress}`);
         BlacklistTokenLogoCacheLib.addToBlacklist(networkId, tokenAddress);
 
         // Cache the null result to avoid repeated failed requests
@@ -86,7 +84,6 @@ export const getTokenLogoFromAddress = async (
 
     // Check if response has the expected data structure
     if (!('data' in tokenInfo) || !tokenInfo.data?.attributes?.image_url) {
-      console.log(`Token response missing image data: ${networkId}:${tokenAddress}`);
 
       // Cache the null result
       await TokenLogoCacheLib.cacheLogo(networkId, tokenAddress, null);
@@ -105,7 +102,6 @@ export const getTokenLogoFromAddress = async (
 
     // Check if it's a 404 error and add to blacklist
     if (error instanceof Error && error.message.includes('404')) {
-      console.log(`Token fetch failed with 404, adding to blacklist: ${networkId}:${tokenAddress}`);
       BlacklistTokenLogoCacheLib.addToBlacklist(networkId, tokenAddress);
     }
 

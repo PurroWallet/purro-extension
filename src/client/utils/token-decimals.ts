@@ -44,11 +44,9 @@ export const fetchTokenDecimals = async (
 
     // Kiểm tra cache trước
     if (decimalsCache.has(cacheKey)) {
-      console.log(`📦 Using cached decimals for ${contractAddress}`);
       return decimalsCache.get(cacheKey)!;
     }
 
-    console.log(`🔍 Fetching decimals for ${contractAddress} on ${chain}`);
 
     // Tạo provider cho chain
     const rpcUrl = getRpcUrl(chain);
@@ -81,14 +79,12 @@ export const fetchTokenDecimals = async (
     // Lưu vào cache
     decimalsCache.set(cacheKey, decimalsNumber);
 
-    console.log(`✅ Token ${contractAddress} has ${decimalsNumber} decimals`);
     return decimalsNumber;
   } catch (error) {
     console.warn(`❌ Failed to fetch decimals for ${contractAddress}:`, error);
 
     // Fallback về 18 (most common)
     const fallbackDecimals = 18;
-    console.log(`🔄 Using fallback decimals: ${fallbackDecimals}`);
     return fallbackDecimals;
   }
 };
@@ -144,7 +140,6 @@ export const ensureTokenDecimals = async (token: any): Promise<number> => {
  */
 export const clearDecimalsCache = (): void => {
   decimalsCache.clear();
-  console.log('🗑️ Decimals cache cleared');
 };
 
 /**

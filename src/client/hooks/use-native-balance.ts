@@ -160,16 +160,6 @@ export const useNativeBalance = () => {
   const isArbitrumActive = isNetworkActive('arbitrum');
   const isHyperliquidActive = isNetworkActive('hyperevm');
 
-  // Debug logging
-  // console.log('🔍 useNativeBalance Debug:', {
-  //     userAddress,
-  //     isEthereumActive,
-  //     isBaseActive,
-  //     isArbitrumActive,
-  //     isHyperliquidActive,
-  //     activeWallet: !!activeWallet,
-  //     isDevMode,
-  // });
 
   // Build queries only for active networks
   const activeChains = useMemo(
@@ -282,11 +272,7 @@ export const useNativeBalance = () => {
       return tokens;
     }
 
-    // console.log('🔍 Processing Native Tokens:', {
-    //     totalQueries: balanceQueries.length,
-    //     totalResults: balanceResults.length,
-    //     activeChains: activeChains.filter(c => c.isActive).map(c => c.chain),
-    // });
+
 
     let resultIndex = 0;
 
@@ -301,13 +287,7 @@ export const useNativeBalance = () => {
       const hasValidBalance =
         messageResponse?.success && messageResponse?.data?.balance;
 
-      // console.log(`🔍 Processing ${chain}:`, {
-      //     resultIndex: resultIndex - 1,
-      //     hasValidBalance,
-      //     success: messageResponse?.success,
-      //     balance: messageResponse?.data?.balance,
-      //     chainId: messageResponse?.data?.chainId
-      // });
+
 
       if (hasValidBalance) {
         const tokenInfo = getNativeTokenInfo(chain);
@@ -349,15 +329,6 @@ export const useNativeBalance = () => {
       return a.chain.localeCompare(b.chain);
     });
 
-    // console.log('🎯 Final Native Tokens:', {
-    //     totalTokens: sortedTokens.length,
-    //     tokens: sortedTokens.map(t => ({
-    //         chain: t.chain,
-    //         balance: t.balanceFormatted,
-    //         symbol: t.symbol,
-    //         usdValue: t.usdValue
-    //     }))
-    // });
 
     return sortedTokens;
   }, [balanceResults, pricesQuery.data, activeChains]);

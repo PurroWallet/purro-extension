@@ -47,9 +47,7 @@ export const useHyperEvmTokenBalances = (address?: string) => {
         queryFn: async () => {
             if (!address) throw new Error('Address is required');
 
-            console.log('🔍 Fetching HyperEVM token balances for:', address);
             const response = await fetchBalances({ wallet: address });
-            console.log('✅ HyperEVM balances fetched:', response);
             return response;
         },
         enabled: !!address,
@@ -69,9 +67,7 @@ export const useHyperEvmTokenPrices = (tokenAddresses: string[]) => {
         queryFn: async () => {
             if (tokenAddresses.length === 0) return null;
 
-            console.log('🔍 Fetching HyperEVM token prices for:', tokenAddresses);
             const response = await fetchTokensInfoByAddresses('hyperevm', tokenAddresses);
-            console.log('✅ HyperEVM prices fetched:', response);
 
             // Update Zustand store with price data
             if (response?.data && Array.isArray(response.data)) {

@@ -67,15 +67,6 @@ const WalletNFTs = () => {
     );
   }
 
-  // Debug info (only in development)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('NFT data:', {
-      totalItems: nfts.items.length,
-      sampleItem: nfts.items[0],
-      sampleImageUrl: nfts.items[0]?.token_instances[0]?.image_url,
-    });
-  }
-
   const handleOpenNftInstancesDialog = (nft: any) => {
     openDialog(
       <NftInstancesDialog

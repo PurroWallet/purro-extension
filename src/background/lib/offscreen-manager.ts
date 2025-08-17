@@ -1,5 +1,4 @@
 // Offscreen document management - MEMORY ONLY for maximum security
-// @ts-expect-error: Variable is written to but not read, keeping for future use
 let __offscreenCreated = false;
 
 export const offscreenManager = {
@@ -29,7 +28,6 @@ export const offscreenManager = {
           'Maintain session state across service worker restarts for security',
       });
       __offscreenCreated = true;
-      console.log('Offscreen document created successfully');
 
       // Wait for the document to fully initialize
       await new Promise(resolve => setTimeout(resolve, 200));
@@ -49,7 +47,6 @@ export const offscreenManager = {
     try {
       await chrome.offscreen.closeDocument();
       __offscreenCreated = false;
-      console.log('Offscreen document closed - session cleared');
     } catch (error) {
       console.warn('Failed to close offscreen document:', error);
     }

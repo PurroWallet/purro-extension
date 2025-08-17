@@ -38,7 +38,6 @@ const NftInstancesIdDialog = ({
             activeAccountWallet.eip155?.address || ''
           );
           setHlName(hlName);
-          console.log(hlName);
         } catch (error) {
           console.error('Error getting HL name:', error);
         } finally {
@@ -48,15 +47,6 @@ const NftInstancesIdDialog = ({
     };
     fetchHLName();
   }, []);
-
-  // Debug logging
-  console.log('Debug HL Names:', {
-    isHlName,
-    hlName,
-    hlNameLoading,
-    tokenAddress: nftInstance.token?.address_hash,
-    activeAccountWallet: activeAccountWallet?.eip155?.address,
-  });
 
   // Prepare menu items for NFT details
   const nftDetailsItems = [

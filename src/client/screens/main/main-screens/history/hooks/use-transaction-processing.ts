@@ -46,32 +46,12 @@ export const useTransactionProcessing = (
         // Handle both possible data structures from useInfiniteQuery
         const pages = 'pages' in data ? data.pages : data;
 
-        console.log('🔍 HISTORY DEBUG: Processing transaction data', {
-            address: address.slice(0, 8) + '...',
-            dataType: typeof data,
-            hasPages: 'pages' in data,
-            pagesLength: Array.isArray(pages) ? pages.length : 0,
-            rawData: data,
-        });
+
 
         if (Array.isArray(pages)) {
-            pages.forEach((page: MultiChainTransactionPage, pageIndex: number) => {
-                console.log(`📄 HISTORY DEBUG: Processing page ${pageIndex}`, {
-                    resultsCount: page.results.length,
-                    results: page.results.map(r => ({
-                        chainId: r.chainId,
-                        transactionCount: r.transactions.length,
-                        hasMore: r.hasMore,
-                    })),
-                });
+            pages.forEach((page: MultiChainTransactionPage, _pageIndex: number) => {
 
                 page.results.forEach((result: ChainTransactionResult) => {
-                    console.log(`⛓️ HISTORY DEBUG: Processing chain ${result.chainId}`, {
-                        chainId: result.chainId,
-                        transactionCount: result.transactions.length,
-                        hasMore: result.hasMore,
-                        firstTxHash: result.transactions[0]?.hash?.slice(0, 10) + '...',
-                    });
 
                     result.transactions.forEach((tx) => {
                         const chainName =

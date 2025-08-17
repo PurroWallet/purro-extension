@@ -9,15 +9,11 @@ const GATEWAY_PRIORITY = [
 ];
 
 export async function fetchWithFallback(cid: string) {
-  console.log('Fetching IPFS content for CID:', cid);
 
   for (let i = 0; i < GATEWAY_PRIORITY.length; i++) {
     const gateway = GATEWAY_PRIORITY[i];
     try {
-      console.log(
-        `Trying gateway ${i + 1}/${GATEWAY_PRIORITY.length}:`,
-        gateway
-      );
+
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000); // Increased timeout
@@ -32,7 +28,6 @@ export async function fetchWithFallback(cid: string) {
       clearTimeout(timeoutId);
 
       if (res.ok) {
-        console.log('Successfully fetched from:', gateway);
         return res;
       } else {
         console.warn(`Gateway ${gateway} returned status:`, res.status);

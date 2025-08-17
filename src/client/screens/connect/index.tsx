@@ -74,21 +74,12 @@ export const ConnectScreen = () => {
 
     setLoading(true);
     try {
-      console.log(
-        '🔄 Approving connection for:',
-        connectionRequest.origin,
-        'with account:',
-        activeAccount.id
-      );
-
       // Send approval to background script with active account
       const result = await approveConnection(
         connectionRequest.origin,
         activeAccount.id,
         connectionRequest.favicon
       );
-
-      console.log('✅ Approval result:', result);
 
       // Small delay to ensure message is processed
       await new Promise(resolve => setTimeout(resolve, 100));

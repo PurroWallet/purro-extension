@@ -26,13 +26,13 @@ export class TransactionCacheLib {
     try {
       const result = await chrome.storage.local.get([TRANSACTION_CACHE_KEY]);
       const cache: TransactionCache = result[TRANSACTION_CACHE_KEY] || {};
-      
+
       const addressCache = cache[address.toLowerCase()];
       if (!addressCache) return null;
-      
+
       const chainCache = addressCache[chainId.toString()];
       if (!chainCache) return null;
-      
+
       return chainCache;
     } catch (error) {
       console.error('Failed to get cached transactions:', error);
@@ -52,21 +52,21 @@ export class TransactionCacheLib {
     try {
       const result = await chrome.storage.local.get([TRANSACTION_CACHE_KEY]);
       const cache: TransactionCache = result[TRANSACTION_CACHE_KEY] || {};
-      
+
       if (!cache[address.toLowerCase()]) {
         cache[address.toLowerCase()] = {};
       }
-      
+
       // Limit transactions to prevent storage bloat
       const limitedTransactions = transactions.slice(-MAX_TRANSACTIONS_PER_CHAIN);
-      
+
       cache[address.toLowerCase()][chainId.toString()] = {
         transactions: limitedTransactions,
         lastBlock,
         lastFetch: Date.now(),
         chainId,
       };
-      
+
       await chrome.storage.local.set({ [TRANSACTION_CACHE_KEY]: cache });
     } catch (error) {
       console.error('Failed to cache transactions:', error);
@@ -89,20 +89,20 @@ export class TransactionCacheLib {
         await this.cacheTransactions(address, chainId, newTransactions, newLastBlock);
         return;
       }
-      
+
       // Merge transactions, avoiding duplicates
       const existingHashes = new Set(cached.transactions.map(tx => tx.hash));
       const uniqueNewTransactions = newTransactions.filter(tx => !existingHashes.has(tx.hash));
-      
+
       const allTransactions = [...cached.transactions, ...uniqueNewTransactions];
-      
+
       // Sort by block number and transaction index to maintain order
       allTransactions.sort((a, b) => {
         const blockDiff = parseInt(a.blockNumber) - parseInt(b.blockNumber);
         if (blockDiff !== 0) return blockDiff;
         return parseInt(a.transactionIndex) - parseInt(b.transactionIndex);
       });
-      
+
       await this.cacheTransactions(address, chainId, allTransactions, newLastBlock);
     } catch (error) {
       console.error('Failed to append transactions:', error);
@@ -123,7 +123,7 @@ export class TransactionCacheLib {
     try {
       const result = await chrome.storage.local.get([TRANSACTION_CACHE_KEY]);
       const cache: TransactionCache = result[TRANSACTION_CACHE_KEY] || {};
-      
+
       if (chainId) {
         // Clear specific chain
         if (cache[address.toLowerCase()]) {
@@ -133,7 +133,7 @@ export class TransactionCacheLib {
         // Clear all chains for address
         delete cache[address.toLowerCase()];
       }
-      
+
       await chrome.storage.local.set({ [TRANSACTION_CACHE_KEY]: cache });
     } catch (error) {
       console.error('Failed to clear transaction cache:', error);
@@ -150,7 +150,7 @@ export const useCachedTransactions = (
   options?: UseInfiniteTransactionsOptions & { enableCache?: boolean }
 ) => {
   const { enabled = true, sort = 'asc', offset = 1000, enableCache = true } = options || {};
-  
+
   return useQuery({
     queryKey: ['cached-transactions', address, chainId, sort, offset, enableCache],
     queryFn: async (): Promise<TransactionPage> => {
@@ -165,19 +165,12 @@ export const useCachedTransactions = (
           endBlock: 'latest',
         });
       }
-      
+
       // Get cached data
       const cached = await TransactionCacheLib.getCachedTransactions(address, chainId);
 
       if (cached && TransactionCacheLib.isCacheFresh(cached)) {
-        // Return cached data if fresh
-        console.log('⚡ CACHE HIT: Loading from cache instantly!', {
-          address: address.slice(0, 8) + '...',
-          chainId,
-          cachedTransactions: cached.transactions.length,
-          lastBlock: cached.lastBlock,
-          cacheAge: Math.round((Date.now() - cached.lastFetch) / 1000) + 's ago',
-        });
+
 
         return {
           transactions: cached.transactions,
@@ -185,26 +178,10 @@ export const useCachedTransactions = (
           chainId,
         };
       }
-      
+
       // Determine start block for fetching
       const startBlock = cached ? (parseInt(cached.lastBlock) + 1).toString() : '0';
 
-      if (cached) {
-        console.log('🔄 SMART FETCH: Only getting NEW transactions!', {
-          address: address.slice(0, 8) + '...',
-          chainId,
-          startingFromBlock: startBlock,
-          cachedTransactions: cached.transactions.length,
-          lastCachedBlock: cached.lastBlock,
-          cacheAge: Math.round((Date.now() - cached.lastFetch) / 1000) + 's ago',
-        });
-      } else {
-        console.log('🆕 FIRST FETCH: Getting all transactions from beginning', {
-          address: address.slice(0, 8) + '...',
-          chainId,
-          startingFromBlock: '0',
-        });
-      }
 
       // Fetch new transactions
       const result = await fetchTransactionsForChain({
@@ -215,19 +192,12 @@ export const useCachedTransactions = (
         startBlock,
         endBlock: 'latest',
       });
-      
+
       if (result.transactions.length > 0) {
         // Get the last block number from new transactions
         const lastTransaction = result.transactions[result.transactions.length - 1];
         const newLastBlock = lastTransaction.blockNumber;
 
-        console.log('✅ FOUND NEW TRANSACTIONS:', {
-          address: address.slice(0, 8) + '...',
-          chainId,
-          newTransactions: result.transactions.length,
-          fromBlock: startBlock,
-          toBlock: newLastBlock,
-        });
 
         if (cached) {
           // Append to existing cache
@@ -238,12 +208,7 @@ export const useCachedTransactions = (
             newLastBlock
           );
 
-          console.log('🔄 CACHE UPDATED: Merged with existing cache', {
-            address: address.slice(0, 8) + '...',
-            chainId,
-            newTransactions: result.transactions.length,
-            totalCached: (cached.transactions.length + result.transactions.length),
-          });
+
 
           // Return combined data
           const updatedCache = await TransactionCacheLib.getCachedTransactions(address, chainId);
@@ -261,23 +226,11 @@ export const useCachedTransactions = (
             newLastBlock
           );
 
-          console.log('💾 CACHE CREATED: First time caching complete', {
-            address: address.slice(0, 8) + '...',
-            chainId,
-            transactions: result.transactions.length,
-            lastBlock: newLastBlock,
-          });
 
           return result;
         }
       } else if (cached) {
-        // No new transactions, return cached data
-        console.log('📋 NO NEW TRANSACTIONS: Using existing cache', {
-          address: address.slice(0, 8) + '...',
-          chainId,
-          cachedTransactions: cached.transactions.length,
-          lastBlock: cached.lastBlock,
-        });
+
 
         return {
           transactions: cached.transactions,
@@ -285,7 +238,7 @@ export const useCachedTransactions = (
           chainId,
         };
       }
-      
+
       // No cached data and no new transactions
       return result;
     },
@@ -304,19 +257,14 @@ export const useCachedInfiniteTransactions = (
   options?: UseInfiniteTransactionsOptions & { enableCache?: boolean }
 ) => {
   const { enabled = true, sort = 'asc', offset = 1000, enableCache = true } = options || {};
-  
+
   return useInfiniteQuery<MultiChainTransactionPage, Error, MultiChainTransactionPage[], unknown[], Record<number, string> | undefined>({
     queryKey: ['cached-infinite-transactions', address, chainIds, sort, offset, enableCache],
     queryFn: async ({ pageParam }) => {
       const results: ChainTransactionResult[] = [];
       const nextLastBlocks: Record<number, string> = {};
-      
-      // Process each chain
-      console.log('🔍 MULTI-CHAIN DEBUG: Processing chains', {
-        address: address.slice(0, 8) + '...',
-        chainIds,
-        totalChains: chainIds.length,
-      });
+
+
 
       for (const chainId of chainIds) {
         try {
@@ -327,16 +275,7 @@ export const useCachedInfiniteTransactions = (
             const cached = await TransactionCacheLib.getCachedTransactions(address, chainId);
 
             if (cached && TransactionCacheLib.isCacheFresh(cached)) {
-              // Use cached data if fresh
-              console.log(`⚡ MULTI-CHAIN CACHE HIT [Chain ${chainId}]:`, {
-                address: address.slice(0, 8) + '...',
-                chainId,
-                cachedTransactions: cached.transactions.length,
-                cacheAge: Math.round((Date.now() - cached.lastFetch) / 1000) + 's ago',
-                currentTime: Date.now(),
-                lastFetch: cached.lastFetch,
-                isFresh: TransactionCacheLib.isCacheFresh(cached),
-              });
+
 
               results.push({
                 chainId,
@@ -345,21 +284,6 @@ export const useCachedInfiniteTransactions = (
                 hasMore: false,
               });
               continue;
-            } else if (cached) {
-              console.log(`🔄 MULTI-CHAIN CACHE STALE [Chain ${chainId}]:`, {
-                address: address.slice(0, 8) + '...',
-                chainId,
-                cachedTransactions: cached.transactions.length,
-                cacheAge: Math.round((Date.now() - cached.lastFetch) / 1000) + 's ago',
-                currentTime: Date.now(),
-                lastFetch: cached.lastFetch,
-                isFresh: TransactionCacheLib.isCacheFresh(cached),
-              });
-            } else {
-              console.log(`🆕 MULTI-CHAIN NO CACHE [Chain ${chainId}]:`, {
-                address: address.slice(0, 8) + '...',
-                chainId,
-              });
             }
 
             // Use last cached block as start point
@@ -367,12 +291,12 @@ export const useCachedInfiniteTransactions = (
               startBlock = (parseInt(cached.lastBlock) + 1).toString();
             }
           }
-          
+
           // Use pageParam if provided (for pagination)
           if (pageParam && pageParam[chainId]) {
             startBlock = pageParam[chainId];
           }
-          
+
           // Fetch new transactions
           const result = await fetchTransactionsForChain({
             address,
@@ -382,7 +306,7 @@ export const useCachedInfiniteTransactions = (
             startBlock,
             endBlock: 'latest',
           });
-          
+
           if (enableCache) {
             const cached = await TransactionCacheLib.getCachedTransactions(address, chainId);
 
@@ -413,25 +337,18 @@ export const useCachedInfiniteTransactions = (
                 );
               }
             } else if (cached && cached.transactions.length > 0) {
-              // No new transactions found, but we have cached data - use it
-              console.log(`📋 NO NEW TRANSACTIONS [Chain ${chainId}]: Using existing cache`, {
-                address: address.slice(0, 8) + '...',
-                chainId,
-                cachedTransactions: cached.transactions.length,
-                lastBlock: cached.lastBlock,
-              });
 
               result.transactions = cached.transactions;
             }
           }
-          
+
           results.push({
             chainId,
             transactions: result.transactions,
             nextPageParam: result.nextPageParam,
             hasMore: !!result.nextPageParam,
           });
-          
+
           if (result.nextPageParam) {
             nextLastBlocks[chainId] = result.nextPageParam;
           }
@@ -442,13 +359,7 @@ export const useCachedInfiniteTransactions = (
           if (enableCache) {
             const cached = await TransactionCacheLib.getCachedTransactions(address, chainId);
             if (cached && cached.transactions.length > 0) {
-              console.log(`🔄 FALLBACK TO CACHE [Chain ${chainId}]: Using cached data after API failure`, {
-                address: address.slice(0, 8) + '...',
-                chainId,
-                cachedTransactions: cached.transactions.length,
-                lastBlock: cached.lastBlock,
-                cacheAge: Math.round((Date.now() - cached.lastFetch) / 1000) + 's ago',
-              });
+
 
               results.push({
                 chainId,
@@ -460,8 +371,7 @@ export const useCachedInfiniteTransactions = (
             }
           }
 
-          // No cached data available, return empty result
-          console.log(`❌ NO FALLBACK [Chain ${chainId}]: No cached data available after API failure`);
+
           results.push({
             chainId,
             transactions: [],
@@ -475,15 +385,6 @@ export const useCachedInfiniteTransactions = (
       const totalTransactions = results.reduce((total, result) => total + result.transactions.length, 0);
       const chainsWithData = results.filter(result => result.transactions.length > 0).length;
       const cacheHits = results.filter(result => result.transactions.length > 0 && !result.hasMore).length;
-
-      console.log('📊 MULTI-CHAIN SUMMARY:', {
-        address: address.slice(0, 8) + '...',
-        totalChains: chainIds.length,
-        chainsWithData,
-        totalTransactions,
-        cacheHits: `${cacheHits}/${chainIds.length} chains`,
-        performance: cacheHits > 0 ? '⚡ Cache boosted!' : '🔄 Fresh fetch',
-      });
 
       return {
         results,

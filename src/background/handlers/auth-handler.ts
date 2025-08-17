@@ -25,8 +25,6 @@ export const authHandler = {
     try {
       const session = await offscreenManager.sendToOffscreen('GET_SESSION');
 
-      console.log('session', session);
-
       // Auto-lock expired sessions
       if (session && session.expiresAt <= Date.now()) {
         await this.lock();

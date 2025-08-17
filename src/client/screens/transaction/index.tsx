@@ -164,20 +164,11 @@ export const TransactionScreen = () => {
     setError(null);
 
     try {
-      console.log(
-        '🔄 Approving transaction for:',
-        transactionRequest.origin,
-        'transaction:',
-        transactionRequest.transaction
-      );
-
       // Send approval to background script - transaction will be sent there
       const result = await approveTransaction(
         transactionRequest.origin,
         transactionRequest.transaction
       );
-
-      console.log('✅ Transaction approval result:', result);
 
       // Small delay to ensure message is processed
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -201,11 +192,6 @@ export const TransactionScreen = () => {
         errorMessage.includes('network');
 
       if (isRetryableError && retryCount < MAX_RETRIES) {
-        console.log(
-          `🔄 Retryable error detected, attempting retry ${
-            retryCount + 1
-          }/${MAX_RETRIES}`
-        );
         setRetryCount(prev => prev + 1);
 
         // Auto-retry after delay

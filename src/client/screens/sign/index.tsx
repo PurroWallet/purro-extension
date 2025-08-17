@@ -80,14 +80,6 @@ export const SignScreen = () => {
         address: decodeURIComponent(address),
         timestamp: Date.now(),
       });
-
-      // Debug: print typed data payload if it is valid JSON
-      try {
-        const parsed = JSON.parse(decodeURIComponent(message));
-        console.log('[Purro] 🔍 TypedData payload:', parsed);
-      } catch (_) {
-        // Not JSON, ignore
-      }
     }
   }, []);
 
@@ -115,21 +107,11 @@ export const SignScreen = () => {
     setError(null);
 
     try {
-      console.log(
-        '🔄 Approving sign for:',
-        signRequest.origin,
-        'message:',
-        signRequest.message
-      );
-
-      // Send approval to background script - signature will be generated there
-      const result = await approveSign(
+      await approveSign(
         signRequest.origin,
         signRequest.message,
         signRequest.address
       );
-
-      console.log('✅ Sign approval result:', result);
 
       // Small delay to ensure message is processed
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -151,11 +133,6 @@ export const SignScreen = () => {
         errorMessage.includes('timeout');
 
       if (isRetryableError && retryCount < MAX_RETRIES) {
-        console.log(
-          `🔄 Retryable error detected, attempting retry ${
-            retryCount + 1
-          }/${MAX_RETRIES}`
-        );
         setRetryCount(prev => prev + 1);
 
         // Auto-retry after delay

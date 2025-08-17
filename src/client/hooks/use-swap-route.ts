@@ -42,11 +42,9 @@ export const swapRouteKeys = {
 
 // Fetch function for swap route
 const fetchSwapRoute = async (params: SwapRouteV2Request): Promise<SwapRouteV2Response> => {
-  console.log("🔍 Fetching swap route with params:", params);
 
   try {
     const result = await routeFinding(params);
-    console.log("✅ Route found:", result);
     return result;
   } catch (error) {
     console.error("❌ Error fetching swap route:", error);

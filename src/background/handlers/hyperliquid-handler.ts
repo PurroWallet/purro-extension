@@ -14,11 +14,11 @@ export const hyperliquidHandler = {
 
       let privateKey: string;
       try {
-        console.log('[Purro] 🔄 Retrieving private key...');
+
         privateKey = await accountHandler.getPrivateKeyByAccountId(
           activeAccount.id
         );
-        console.log('[Purro] ✅ Private key retrieved successfully');
+
       } catch (error) {
         console.error('[Purro] ❌ Failed to retrieve private key:', error);
 
@@ -60,13 +60,10 @@ export const hyperliquidHandler = {
 
       let privateKey: string;
       try {
-        console.log('[Purro] 🔄 Retrieving private key for testnet...');
         privateKey = await accountHandler.getPrivateKeyByAccountId(
           activeAccount.id
         );
-        console.log(
-          '[Purro] ✅ Private key retrieved successfully for testnet'
-        );
+
       } catch (error) {
         console.error('[Purro] ❌ Failed to retrieve private key:', error);
 
