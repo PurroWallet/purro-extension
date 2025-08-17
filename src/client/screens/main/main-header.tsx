@@ -3,10 +3,10 @@ import { hyperliquidLogo } from '@/assets/logo';
 import { AccountIcon, AccountName } from '@/client/components/account';
 import { openSidePanel } from '@/client/lib/utils';
 import { cn } from '@/client/lib/utils';
-import { Settings, X, SearchIcon } from 'lucide-react';
+import { Settings, SearchIcon } from 'lucide-react';
 import useWalletStore from '@/client/hooks/use-wallet-store';
 import useAccountSheetStore from '@/client/hooks/use-account-sheet-store';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
 import { SwapSettingsDrawer } from '@/client/components/drawers';
 import { CircularTimer } from '@/client/components/ui/circular-timer';
@@ -14,21 +14,19 @@ import useSwapStore from '@/client/hooks/use-swap-store';
 import useCountdownTimer from '@/client/hooks/use-countdown-timer';
 import { TokenSelectorDialog } from '@/client/components/dialogs';
 import useDialogStore from '@/client/hooks/use-dialog-store';
+import HeaderChainFilter from '@/client/components/header-chain-filter';
+import useHistoryChainFilterStore from '@/client/hooks/use-history-chain-filter';
 
 const MainHeader = ({
   className,
   currentScreen,
   onNftNetworkToggle,
   isNftNetworkVisible,
-  isHistoryVisible,
-  onHistoryToggle,
 }: {
   className?: string;
   currentScreen: 'home' | 'explore' | 'nft' | 'history' | 'swap';
   onNftNetworkToggle?: () => void;
-  onHistoryToggle?: () => void;
   isNftNetworkVisible: boolean;
-  isHistoryVisible: boolean;
 }) => {
   const { activeAccount, wallets } = useWalletStore();
   const { open: openAccountSheet } = useAccountSheetStore();
@@ -42,6 +40,10 @@ const MainHeader = ({
   const isSwapScreen = currentScreen === 'swap';
   const { openDrawer } = useDrawerStore();
   const { openDialog } = useDialogStore();
+
+  // Chain filter state for history screen
+  const [isChainFilterOpen, setIsChainFilterOpen] = useState(false);
+  const { chainFilter, setChainFilter } = useHistoryChainFilterStore();
   // Get swap state for timer
   const {
     lastRefreshTimestamp,
@@ -149,16 +151,15 @@ const MainHeader = ({
       )}
 
       {isHistoryScreen && (
-        <div
-          className="flex items-center gap-2 cursor-pointer hover:bg-white/10 rounded-full p-2 transition-all duration-300"
-          onClick={onHistoryToggle}
-        >
-          {!isHistoryVisible ? (
-            <img src={hyperliquidLogo} alt="Hyperliquid" className="size-5" />
-          ) : (
-            <X className="size-5 text-white/90" />
-          )}
-        </div>
+        <>
+          {/* Chain Filter */}
+          <HeaderChainFilter
+            isOpen={isChainFilterOpen}
+            onToggle={() => setIsChainFilterOpen(!isChainFilterOpen)}
+            selectedFilter={chainFilter}
+            onFilterChange={setChainFilter}
+          />
+        </>
       )}
     </div>
   );
@@ -180,24 +181,6 @@ export const NftNetworkNotification = ({
         <p className="text-white/90 text-sm">
           You are viewing NFTs on Hyperliquid. Orther networks will be available
           soon.
-        </p>
-      </div>
-    </div>
-  );
-};
-
-export const HistoryNotification = ({ isVisible }: { isVisible: boolean }) => {
-  return (
-    <div
-      className={cn(
-        'bg-[var(--card-color)] border-b border-white/10 w-full overflow-hidden transition-all duration-300 ease-in-out',
-        isVisible ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'
-      )}
-    >
-      <div className="p-2">
-        <p className="text-white/90 text-sm">
-          You are viewing history on Hyperliquid. Orther networks will be
-          available soon.
         </p>
       </div>
     </div>

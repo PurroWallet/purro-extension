@@ -5,10 +5,7 @@ import useInit from '@/client/hooks/use-init';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import MainHeader, {
-  HistoryNotification,
-  NftNetworkNotification,
-} from './main-header';
+import MainHeader, { NftNetworkNotification } from './main-header';
 import { cn } from '@/client/lib/utils';
 import AccountSheet from '@/client/components/account-sheet/account-sheet';
 import Home from './main-screens/home';
@@ -44,14 +41,8 @@ export const MainContent = () => {
   const { activeAccount } = useWalletStore();
   const isWatchOnly = activeAccount?.source === 'watchOnly';
 
-  const {
-    mainScreen,
-    isNftNetworkVisible,
-    isHistoryVisible,
-    setMainScreen,
-    toggleNftNetwork,
-    toggleHistory,
-  } = useMainScreenStore();
+  const { mainScreen, isNftNetworkVisible, setMainScreen, toggleNftNetwork } =
+    useMainScreenStore();
 
   // Auto-switch away from swap screen if account becomes watch-only
   useEffect(() => {
@@ -71,14 +62,9 @@ export const MainContent = () => {
         currentScreen={mainScreen}
         onNftNetworkToggle={toggleNftNetwork}
         isNftNetworkVisible={isNftNetworkVisible}
-        isHistoryVisible={isHistoryVisible}
-        onHistoryToggle={toggleHistory}
       />
       {mainScreen === 'nft' && (
         <NftNetworkNotification isVisible={isNftNetworkVisible} />
-      )}
-      {mainScreen === 'history' && (
-        <HistoryNotification isVisible={isHistoryVisible} />
       )}
       <div className={cn('flex-1 overflow-y-auto transition-all duration-300')}>
         {mainScreen === 'home' && <Home />}

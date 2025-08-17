@@ -24,11 +24,15 @@ interface TransactionWithChain extends EtherscanTransaction {
 type TransactionType = HyperScanTokenTransfersItems | TransactionWithChain;
 
 // Type guard functions
-const isHyperScanTransaction = (tx: TransactionType): tx is HyperScanTokenTransfersItems => {
+const isHyperScanTransaction = (
+  tx: TransactionType
+): tx is HyperScanTokenTransfersItems => {
   return 'token' in tx && 'total' in tx;
 };
 
-const isEtherscanTransaction = (tx: TransactionType): tx is TransactionWithChain => {
+const isEtherscanTransaction = (
+  tx: TransactionType
+): tx is TransactionWithChain => {
   return 'chainId' in tx && 'chainName' in tx;
 };
 
@@ -61,9 +65,15 @@ const HistoryDetailDialog = ({
     : transaction.type === 'send';
 
   // Token-specific flags (only for HyperScan transactions)
-  const isTokenMinting = isHyperScanTransaction(transaction) && transaction.type.includes('token_minting');
-  const isTokenBurning = isHyperScanTransaction(transaction) && transaction.type.includes('token_burning');
-  const isTokenTransfer = isHyperScanTransaction(transaction) && transaction.type.includes('token_transfer');
+  const isTokenMinting =
+    isHyperScanTransaction(transaction) &&
+    transaction.type.includes('token_minting');
+  const isTokenBurning =
+    isHyperScanTransaction(transaction) &&
+    transaction.type.includes('token_burning');
+  const isTokenTransfer =
+    isHyperScanTransaction(transaction) &&
+    transaction.type.includes('token_transfer');
 
   const formatTokenAmount = (amount: number): string => {
     const absAmount = Math.abs(amount);
@@ -109,24 +119,25 @@ const HistoryDetailDialog = ({
   // Get explorer URL helper
   const getExplorerUrl = (tx: TransactionType): string => {
     if (isHyperScanTransaction(tx)) {
-      return `https://hyperscan.com/tx/${tx.transaction_hash}`;
+      return `https://hyperevmscan.io/tx/${tx.transaction_hash}`;
     }
 
     const explorerMap: Record<string, string> = {
       ethereum: 'https://etherscan.io',
       arbitrum: 'https://arbiscan.io',
       base: 'https://basescan.org',
-      hyperevm: 'https://hyperscan.com',
+      hyperevm: 'https://hyperevmscan.io',
     };
 
-    const baseUrl = explorerMap[tx.chainName.toLowerCase()] || 'https://etherscan.io';
+    const baseUrl =
+      explorerMap[tx.chainName.toLowerCase()] || 'https://etherscan.io';
     return `${baseUrl}/tx/${tx.hash}`;
   };
 
   // Get explorer name helper
   const getExplorerName = (tx: TransactionType): string => {
     if (isHyperScanTransaction(tx)) {
-      return 'View on HyperScan';
+      return 'View on Explorer';
     }
 
     const explorerNames: Record<string, string> = {
@@ -183,7 +194,8 @@ const HistoryDetailDialog = ({
                         fallbackDiv.className =
                           'size-full bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 rounded-full flex items-center justify-center font-bold text-[var(--primary-color)] text-2xl border border-[var(--primary-color)]/20';
                         fallbackDiv.textContent =
-                          transaction.token.symbol?.charAt(0).toUpperCase() || '';
+                          transaction.token.symbol?.charAt(0).toUpperCase() ||
+                          '';
                         parent.insertBefore(fallbackDiv, e.currentTarget);
                       }
                     }}
@@ -253,7 +265,8 @@ const HistoryDetailDialog = ({
                       Number(transaction.total?.value || '0') /
                         10 ** Number(transaction.total?.decimals || '0')
                     )}{' '}
-                    {transaction.token.symbol && transaction.token.symbol.length > 6
+                    {transaction.token.symbol &&
+                    transaction.token.symbol.length > 6
                       ? `${transaction.token.symbol.substring(0, 6)}...`
                       : transaction.token.symbol || 'Unknown'}
                   </>
@@ -265,7 +278,9 @@ const HistoryDetailDialog = ({
             <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
               <p className="text-base text-left font-semibold">Network</p>
               <p className="text-sm text-muted-foreground text-right truncate w-full">
-                {isHyperScanTransaction(transaction) ? 'HyperEVM' : transaction.chainName}
+                {isHyperScanTransaction(transaction)
+                  ? 'HyperEVM'
+                  : transaction.chainName}
               </p>
             </div>
             <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
@@ -282,7 +297,9 @@ const HistoryDetailDialog = ({
             </div>
             {isEtherscanTransaction(transaction) && (
               <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
-                <p className="text-base text-left font-semibold">Block Number</p>
+                <p className="text-base text-left font-semibold">
+                  Block Number
+                </p>
                 <p className="text-sm text-muted-foreground text-right truncate w-full">
                   {transaction.blockNumber}
                 </p>
@@ -292,7 +309,9 @@ const HistoryDetailDialog = ({
               <div className="w-full flex items-center justify-between bg-[var(--card-color)] hover:bg-[var(--card-color)]/80 transition-colors duration-200 cursor-pointer border-b border-white/10 p-3 gap-2">
                 <p className="text-base text-left font-semibold">Date</p>
                 <p className="text-sm text-muted-foreground text-right truncate w-full">
-                  {new Date(parseInt(transaction.timeStamp) * 1000).toLocaleString()}
+                  {new Date(
+                    parseInt(transaction.timeStamp) * 1000
+                  ).toLocaleString()}
                 </p>
               </div>
             )}
