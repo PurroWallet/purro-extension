@@ -203,6 +203,9 @@ export class MessageHandler {
         case 'EVM_GET_TRANSACTION_RECEIPT':
           result = await evmRpcHandler.handleEvmGetTransactionReceipt(data);
           break;
+        case 'CHECK_TRANSACTION_STATUS':
+          result = await evmRpcHandler.handleCheckTransactionStatus(data);
+          break;
         case 'EVM_SEND_TOKEN':
           result = await evmHandler.handleSendToken(data);
           break;

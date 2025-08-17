@@ -351,4 +351,93 @@ export const evmRpcHandler = {
       );
     }
   },
+
+  async handleCheckTransactionStatus(data: {
+    txHash: string;
+    network?: string;
+    chainId?: number | string;
+  }): Promise<MessageResponse> {
+    try {
+      const { txHash, network, chainId } = data;
+
+      // Validate transaction hash
+      if (!txHash || typeof txHash !== 'string') {
+        return createErrorResponse('Invalid transaction hash parameter', 4001);
+      }
+
+      // Map network to chainId if provided
+      let targetChainId: number;
+      if (network) {
+        switch (network.toLowerCase()) {
+          case 'ethereum':
+            targetChainId = 1;
+            break;
+          case 'arbitrum':
+            targetChainId = 42161;
+            break;
+          case 'base':
+            targetChainId = 8453;
+            break;
+          default:
+            return createErrorResponse(`Unsupported network: ${network}`, 4001);
+        }
+      } else if (typeof chainId === 'string') {
+        targetChainId = parseInt(chainId, 10);
+        if (isNaN(targetChainId)) {
+          return createErrorResponse(`Invalid chainId: ${chainId}`, 4001);
+        }
+      } else {
+        targetChainId = chainId || (await getCurrentChainId());
+      }
+
+      // Get transaction receipt
+      const receipt = await makeRpcCall(
+        'eth_getTransactionReceipt',
+        [txHash],
+        targetChainId
+      );
+
+      // Determine transaction status
+      let confirmed = false;
+      let failed = false;
+
+      if (receipt) {
+        // Receipt exists, transaction is mined
+        confirmed = true;
+        // Check if transaction failed (status = 0x0)
+        if (receipt.status === '0x0') {
+          failed = true;
+        }
+      } else {
+        // No receipt yet, check if transaction exists
+        const transaction = await makeRpcCall(
+          'eth_getTransactionByHash',
+          [txHash],
+          targetChainId
+        );
+
+        if (!transaction) {
+          // Transaction doesn't exist, might be failed or not yet propagated
+          failed = true;
+        }
+        // If transaction exists but no receipt, it's still pending
+      }
+
+      return createSuccessResponse({
+        confirmed,
+        failed,
+        receipt,
+        blockNumber: receipt?.blockNumber,
+        gasUsed: receipt?.gasUsed,
+      });
+    } catch (error) {
+      console.error('Error in handleCheckTransactionStatus:', error);
+      return createErrorResponse(
+        error instanceof Error
+          ? error.message
+          : 'Failed to check transaction status',
+        4001
+      );
+    }
+  },
 };
