@@ -24,7 +24,9 @@ interface TooltipContentProps {
   alignOffset?: number;
   avoidCollisions?: boolean;
   collisionBoundary?: Element | null;
-  collisionPadding?: number | Partial<Record<'top' | 'right' | 'bottom' | 'left', number>>;
+  collisionPadding?:
+    | number
+    | Partial<Record<'top' | 'right' | 'bottom' | 'left', number>>;
   arrowPadding?: number;
   sticky?: 'partial' | 'always';
   hideWhenDetached?: boolean;
@@ -49,41 +51,47 @@ const TooltipContext = React.createContext<{
 });
 
 const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(
-  ({
-    children,
-    delayDuration = 700,
-    skipDelayDuration = 300,
-    disableHoverableContent = false,
-    ...props
-  }, ref) => {
+  (
+    {
+      children,
+      delayDuration = 700,
+      skipDelayDuration = 300,
+      disableHoverableContent = false,
+      ...props
+    },
+    ref
+  ) => {
     const [open, setOpen] = React.useState(false);
     const triggerRef = React.useRef<HTMLElement>(null);
     const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
     const skipTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
     const [skipDelay, setSkipDelay] = React.useState(false);
 
-    const handleOpenChange = React.useCallback((newOpen: boolean) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      if (newOpen) {
-        const delay = skipDelay ? skipDelayDuration : delayDuration;
-        timeoutRef.current = setTimeout(() => {
-          setOpen(true);
-        }, delay);
-      } else {
-        setOpen(false);
-        // Set skip delay for next tooltip
-        setSkipDelay(true);
-        if (skipTimeoutRef.current) {
-          clearTimeout(skipTimeoutRef.current);
+    const handleOpenChange = React.useCallback(
+      (newOpen: boolean) => {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
         }
-        skipTimeoutRef.current = setTimeout(() => {
-          setSkipDelay(false);
-        }, skipDelayDuration);
-      }
-    }, [delayDuration, skipDelayDuration, skipDelay]);
+
+        if (newOpen) {
+          const delay = skipDelay ? skipDelayDuration : delayDuration;
+          timeoutRef.current = setTimeout(() => {
+            setOpen(true);
+          }, delay);
+        } else {
+          setOpen(false);
+          // Set skip delay for next tooltip
+          setSkipDelay(true);
+          if (skipTimeoutRef.current) {
+            clearTimeout(skipTimeoutRef.current);
+          }
+          skipTimeoutRef.current = setTimeout(() => {
+            setSkipDelay(false);
+          }, skipDelayDuration);
+        }
+      },
+      [delayDuration, skipDelayDuration, skipDelay]
+    );
 
     React.useEffect(() => {
       return () => {
@@ -104,7 +112,7 @@ const Tooltip = React.forwardRef<HTMLDivElement, TooltipProps>(
           triggerRef,
           delayDuration,
           skipDelayDuration,
-          disableHoverableContent
+          disableHoverableContent,
         }}
       >
         <div ref={ref} {...props}>
@@ -137,22 +145,25 @@ const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>(
     };
 
     if (asChild) {
-      return React.cloneElement(children as React.ReactElement, {
-        ref: (node: HTMLElement) => {
-          triggerRef.current = node;
-          if (typeof ref === 'function') ref(node);
-          else if (ref) ref.current = node;
-        },
+      const child = children as React.ReactElement;
+      const combinedRef = (node: HTMLElement | null) => {
+        triggerRef.current = node;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) ref.current = node;
+      };
+
+      return React.cloneElement(child, {
+        ref: combinedRef,
         onMouseEnter: handleMouseEnter,
         onMouseLeave: handleMouseLeave,
         onFocus: handleFocus,
         onBlur: handleBlur,
-      });
+      } as React.HTMLAttributes<HTMLElement>);
     }
 
     return (
       <button
-        ref={(node) => {
+        ref={node => {
           triggerRef.current = node;
           if (typeof ref === 'function') ref(node);
           else if (ref) ref.current = node;
@@ -177,19 +188,21 @@ const TooltipTrigger = React.forwardRef<HTMLElement, TooltipTriggerProps>(
 TooltipTrigger.displayName = 'TooltipTrigger';
 
 const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
-  ({
-    children,
-    className,
-    side = 'top',
-    align = 'center',
-    sideOffset = 4,
-    alignOffset = 0,
-    avoidCollisions = true,
-    collisionPadding = 10,
-    onEscapeKeyDown,
-    onPointerDownOutside,
-    ...props
-  }, ref) => {
+  (
+    {
+      children,
+      className,
+      side = 'top',
+      align = 'center',
+      sideOffset = 4,
+      alignOffset = 0,
+      avoidCollisions = true,
+      collisionPadding = 10,
+      onEscapeKeyDown,
+      ...props
+    },
+    ref
+  ) => {
     const { open, onOpenChange, triggerRef } = React.useContext(TooltipContext);
     const contentRef = React.useRef<HTMLDivElement>(null);
     const [position, setPosition] = React.useState({ top: 0, left: 0 });
@@ -228,13 +241,17 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
 
       // Handle collision detection and flipping
       if (avoidCollisions) {
-        const padding = typeof collisionPadding === 'number' ? collisionPadding : 10;
+        const padding =
+          typeof collisionPadding === 'number' ? collisionPadding : 10;
 
         if (side === 'top' && top < padding) {
           // Flip to bottom
           top = triggerRect.bottom + sideOffset;
           finalSide = 'bottom';
-        } else if (side === 'bottom' && top + contentRect.height > viewport.height - padding) {
+        } else if (
+          side === 'bottom' &&
+          top + contentRect.height > viewport.height - padding
+        ) {
           // Flip to top
           top = triggerRect.top - contentRect.height - sideOffset;
           finalSide = 'top';
@@ -242,7 +259,10 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
           // Flip to right
           left = triggerRect.right + sideOffset;
           finalSide = 'right';
-        } else if (side === 'right' && left + contentRect.width > viewport.width - padding) {
+        } else if (
+          side === 'right' &&
+          left + contentRect.width > viewport.width - padding
+        ) {
           // Flip to left
           left = triggerRect.left - contentRect.width - sideOffset;
           finalSide = 'left';
@@ -256,7 +276,11 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
             left = triggerRect.left + alignOffset;
             break;
           case 'center':
-            left = triggerRect.left + triggerRect.width / 2 - contentRect.width / 2 + alignOffset;
+            left =
+              triggerRect.left +
+              triggerRect.width / 2 -
+              contentRect.width / 2 +
+              alignOffset;
             break;
           case 'end':
             left = triggerRect.right - contentRect.width + alignOffset;
@@ -268,7 +292,11 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
             top = triggerRect.top + alignOffset;
             break;
           case 'center':
-            top = triggerRect.top + triggerRect.height / 2 - contentRect.height / 2 + alignOffset;
+            top =
+              triggerRect.top +
+              triggerRect.height / 2 -
+              contentRect.height / 2 +
+              alignOffset;
             break;
           case 'end':
             top = triggerRect.bottom - contentRect.height + alignOffset;
@@ -277,13 +305,28 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
       }
 
       // Final boundary checks
-      const padding = typeof collisionPadding === 'number' ? collisionPadding : 10;
-      left = Math.max(padding, Math.min(left, viewport.width - contentRect.width - padding));
-      top = Math.max(padding, Math.min(top, viewport.height - contentRect.height - padding));
+      const padding =
+        typeof collisionPadding === 'number' ? collisionPadding : 10;
+      left = Math.max(
+        padding,
+        Math.min(left, viewport.width - contentRect.width - padding)
+      );
+      top = Math.max(
+        padding,
+        Math.min(top, viewport.height - contentRect.height - padding)
+      );
 
       setPosition({ top, left });
       setActualSide(finalSide);
-    }, [side, align, sideOffset, alignOffset, avoidCollisions, collisionPadding, triggerRef]);
+    }, [
+      side,
+      align,
+      sideOffset,
+      alignOffset,
+      avoidCollisions,
+      collisionPadding,
+      triggerRef,
+    ]);
 
     // Update position when open
     React.useEffect(() => {
@@ -319,7 +362,7 @@ const TooltipContent = React.forwardRef<HTMLDivElement, TooltipContentProps>(
 
     const content = (
       <div
-        ref={(node) => {
+        ref={node => {
           contentRef.current = node;
           if (typeof ref === 'function') ref(node);
           else if (ref) ref.current = node;
