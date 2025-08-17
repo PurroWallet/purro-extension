@@ -4,14 +4,27 @@ import useDepositChainStore from '@/client/hooks/use-deposit-chain-store';
 import { formatCurrency } from '@/client/utils/formatters';
 import { sendMessage } from '@/client/utils/extension-message-utils';
 import useDialogStore from '@/client/hooks/use-dialog-store';
-import { BRIDGE_CONTRACT_ADDRESS, MIN_DEPOSIT_AMOUNT, USDC_CONTRACT_ADDRESS, ARBITRUM_CHAIN_ID } from './constants';
+import {
+  BRIDGE_CONTRACT_ADDRESS,
+  MIN_DEPOSIT_AMOUNT,
+  USDC_CONTRACT_ADDRESS,
+  ARBITRUM_CHAIN_ID,
+} from './constants';
 import { getNetworkIcon } from '@/client/utils/icons';
 import { useAlchemyTokens } from '@/client/hooks/use-alchemy-tokens';
 import useNetworkSettingsStore from '@/client/hooks/use-network-store';
 
 const InputAmount = () => {
   const { closeDialog } = useDialogStore();
-  const { amount, setAmount, setStep, setError, setTxHash, isLoading, setIsLoading } = useDepositChainStore();
+  const {
+    amount,
+    setAmount,
+    setStep,
+    setError,
+    setTxHash,
+    isLoading,
+    setIsLoading,
+  } = useDepositChainStore();
   const { isNetworkActive } = useNetworkSettingsStore();
 
   // Check if Arbitrum network is enabled
@@ -22,17 +35,14 @@ const InputAmount = () => {
 
   // Find USDC token on Arbitrum
   const usdcBalance = useMemo(() => {
-    // Debug: Log all Arbitrum tokens
-    const arbitrumTokens = allTokens.filter(token => token.chain === 'arbitrum');
-    console.log('Arbitrum tokens found:', arbitrumTokens);
-
     const arbitrumUSDC = allTokens.find(
-      token => token.chain === 'arbitrum' &&
-      (token.symbol.toLowerCase() === 'usdc' ||
-       token.contractAddress.toLowerCase() === '0xaf88d065e77c8cc2239327c5edb3a432268e5831')
+      token =>
+        token.chain === 'arbitrum' &&
+        (token.symbol.toLowerCase() === 'usdc' ||
+          token.contractAddress.toLowerCase() ===
+            '0xaf88d065e77c8cc2239327c5edb3a432268e5831')
     );
 
-    console.log('USDC token found:', arbitrumUSDC);
     return arbitrumUSDC?.balanceFormatted || 0;
   }, [allTokens]);
 
@@ -50,7 +60,8 @@ const InputAmount = () => {
   const validationMessage = useMemo(() => {
     if (!amount) return null;
     if (isNaN(numAmount)) return 'Please enter a valid amount';
-    if (numAmount < MIN_DEPOSIT_AMOUNT) return `Minimum deposit is ${MIN_DEPOSIT_AMOUNT} USDC`;
+    if (numAmount < MIN_DEPOSIT_AMOUNT)
+      return `Minimum deposit is ${MIN_DEPOSIT_AMOUNT} USDC`;
     if (numAmount > usdcBalance) return 'Insufficient USDC balance';
     return null;
   }, [amount, numAmount, usdcBalance]);
@@ -74,15 +85,6 @@ const InputAmount = () => {
     const paddedAmount = amountInSmallestUnit.toString(16).padStart(64, '0');
 
     const encodedData = functionSelector + paddedAddress + paddedAmount;
-
-    // Debug log to verify encoding matches expected format
-    console.log('Encoding transfer:', {
-      to,
-      amount,
-      amountInSmallestUnit,
-      encodedData,
-      expectedFor5USDC: '0xa9059cbb0000000000000000000000002df1c51e09aecf9cacb7bc98cb1742757f163df700000000000000000000000000000000000000000000000000000000004c4b40'
-    });
 
     return encodedData;
   };
@@ -118,7 +120,9 @@ const InputAmount = () => {
       }
     } catch (error) {
       console.error('Deposit error:', error);
-      setError(error instanceof Error ? error.message : 'Unknown error occurred');
+      setError(
+        error instanceof Error ? error.message : 'Unknown error occurred'
+      );
       setStep('error');
     } finally {
       setIsLoading(false);
@@ -175,8 +179,11 @@ const InputAmount = () => {
             {/* Balance and Validation */}
             <div className="flex items-center justify-between text-sm">
               <div className="text-gray-400">
-                Available: {!isArbitrumActive ? (
-                  <span className="text-yellow-400">Arbitrum network disabled</span>
+                Available:{' '}
+                {!isArbitrumActive ? (
+                  <span className="text-yellow-400">
+                    Arbitrum network disabled
+                  </span>
                 ) : isLoadingBalance ? (
                   <span className="animate-pulse">Loading...</span>
                 ) : (
@@ -185,7 +192,9 @@ const InputAmount = () => {
                     {/* Debug info */}
                     {process.env.NODE_ENV === 'development' && (
                       <span className="text-xs text-yellow-400 ml-2">
-                        (Found {allTokens.filter(t => t.chain === 'arbitrum').length} Arbitrum tokens)
+                        (Found{' '}
+                        {allTokens.filter(t => t.chain === 'arbitrum').length}{' '}
+                        Arbitrum tokens)
                       </span>
                     )}
                   </>
@@ -197,7 +206,8 @@ const InputAmount = () => {
             {!isArbitrumActive && (
               <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
                 <p className="text-yellow-400 text-xs">
-                  Please enable the Arbitrum network in settings to view your USDC balance and make deposits.
+                  Please enable the Arbitrum network in settings to view your
+                  USDC balance and make deposits.
                 </p>
               </div>
             )}
@@ -219,7 +229,9 @@ const InputAmount = () => {
         </Button>
         <Button
           onClick={handleDeposit}
-          disabled={!isValidAmount || isLoading || isLoadingBalance || !isArbitrumActive}
+          disabled={
+            !isValidAmount || isLoading || isLoadingBalance || !isArbitrumActive
+          }
           className="flex-1"
         >
           {isLoading ? (

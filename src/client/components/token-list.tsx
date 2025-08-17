@@ -48,18 +48,6 @@ const checkAlertScanToken = (
   const name = token.name?.toLowerCase() || '';
   const symbol = token.symbol?.toLowerCase() || '';
 
-  // Debug logging for legitimate tokens that might be flagged
-  if (['eth', 'usdc', 'usdt', 'arb', 'btc', 'bnb'].includes(symbol.trim())) {
-    console.log('🔍 CHECKING LEGITIMATE TOKEN:', {
-      originalName: token.name,
-      originalSymbol: token.symbol,
-      processedName: name,
-      processedSymbol: symbol,
-      symbolTrimmed: symbol.trim(),
-      hasSpaces: symbol !== symbol.trim(),
-    });
-  }
-
   // High-risk indicators
   const highRiskPatterns = [
     // Airdrop/claim scams
