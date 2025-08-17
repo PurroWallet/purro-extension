@@ -8,23 +8,22 @@ import { SwapRouteV2Response } from "@/client/types/liquidswap-api";
  * 
  * This store manages swap-related state and persists user settings across extension sessions.
  * 
- * Persisted Settings:
+ * Persisted Settings (Simple Approach):
  * - slippage: User's preferred slippage tolerance (0.01% - 50%)
  * - deadline: Transaction deadline in minutes (1 - 4320 minutes)
  * - enableAutoRefresh: Whether to auto-refresh swap routes
  * - refreshInterval: Auto-refresh interval in milliseconds (1000ms - 60000ms)
- * - tokenIn: Selected input token (without balance data)
- * - tokenOut: Selected output token (without balance data)
  * 
- * Non-Persisted State:
- * - amountIn/amountOut: Current swap amounts (temporary)
- * - route: Current swap route data (temporary)
- * - isSwapping: Transaction state (temporary)
- * - tokenPrices: Current token prices (temporary)
- * - token balances: Balance data (changes frequently)
+ * Non-Persisted State (Resets each session):
+ * - tokenIn/tokenOut: Selected tokens (fresh selection each time)
+ * - amountIn/amountOut: Current swap amounts 
+ * - route: Current swap route data
+ * - isSwapping: Transaction state
+ * - tokenPrices: Current token prices
+ * - lastRefreshTimestamp: Refresh timing
  * 
- * The store automatically validates all persisted values to ensure they stay within
- * acceptable ranges and provides sensible defaults for new users.
+ * This simple approach ensures that only user preferences are saved while
+ * token selections and balances are always fresh when the extension opens.
  */
 
 // Constants for better maintainability
@@ -231,37 +230,22 @@ const useSwapStore = create<SwapState>()(
     {
       name: SWAP_STORAGE_NAME,
       version: SWAP_STORAGE_VERSION,
-      // Only persist settings that should survive across sessions
+      // Only persist user settings that should survive across sessions
       partialize: (state) => ({
-        // Persist user settings
+        // Only persist user settings
         slippage: state.slippage,
         deadline: state.deadline,
         enableAutoRefresh: state.enableAutoRefresh,
         refreshInterval: state.refreshInterval,
-        // Persist token selection (but not balances which change frequently)
-        tokenIn: state.tokenIn ? {
-          ...state.tokenIn,
-          balance: '0', // Don't persist balance
-          balanceFormatted: 0,
-          usdValue: 0,
-        } : null,
-        tokenOut: state.tokenOut ? {
-          ...state.tokenOut,
-          balance: '0', // Don't persist balance
-          balanceFormatted: 0,
-          usdValue: 0,
-        } : null,
-        // Don't persist temporary state
-        // amountIn, amountOut, route, isSwapping, tokenPrices, etc.
+        // Don't persist anything else - keep it simple
+        // tokenIn, tokenOut, amounts, route, etc. will reset on each session
       }),
       onRehydrateStorage: () => (state) => {
-        console.log('🔄 Swap store rehydrated:', {
+        console.log('🔄 Swap store rehydrated - settings only:', {
           slippage: state?.slippage,
           deadline: state?.deadline,
           enableAutoRefresh: state?.enableAutoRefresh,
           refreshInterval: state?.refreshInterval,
-          tokenIn: state?.tokenIn?.symbol,
-          tokenOut: state?.tokenOut?.symbol,
         });
       },
     }
