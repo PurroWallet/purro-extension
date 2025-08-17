@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchTokenPrices, Network } from '@/client/services/gecko-terminal-api';
+import { fetchTokensInfoByAddresses, Network } from '@/client/services/gecko-terminal-api';
 import QueryKeys from '@/client/utils/query-keys';
 import { ChainType } from '@/client/types/wallet';
 
@@ -73,7 +73,7 @@ export const useDetailedTokenInfo = ({
     queryKey: [QueryKeys.DETAILED_TOKEN_INFO, network, tokenAddress],
     queryFn: async (): Promise<DetailedTokenInfo | null> => {
       try {
-        const response = await fetchTokenPrices(network, [tokenAddress]);
+        const response = await fetchTokensInfoByAddresses(network, [tokenAddress]);
 
         // Handle new multi-token API response format
         if (response?.data && Array.isArray(response.data)) {

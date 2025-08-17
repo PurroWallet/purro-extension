@@ -1,10 +1,22 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { fetchTokenPrices } from "@/client/services/gecko-terminal-api";
+import { fetchTokensInfoByAddresses } from "@/client/services/gecko-terminal-api";
 import { fetchBalances } from "@/client/services/liquidswap-api";
 import { FetchBalancesResponse } from "@/client/types/liquidswap-api";
 import useWalletStore from "./use-wallet-store";
 import useSwapStore from "./use-swap-store";
+
+// Constants for better maintainability
+const ADDRESS_NORMALIZATION = {
+    NORMALIZE_TO_LOWERCASE: true,
+} as const;
+
+// Helper function to normalize token address consistently
+const normalizeAddress = (address: string): string => {
+    return ADDRESS_NORMALIZATION.NORMALIZE_TO_LOWERCASE ?
+        address.toLowerCase() :
+        address;
+};
 
 // Query keys for HyperEVM tokens
 export const hyperEvmTokenKeys = {
@@ -58,13 +70,13 @@ export const useHyperEvmTokenPrices = (tokenAddresses: string[]) => {
             if (tokenAddresses.length === 0) return null;
 
             console.log('🔍 Fetching HyperEVM token prices for:', tokenAddresses);
-            const response = await fetchTokenPrices('hyperevm', tokenAddresses);
+            const response = await fetchTokensInfoByAddresses('hyperevm', tokenAddresses);
             console.log('✅ HyperEVM prices fetched:', response);
 
             // Update Zustand store with price data
             if (response?.data && Array.isArray(response.data)) {
                 response.data.forEach((tokenData: any) => {
-                    const address = tokenData.attributes.address.toLowerCase();
+                    const address = normalizeAddress(tokenData.attributes.address);
                     const price = parseFloat(tokenData.attributes.price_usd || '0');
                     const priceChange24h = parseFloat(tokenData.attributes.price_change_percentage?.h24 || '0');
 
@@ -100,7 +112,7 @@ export const useHyperEvmTokens = () => {
         const response = balancesQuery.data as FetchBalancesResponse | null;
         if (!response?.data?.tokens) return [];
 
-        return response.data.tokens.map(token => token.token.toLowerCase());
+        return response.data.tokens.map(token => normalizeAddress(token.token));
     }, [balancesQuery.data]);
 
     // Fetch token prices
@@ -115,7 +127,7 @@ export const useHyperEvmTokens = () => {
         if (response?.data && Array.isArray(response.data)) {
             const pricesMap: { [key: string]: { price: number; priceChange24h: number } } = {};
             response.data.forEach((tokenData: any) => {
-                const address = tokenData.attributes.address.toLowerCase();
+                const address = normalizeAddress(tokenData.attributes.address);
                 pricesMap[address] = {
                     price: parseFloat(tokenData.attributes.price_usd || '0'),
                     priceChange24h: parseFloat(tokenData.attributes.price_change_percentage?.h24 || '0'),
@@ -133,7 +145,7 @@ export const useHyperEvmTokens = () => {
         if (!response?.data?.tokens) return [];
 
         return response.data.tokens.map(token => {
-            const tokenAddress = token.token.toLowerCase();
+            const tokenAddress = normalizeAddress(token.token);
             const priceData = processedPrices[tokenAddress] || tokenPrices[tokenAddress] || { price: 0, priceChange24h: 0 };
             const balance = parseFloat(token.balance) / Math.pow(10, token.decimals);
 
@@ -179,13 +191,13 @@ export const useHyperEvmTokens = () => {
 
     // Get token price by address
     const getTokenPrice = (address: string): number => {
-        const tokenAddress = address.toLowerCase();
+        const tokenAddress = normalizeAddress(address);
         return processedPrices[tokenAddress]?.price || tokenPrices[tokenAddress]?.price || 0;
     };
 
     // Get token price change by address
     const getTokenPriceChange = (address: string): number => {
-        const tokenAddress = address.toLowerCase();
+        const tokenAddress = normalizeAddress(address);
         return processedPrices[tokenAddress]?.priceChange24h || tokenPrices[tokenAddress]?.priceChange24h || 0;
     };
 

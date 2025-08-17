@@ -262,7 +262,7 @@ const fetchAlchemyTokenBalances = async (
 };
 
 // Fast fetch single token metadata - no retries, quick fallback
-const fetchSingleTokenMetadataFast = async (
+export const fetchSingleTokenMetadataFast = async (
   endpoint: string,
   contractAddress: string,
   timeout: number = 3000 // 3 second timeout
@@ -307,6 +307,7 @@ const fetchSingleTokenMetadataFast = async (
     };
   } catch (error) {
     // Fast fallback - no retry, no logging spam
+    console.warn(`Failed to fetch token metadata for ${contractAddress}:`, error);
     return {
       name: 'Unknown Token',
       symbol: 'UNKNOWN',

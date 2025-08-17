@@ -711,22 +711,30 @@ export class PurroEVMProvider implements EthereumProvider {
       txObject.from = this.selectedAddress;
     }
 
-    const result = await this.sendMessage('EVM_SEND_TRANSACTION', {
-      transactionData: txObject,
-    });
+    try {
+      const result = await this.sendMessage('EVM_SEND_TRANSACTION', {
+        transactionData: txObject,
+      });
 
-    // Handle response structure from handler
-    if (result?.data) {
-      // If data is a string (transaction hash), return it directly
-      if (typeof result.data === 'string') {
-        return result.data;
+      // Handle response structure from handler
+      if (result?.data) {
+        // If data is a string (transaction hash), return it directly
+        if (typeof result.data === 'string') {
+          return result.data;
+        }
+        // If data has transactionHash property, return that
+        if (result.data.transactionHash) {
+          return result.data.transactionHash;
+        }
       }
-      // If data has transactionHash property, return that
-      if (result.data.transactionHash) {
-        return result.data.transactionHash;
+      return result.transactionHash || result;
+    } catch (error) {
+      // Handle user rejection and other errors
+      if (error instanceof Error) {
+        throw this.createProviderError(4001, error.message);
       }
+      throw this.createProviderError(4001, 'Transaction failed');
     }
-    return result.transactionHash || result;
   }
 
   private async handleSignTransaction(params: any): Promise<string> {

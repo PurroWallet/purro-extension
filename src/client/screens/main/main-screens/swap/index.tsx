@@ -5,12 +5,16 @@ import useSwapStore from '@/client/hooks/use-swap-store';
 import { useSwapRoute } from '@/client/hooks/use-swap-route';
 import { SwapTokenSelectorDrawer } from '@/client/components/drawers';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
+import { fetchHyperEvmTokenPrices } from '@/client/services/gecko-terminal-api';
 
 import TokenLogo from '@/client/components/token-logo';
 import {
   getTokenBalance,
   isWrapScenario,
   isUnwrapScenario,
+  getMaxSpendableBalance,
+  hasEnoughBalanceWithGas,
+  estimateGasCost,
 } from '@/client/utils/swap-utils';
 // Create a comprehensive formatBalance function for display
 const formatBalance = (balance: number): string => {
@@ -44,7 +48,6 @@ import { useNativeBalance } from '@/client/hooks/use-native-balance';
 import useMainSwapStore from '@/client/hooks/use-main-swap-store';
 
 import { fetchBalances } from '@/client/services/liquidswap-api';
-
 import { Balance } from '@/client/types/liquidswap-api';
 import { UnifiedToken } from '@/client/components/token-list';
 
@@ -62,6 +65,34 @@ const DEFAULT_WHYPE_TOKEN = {
 
 const WHYPE_TOKEN_ADDRESS = '0x5555555555555555555555555555555555555555';
 
+// Helper function to get token price with proper fallbacks
+const getTokenPrice = (
+  token: any,
+  tokenPrices: Record<string, { price: number; priceChange24h: number }>
+): number => {
+  if (!token) return 0;
+
+  // For native HYPE tokens, use WHYPE price
+  if (token.contractAddress === 'native') {
+    const whypePrice = tokenPrices[WHYPE_TOKEN_ADDRESS.toLowerCase()]?.price;
+    if (whypePrice) return whypePrice;
+  }
+
+  // Try lowercase address first
+  const normalizedAddress = token.contractAddress?.toLowerCase();
+  if (normalizedAddress && tokenPrices[normalizedAddress]?.price) {
+    return tokenPrices[normalizedAddress].price;
+  }
+
+  // Try original address
+  if (token.contractAddress && tokenPrices[token.contractAddress]?.price) {
+    return tokenPrices[token.contractAddress].price;
+  }
+
+  // Fallback to token's own usdPrice
+  return token.usdPrice || 0;
+};
+
 const Swap = () => {
   const {
     tokenIn,
@@ -72,6 +103,7 @@ const Swap = () => {
     slippage,
     route,
     tokenPrices,
+    updateTokenPrice,
     setAmountIn,
     setAmountOut,
     setIsExactIn,
@@ -118,6 +150,54 @@ const Swap = () => {
     }
   }, [tokenOut, setTokenOut, nativeTokens]);
 
+  // Fetch token prices when tokens are selected
+  useEffect(() => {
+    const fetchTokenPrices = async () => {
+      const addressesToFetch: string[] = [];
+
+      // Add tokenIn address if it exists and not native
+      if (tokenIn?.contractAddress && tokenIn.contractAddress !== 'native') {
+        addressesToFetch.push(tokenIn.contractAddress);
+      }
+
+      // Add tokenOut address if it exists and not native
+      if (tokenOut?.contractAddress && tokenOut.contractAddress !== 'native') {
+        addressesToFetch.push(tokenOut.contractAddress);
+      }
+
+      // Add WHYPE address for native HYPE tokens
+      if (
+        tokenIn?.contractAddress === 'native' ||
+        tokenOut?.contractAddress === 'native'
+      ) {
+        addressesToFetch.push(WHYPE_TOKEN_ADDRESS);
+      }
+
+      if (addressesToFetch.length > 0) {
+        try {
+          console.log('🔍 Fetching token prices for swap:', addressesToFetch);
+          const response = await fetchHyperEvmTokenPrices(addressesToFetch);
+
+          if (response?.data?.attributes?.token_prices) {
+            Object.entries(response.data.attributes.token_prices).forEach(
+              ([address, priceStr]) => {
+                const price = parseFloat(priceStr as string);
+                if (!isNaN(price)) {
+                  updateTokenPrice(address.toLowerCase(), price, 0); // No price change data from this API
+                  console.log(`✅ Updated price for ${address}: $${price}`);
+                }
+              }
+            );
+          }
+        } catch (error) {
+          console.error('❌ Error fetching token prices:', error);
+        }
+      }
+    };
+
+    fetchTokenPrices();
+  }, [tokenIn?.contractAddress, tokenOut?.contractAddress, updateTokenPrice]);
+
   // Function to get updated native HYPE token data
   const getNativeHypeWithBalance = useCallback(
     (baseToken: UnifiedToken) => {
@@ -155,6 +235,14 @@ const Swap = () => {
   const tokenOutBalance = tokenOut
     ? getTokenBalance(getNativeHypeWithBalance(tokenOut))
     : 0;
+
+  const tokenInBalanceCheck = tokenIn
+    ? hasEnoughBalanceWithGas(
+        getNativeHypeWithBalance(tokenIn),
+        amountIn,
+        estimateGasCost(tokenIn, 'swap')
+      )
+    : { hasEnough: true, shortfall: 0, details: '' };
 
   useEffect(() => {
     const fetchWHYPEBalance = async () => {
@@ -320,26 +408,45 @@ const Swap = () => {
 
   const handleMaxClick = () => {
     if (tokenIn && tokenInBalance > 0) {
-      // Format max amount with appropriate precision
-      const decimals = tokenIn.decimals || 18;
-      const maxDecimals = Math.min(decimals, 8); // Limit display decimals
-      const maxAmount = tokenInBalance
-        .toFixed(maxDecimals)
-        .replace(/\.?0+$/, '');
-      setAmountIn(maxAmount);
-      setIsExactIn(true);
+      // Use enhanced max balance calculation that considers gas fees for native tokens
+      const maxAmount = getMaxSpendableBalance(
+        getNativeHypeWithBalance(tokenIn),
+        {
+          reserveGas: true, // Always reserve gas for native tokens
+          gasBuffer: 0.1, // 10% buffer
+          customGasEstimate: estimateGasCost(tokenIn, 'swap'), // Use swap gas estimate
+        }
+      );
+
+      if (parseFloat(maxAmount) > 0) {
+        setAmountIn(maxAmount);
+        setIsExactIn(true);
+      }
     }
   };
 
   const handleHalfClick = () => {
     if (tokenIn && tokenInBalance > 0) {
-      const decimals = tokenIn.decimals || 18;
-      const maxDecimals = Math.min(decimals, 8);
-      const halfAmount = (tokenInBalance / 2)
-        .toFixed(maxDecimals)
-        .replace(/\.?0+$/, '');
-      setAmountIn(halfAmount);
-      setIsExactIn(true);
+      // Use enhanced max balance calculation and take half of it
+      const maxAmount = getMaxSpendableBalance(
+        getNativeHypeWithBalance(tokenIn),
+        {
+          reserveGas: true,
+          gasBuffer: 0.1,
+          customGasEstimate: estimateGasCost(tokenIn, 'swap'),
+        }
+      );
+
+      const halfAmount = parseFloat(maxAmount) / 2;
+      if (halfAmount > 0) {
+        const decimals = tokenIn.decimals || 18;
+        const maxDecimals = Math.min(decimals, 8);
+        const formattedHalf = halfAmount
+          .toFixed(maxDecimals)
+          .replace(/\.?0+$/, '');
+        setAmountIn(formattedHalf);
+        setIsExactIn(true);
+      }
     }
   };
 
@@ -418,9 +525,11 @@ const Swap = () => {
               <h1 className="text-white/60 font-medium">Sell</h1>
               {tokenIn && (
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-white/60">
-                    {formatBalance(tokenInBalance)} {tokenIn.symbol}
-                  </span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-xs text-white/60">
+                      {formatBalance(tokenInBalance)} {tokenIn.symbol}
+                    </span>
+                  </div>
                   <button
                     onClick={handleHalfClick}
                     className="text-xs text-[var(--primary-color-light)] hover:text-[var(--primary-color)] transition-all duration-300"
@@ -460,7 +569,8 @@ const Swap = () => {
                   <span className="text-xs text-white/60">
                     ~ $
                     {(
-                      (parseFloat(amountIn) || 0) * (tokenIn.usdPrice || 0)
+                      (parseFloat(amountIn) || 0) *
+                      getTokenPrice(tokenIn, tokenPrices)
                     ).toFixed(2)}
                   </span>
                   {tokenIn.contractAddress &&
@@ -537,7 +647,8 @@ const Swap = () => {
                   <span className="text-xs text-white/60">
                     ~ $
                     {(
-                      (parseFloat(amountOut) || 0) * (tokenOut.usdPrice || 0)
+                      (parseFloat(amountOut) || 0) *
+                      getTokenPrice(tokenOut, tokenPrices)
                     ).toFixed(2)}
                   </span>
                   {tokenOut.contractAddress &&
@@ -653,6 +764,25 @@ const Swap = () => {
             </div>
           </div>
         )}
+
+        {/* Enhanced balance error with gas fee information */}
+        {!tokenInBalanceCheck.hasEnough &&
+          amountIn &&
+          parseFloat(amountIn) > 0 && (
+            <div className="bg-[var(--button-color-destructive)]/10 border border-[var(--button-color-destructive)]/30 rounded-lg p-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="size-4 text-[var(--button-color-destructive)]" />
+                <div className="flex flex-col">
+                  <span className="text-sm text-[var(--button-color-destructive)]">
+                    Insufficient balance
+                  </span>
+                  <span className="text-xs text-[var(--button-color-destructive)]/70">
+                    {tokenInBalanceCheck.details}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
       </div>
     </div>
   );

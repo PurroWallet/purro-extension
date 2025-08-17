@@ -4,7 +4,7 @@ import {
   fetchUserSpotBalance,
   fetchUserPerpsBalance,
 } from '../services/hyperliquid-api';
-import { fetchTokenPrices } from '../services/gecko-terminal-api';
+import { fetchTokensInfoByAddresses } from '../services/gecko-terminal-api';
 import { fetchBalances } from '../services/liquidswap-api';
 import QueryKeys from '../utils/query-keys';
 import useWalletStore from './use-wallet-store';
@@ -153,7 +153,7 @@ export const useHlPortfolioData = (
 
   const tokenPricesQuery = useQuery({
     queryKey: [QueryKeys.HYPER_EVM_TOKEN_PRICES, tokenAddresses],
-    queryFn: () => fetchTokenPrices('hyperevm', tokenAddresses),
+    queryFn: () => fetchTokensInfoByAddresses('hyperevm', tokenAddresses),
     staleTime: 60 * 1000, // 60 seconds
     enabled: tokenAddresses.length > 0,
   });
