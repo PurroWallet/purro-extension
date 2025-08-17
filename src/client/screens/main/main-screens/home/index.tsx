@@ -95,13 +95,14 @@ const Home = () => {
                 onMouseLeave={() => setButtonHovered(null)}
                 icon={
                   <SendAnimationIcon
-                    className="text-[var(--primary-color-light)] size-5"
+                    className="text-[var(--text-color)] size-5"
                     isHovered={buttonHovered === 'send'}
                   />
                 }
                 onClick={() => {
                   openDrawer(<SendDrawer />);
                 }}
+                className="text-[var(--text-color)]"
               >
                 Send
               </Button>
@@ -110,13 +111,14 @@ const Home = () => {
                 onMouseLeave={() => setButtonHovered(null)}
                 icon={
                   <ReceiveAnimationIcon
-                    className="text-[var(--primary-color-light)] size-5"
+                    className="text-[var(--text-color)] size-5"
                     isHovered={buttonHovered === 'receive'}
                   />
                 }
                 onClick={() => {
                   openDrawer(<ReceiveChooseDrawer />);
                 }}
+                className="text-[var(--text-color)]"
               >
                 Receive
               </Button>
@@ -125,13 +127,14 @@ const Home = () => {
                 onMouseLeave={() => setButtonHovered(null)}
                 icon={
                   <SwapAnimationIcon
-                    className="text-[var(--primary-color-light)]"
+                    className="text-[var(--text-color)]"
                     isHovered={buttonHovered === 'swap'}
                   />
                 }
                 onClick={() => {
                   setMainScreen('swap');
                 }}
+                className="text-[var(--text-color)]"
               >
                 Swap
               </Button>
@@ -140,13 +143,14 @@ const Home = () => {
                 onMouseLeave={() => setButtonHovered(null)}
                 icon={
                   <BridgeAnimationIcon
-                    className="text-[var(--primary-color-light)]"
+                    className="text-[var(--text-color)]"
                     isHovered={buttonHovered === 'bridge'}
                   />
                 }
                 onClick={() => {
                   openDrawer(<BridgeDrawer />);
                 }}
+                className="text-[var(--text-color)]"
               >
                 Bridge
               </Button>
@@ -200,16 +204,21 @@ const Button = ({
   onClick,
   onMouseEnter,
   onMouseLeave,
+  className,
 }: {
   children: ReactNode;
   icon: ReactNode;
   onClick: () => void;
   onMouseEnter: () => void;
   onMouseLeave: () => void;
+  className?: string;
 }) => {
   return (
     <button
-      className="flex flex-col items-center py-4 hover:bg-white/10 transition-all duration-300 cursor-pointer text-[var(--primary-color-light)] pt-5 overflow-hidden"
+      className={cn(
+        'flex flex-col items-center py-4 hover:bg-white/10 transition-all duration-300 cursor-pointer text-[var(--primary-color-light)] pt-5 overflow-hidden',
+        className
+      )}
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}

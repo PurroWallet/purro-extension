@@ -3,11 +3,11 @@
 
 :root {
   --primary-color: #088b88;
-  --primary-color-light: #8ffffd;
+  --primary-color-light: #00f7da;
   --primary-color-dark: #166260;
   --background-color: #0f1a1f;
-  --text-color: #f0f0f0;
-  --button-color: #8ffffd;
+  --text-color: #f1f7f6;
+  --button-color: #00f7da;
   --button-color-secondary: #163737;
   --button-color-destructive: #ffa48f;
   --card-color: #163737;

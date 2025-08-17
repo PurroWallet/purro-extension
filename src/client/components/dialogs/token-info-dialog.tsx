@@ -205,18 +205,6 @@ const TokenInfoDialog: React.FC<TokenInfoDialogProps> = ({
 
       {/* Actions moved to footer */}
       <DialogFooter className="flex-col">
-        {/* Swap button - only show for HyperEVM tokens */}
-        {isHyperEvmToken && (
-          <Button
-            variant="primary"
-            className="w-full flex items-center gap-2"
-            onClick={handleSwapClick}
-          >
-            <ArrowUpDown className="size-4" />
-            Swap {token.symbol}
-          </Button>
-        )}
-
         {getTokenExplorerUrl(
           token.chain,
           token.contractAddress,
@@ -238,6 +226,18 @@ const TokenInfoDialog: React.FC<TokenInfoDialogProps> = ({
           >
             <ExternalLink className="size-4" />
             View on Explorer
+          </Button>
+        )}
+
+        {/* Swap button - only show for HyperEVM tokens */}
+        {isHyperEvmToken && (
+          <Button
+            variant="primary"
+            className="w-full flex items-center gap-2"
+            onClick={handleSwapClick}
+          >
+            <ArrowUpDown className="size-4" />
+            Swap {token.symbol}
           </Button>
         )}
       </DialogFooter>

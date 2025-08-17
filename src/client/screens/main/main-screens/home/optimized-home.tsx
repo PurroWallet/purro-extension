@@ -67,6 +67,7 @@ const OptimizedHome = () => {
               }
               onClick={() => {}}
               disabled={isWatchOnly}
+              className="text-[var(--primary-color-light)]"
             >
               Bridge
             </ActionButton>
@@ -85,6 +86,7 @@ interface ActionButtonProps {
   icon: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
+  className?: string;
 }
 
 const ActionButton = ({
@@ -92,11 +94,13 @@ const ActionButton = ({
   icon,
   onClick,
   disabled = false,
+  className,
 }: ActionButtonProps) => {
   return (
     <button
       className={cn(
         'flex flex-col items-center py-4 transition-all duration-300 cursor-pointer text-[var(--primary-color-light)] pt-5',
+        className,
         disabled
           ? 'opacity-50 cursor-not-allowed'
           : 'hover:bg-white/10 active:scale-95'
