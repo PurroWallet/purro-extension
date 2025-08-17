@@ -19,3 +19,5 @@ export {
 } from './collapsiable';
 
 export { CircularTimer } from './circular-timer';
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './tooltip';
+export type { TooltipProps, TooltipTriggerProps, TooltipContentProps } from './tooltip';
