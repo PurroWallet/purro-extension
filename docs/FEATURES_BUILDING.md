@@ -31,7 +31,19 @@ description: Purro Extension Features Building
   - [x] Developer mode toggle
   - [x] **Notifications system** with beta release announcements
   - [x] **Optimized tabs** with performance tracking
-- [x] **Swap Screen** (redirects to external DEXes)
+- [x] **Swap Screen** with full in-app swap functionality
+  - [x] **In-app swap execution** with HyperEVM token support
+  - [x] **Token searching and selection** with infinite scroll
+  - [x] **Smart token selector** with balance validation
+  - [x] **Real-time price fetching** from GeckoTerminal API
+  - [x] **Gas estimation and optimization** with safety buffers
+  - [x] **WRAP/UNWRAP scenarios** (HYPE ↔ WHYPE)
+  - [x] **Swap confirmation dialogs** with transaction success tracking
+- [x] **Explorer Screen** with dApp discovery and watchlist
+  - [x] **Curated dApp directory** with 11+ featured dApps
+  - [x] **Watchlist system** for favorite dApps
+  - [x] **Direct dApp integration** with one-click access
+  - [x] **dApp categorization** (DeFi, Bridge, DEX, NFT, etc.)
 - [x] **NFT Screen** with collection viewing
 - [x] **History Screen** with transaction history
 - [x] **Account switching** with account sheet
@@ -80,16 +92,27 @@ description: Purro Extension Features Building
 - [x] **ERC-721 and ERC-1155 support**
 
 ## Portfolio & History
-- [x] **Token portfolio** with real-time balances (Ethereum/Arbitrum/Base)
+- [x] **Token portfolio** with real-time balances (Ethereum/Arbitrum/Base/HyperEVM)
 - [x] **Transaction history** with infinite scroll
 - [x] **Transaction detail view**
 - [⚠️] **HyperScan integration** for HyperEVM data (rate limited)
 - [x] **Hyperliquid Name resolution** in history
 - [x] **Token metadata caching**
 - [x] **Unified token lists** across networks
+- [x] **HyperEVM token searching** with comprehensive token discovery
+- [x] **Real-time token pricing** via GeckoTerminal API integration
 - [x] **Testnet token support** with custom tokens
 - [x] **Performance tracking** for loading times
 - [x] **Error handling** with fallback mechanisms
+- [x] **Advanced Caching System**
+  - [x] **Smart transaction caching** with incremental fetching
+  - [x] **Multi-chain cache support** (Ethereum, Arbitrum, Base, HyperEVM)
+  - [x] **5-minute fresh data guarantee**
+  - [x] **Storage-efficient** with 5000 transaction limit per chain
+- [x] **Optimized Portfolio Management**
+  - [x] **Cross-chain data caching** (30-second cache duration)
+  - [x] **Debounced API calls** (300ms) to prevent excessive requests
+  - [x] **Smart network-based fetching**
 
 ## HyperEVM API Limitations & HyperScan Integration
 
@@ -236,6 +259,17 @@ Due to HyperEVM API limitations, Purro extension currently uses HyperScan API as
 - [x] **Per-site permissions** management
 - [x] **Session timeout** protection
 - [x] **Forgot password** recovery flow
+- [x] **Enhanced Security Test Suite**
+  - [x] **Session timeout and expiration testing**
+  - [x] **Data tampering detection**
+  - [x] **Auto-lock functionality validation**
+  - [x] **Storage isolation tests**
+  - [x] **Memory cleanup verification**
+  - [x] **Encryption parameter validation**
+- [x] **Security Audit Tools**
+  - [x] **Security test runner** (`pnpm run test:security`)
+  - [x] **Dependency audit** (`pnpm run security:audit`)
+  - [x] **Complete security check** (`pnpm run security:check`)
 
 ## User Interface
 - [x] **Modern UI** with Tailwind CSS
@@ -246,22 +280,34 @@ Due to HyperEVM API limitations, Purro extension currently uses HyperScan API as
 - [x] **Dialog system** for modals
 - [x] **Drawer system** for bottom sheets
 - [x] **Toast notifications**
-- [x] **Notifications system**
+- [x] **Advanced Notifications System**
+  - [x] **In-app notification center** with bell icon
   - [x] **Beta release announcements**
   - [x] **Unread notification indicators**
   - [x] **Notification dialog with rich content**
   - [x] **Mark as viewed functionality**
+  - [x] **Notification types** (release, update, announcement)
+  - [x] **Persistent storage** with view history
+  - [x] **Rich content support** with markdown formatting
 - [x] **Performance optimizations**
-  - [x] **React 19** with latest features
-  - [x] **Vite 6** for faster builds
-  - [x] **Tailwind CSS 4** for modern styling
-  - [x] **TanStack Query 5** for data fetching
+  - [x] **React 19.1.0** with latest features
+  - [x] **Vite 6.3.5** for faster builds
+  - [x] **Tailwind CSS 4.1.8** for modern styling
+  - [x] **TanStack Query 5.80.7** for data fetching
+  - [x] **TypeScript 5.8.3** for enhanced type safety
+  - [x] **ESLint 9.18.0** for code quality
+  - [x] **Lucide React 0.513.0** for modern icons
 
 ## Developer Features
 - [x] **Developer mode** for testnet access
 - [x] **Testnet chain support**
 - [x] **Debug logging**
-- [x] **Unit testing** for handlers
+- [x] **Comprehensive Testing Framework**
+  - [x] **Unit testing** for handlers
+  - [x] **Security test runner** with 100+ tests
+  - [x] **Handler test framework** with full coverage
+  - [x] **Encryption validation** tests
+  - [x] **Memory management** tests
 - [x] **Type safety** with TypeScript
 - [x] **Testnet token management system**
   - [x] **Custom token addition**
@@ -270,6 +316,10 @@ Due to HyperEVM API limitations, Purro extension currently uses HyperScan API as
   - [x] **Token removal**
 - [x] **Performance tracking** for data loading
 - [x] **Error handling** with graceful degradation
+- [x] **Enhanced Hook System**
+  - [x] **Specialized hooks** for watchlist, caching, optimization
+  - [x] **State management** with Zustand persistence
+  - [x] **Multi-chain support** hooks
 
 ## Extension Features
 - [x] **Manifest V3** compliance
@@ -303,8 +353,10 @@ Due to HyperEVM API limitations, Purro extension currently uses HyperScan API as
 - [x] **Swap/bridge/send/receive in one interface** - All functions available in unified UI
 
 #### Token Swap via LiquidSwap
-- [x] **LiquidSwap integration** - External link integration in swap drawer
-- [ ] **In-app swap execution** - Currently redirects to external DEX
+- [x] **LiquidSwap integration** - Full in-app swap execution
+- [x] **In-app swap execution** - Complete swap functionality with HyperEVM tokens
+- [x] **Advanced token searching** - Comprehensive token discovery and selection
+- [x] **Real-time pricing** - Live price feeds from GeckoTerminal API
 
 #### Pre-Transaction Gas
 - [x] **Real-time gas estimation** - Full implementation with EIP-1559 support
@@ -329,10 +381,12 @@ Due to HyperEVM API limitations, Purro extension currently uses HyperScan API as
 - [x] **HyperCore & HyperEVM developer mode** - Testnet support with toggle
 
 #### Enhanced User Experience
-- [x] **Notifications system** - Beta announcements and updates
+- [x] **Advanced notifications system** - Beta announcements and updates
 - [x] **Drawer-based actions** - Modern UI patterns for actions
-- [x] **Performance optimizations** - React 19, Vite 6, Tailwind CSS 4
+- [x] **DApp Explorer** - Curated dApp directory with watchlist
+- [x] **Performance optimizations** - React 19.1.0, Vite 6.3.5, Tailwind CSS 4.1.8
 - [x] **Testnet token management** - Custom token addition and management
+- [x] **Enhanced caching system** - Smart transaction and portfolio caching
 
 ### PLANNED FEATURES (Not Yet Implemented)
 
@@ -370,21 +424,26 @@ Due to HyperEVM API limitations, Purro extension currently uses HyperScan API as
 
 ### DEVELOPMENT PRIORITIES
 
-#### Phase 1 - Core Infrastructure (Completed)
-- Multi-chain wallet functionality
-- dApp integration (EIP-1193, EIP-6963, EIP-712)
-- Basic DeFi operations (send, receive, portfolio)
-- Notifications system
-- Drawer-based UI patterns
-- Performance optimizations
+#### Phase 1 - Core Infrastructure (Completed in v0.3.1)
+- [x] **Multi-chain wallet functionality**
+- [x] **dApp integration** (EIP-1193, EIP-6963, EIP-712)
+- [x] **Basic DeFi operations** (send, receive, portfolio)
+- [x] **Basic notifications system**
+- [x] **Drawer-based UI patterns**
+- [x] **Initial performance optimizations**
 
-#### Phase 2 - Advanced Features (In Progress)
-- In-app swap execution
-- Advanced bridging
-- Enhanced security features
-- Testnet token management
-- Hyperliquid DEX integration
-- Alchemy SDK extension for HyperEVM
+#### Phase 2 - Advanced Features (Completed in v0.6.2)
+- [x] **DApp Explorer** with watchlist functionality
+- [x] **Enhanced security features** with comprehensive test suite
+- [x] **Advanced notifications system** with rich content
+- [x] **Smart caching system** for transactions and portfolio
+- [x] **Performance optimizations** with latest dependencies
+- [x] **Testnet token management** - Custom token addition and management
+- [x] **Hyperliquid DEX integration** - Enhanced functionality
+- [x] **In-app swap execution** - Complete HyperEVM swap functionality
+- [x] **Advanced token searching** - HyperEVM token discovery and search
+- [ ] **Advanced bridging** (planned)
+- [ ] **Alchemy SDK extension for HyperEVM** (planned)
 
 #### Phase 3 - Ecosystem Integration (Planned)
 - Account abstraction (AA Smart Wallet)
