@@ -42,7 +42,7 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
         default:
           return false;
       }
-    } catch (error) {
+    } catch {
       return false;
     }
   };
@@ -85,7 +85,7 @@ const ImportWatchOnly = ({ onNext }: { onNext: () => void }) => {
         setError('This address is already imported as watch-only');
         return;
       }
-    } catch (err) {
+    } catch {
       setError('Failed to validate address');
       return;
     }

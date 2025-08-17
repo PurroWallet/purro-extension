@@ -131,7 +131,7 @@ const ConfirmSwapButton = () => {
         route,
       });
 
-      if (result.success) {
+      if (result.success && result.data) {
         // Reset swap amounts and route for next swap
         resetAmounts();
 
@@ -151,7 +151,11 @@ const ConfirmSwapButton = () => {
           />
         );
       } else {
-        setSwapError(formatErrorMessage(result.error || null));
+        setSwapError(
+          formatErrorMessage(
+            result.error || 'Transaction failed - no transaction hash received'
+          )
+        );
       }
     } catch (error) {
       console.error('❌ Swap failed:', error);

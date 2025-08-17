@@ -1,5 +1,4 @@
 // Offscreen document management - MEMORY ONLY for maximum security
-let __offscreenCreated = false;
 
 export const offscreenManager = {
   async hasOffscreenDocument(): Promise<boolean> {
@@ -16,7 +15,6 @@ export const offscreenManager = {
   async createOffscreenDocument(): Promise<void> {
     // Check if already exists
     if (await this.hasOffscreenDocument()) {
-      __offscreenCreated = true;
       return;
     }
 
@@ -27,26 +25,22 @@ export const offscreenManager = {
         justification:
           'Maintain session state across service worker restarts for security',
       });
-      __offscreenCreated = true;
 
       // Wait for the document to fully initialize
       await new Promise(resolve => setTimeout(resolve, 200));
     } catch (error) {
       console.error('Failed to create offscreen document:', error);
-      __offscreenCreated = false;
       throw new Error('Unable to initialize secure session storage');
     }
   },
 
   async closeOffscreenDocument(): Promise<void> {
     if (!(await this.hasOffscreenDocument())) {
-      __offscreenCreated = false;
       return;
     }
 
     try {
       await chrome.offscreen.closeDocument();
-      __offscreenCreated = false;
     } catch (error) {
       console.warn('Failed to close offscreen document:', error);
     }

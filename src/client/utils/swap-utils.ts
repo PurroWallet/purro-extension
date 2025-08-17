@@ -1,4 +1,5 @@
 import { UnifiedToken } from '@/client/components/token-list';
+import { SwapRouteV2Response } from '@/client/types/liquidswap-api';
 
 // Constants for HYPE/WHYPE detection
 export const HYPE_NATIVE_IDENTIFIERS = ['HYPE', 'native', 'NATIVE'];
@@ -103,8 +104,8 @@ export const validateSwap = (
     amountIn: string,
     amountOut: string,
     hasInsufficientBalance: boolean,
-    routeError: any,
-    route: any
+    routeError: Error | null,
+    route: SwapRouteV2Response | null
 ): boolean => {
     return !!(
         tokenIn &&

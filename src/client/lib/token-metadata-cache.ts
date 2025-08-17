@@ -187,7 +187,7 @@ export class TokenMetadataCacheLib {
    * Clean oldest entries when cache is full (based on cachedAt, not expiration)
    */
   private static async cleanOldestEntries(
-    chainId: string,
+    _chainId: string,
     chainCache: TokenMetadataCache[string]
   ): Promise<void> {
     try {

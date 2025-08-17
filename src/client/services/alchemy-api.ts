@@ -241,7 +241,7 @@ export const fetchSingleTokenMetadataFast = async (
       decimals: result?.decimals || 18,
       logo: result?.logo || undefined,
     };
-  } catch (error) {
+  } catch {
     // Fast fallback - no retry, no logging spam
     return {
       name: 'Unknown Token',
@@ -279,7 +279,7 @@ const getTokensMetadata = async (
       try {
         const metadata = await fetchSingleTokenMetadataFast(endpoint, address);
         return { address, metadata };
-      } catch (error) {
+      } catch {
         // Use fallback metadata for failed fetches
         return {
           address,
@@ -298,18 +298,18 @@ const getTokensMetadata = async (
       const results = await Promise.allSettled(fetchPromises);
 
       // Process results
-      let fallbackCount = 0;
+      let _fallbackCount = 0;
 
       results.forEach(result => {
         if (result.status === 'fulfilled') {
           const { address, metadata } = result.value;
           newMetadata[address] = metadata;
           if (metadata.name === 'Unknown Token') {
-            fallbackCount++;
+            _fallbackCount++;
           }
         } else {
           // Handle rejected promises
-          fallbackCount++;
+          _fallbackCount++;
         }
       });
 
@@ -317,7 +317,7 @@ const getTokensMetadata = async (
       if (Object.keys(newMetadata).length > 0) {
         await TokenMetadataCacheLib.cacheMultipleMetadata(chainId, newMetadata);
       }
-    } catch (error) {
+    } catch {
       // If batch fails, use fallback for all missing addresses
       for (const address of missingAddresses) {
         newMetadata[address] = {
@@ -402,7 +402,7 @@ export const fetchEthereumTokensOptimized = async (
               logo: metadata.logo,
             },
           };
-        } catch (error) {
+        } catch {
           return {
             contractAddress: token.contractAddress,
             balance: token.tokenBalance,
@@ -492,7 +492,7 @@ export const fetchBaseTokensOptimized = async (
               logo: metadata.logo,
             },
           };
-        } catch (error) {
+        } catch {
           return {
             contractAddress: token.contractAddress,
             balance: token.tokenBalance,
@@ -582,7 +582,7 @@ export const fetchArbitrumTokensOptimized = async (
               logo: metadata.logo,
             },
           };
-        } catch (error) {
+        } catch {
           return {
             contractAddress: token.contractAddress,
             balance: token.tokenBalance,
@@ -620,7 +620,7 @@ export const fetchAllEvmTokensOptimized = async (
     ]);
 
     return [ethereumTokens, baseTokens, arbitrumTokens];
-  } catch (error) {
+  } catch {
     return [];
   }
 };

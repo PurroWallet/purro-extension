@@ -219,7 +219,7 @@ export const suiWalletKeyUtils = {
         address.length > 0 &&
         publicKey.toBase64().length > 0
       );
-    } catch (error) {
+    } catch {
       return false;
     }
   },
@@ -416,7 +416,7 @@ export const solanaWalletKeyUtils = {
         keypair.secretKey !== null &&
         keypair.secretKey.length === 64
       ); // Solana secret keys are always 64 bytes
-    } catch (error) {
+    } catch {
       return false;
     }
   },
@@ -447,7 +447,7 @@ export const solanaWalletKeyUtils = {
         address !== null &&
         address.length > 0
       );
-    } catch (error) {
+    } catch {
       return false;
     }
   },
@@ -573,7 +573,7 @@ export const multiChainWalletUtils = {
         default:
           return false;
       }
-    } catch (error) {
+    } catch {
       return false;
     }
   },

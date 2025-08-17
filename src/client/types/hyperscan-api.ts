@@ -1,3 +1,62 @@
+// Base types for reusable structures
+export interface HyperScanTokenInfo {
+  address_hash: string;
+  circulating_market_cap: string | null;
+  decimals: string | null;
+  exchange_rate: string | null;
+  holders_count: string;
+  icon_url: string | null;
+  name: string;
+  symbol: string;
+  total_supply: string | null;
+  type: string;
+  volume_24h: string | null;
+}
+
+export interface HyperScanMetadataRecord {
+  data: Record<string, unknown>;
+  name: {
+    expiry: string;
+    name: string;
+    owner: string;
+  };
+}
+
+export interface HyperScanNftMetadata {
+  description?: string;
+  image?: string;
+  name?: string;
+  title?: string;
+  record?: HyperScanMetadataRecord;
+  attributes?: Array<{
+    trait_type: string;
+    value: string | number;
+    [key: string]: unknown;
+  }>;
+  [key: string]: unknown; // Allow for additional metadata fields
+}
+
+export interface HyperScanThumbnails {
+  size?: string;
+  url?: string;
+  [key: string]: unknown;
+}
+
+export interface HyperScanAddressInfo {
+  ens_domain_name: string | null;
+  hash: string;
+  implementations: string[];
+  is_contract: boolean;
+  is_scam: boolean;
+  is_verified: boolean;
+  metadata: Record<string, unknown> | null;
+  name: string | null;
+  private_tags: string[];
+  proxy_type: string | null;
+  public_tags: string[];
+  watchlist_names: string[];
+}
+
 export interface HyperScanTokenBalanceResponse {
   token: {
     address: string;
@@ -43,23 +102,9 @@ export interface HyperScanNFTResponse {
     is_unique: boolean | null;
     media_type: string | null;
     media_url: string;
-    metadata: {
-      description?: string;
-      image?: string;
-      name?: string;
-      title?: string;
-      record?: {
-        data: any;
-        name: {
-          expiry: string;
-          name: string;
-          owner: string;
-        };
-      };
-      [key: string]: any; // Allow for additional metadata fields
-    } | null;
+    metadata: HyperScanNftMetadata | null;
     owner: string | null;
-    thumbnails: any | null;
+    thumbnails: HyperScanThumbnails | null;
     token: {
       address_hash: string;
       circulating_market_cap: string | null;
@@ -103,24 +148,10 @@ export interface HyperScanNftCollectionsResponse {
       is_unique: boolean | null;
       media_type: string | null;
       media_url: string;
-      metadata: {
-        description?: string;
-        image?: string;
-        name?: string;
-        title?: string;
-        record?: {
-          data: any;
-          name: {
-            expiry: string;
-            name: string;
-            owner: string;
-          };
-        };
-        [key: string]: any; // Allow for additional metadata fields
-      } | null;
+      metadata: HyperScanNftMetadata | null;
       owner: string | null;
-      thumbnails: any | null;
-      token: any | null;
+      thumbnails: HyperScanThumbnails | null;
+      token: HyperScanTokenInfo | null;
       token_type: string;
       value: string;
     }[];
@@ -141,23 +172,9 @@ export interface HyperScanNftInstancesItem {
   is_unique: boolean | null;
   media_type: string | null;
   media_url: string;
-  metadata: {
-    description?: string;
-    image?: string;
-    name?: string;
-    title?: string;
-    record?: {
-      data: any;
-      name: {
-        expiry: string;
-        name: string;
-        owner: string;
-      };
-    };
-    [key: string]: any; // Allow for additional metadata fields
-  } | null;
+  metadata: HyperScanNftMetadata | null;
   owner: string | null;
-  thumbnails: any | null;
+  thumbnails: HyperScanThumbnails | null;
   token: {
     address_hash: string;
     circulating_market_cap: string | null;
@@ -183,37 +200,11 @@ export interface HyperScanTokenTransfersNextPageParams {
 export interface HyperScanTokenTransfersItems {
   block_hash: string;
   block_number: number;
-  from: {
-    ens_domain_name: string | null;
-    hash: string;
-    implementations: any[];
-    is_contract: boolean;
-    is_scam: boolean;
-    is_verified: boolean;
-    metadata: any | null;
-    name: string | null;
-    private_tags: any[];
-    proxy_type: string | null;
-    public_tags: any[];
-    watchlist_names: any[];
-  };
+  from: HyperScanAddressInfo;
   log_index: number;
   method: string;
   timestamp: string;
-  to: {
-    ens_domain_name: string | null;
-    hash: string;
-    implementations: any[];
-    is_contract: boolean;
-    is_scam: boolean;
-    is_verified: boolean;
-    metadata: any | null;
-    name: string | null;
-    private_tags: any[];
-    proxy_type: string | null;
-    public_tags: any[];
-    watchlist_names: any[];
-  };
+  to: HyperScanAddressInfo;
   token: {
     address: string;
     address_hash: string;
@@ -266,6 +257,7 @@ export interface HyperScanTransactionsItems {
   transaction_types: ('coin_transfer' | 'token_transfer' | 'contract_call')[];
   value: string;
 }
+
 export interface HyperScanTransactionsNextPageParams {
   block_number: number;
   fee: string;

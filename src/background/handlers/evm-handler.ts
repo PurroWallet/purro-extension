@@ -928,7 +928,7 @@ export const evmHandler = {
           isEIP712 = true;
 
         }
-      } catch (parseError) {
+      } catch {
         isEIP712 = false;
       }
 

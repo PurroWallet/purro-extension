@@ -1,13 +1,36 @@
 import { sendMessage } from '@/client/utils/extension-message-utils';
 import { UnifiedToken } from '@/client/components/token-list';
 import { isHypeToken, isWrapScenario, isUnwrapScenario } from './swap-utils';
+import { SwapRouteV2Response } from '@/client/types/liquidswap-api';
+
+// Transaction data interface for better type safety
+interface TransactionData {
+    to: string;
+    data: string;
+    value: string;
+    chainId?: string;
+}
+
+// Transaction result interface
+interface TransactionResult {
+    success: boolean;
+    data?: unknown;
+    error?: string;
+}
+
+// Swap execution result interface
+interface SwapExecutionResult {
+    success: boolean;
+    data?: string; // Transaction hash when successful
+    error?: string;
+}
 
 export interface SwapTransactionParams {
     tokenIn: UnifiedToken;
     tokenOut: UnifiedToken;
     amountIn: string;
     amountOut: string;
-    route: any;
+    route: SwapRouteV2Response;
     activeAccountAddress: string;
 }
 
@@ -20,8 +43,8 @@ export const executeSwapTransaction = async ({
     tokenIn: UnifiedToken;
     tokenOut: UnifiedToken;
     amountIn: string;
-    route: any;
-}): Promise<{ success: boolean; data?: any; error?: string }> => {
+    route: SwapRouteV2Response;
+}): Promise<SwapExecutionResult> => {
     try {
         // Determine if this is a direct wrap/unwrap scenario
         const isDirectWrapUnwrapScenario = isWrapScenario(tokenIn, tokenOut) || isUnwrapScenario(tokenIn, tokenOut);
@@ -31,7 +54,7 @@ export const executeSwapTransaction = async ({
 
         // Step 1: Handle approval for ERC20 tokens (skip for direct wrap/unwrap)
         if (!isFromNativeToken && !isDirectWrapUnwrapScenario) {
-            const spenderAddress = route.execution.to;
+            const spenderAddress = route.execution?.to;
             if (!spenderAddress) {
                 throw new Error('No spender address in route execution');
             }
@@ -39,7 +62,7 @@ export const executeSwapTransaction = async ({
             // Check current allowance
             const allowanceData = {
                 tokenAddress: tokenIn.contractAddress,
-                ownerAddress: route.execution.from,
+                ownerAddress: '', // Will be set by the background script
                 spenderAddress: spenderAddress,
                 chainId: '0x3e7', // HyperEVM
             };
@@ -78,8 +101,8 @@ export const executeSwapTransaction = async ({
         }
 
         // Step 2: Execute the swap transaction
-        let transactionData: any;
-        let result: any;
+        let transactionData: TransactionData;
+        let result: TransactionResult;
 
         // Check if this is a direct wrap/unwrap scenario
         if (isDirectWrapUnwrapScenario) {
@@ -92,7 +115,7 @@ export const executeSwapTransaction = async ({
                 );
 
                 transactionData = {
-                    to: tokenOut.contractAddress,
+                    to: tokenOut.contractAddress || '',
                     data: `0xd0e30db0`, // wrap() function selector
                     value: `0x${amountInWei.toString(16)}`,
                     chainId: '0x3e7', // HyperEVM
@@ -106,7 +129,7 @@ export const executeSwapTransaction = async ({
                 );
 
                 transactionData = {
-                    to: tokenOut.contractAddress,
+                    to: tokenOut.contractAddress || '',
                     data: `0x2e1a7d4d${amountInWei.toString(16).padStart(64, '0')}`, // withdraw(uint256) function
                     value: '0x0',
                     chainId: '0x3e7', // HyperEVM
@@ -131,8 +154,8 @@ export const executeSwapTransaction = async ({
 
             // Prepare transaction data
             transactionData = {
-                to: route.execution.to,
-                data: route.execution.calldata,
+                to: route.execution?.to || '',
+                data: route.execution?.calldata || '',
                 value: transactionValue,
             };
 
@@ -144,7 +167,7 @@ export const executeSwapTransaction = async ({
             throw new Error(result.error || 'Swap transaction failed');
         }
 
-        return { success: true, data: result.data };
+        return { success: true, data: result.data as string };
 
     } catch (error) {
         return {

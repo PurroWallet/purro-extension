@@ -10,6 +10,71 @@ import {
   suiWalletKeyUtils,
 } from '@/background/utils/keys';
 
+// Constants for easy customization
+const VALIDATION_CONFIG = {
+  EVM_CHAINS: ['ethereum', 'hyperevm', 'base', 'arbitrum'],
+  ERROR_MESSAGES: {
+    INVALID_PRIVATE_KEY: 'Invalid private key. Please try again.',
+    ALREADY_IMPORTED: 'This private key is already imported.',
+  },
+  ACCOUNT_NAME_PREFIX: 'Account',
+} as const;
+
+// Utility function to validate private key and get address
+const validatePrivateKeyFormat = (
+  privateKeyValue: string,
+  chain: string | null
+) => {
+  if (!privateKeyValue.trim() || !chain) {
+    return { isValid: false, address: '' };
+  }
+
+  try {
+    let isValid = false;
+    let walletAddress = '';
+
+    if (
+      VALIDATION_CONFIG.EVM_CHAINS.includes(
+        chain as (typeof VALIDATION_CONFIG.EVM_CHAINS)[number]
+      )
+    ) {
+      try {
+        isValid = evmWalletKeyUtils.isValidPrivateKey(privateKeyValue);
+        if (isValid) {
+          const wallet = evmWalletKeyUtils.fromPrivateKey(privateKeyValue);
+          walletAddress = wallet.address;
+        }
+      } catch {
+        isValid = false;
+      }
+    } else if (chain === 'solana') {
+      try {
+        isValid = solanaWalletKeyUtils.isValidPrivateKey(privateKeyValue);
+        if (isValid) {
+          const wallet = solanaWalletKeyUtils.fromPrivateKey(privateKeyValue);
+          walletAddress = wallet.address;
+        }
+      } catch {
+        isValid = false;
+      }
+    } else if (chain === 'sui') {
+      try {
+        isValid = suiWalletKeyUtils.isValidPrivateKey(privateKeyValue);
+        if (isValid) {
+          const wallet = suiWalletKeyUtils.fromPrivateKey(privateKeyValue);
+          walletAddress = wallet.address;
+        }
+      } catch {
+        isValid = false;
+      }
+    }
+
+    return { isValid, address: walletAddress };
+  } catch {
+    return { isValid: false, address: '' };
+  }
+};
+
 const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
   const { chain, privateKey, setPrivateKey, accountName, setAccountName } =
     useCreateWalletStore();
@@ -22,7 +87,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
   useEffect(() => {
     if (!accountName && initialized) {
       setAccountName(
-        `Account ${accounts.length > 0 ? accounts.length + 1 : 1}`
+        `${VALIDATION_CONFIG.ACCOUNT_NAME_PREFIX} ${accounts.length > 0 ? accounts.length + 1 : 1}`
       );
     }
   }, [accounts, accountName, setAccountName, initialized]);
@@ -33,73 +98,31 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
     }
 
     try {
-      // First validate the private key format and get address
-      let isValid = false;
-      let walletAddress = '';
+      // Validate the private key format and get address
+      const validation = validatePrivateKeyFormat(privateKey, chain ?? null);
 
-      // EVM chains (Ethereum, Hyperliquid, Base, Arbitrum) all use the same validation
-      if (
-        chain === 'ethereum' ||
-        chain === 'hyperevm' ||
-        chain === 'base' ||
-        chain === 'arbitrum'
-      ) {
-        try {
-          isValid = evmWalletKeyUtils.isValidPrivateKey(privateKey);
-
-          if (isValid) {
-            const wallet = evmWalletKeyUtils.fromPrivateKey(privateKey);
-            walletAddress = wallet.address;
-          }
-        } catch (evmError) {
-          isValid = false;
-        }
-      } else if (chain === 'solana') {
-        try {
-          isValid = solanaWalletKeyUtils.isValidPrivateKey(privateKey);
-
-          if (isValid) {
-            const wallet = solanaWalletKeyUtils.fromPrivateKey(privateKey);
-            walletAddress = wallet.address;
-          }
-        } catch (solanaError) {
-          isValid = false;
-        }
-      } else if (chain === 'sui') {
-        try {
-          isValid = suiWalletKeyUtils.isValidPrivateKey(privateKey);
-
-          if (isValid) {
-            const wallet = suiWalletKeyUtils.fromPrivateKey(privateKey);
-            walletAddress = wallet.address;
-          }
-        } catch (suiError) {
-          isValid = false;
-        }
-      }
-
-      if (!isValid) {
-        throw new Error('Invalid private key. Please try again.');
+      if (!validation.isValid) {
+        throw new Error(VALIDATION_CONFIG.ERROR_MESSAGES.INVALID_PRIVATE_KEY);
       }
 
       // Set the address for display
-      setAddress(walletAddress);
+      setAddress(validation.address);
 
       // Check if private key already exists
       try {
         const exists = await checkPrivateKeyExists(privateKey);
 
         if (exists) {
-          setError('This private key is already imported.');
+          setError(VALIDATION_CONFIG.ERROR_MESSAGES.ALREADY_IMPORTED);
           return false;
         }
-      } catch (checkError) {
+      } catch {
         // Continue with import even if check fails
       }
 
       return true;
-    } catch (error) {
-      setError('Invalid private key. Please try again.');
+    } catch {
+      setError(VALIDATION_CONFIG.ERROR_MESSAGES.INVALID_PRIVATE_KEY);
       setAddress(null);
       return false;
     }
@@ -131,64 +154,20 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
 
                 setPrivateKey(inputValue);
                 setError(null); // Clear error when user types
-                setAddress(null); // Clear address when user types
 
                 // Validate and show address if private key is valid
                 if (inputValue.trim()) {
-                  try {
-                    let isValid = false;
-                    // @ts-ignore - walletAddress is assigned but not used
-                    let walletAddress = '';
-
-                    // EVM chains (Ethereum, Hyperliquid, Base, Arbitrum) all use the same validation
-                    if (
-                      chain === 'ethereum' ||
-                      chain === 'hyperevm' ||
-                      chain === 'base' ||
-                      chain === 'arbitrum'
-                    ) {
-                      try {
-                        isValid =
-                          evmWalletKeyUtils.isValidPrivateKey(inputValue);
-
-                        if (isValid) {
-                          const wallet =
-                            evmWalletKeyUtils.fromPrivateKey(inputValue);
-                          walletAddress = wallet.address;
-                        }
-                      } catch (evmError) {
-                        isValid = false;
-                      }
-                    } else if (chain === 'solana') {
-                      try {
-                        isValid =
-                          solanaWalletKeyUtils.isValidPrivateKey(inputValue);
-
-                        if (isValid) {
-                          const wallet =
-                            solanaWalletKeyUtils.fromPrivateKey(inputValue);
-                          walletAddress = wallet.publicKey;
-                        }
-                      } catch (solanaError) {
-                        isValid = false;
-                      }
-                    } else if (chain === 'sui') {
-                      try {
-                        isValid =
-                          suiWalletKeyUtils.isValidPrivateKey(inputValue);
-
-                        if (isValid) {
-                          const wallet =
-                            suiWalletKeyUtils.fromPrivateKey(inputValue);
-                          walletAddress = wallet.address;
-                        }
-                      } catch (suiError) {
-                        isValid = false;
-                      }
-                    }
-                  } catch (error) {
-                    // Ignore validation errors during typing
+                  const validation = validatePrivateKeyFormat(
+                    inputValue,
+                    chain ?? null
+                  );
+                  if (validation.isValid) {
+                    setAddress(validation.address);
+                  } else {
+                    setAddress(null);
                   }
+                } else {
+                  setAddress(null); // Clear address only when input is empty
                 }
               }}
               onKeyDown={async e => {
@@ -202,7 +181,7 @@ const ImportPrivateKey = ({ onNext }: { onNext: () => void }) => {
 
             <input
               type="text"
-              placeholder={`Account ${accounts.length > 0 ? accounts.length + 1 : 1}`}
+              placeholder={`${VALIDATION_CONFIG.ACCOUNT_NAME_PREFIX} ${accounts.length > 0 ? accounts.length + 1 : 1}`}
               value={accountName ?? ''}
               onChange={e => setAccountName(e.target.value)}
               className="w-full px-4 py-3 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary-color-light)] bg-[var(--card-color)] text-white placeholder-gray-400 text-base"

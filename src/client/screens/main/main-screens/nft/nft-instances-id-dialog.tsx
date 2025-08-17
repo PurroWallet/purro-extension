@@ -140,12 +140,13 @@ const NftInstancesIdDialog = ({
           <Menu items={nftDetailsItems} />
 
           {/* Properties section */}
-          {nftInstance.metadata?.attributes?.length > 0 && (
-            <div>
-              <h3 className="text-base font-semibold mb-1">Properties</h3>
-              <Menu items={propertiesItems} />
-            </div>
-          )}
+          {nftInstance.metadata?.attributes &&
+            nftInstance.metadata.attributes.length > 0 && (
+              <div>
+                <h3 className="text-base font-semibold mb-1">Properties</h3>
+                <Menu items={propertiesItems} />
+              </div>
+            )}
         </div>
       </DialogContent>
     </DialogWrapper>

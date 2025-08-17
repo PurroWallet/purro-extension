@@ -74,8 +74,7 @@ export const ConnectScreen = () => {
 
     setLoading(true);
     try {
-      // Send approval to background script with active account
-      const result = await approveConnection(
+      await approveConnection(
         connectionRequest.origin,
         activeAccount.id,
         connectionRequest.favicon

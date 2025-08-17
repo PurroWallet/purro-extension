@@ -381,11 +381,6 @@ export const useCachedInfiniteTransactions = (
         }
       }
 
-      // Log summary of multi-chain results
-      const totalTransactions = results.reduce((total, result) => total + result.transactions.length, 0);
-      const chainsWithData = results.filter(result => result.transactions.length > 0).length;
-      const cacheHits = results.filter(result => result.transactions.length > 0 && !result.hasMore).length;
-
       return {
         results,
         nextLastBlocks: Object.keys(nextLastBlocks).length > 0 ? nextLastBlocks : undefined,

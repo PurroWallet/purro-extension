@@ -164,8 +164,7 @@ export const TransactionScreen = () => {
     setError(null);
 
     try {
-      // Send approval to background script - transaction will be sent there
-      const result = await approveTransaction(
+      await approveTransaction(
         transactionRequest.origin,
         transactionRequest.transaction
       );

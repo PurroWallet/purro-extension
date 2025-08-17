@@ -91,7 +91,7 @@ const fetchNativeTokenPrices = async (): Promise<Record<string, number>> => {
       arbitrum: ethPrice,
       hyperevm: hypePrice,
     };
-  } catch (error) {
+  } catch {
     return {
       ethereum: 0,
       base: 0,

@@ -166,7 +166,7 @@ export const encryption = {
       key = await crypto.subtle.deriveKey(
         {
           name: 'PBKDF2',
-          salt: salt as BufferSource,
+          salt: salt,
           iterations: ITERATIONS,
           hash: 'SHA-256',
         },
@@ -180,7 +180,7 @@ export const encryption = {
       const encrypted = await crypto.subtle.encrypt(
         {
           name: 'AES-GCM',
-          iv: nonce as BufferSource,
+          iv: nonce,
           tagLength: TAG_LENGTH * 8, // 128 bits
         },
         key,
@@ -240,7 +240,7 @@ export const encryption = {
       key = await crypto.subtle.deriveKey(
         {
           name: 'PBKDF2',
-          salt: salt as BufferSource,
+          salt: salt,
           iterations: encryptedData.iterations,
           hash: 'SHA-256',
         },
@@ -253,7 +253,7 @@ export const encryption = {
       const decrypted = await crypto.subtle.decrypt(
         {
           name: 'AES-GCM',
-          iv: nonce as BufferSource,
+          iv: nonce,
           tagLength: TAG_LENGTH * 8,
         },
         key,
@@ -316,7 +316,7 @@ export const encryption = {
       const hashBuffer = await crypto.subtle.deriveBits(
         {
           name: 'PBKDF2',
-          salt: passwordSalt as BufferSource,
+          salt: passwordSalt,
           iterations: ITERATIONS,
           hash: 'SHA-256',
         },
@@ -543,15 +543,15 @@ export const encryption = {
       return await crypto.subtle.deriveBits(
         {
           name: 'PBKDF2',
-          salt: salt as BufferSource,
+          salt: salt,
           iterations: iterations,
           hash: 'SHA-256',
         },
         keyMaterial,
         keyLength
       );
-    } catch (error) {
-      throw new Error(`Key derivation failed: ${(error as Error).message}`);
+    } catch {
+      throw new Error('Key derivation failed');
     }
   },
 
