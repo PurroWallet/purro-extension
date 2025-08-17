@@ -81,5 +81,5 @@ export const EXPLORER_NAMES = {
     ethereum: 'View on Etherscan',
     arbitrum: 'View on Arbiscan',
     base: 'View on BaseScan',
-    hyperevm: 'View on HyperScan',
+    hyperevm: 'View on Explorer',
 } as const; 
