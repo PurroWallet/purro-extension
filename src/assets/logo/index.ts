@@ -15,3 +15,4 @@ export { default as hpumpLogo } from './hypurr-pump-logo.png';
 export { default as hyperlendLogo } from './hyperlend-logo.svg';
 export { default as hyperevmscanLogo } from './hyperevmscan-logo.svg';
 export { default as driptradeLogo } from './drip-trade-logo.svg';
+export { default as hlNameLogo } from './hl-names-logo.svg';

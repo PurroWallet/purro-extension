@@ -8,9 +8,7 @@ import { DialogHeader } from '@/client/components/ui';
 import { Menu } from '@/client/components/ui/menu';
 import useSendTokenStore from '@/client/hooks/use-send-token-store';
 import useDialogStore from '@/client/hooks/use-dialog-store';
-import { CheckCircle2, Send, X, ExternalLink, Copy, Check } from 'lucide-react';
-import { getNetworkIcon } from '@/utils/network-icons';
-import TokenLogo from '@/client/components/token-logo';
+import { CheckCircle2, X, Copy, Check } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect, useState } from 'react';
 import { getAddressByDomain } from '@/client/services/hyperliquid-name-api';
@@ -102,14 +100,6 @@ const TransactionSuccess = () => {
     setTransactionHash('');
     setStep('select');
     closeDialog();
-  };
-
-  const handleSendAnother = () => {
-    // Keep the token selected but clear amount, recipient, and transaction hash
-    setRecipient('');
-    setAmount('');
-    setTransactionHash('');
-    setStep('send');
   };
 
   const handleViewOnExplorer = () => {

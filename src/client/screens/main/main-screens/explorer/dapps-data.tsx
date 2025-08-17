@@ -10,6 +10,7 @@ import {
   hyperlendLogo,
   hyperevmscanLogo,
   driptradeLogo,
+  hlNameLogo,
 } from '@/assets/logo';
 
 export interface DApp {
@@ -50,7 +51,13 @@ export const DAPPS_DATA: DApp[] = [
     url: 'https://app.hyperswap.exchange',
     logo: hyperSwapLogo,
   },
-
+  {
+    id: 'hyperliquid-names',
+    name: 'Hyperliquid Names',
+    category: 'Infrastructure',
+    url: 'https://app.hlnames.xyz',
+    logo: hlNameLogo,
+  },
   {
     id: 'liquidlaunch',
     name: 'LiquidLaunch',
