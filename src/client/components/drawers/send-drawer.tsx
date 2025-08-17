@@ -28,7 +28,7 @@ export const SendDrawer = () => {
         }}
       >
         <p className="text-base font-semibold">
-          Send on HyperEVM & Supported Chains
+          Send on HyperEVM & Supported Networks
         </p>
       </div>
     </div>

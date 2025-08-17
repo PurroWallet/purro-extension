@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useEditAccountStore from '@/client/hooks/use-edit-account-store';
 import {
   Button,
@@ -8,6 +8,23 @@ import {
   DialogWrapper,
 } from '@/client/components/ui';
 import useWallet from '@/client/hooks/use-wallet';
+import useWalletStore from '@/client/hooks/use-wallet-store';
+import {
+  getHLProfileByAddress,
+  HLProfile,
+} from '@/client/services/hyperliquid-name-api';
+import { HlNameIcon } from '@/assets/icon-component/hl-name-icon';
+
+// Constants for easy customization
+const ICON_SELECTION_TYPES = {
+  EMOJI: 'emoji',
+  HL_AVATAR: 'hl_avatar',
+} as const;
+
+const SELECTION_TAB_LABELS = {
+  EMOJI: 'Emoji Icons',
+  HL_AVATAR: 'HL Avatar',
+} as const;
 
 const emojiCategories = {
   'Smileys & People': [
@@ -444,7 +461,7 @@ const emojiCategories = {
     '🛹',
     '🛷',
     '⛸',
-    '🥌',
+    '��',
     '🎿',
     '⛷',
     '🏂',
@@ -1243,79 +1260,205 @@ const emojiCategories = {
 const EditIcon = ({ onBack }: { onBack: () => void }) => {
   const { changeAccountIcon } = useWallet();
   const { selectedAccountId } = useEditAccountStore();
+  const { accounts, getAccountWalletObject } = useWalletStore();
   const [selectedEmoji, setSelectedEmoji] = useState<string>('');
   const [activeCategory, setActiveCategory] =
     useState<string>('Smileys & People');
+  const [selectionType, setSelectionType] = useState<string>(
+    ICON_SELECTION_TYPES.EMOJI
+  );
+  const [hlProfile, setHlProfile] = useState<HLProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState<boolean>(false);
+
+  // Get account and wallet info
+  const account = accounts.find(account => account.id === selectedAccountId);
+  const accountWallet = selectedAccountId
+    ? getAccountWalletObject(selectedAccountId)
+    : null;
+
+  // Get the first available address from the wallet object
+  const accountAddress =
+    accountWallet?.eip155?.address ||
+    accountWallet?.solana?.address ||
+    accountWallet?.sui?.address;
+
+  // Fetch HL profile if account has an address
+  useEffect(() => {
+    let isMounted = true;
+    if (accountAddress) {
+      setLoadingProfile(true);
+      getHLProfileByAddress(accountAddress).then(profile => {
+        if (isMounted) {
+          setHlProfile(profile);
+          setLoadingProfile(false);
+        }
+      });
+    } else {
+      setHlProfile(null);
+      setLoadingProfile(false);
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [accountAddress]);
 
   const handleEmojiSelect = (emoji: string) => {
     setSelectedEmoji(emoji);
+    setSelectionType(ICON_SELECTION_TYPES.EMOJI);
+  };
+
+  const handleHLAvatarSelect = () => {
+    if (hlProfile?.avatar) {
+      setSelectedEmoji(''); // Clear emoji selection
+      setSelectionType(ICON_SELECTION_TYPES.HL_AVATAR);
+    }
   };
 
   const handleSave = async () => {
-    if (selectedEmoji && selectedAccountId) {
-      try {
+    if (!selectedAccountId) return;
+
+    try {
+      if (
+        selectionType === ICON_SELECTION_TYPES.HL_AVATAR &&
+        hlProfile?.avatar
+      ) {
+        await changeAccountIcon(selectedAccountId, hlProfile.avatar);
+      } else if (
+        selectionType === ICON_SELECTION_TYPES.EMOJI &&
+        selectedEmoji
+      ) {
         await changeAccountIcon(selectedAccountId, selectedEmoji);
-        onBack();
-      } catch (error) {
-        console.error('Failed to update account icon:', error);
       }
+      onBack();
+    } catch (error) {
+      console.error('Failed to update account icon:', error);
     }
   };
+
+  const hasSelection =
+    (selectionType === ICON_SELECTION_TYPES.EMOJI && selectedEmoji) ||
+    (selectionType === ICON_SELECTION_TYPES.HL_AVATAR && hlProfile?.avatar);
 
   return (
     <DialogWrapper>
       <DialogHeader title="Edit Icon" onClose={onBack} />
       <DialogContent>
-        {/* Selected emoji preview */}
-        {selectedEmoji && (
-          <div className="flex flex-col items-center gap-2 p-4 bg-[var(--background-color)]/50 rounded-lg">
-            <div className="text-4xl">{selectedEmoji}</div>
-            <p className="text-sm text-gray-400">Selected Icon</p>
-          </div>
-        )}
-
-        {/* Category tabs */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {Object.keys(emojiCategories).map(category => (
+        {/* Selection type tabs - only show if HL avatar is available */}
+        {hlProfile?.avatar && (
+          <div className="flex gap-2">
             <button
-              key={category}
-              onClick={() => setActiveCategory(category)}
-              className={`px-3 py-2 rounded-lg text-sm transition-colors ${
-                activeCategory === category
+              onClick={() => setSelectionType(ICON_SELECTION_TYPES.EMOJI)}
+              className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+                selectionType === ICON_SELECTION_TYPES.EMOJI
                   ? 'bg-[var(--primary-color)] text-white'
                   : 'bg-[var(--background-color)] text-gray-400 hover:text-white'
               }`}
             >
-              {category}
+              {SELECTION_TAB_LABELS.EMOJI}
             </button>
-          ))}
-        </div>
+            <button
+              onClick={() => setSelectionType(ICON_SELECTION_TYPES.HL_AVATAR)}
+              className={`px-4 py-2 rounded-lg text-sm transition-colors ${
+                selectionType === ICON_SELECTION_TYPES.HL_AVATAR
+                  ? 'bg-[var(--primary-color)] text-white'
+                  : 'bg-[var(--background-color)] text-gray-400 hover:text-white'
+              }`}
+            >
+              {SELECTION_TAB_LABELS.HL_AVATAR}
+            </button>
+          </div>
+        )}
 
-        {/* Emoji grid */}
-        <div className="grid grid-cols-8 gap-2">
-          {emojiCategories[activeCategory as keyof typeof emojiCategories].map(
-            (emoji, index) => (
-              <button
-                key={`${activeCategory}-${index}`}
-                onClick={() => handleEmojiSelect(emoji)}
-                className={`w-10 h-10 flex items-center justify-center text-2xl rounded-lg transition-all hover:bg-[var(--background-color)]/50 hover:scale-110 ${
-                  selectedEmoji === emoji
-                    ? 'bg-[var(--primary-color)]/20 ring-2 ring-[var(--primary-color)]'
-                    : ''
-                }`}
-              >
-                {emoji}
-              </button>
-            )
-          )}
-        </div>
+        {/* Content based on selection type */}
+        {selectionType === ICON_SELECTION_TYPES.HL_AVATAR ? (
+          <div className="text-center py-8">
+            {loadingProfile ? (
+              <div className="flex flex-col items-center gap-2">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary-color)]"></div>
+                <p className="text-sm text-gray-400">Loading HL profile...</p>
+              </div>
+            ) : hlProfile?.avatar ? (
+              <div className="flex flex-col items-center gap-4">
+                <div
+                  onClick={handleHLAvatarSelect}
+                  className={`cursor-pointer p-4 rounded-lg transition-all hover:bg-[var(--background-color)]/50 hover:scale-105 ${
+                    selectionType === ICON_SELECTION_TYPES.HL_AVATAR
+                      ? 'bg-[var(--primary-color)]/20 ring-2 ring-[var(--primary-color)]'
+                      : ''
+                  }`}
+                >
+                  <img
+                    src={hlProfile.avatar}
+                    alt="HL Avatar"
+                    className="size-20 rounded-full object-cover mx-auto"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <HlNameIcon className="size-5" />
+                  <p className="text-base font-medium">
+                    {hlProfile.primaryName || 'Your HL Avatar'}
+                  </p>
+                </div>
+                <p className="text-sm text-gray-400">
+                  Click to select this as your account icon
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <HlNameIcon className="size-12 text-gray-400" />
+                <p className="text-sm text-gray-400">
+                  No HL avatar found for this address
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            {/* Category tabs for emoji selection */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {Object.keys(emojiCategories).map(category => (
+                <button
+                  key={category}
+                  onClick={() => setActiveCategory(category)}
+                  className={`px-3 py-2 rounded-lg text-sm transition-colors ${
+                    activeCategory === category
+                      ? 'bg-[var(--primary-color)] text-white'
+                      : 'bg-[var(--background-color)] text-gray-400 hover:text-white'
+                  }`}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+
+            {/* Emoji grid */}
+            <div className="grid grid-cols-8 gap-2">
+              {emojiCategories[
+                activeCategory as keyof typeof emojiCategories
+              ].map((emoji, index) => (
+                <button
+                  key={`${activeCategory}-${index}`}
+                  onClick={() => handleEmojiSelect(emoji)}
+                  className={`w-10 h-10 flex items-center justify-center text-2xl rounded-lg transition-all hover:bg-[var(--background-color)]/50 hover:scale-110 ${
+                    selectedEmoji === emoji &&
+                    selectionType === ICON_SELECTION_TYPES.EMOJI
+                      ? 'bg-[var(--primary-color)]/20 ring-2 ring-[var(--primary-color)]'
+                      : ''
+                  }`}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </DialogContent>
       <DialogFooter>
         <Button
           onClick={handleSave}
-          disabled={!selectedEmoji}
+          disabled={!hasSelection}
           className={`w-full ${
-            !selectedEmoji ? 'opacity-50 cursor-not-allowed' : ''
+            !hasSelection ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >
           Save

@@ -17,7 +17,11 @@ import useDialogStore from '@/client/hooks/use-dialog-store';
 import useEditAccountStore from '@/client/hooks/use-edit-account-store';
 import { AccountIcon } from '../../account';
 import { Menu } from '../../ui/menu';
-import { getHLNameByAddress } from '@/client/services/hyperliquid-name-api';
+import {
+  getHLNameByAddress,
+  getHLProfileByAddress,
+  HLProfile,
+} from '@/client/services/hyperliquid-name-api';
 import { HlNameIcon } from '@/assets/icon-component/hl-name-icon';
 
 // Constants for easy customization
@@ -49,6 +53,7 @@ const MainEditAccount = ({
   const isWatchOnly = account?.source === 'watchOnly';
   const [seedPhrase, setSeedPhrase] = useState<SeedPhraseData | null>(null);
   const [hlName, setHlName] = useState<string | null>(null);
+  const [hlProfile, setHlProfile] = useState<HLProfile | null>(null);
 
   // Get the first available address from the wallet object
   const accountAddress =
@@ -56,15 +61,23 @@ const MainEditAccount = ({
     accountWallet?.solana?.address ||
     accountWallet?.sui?.address;
 
-  // Fetch HL name if account has an address
+  // Fetch HL name and profile if account has an address
   useEffect(() => {
     let isMounted = true;
     if (accountAddress) {
-      getHLNameByAddress(accountAddress).then(name => {
-        if (isMounted) setHlName(name);
+      // Fetch both name and profile data
+      Promise.all([
+        getHLNameByAddress(accountAddress),
+        getHLProfileByAddress(accountAddress),
+      ]).then(([name, profile]) => {
+        if (isMounted) {
+          setHlName(name);
+          setHlProfile(profile);
+        }
       });
     } else {
       setHlName(null);
+      setHlProfile(null);
     }
     return () => {
       isMounted = false;
@@ -88,7 +101,7 @@ const MainEditAccount = ({
         onClose={() => closeDialog()}
         icon={<X className="size-4" />}
       />
-      <DialogContent>
+      <DialogContent className="items-center">
         <div className="flex items-center justify-center size-24 bg-[var(--card-color)] rounded-full relative">
           <AccountIcon
             icon={account?.icon}
@@ -104,6 +117,14 @@ const MainEditAccount = ({
             </button>
           </div>
         </div>
+
+        {/* Show HL avatar availability hint */}
+        {hlProfile?.avatar && (
+          <div className="flex items-center justify-center gap-2 px-3 py-1 bg-[var(--background-color)]/30 rounded-full">
+            <HlNameIcon className="size-4" />
+            <p className="text-xs text-gray-400">HL Avatar Available</p>
+          </div>
+        )}
         <Menu
           items={[
             ...(hlName

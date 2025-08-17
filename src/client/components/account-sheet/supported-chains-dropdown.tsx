@@ -169,7 +169,7 @@ const SupportedChainsDropdown = ({
               }}
             >
               <p className="p-2 text-sm font-medium text-[var(--text-color)] border-b border-white/10">
-                {isDevMode ? 'Testnet Chains' : 'Supported Chains'}
+                {isDevMode ? 'Testnet Networks' : 'Supported Networks'}
               </p>
               {sortedChains.map(chain => (
                 <button

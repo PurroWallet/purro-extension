@@ -20,12 +20,18 @@ export const AccountIcon = ({
     icon.startsWith('data:');
 
   if (isUrl) {
-    return <img src={icon} alt={alt} className={cn('size-6', className)} />;
+    return (
+      <img
+        src={icon}
+        alt={alt}
+        className={cn('size-6 rounded-full', className)}
+      />
+    );
   } else {
     return (
       <span
         className={cn(
-          'text-lg w-8 text-center flex items-center justify-center',
+          'text-lg w-8 text-center flex items-center justify-center rounded-full',
           className
         )}
       >
