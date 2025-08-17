@@ -10,14 +10,10 @@ import useSendTokenStore from '@/client/hooks/use-send-token-store';
 import useWalletStore from '@/client/hooks/use-wallet-store';
 import { formatCurrency } from '@/client/utils/formatters';
 import {
-  ArrowLeft,
   Send,
-  DollarSign,
-  Coins,
   CircleAlert,
   CircleCheck,
   Loader2,
-  BookText,
   User,
   ArrowUpDown,
   XIcon,

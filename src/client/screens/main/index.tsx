@@ -19,6 +19,7 @@ import HistoryAnimationIcon from '@/client/components/animation-icon/history';
 import useWalletStore from '@/client/hooks/use-wallet-store';
 import useMainScreenStore from '@/client/hooks/use-main-screen-store';
 import ConfirmSwapButton from '@/client/components/swap-action-button';
+import ExploreAnimationIcon from '@/client/components/animation-icon/explore';
 
 const queryClient = new QueryClient();
 
@@ -108,7 +109,7 @@ export const MainContent = () => {
             onMouseEnter={() => setButtonHovered('swap')}
             onMouseLeave={() => setButtonHovered(null)}
             icon={
-              <SwapAnimationIcon
+              <ExploreAnimationIcon
                 className={cn(
                   mainScreen === 'swap' && 'text-[var(--primary-color-light)]'
                 )}
