@@ -38,14 +38,17 @@ export const IconButton = ({
   children,
   onClick,
   className,
+  disabled,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
   className?: string;
+  disabled?: boolean;
 }) => {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
       className={cn(
         'p-2 rounded-full hover:bg-[var(--card-color)]/80 size-8 transition-all cursor-pointer flex justify-center items-center',
         className

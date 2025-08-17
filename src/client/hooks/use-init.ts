@@ -1,9 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import useWalletStore from './use-wallet-store';
 import { STORAGE_KEYS } from '@/background/constants/storage-keys';
 
+// Constants for easy customization
+const ONBOARDING_CONFIG = {
+  DEBOUNCE_DELAY: 500,
+  WINDOW_CHECK_INTERVAL: 1000,
+  FALLBACK_RESET_DELAY: 5000,
+} as const;
+
+// Global flag to prevent multiple onboarding windows
+let isOnboardingWindowOpen = false;
+
 const useInit = () => {
   const { loading, hasWallet, initialized, loadWalletState } = useWalletStore();
+  const onboardingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     // Initialize wallet state on first load
@@ -13,26 +24,66 @@ const useInit = () => {
   }, [initialized, loading, loadWalletState]);
 
   useEffect(() => {
-    // Handle onboarding flow after state is loaded
-    if (initialized && !loading && !hasWallet) {
-      window.open('onboarding.html', '_blank');
+    // Clear any existing timeout
+    if (onboardingTimeoutRef.current) {
+      clearTimeout(onboardingTimeoutRef.current);
     }
+
+    // Handle onboarding flow after state is loaded
+    const isOnboardingPage = window.location.pathname.includes('onboarding') ||
+      window.location.href.includes('onboarding.html');
+    const isImportPage = window.location.pathname.includes('import') ||
+      window.location.href.includes('import.html');
+
+    if (initialized && !loading && !hasWallet && !isOnboardingPage && !isImportPage && !isOnboardingWindowOpen) {
+      // Debounce the onboarding window opening
+      onboardingTimeoutRef.current = setTimeout(() => {
+        if (!isOnboardingWindowOpen) {
+          isOnboardingWindowOpen = true;
+
+          const newWindow = window.open('onboarding.html', '_blank');
+
+          // Reset flag when window is closed
+          if (newWindow) {
+            const checkClosed = setInterval(() => {
+              if (newWindow.closed) {
+                isOnboardingWindowOpen = false;
+                clearInterval(checkClosed);
+              }
+            }, ONBOARDING_CONFIG.WINDOW_CHECK_INTERVAL);
+
+            // Fallback reset
+            setTimeout(() => {
+              isOnboardingWindowOpen = false;
+              clearInterval(checkClosed);
+            }, ONBOARDING_CONFIG.FALLBACK_RESET_DELAY);
+          } else {
+            isOnboardingWindowOpen = false;
+          }
+        }
+      }, ONBOARDING_CONFIG.DEBOUNCE_DELAY);
+    }
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (onboardingTimeoutRef.current) {
+        clearTimeout(onboardingTimeoutRef.current);
+      }
+    };
   }, [initialized, loading, hasWallet]);
 
-  // Listen for lock state changes from background script
+  // Listen for storage changes
   useEffect(() => {
     function handleStorageChange(
       changes: { [key: string]: chrome.storage.StorageChange },
       areaName: string
     ) {
       if (areaName !== 'local') return;
-      // Refresh when any Purro storage key that may affect wallet state changes
+
       const shouldRefresh = Object.keys(changes).some(
         key =>
-          // Generic prefixes for account / wallet related keys
           key.startsWith('purro:account') ||
           key.startsWith('purro:wallet') ||
-          // Explicit keys we rely on
           key === STORAGE_KEYS.ACCOUNTS ||
           key === STORAGE_KEYS.ACCOUNT_ACTIVE_ACCOUNT ||
           key === STORAGE_KEYS.SESSION_IS_LOCKED

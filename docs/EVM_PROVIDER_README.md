@@ -61,7 +61,7 @@ window.addEventListener('eip6963:announceProvider', (event) => {
 window.dispatchEvent(new CustomEvent('eip6963:requestProvider'));
 
 // Find Purro Wallet
-const purroProvider = providers.find(p => p.info.rdns === 'com.purro.wallet');
+const purroProvider = providers.find(p => p.info.rdns === 'xyz.purro.app');
 if (purroProvider) {
   const provider = purroProvider.provider;
   
@@ -75,7 +75,7 @@ if (purroProvider) {
 
 ```javascript
 // Check window.ethereum
-if (window.ethereum?.info?.rdns === 'com.purro.wallet') {
+if (window.ethereum?.info?.rdns === 'xyz.purro.app') {
   const provider = window.ethereum;
   // Use provider...
 }

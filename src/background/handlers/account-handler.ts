@@ -36,6 +36,50 @@ export const accountHandler = {
     }
   },
 
+  // Validate private key without importing
+  async validatePrivateKey(data: {
+    privateKey: string;
+    chain: ChainType;
+  }): Promise<{ isValid: boolean; address: string }> {
+    try {
+      if (!data.privateKey || typeof data.privateKey !== 'string') {
+        return { isValid: false, address: '' };
+      }
+
+      let walletKeys: any;
+      let isValid = false;
+
+      // Validate private key based on chain type
+      if (data.chain === 'eip155') {
+        isValid = evmWalletKeyUtils.isValidPrivateKey(data.privateKey);
+        if (isValid) {
+          walletKeys = evmWalletKeyUtils.fromPrivateKey(data.privateKey);
+        }
+      } else if (data.chain === 'solana') {
+        isValid = solanaWalletKeyUtils.isValidPrivateKey(data.privateKey);
+        if (isValid) {
+          walletKeys = solanaWalletKeyUtils.fromPrivateKey(data.privateKey);
+        }
+      } else if (data.chain === 'sui') {
+        isValid = suiWalletKeyUtils.isValidPrivateKey(data.privateKey);
+        if (isValid) {
+          walletKeys = suiWalletKeyUtils.fromPrivateKey(data.privateKey);
+        }
+      } else {
+        return { isValid: false, address: '' };
+      }
+
+      if (isValid && walletKeys) {
+        return { isValid: true, address: walletKeys.address };
+      } else {
+        return { isValid: false, address: '' };
+      }
+    } catch (error) {
+      console.error('Private key validation error:', error);
+      return { isValid: false, address: '' };
+    }
+  },
+
   async isPrivateKeyAlreadyImported(privateKey: string): Promise<boolean> {
     try {
       // Validate input

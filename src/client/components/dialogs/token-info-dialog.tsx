@@ -43,7 +43,10 @@ interface TokenInfoDialogProps {
   onClose: () => void;
 }
 
-const checkAlertScanToken = (token: UnifiedToken, hasTokenLogo: boolean = false): ScamAlert => {
+const checkAlertScanToken = (
+  token: UnifiedToken,
+  hasTokenLogo: boolean = false
+): ScamAlert => {
   const reasons: string[] = [];
   let riskLevel: 'high' | 'medium' | 'low' = 'low';
 
@@ -104,20 +107,29 @@ const checkAlertScanToken = (token: UnifiedToken, hasTokenLogo: boolean = false)
   }
 
   // Check for suspicious character combinations
-  if (name.includes('✅') && (name.includes('airdrop') || name.includes('distribution'))) {
+  if (
+    name.includes('✅') &&
+    (name.includes('airdrop') || name.includes('distribution'))
+  ) {
     reasons.push('Checkmark + airdrop/distribution pattern');
     riskLevel = 'high';
   }
 
   // Check for Cyrillic character impersonation (like UЅDС vs USDC)
-  const cyrillicChars = name.match(/[\u0400-\u04FF]/g) || symbol.match(/[\u0400-\u04FF]/g);
+  const cyrillicChars =
+    name.match(/[\u0400-\u04FF]/g) || symbol.match(/[\u0400-\u04FF]/g);
   if (cyrillicChars) {
     reasons.push(`Contains Cyrillic characters: ${cyrillicChars.join(', ')}`);
     riskLevel = 'high';
   }
 
   // Check for URL patterns in name/symbol
-  if (name.includes('t.me') || symbol.includes('t.me') || name.includes('http') || symbol.includes('http')) {
+  if (
+    name.includes('t.me') ||
+    symbol.includes('t.me') ||
+    name.includes('http') ||
+    symbol.includes('http')
+  ) {
     reasons.push('Contains URL/social media links');
     riskLevel = 'high';
   }
@@ -146,7 +158,7 @@ const checkAlertScanToken = (token: UnifiedToken, hasTokenLogo: boolean = false)
   return {
     isScam,
     riskLevel,
-    reasons
+    reasons,
   };
 };
 
@@ -229,14 +241,22 @@ const TokenInfoDialog: React.FC<TokenInfoDialogProps> = ({
         <div className="flex flex-col gap-4">
           {/* Token Header */}
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <TokenLogo
-                symbol={token.symbol}
-                existingLogo={token.logo}
-                networkId={token.chain}
-                tokenAddress={token.contractAddress}
-                className="size-16 rounded-full"
-              />
+            <div className="relative flex-shrink-0">
+              <div className="size-16 flex items-center justify-center rounded-full bg-[var(--primary-color)]/10 overflow-hidden">
+                {scamAlert.isScam ? (
+                  <div className="size-16 rounded-full flex items-center justify-center bg-gradient-to-br from-orange-500/20 to-orange-500/10 text-orange-600">
+                    <AlertTriangle className="w-8 h-8" />
+                  </div>
+                ) : (
+                  <TokenLogo
+                    symbol={token.symbol}
+                    existingLogo={token.logo}
+                    networkId={token.chain}
+                    tokenAddress={token.contractAddress}
+                    className="size-16 rounded-full"
+                  />
+                )}
+              </div>
               <div className="absolute -bottom-1 -right-1 size-6 bg-[var(--background-color)] rounded-full flex items-center justify-center border border-[var(--card-color)]">
                 <img
                   src={getNetworkIcon(token.chain)}
@@ -245,41 +265,51 @@ const TokenInfoDialog: React.FC<TokenInfoDialogProps> = ({
                 />
               </div>
             </div>
-            <div className="flex-1">
-              <h3 className="text-xl font-bold text-white">{token.name}</h3>
-              <p className="text-white/60">{token.symbol}</p>
-              <p className="text-sm text-white/40">{token.chainName}</p>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-xl font-bold text-white truncate">
+                {token.name}
+              </h3>
+              <p className="text-white/60 truncate">{token.symbol}</p>
+              <p className="text-sm text-white/40 truncate">
+                {token.chainName}
+              </p>
             </div>
           </div>
 
           {/* Scam Warning Alert */}
           {scamAlert.isScam && (
-            <div className={`p-3 rounded-lg border ${
-              scamAlert.riskLevel === 'high'
-                ? 'bg-amber-500/10 border-amber-500/30'
-                : scamAlert.riskLevel === 'medium'
-                ? 'bg-yellow-500/10 border-yellow-500/30'
-                : 'bg-orange-500/10 border-orange-500/30'
-            }`}>
+            <div
+              className={`p-3 rounded-lg border ${
+                scamAlert.riskLevel === 'high'
+                  ? 'bg-amber-500/10 border-amber-500/30'
+                  : scamAlert.riskLevel === 'medium'
+                    ? 'bg-yellow-500/10 border-yellow-500/30'
+                    : 'bg-orange-500/10 border-orange-500/30'
+              }`}
+            >
               {/* Collapsible Header */}
               <div
                 className="flex items-center gap-2 cursor-pointer"
                 onClick={() => setIsWarningExpanded(!isWarningExpanded)}
               >
-                <AlertTriangle className={`w-4 h-4 flex-shrink-0 ${
-                  scamAlert.riskLevel === 'high'
-                    ? 'text-amber-400'
-                    : scamAlert.riskLevel === 'medium'
-                    ? 'text-yellow-400'
-                    : 'text-orange-400'
-                }`} />
-                <h4 className={`font-semibold text-sm flex-1 ${
-                  scamAlert.riskLevel === 'high'
-                    ? 'text-amber-400'
-                    : scamAlert.riskLevel === 'medium'
-                    ? 'text-yellow-400'
-                    : 'text-orange-400'
-                }`}>
+                <AlertTriangle
+                  className={`w-4 h-4 flex-shrink-0 ${
+                    scamAlert.riskLevel === 'high'
+                      ? 'text-amber-400'
+                      : scamAlert.riskLevel === 'medium'
+                        ? 'text-yellow-400'
+                        : 'text-orange-400'
+                  }`}
+                />
+                <h4
+                  className={`font-semibold text-sm flex-1 ${
+                    scamAlert.riskLevel === 'high'
+                      ? 'text-amber-400'
+                      : scamAlert.riskLevel === 'medium'
+                        ? 'text-yellow-400'
+                        : 'text-orange-400'
+                  }`}
+                >
                   Security Warning - {scamAlert.riskLevel.toUpperCase()} Risk
                 </h4>
                 {isWarningExpanded ? (
@@ -292,7 +322,9 @@ const TokenInfoDialog: React.FC<TokenInfoDialogProps> = ({
               {/* Collapsible Content */}
               {isWarningExpanded && (
                 <div className="mt-3">
-                  <p className="text-sm text-white/70">Verify this token carefully before transactions.</p>
+                  <p className="text-sm text-white/70">
+                    Verify this token carefully before transactions.
+                  </p>
                 </div>
               )}
             </div>
@@ -390,7 +422,7 @@ const TokenInfoDialog: React.FC<TokenInfoDialogProps> = ({
         {/* Swap button - only show for HyperEVM tokens */}
         {isHyperEvmToken && (
           <Button
-            variant={scamAlert.isScam ? "secondary" : "primary"}
+            variant={scamAlert.isScam ? 'secondary' : 'primary'}
             className={`w-full flex items-center gap-2 ${
               scamAlert.isScam
                 ? 'border-amber-500/50 text-amber-400 hover:bg-amber-500/10'
@@ -403,9 +435,8 @@ const TokenInfoDialog: React.FC<TokenInfoDialogProps> = ({
             {scamAlert.riskLevel === 'high'
               ? `⚠️ High Risk - Swap Disabled`
               : scamAlert.isScam
-              ? `⚠️ Swap ${token.symbol} (Use Caution)`
-              : `Swap ${token.symbol}`
-            }
+                ? `⚠️ Swap ${token.symbol} (Use Caution)`
+                : `Swap ${token.symbol}`}
           </Button>
         )}
 

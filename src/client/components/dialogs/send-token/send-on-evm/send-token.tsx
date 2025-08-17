@@ -18,6 +18,9 @@ import {
   CircleCheck,
   Loader2,
   BookText,
+  User,
+  ArrowUpDown,
+  XIcon,
 } from 'lucide-react';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -264,7 +267,7 @@ const SendToken = () => {
       <DialogHeader
         title={`Send ${token?.symbol || 'Token'}`}
         onClose={onBack}
-        icon={<ArrowLeft className="size-4 text-white" />}
+        icon={<XIcon className="size-4 text-white" />}
       />
       <DialogContent>
         {token && (
@@ -292,9 +295,7 @@ const SendToken = () => {
 
             {/* Recipient Address Input */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">
-                Recipient Address
-              </label>
+              <label className="block text-base ">Recipient Address</label>
               <div className="w-full relative">
                 <Input
                   type="text"
@@ -314,7 +315,7 @@ const SendToken = () => {
                   }
                   className="absolute right-2 top-1/2 -translate-y-1/2 size-8 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center cursor-pointer"
                 >
-                  <BookText className="size-4" />
+                  <User className="size-4 text-white" />
                 </button>
 
                 {/* Address Dropdown */}
@@ -416,30 +417,26 @@ const SendToken = () => {
             {/* Amount Input */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-300">
-                  Amount
-                </label>
-                <Button
-                  onClick={toggleInputMode}
-                  className="px-2 py-1 text-xs bg-[var(--primary-color)] hover:bg-[var(--primary-color)]/80 text-white"
-                >
-                  {inputMode === 'token' ? (
-                    <DollarSign className="size-3" />
-                  ) : (
-                    <Coins className="size-3" />
-                  )}
-                  {inputMode === 'token' ? 'USD' : token.symbol}
-                </Button>
+                <label className="block text-base">Amount</label>
+                <span className="text-sm text-gray-400">
+                  Balance:{' '}
+                  {inputMode === 'token'
+                    ? `${formatDisplayNumber(
+                        token.balanceFormatted,
+                        'token'
+                      )} ${token.symbol}`
+                    : formatCurrency(token.usdValue)}
+                </span>
               </div>
 
               {/* Input field with Max button */}
-              <div className="relative">
+              <div className="flex items-stretch gap-1">
                 <input
                   type="number"
                   value={amount}
                   onChange={e => setAmount(e.target.value)}
                   placeholder={inputMode === 'token' ? '0.0' : '0.00'}
-                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 pr-12 text-base transition-colors duration-200 ${
+                  className={`flex-1 px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 bg-[var(--card-color)] text-white placeholder-gray-400 text-base transition-colors duration-200 ${
                     amount && !isValidAmount
                       ? 'border-red-500 focus:ring-red-500'
                       : 'border-white/10 focus:ring-[var(--primary-color-light)]'
@@ -449,7 +446,7 @@ const SendToken = () => {
                 />
                 <Button
                   onClick={handleMaxClick}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs bg-[var(--primary-color)] text-white hover:bg-[var(--primary-color)]/80"
+                  className="px-4 text-xs bg-[var(--primary-color)] text-white hover:bg-[var(--primary-color)]/80 rounded-lg"
                 >
                   Max
                 </Button>
@@ -457,19 +454,14 @@ const SendToken = () => {
 
               {/* Conversion and Available Balance */}
               <div className="flex items-center justify-between text-sm text-gray-400">
-                <span>
+                <span
+                  onClick={toggleInputMode}
+                  className="flex items-center gap-1 cursor-pointer"
+                >
                   {inputMode === 'token'
                     ? `≈ $${conversionAmount}`
-                    : `≈ ${conversionAmount} ${token.symbol}`}
-                </span>
-                <span>
-                  Available:{' '}
-                  {inputMode === 'token'
-                    ? `${formatDisplayNumber(
-                        token.balanceFormatted,
-                        'token'
-                      )} ${token.symbol}`
-                    : formatCurrency(token.usdValue)}
+                    : `≈ ${conversionAmount} ${token.symbol}`}{' '}
+                  <ArrowUpDown className="size-4" />
                 </span>
               </div>
 

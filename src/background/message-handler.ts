@@ -125,6 +125,9 @@ export class MessageHandler {
             data.accountName
           );
           break;
+        case 'VALIDATE_PRIVATE_KEY':
+          result = await accountHandler.validatePrivateKey(data);
+          break;
         case 'IS_WATCH_ONLY_ADDRESS_EXISTS':
           result = await accountHandler.isWalletAddressExists(data.address);
           break;

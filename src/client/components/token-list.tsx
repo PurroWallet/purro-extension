@@ -244,11 +244,11 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
 
     switch (scamAlert.riskLevel) {
       case 'high':
-        return 'border-2 border-amber-500/50 bg-amber-500/5';
+        return 'bg-amber-500/5';
       case 'medium':
-        return 'border-2 border-yellow-500/50 bg-yellow-500/5';
+        return 'bg-yellow-500/5';
       default:
-        return 'border border-orange-500/30 bg-orange-500/5';
+        return 'bg-orange-500/5';
     }
   };
 
@@ -271,11 +271,13 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
               onError={() => setTokenImageError(true)}
             />
           ) : (
-            <div className={`size-12 rounded-full flex items-center justify-center font-bold text-lg border ${
-              scamAlert.isScam
-                ? 'bg-gradient-to-br from-orange-500/20 to-orange-500/10 text-orange-600 border-orange-500/20'
-                : 'bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 text-[var(--primary-color)] border-[var(--primary-color)]/20'
-            }`}>
+            <div
+              className={`size-12 rounded-full flex items-center justify-center font-bold text-lg ${
+                scamAlert.isScam
+                  ? 'bg-gradient-to-br from-orange-500/20 to-orange-500/10 text-orange-600'
+                  : 'bg-gradient-to-br from-[var(--primary-color)]/20 to-[var(--primary-color)]/10 text-[var(--primary-color)] border-[var(--primary-color)]/20'
+              }`}
+            >
               {scamAlert.isScam ? (
                 <AlertTriangle className="w-6 h-6" />
               ) : (
@@ -319,8 +321,6 @@ const TokenItem = ({ token, onClick }: TokenItemProps) => {
           </span>
         </div>
       </div>
-
-
     </div>
   );
 };
