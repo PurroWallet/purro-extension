@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogWrapper,
+  IconButton,
 } from '@/client/components/ui';
 import { DialogHeader } from '@/client/components/ui';
 import useSendTokenStore from '@/client/hooks/use-send-token-store';
@@ -17,11 +18,11 @@ import useDialogStore from '@/client/hooks/use-dialog-store';
 import {
   ArrowLeft,
   Send,
-  CheckCircle,
   AlertTriangle,
   X,
   CircleAlert,
-  Pen,
+  ChevronDown,
+  RefreshCw,
 } from 'lucide-react';
 import { getNetworkIcon } from '@/utils/network-icons';
 import { getAddressByDomain } from '@/client/services/hyperliquid-name-api';
@@ -31,6 +32,56 @@ import {
 } from '@/client/hooks/use-native-balance';
 import TokenLogo from '@/client/components/token-logo';
 import { ensureTokenDecimals } from '@/client/utils/token-decimals';
+import { Menu } from '@/client/components/ui/menu';
+
+// Constants for better maintainability
+const GAS_ESTIMATION_CONSTANTS = {
+  REFRESH_INTERVAL: 30000, // 30 seconds
+  RETRY_DELAY: 2000, // 2 seconds
+  MAX_RETRIES: 3,
+  FALLBACK_GAS_PRICE: 20, // gwei
+} as const;
+
+const GAS_PRIORITY_MULTIPLIERS = {
+  L2: {
+    slow: 0.95,
+    standard: 1.0,
+    fast: 1.05,
+    rapid: 1.1,
+  },
+  L1: {
+    slow: 0.8,
+    standard: 1.0,
+    fast: 1.2,
+    rapid: 1.5,
+  },
+  BUFFER: {
+    L2: 1.1,
+    L1: 1.2,
+  },
+} as const;
+
+const GAS_PRIORITY_TIMES = {
+  slow: '~30s',
+  standard: '~15s',
+  fast: '~10s',
+  rapid: '~5s',
+} as const;
+
+const SKELETON_CONSTANTS = {
+  ANIMATION: 'animate-pulse',
+  COLORS: {
+    BACKGROUND: 'bg-gray-300 dark:bg-gray-600',
+    SHIMMER: 'bg-white/10',
+  },
+  SIZES: {
+    GAS_LIMIT: 'h-4 w-16',
+    GAS_PRICE: 'h-4 w-20',
+    GAS_FEE: 'h-4 w-24',
+    GAS_USD: 'h-4 w-16',
+    SPEED: 'h-4 w-18',
+  },
+} as const;
 
 type GasEstimate = {
   gasLimit: string;
@@ -38,6 +89,176 @@ type GasEstimate = {
   gasCostEth: string;
   gasCostUsd: string;
   totalCostUsd: string;
+};
+
+// Gas estimation skeleton component with consistent header
+const GasEstimationSkeleton = () => {
+  return (
+    <div>
+      {/* Header skeleton */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <h4 className="text-white text-base">Gas Estimate</h4>
+        </div>
+        <IconButton>
+          <RefreshCw className="size-4 text-white animate-spin" />
+        </IconButton>
+      </div>
+
+      {/* Gas details skeleton using Menu structure */}
+      <Menu
+        items={[
+          {
+            label: 'Gas Limit',
+            description: '',
+            arrowLeftIcon: () => (
+              <div
+                className={`${SKELETON_CONSTANTS.SIZES.GAS_LIMIT} ${SKELETON_CONSTANTS.COLORS.SHIMMER} rounded ${SKELETON_CONSTANTS.ANIMATION}`}
+              ></div>
+            ),
+          },
+          {
+            label: 'Gas Price',
+            description: '',
+            arrowLeftIcon: () => (
+              <div
+                className={`${SKELETON_CONSTANTS.SIZES.GAS_PRICE} ${SKELETON_CONSTANTS.COLORS.SHIMMER} rounded ${SKELETON_CONSTANTS.ANIMATION}`}
+              ></div>
+            ),
+          },
+          {
+            label: 'Gas Fee',
+            description: '',
+            arrowLeftIcon: () => (
+              <div
+                className={`${SKELETON_CONSTANTS.SIZES.GAS_FEE} ${SKELETON_CONSTANTS.COLORS.SHIMMER} rounded ${SKELETON_CONSTANTS.ANIMATION}`}
+              ></div>
+            ),
+          },
+          {
+            label: 'Gas Fee (USD)',
+            description: '',
+            arrowLeftIcon: () => (
+              <div
+                className={`${SKELETON_CONSTANTS.SIZES.GAS_USD} ${SKELETON_CONSTANTS.COLORS.SHIMMER} rounded ${SKELETON_CONSTANTS.ANIMATION}`}
+              ></div>
+            ),
+          },
+          {
+            label: 'Speed',
+            description: '',
+            arrowLeftIcon: () => (
+              <div className="flex items-center space-x-2">
+                <div
+                  className={`${SKELETON_CONSTANTS.SIZES.SPEED} ${SKELETON_CONSTANTS.COLORS.SHIMMER} rounded ${SKELETON_CONSTANTS.ANIMATION}`}
+                ></div>
+                <div
+                  className={`w-5 h-5 ${SKELETON_CONSTANTS.COLORS.SHIMMER} rounded ${SKELETON_CONSTANTS.ANIMATION}`}
+                ></div>
+              </div>
+            ),
+          },
+        ]}
+      />
+
+      {/* Total cost skeleton */}
+      <Menu
+        items={[
+          {
+            label: 'Total (Token + Gas Fee)',
+            description: '',
+            arrowLeftIcon: () => (
+              <div
+                className={`h-4 w-20 ${SKELETON_CONSTANTS.COLORS.SHIMMER} rounded ${SKELETON_CONSTANTS.ANIMATION}`}
+              ></div>
+            ),
+          },
+        ]}
+      />
+    </div>
+  );
+};
+
+// Compact error component that fits with Menu design
+const GasEstimationError = ({
+  error,
+  onRetry,
+  retryCount = 0,
+  isRetrying = false,
+}: {
+  error: string;
+  onRetry: () => void;
+  retryCount?: number;
+  isRetrying?: boolean;
+}) => {
+  const canRetry = retryCount < GAS_ESTIMATION_CONSTANTS.MAX_RETRIES;
+  const shortError = error.length > 50 ? error.substring(0, 50) + '...' : error;
+
+  return (
+    <div className="space-y-3">
+      {/* Error header with retry action */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <h4 className="text-white text-base">Gas Estimate</h4>
+          <div className="flex items-center space-x-1">
+            <AlertTriangle className="size-3 text-yellow-400" />
+            <span className="text-yellow-400 text-xs">failed</span>
+          </div>
+        </div>
+        {canRetry && (
+          <IconButton onClick={onRetry} disabled={isRetrying}>
+            <RefreshCw
+              className={`size-4 text-gray-400 ${isRetrying ? 'animate-spin' : ''}`}
+            />
+          </IconButton>
+        )}
+      </div>
+
+      {/* Error details in Menu format */}
+      <Menu
+        items={[
+          {
+            label: 'Status',
+            description: canRetry ? 'Retrying...' : 'Failed',
+            arrowLeftIcon: () => (
+              <div
+                className={`w-2 h-2 rounded-full ${canRetry ? 'bg-yellow-400 animate-pulse' : 'bg-red-400'}`}
+              />
+            ),
+          },
+          {
+            label: 'Error',
+            description: shortError,
+          },
+          ...(retryCount > 0
+            ? [
+                {
+                  label: 'Attempts',
+                  description: `${retryCount}/${GAS_ESTIMATION_CONSTANTS.MAX_RETRIES}`,
+                },
+              ]
+            : []),
+        ]}
+      />
+
+      {/* Manual retry for max attempts reached */}
+      {!canRetry && (
+        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
+          <div className="flex items-start space-x-2">
+            <AlertTriangle className="size-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-yellow-400 text-xs font-medium mb-1">
+                Unable to estimate gas fees
+              </p>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Please check your connection and try refreshing the page
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 // Helper function to get chain ID from chain name
@@ -96,55 +317,56 @@ const estimateGas = async (
       };
     }
 
-    // Get gas estimate
-    const gasEstimateResponse = await sendMessage('EVM_ESTIMATE_GAS', {
-      transaction: txObject,
-      chainId: getChainId(token.chain),
-    });
+    // Get gas estimate and gas price in parallel
+    const [gasEstimateResponse, gasPriceResponse] = await Promise.all([
+      sendMessage('EVM_ESTIMATE_GAS', {
+        txObject: txObject,
+        chainId: getChainId(token.chain),
+      }),
+      sendMessage('EVM_GET_GAS_PRICE', {
+        chainId: getChainId(token.chain),
+      }),
+    ]);
 
-    // Access the nested data properly (backend wraps response in data field)
-    // First try the direct path, then fallback to nested path
-    const estimateData =
-      gasEstimateResponse.data || gasEstimateResponse.data?.data;
-    const gasLimit = parseInt(estimateData.gas, 16);
-
-    // Handle both legacy and EIP-1559 transactions
-    let effectiveGasPrice: number;
-    let gasPriceGwei: number;
-
-    if (estimateData.gasPrice) {
-      // Legacy transaction (type 0x0)
-      effectiveGasPrice = parseInt(estimateData.gasPrice, 16);
-
-      gasPriceGwei = effectiveGasPrice / 1e9;
-    } else if (estimateData.maxFeePerGas) {
-      // EIP-1559 transaction (type 0x2)
-      effectiveGasPrice = parseInt(estimateData.maxFeePerGas, 16);
-      gasPriceGwei = effectiveGasPrice / 1e9;
-
-      // Log additional EIP-1559 info if available
-      // if (estimateData.maxPriorityFeePerGas) {
-      //   const priorityFeeGwei = Math.round(
-      //     parseInt(estimateData.maxPriorityFeePerGas, 16) / 1e9
-      //   );
-      // }
-    } else {
-      // Fallback if neither is available
-      console.warn('⚠️ No gas price data in response, using fallback');
-      effectiveGasPrice = 20e9; // 20 Gwei fallback
-      gasPriceGwei = 20;
+    // Check if the gas estimate response is successful and has data
+    if (!gasEstimateResponse?.success || !gasEstimateResponse?.data) {
+      throw new Error('Failed to get gas estimate from backend');
     }
+
+    const estimateData = gasEstimateResponse.data;
+
+    // Check if gasEstimate exists in the response
+    if (!estimateData.gasEstimate) {
+      throw new Error('Gas estimate not found in response');
+    }
+
+    const gasLimit = parseInt(estimateData.gasEstimate, 16);
+
+    // Handle gas price - throw error if not available instead of using fallback
+    if (!gasPriceResponse?.success || !gasPriceResponse?.data?.gasPrice) {
+      throw new Error(
+        'Unable to fetch current gas price. Please try again later.'
+      );
+    }
+
+    const effectiveGasPrice = parseInt(gasPriceResponse.data.gasPrice, 16);
+    const gasPriceGwei = effectiveGasPrice / 1e9;
 
     // Calculate gas cost in ETH
     const gasCostWei = gasLimit * effectiveGasPrice;
     const gasCostEth = gasCostWei / 1e18;
 
-    let nativeTokenPrice = 3000; // Default fallback
-
     const nativeToken = nativeTokens.find(
       (t: NativeToken) => t.chain === token.chain
     );
-    nativeTokenPrice = nativeToken?.usdPrice || 3000;
+
+    if (!nativeToken?.usdPrice) {
+      throw new Error(
+        'Unable to fetch current token price for gas calculation. Please try again later.'
+      );
+    }
+
+    const nativeTokenPrice = nativeToken.usdPrice;
 
     const gasCostUsd = gasCostEth * nativeTokenPrice;
     const tokenTotalCostUsd = parseFloat(amount) * (token.usdPrice || 0);
@@ -162,25 +384,8 @@ const estimateGas = async (
     };
   } catch (error) {
     console.error('❌ Gas estimation failed:', error);
-
-    // Fallback to estimated values if RPC fails
-    const fallbackGasLimit = token.symbol === 'ETH' ? '21000' : '65000';
-    const fallbackGasPrice = '20'; // 20 gwei
-    const fallbackGasCostEth =
-      (parseInt(fallbackGasLimit) * parseInt(fallbackGasPrice) * 1e9) / 1e18; // Convert gwei to ETH
-    const fallbackGasCostUsd = fallbackGasCostEth * 3000;
-
-    console.warn('⚠️ Using fallback gas estimation');
-    const tokenTotalCostUsd = parseFloat(amount) * (token.usdPrice || 0);
-    return {
-      gasLimit: fallbackGasLimit,
-      gasPrice: fallbackGasPrice,
-      gasCostEth: fallbackGasCostEth.toFixed(8),
-      gasCostUsd: fallbackGasCostUsd.toFixed(6),
-      totalCostUsd: (tokenTotalCostUsd + fallbackGasCostUsd).toFixed(6),
-      transactionType: 'fallback',
-      isEIP1559: false,
-    };
+    // Re-throw the error instead of providing fallback values
+    throw error;
   }
 };
 
@@ -214,28 +419,28 @@ const GasFeeSelection = ({
   }>({
     slow: {
       gasPrice: '',
-      time: '~30s',
+      time: GAS_PRIORITY_TIMES.slow,
       gasCostEth: '',
       gasCostUsd: '',
       totalCostUsd: '',
     },
     standard: {
       gasPrice: '',
-      time: '~15s',
+      time: GAS_PRIORITY_TIMES.standard,
       gasCostEth: '',
       gasCostUsd: '',
       totalCostUsd: '',
     },
     fast: {
       gasPrice: '',
-      time: '~10s',
+      time: GAS_PRIORITY_TIMES.fast,
       gasCostEth: '',
       gasCostUsd: '',
       totalCostUsd: '',
     },
     rapid: {
       gasPrice: '',
-      time: '~5s',
+      time: GAS_PRIORITY_TIMES.rapid,
       gasCostEth: '',
       gasCostUsd: '',
       totalCostUsd: '',
@@ -250,18 +455,8 @@ const GasFeeSelection = ({
       token.chain === 'hyperevm';
 
     const multipliers = isL2
-      ? {
-          slow: 0.95,
-          standard: 1.0,
-          fast: 1.05,
-          rapid: 1.1,
-        }
-      : {
-          slow: 0.8,
-          standard: 1.0,
-          fast: 1.2,
-          rapid: 1.5,
-        };
+      ? GAS_PRIORITY_MULTIPLIERS.L2
+      : GAS_PRIORITY_MULTIPLIERS.L1;
 
     return baseGasPrice * multipliers[priority];
   }
@@ -392,6 +587,11 @@ const ConfirmSend = () => {
   const { getActiveAccountWalletObject } = useWalletStore();
   const [gasEstimate, setGasEstimate] = useState<GasEstimate | null>(null);
   const [isEstimatingGas, setIsEstimatingGas] = useState(true);
+  const [gasEstimationError, setGasEstimationError] = useState<string | null>(
+    null
+  );
+  const [gasRetryCount, setGasRetryCount] = useState(0);
+  const [isRetryingGas, setIsRetryingGas] = useState(false);
   const [addressDomain, setAddressDomain] = useState<string | null>(null);
   const { nativeTokens } = useNativeBalance();
   const [isHaveEnoughGasFee, setIsHaveEnoughGasFee] = useState(true);
@@ -399,6 +599,7 @@ const ConfirmSend = () => {
   const [gasRefreshCounter, setGasRefreshCounter] = useState(0);
   const [lastGasUpdate, setLastGasUpdate] = useState<number>(Date.now());
   const [refreshCountdown, setRefreshCountdown] = useState<number>(30);
+  const [isGasCollapsibleOpen, setIsGasCollapsibleOpen] = useState(false);
 
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
   const isHLName = recipient.match(/^[a-zA-Z0-9]+\.hl$/);
@@ -414,32 +615,66 @@ const ConfirmSend = () => {
     }
   }, [recipient]);
 
-  useEffect(() => {
-    const performGasEstimation = async () => {
-      if (token && amount && recipient && activeAccountAddress) {
-        setIsEstimatingGas(true);
-        if (isHLName && !addressDomain) {
-          setIsEstimatingGas(false);
-          return;
-        }
+  // Gas estimation function with retry logic
+  const performGasEstimation = async (isRetry = false) => {
+    if (!token || !amount || !recipient || !activeAccountAddress) return;
 
-        try {
-          const estimate = await estimateGas(
-            token,
-            amount,
-            addressDomain || recipient,
-            activeAccountAddress,
-            nativeTokens
-          );
-          setGasEstimate(estimate);
-        } catch (error) {
-          console.error('Failed to estimate gas:', error);
-        } finally {
-          setIsEstimatingGas(false);
+    if (isHLName && !addressDomain) {
+      setIsEstimatingGas(false);
+      return;
+    }
+
+    setIsEstimatingGas(true);
+    if (isRetry) {
+      setIsRetryingGas(true);
+    }
+
+    try {
+      const estimate = await estimateGas(
+        token,
+        amount,
+        addressDomain || recipient,
+        activeAccountAddress,
+        nativeTokens
+      );
+      setGasEstimate(estimate);
+      setGasEstimationError(null);
+      setGasRetryCount(0); // Reset retry count on success
+    } catch (error) {
+      console.error('Failed to estimate gas:', error);
+      setGasEstimate(null);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unable to estimate gas fees';
+      setGasEstimationError(errorMessage);
+
+      // Auto-retry logic for retryable errors
+      if (!isRetry && gasRetryCount < GAS_ESTIMATION_CONSTANTS.MAX_RETRIES) {
+        const isRetryableError =
+          errorMessage.includes('fetch') ||
+          errorMessage.includes('network') ||
+          errorMessage.includes('timeout') ||
+          errorMessage.includes('Unable to fetch');
+
+        if (isRetryableError) {
+          setGasRetryCount(prev => prev + 1);
+          setTimeout(() => {
+            performGasEstimation(true);
+          }, GAS_ESTIMATION_CONSTANTS.RETRY_DELAY);
         }
       }
-    };
+    } finally {
+      setIsEstimatingGas(false);
+      setIsRetryingGas(false);
+    }
+  };
 
+  // Manual retry handler
+  const handleGasRetry = () => {
+    setGasRetryCount(prev => prev + 1);
+    performGasEstimation(true);
+  };
+
+  useEffect(() => {
     performGasEstimation();
   }, [
     token,
@@ -469,17 +704,18 @@ const ConfirmSend = () => {
   useEffect(() => {
     if (!token || !amount || !recipient || !activeAccountAddress) return;
 
-    const GAS_REFRESH_INTERVAL = 30000; // 30 seconds
-
     const refreshInterval = setInterval(() => {
       const timeSinceLastUpdate = Date.now() - lastGasUpdate;
 
       // Only refresh if enough time has passed and we're not currently estimating
-      if (timeSinceLastUpdate >= GAS_REFRESH_INTERVAL && !isEstimatingGas) {
+      if (
+        timeSinceLastUpdate >= GAS_ESTIMATION_CONSTANTS.REFRESH_INTERVAL &&
+        !isEstimatingGas
+      ) {
         setGasRefreshCounter(prev => prev + 1);
         setLastGasUpdate(Date.now());
       }
-    }, GAS_REFRESH_INTERVAL);
+    }, GAS_ESTIMATION_CONSTANTS.REFRESH_INTERVAL);
 
     return () => clearInterval(refreshInterval);
   }, [
@@ -530,8 +766,10 @@ const ConfirmSend = () => {
 
         // Fallback if gas price is 0 or invalid
         if (!gasPriceGwei || gasPriceGwei <= 0) {
-          console.warn('⚠️ Invalid gas price, using fallback of 20 gwei');
-          gasPriceGwei = 20;
+          console.warn(
+            `⚠️ Invalid gas price, using fallback of ${GAS_ESTIMATION_CONSTANTS.FALLBACK_GAS_PRICE} gwei`
+          );
+          gasPriceGwei = GAS_ESTIMATION_CONSTANTS.FALLBACK_GAS_PRICE;
         }
 
         // Add safety buffer to gas price (10% extra) to account for network changes
@@ -539,7 +777,9 @@ const ConfirmSend = () => {
           token.chain === 'arbitrum' ||
           token.chain === 'base' ||
           token.chain === 'hyperevm';
-        const bufferMultiplier = isL2 ? 1.1 : 1.2; // Smaller buffer for L2s
+        const bufferMultiplier = isL2
+          ? GAS_PRIORITY_MULTIPLIERS.BUFFER.L2
+          : GAS_PRIORITY_MULTIPLIERS.BUFFER.L1;
         gasPriceGwei = Math.ceil(gasPriceGwei * bufferMultiplier * 1000) / 1000; // Round to 3 decimals
 
         const gasPriceWei = Math.floor(gasPriceGwei * 1e9);
@@ -688,7 +928,7 @@ const ConfirmSend = () => {
   return (
     <DialogWrapper>
       <DialogHeader
-        title="Confirm Transaction"
+        title="Confirm Send"
         onClose={handleBackFromConfirm}
         icon={<ArrowLeft className="size-4 text-white" />}
         rightContent={
@@ -702,155 +942,161 @@ const ConfirmSend = () => {
       />
       <DialogContent>
         {token && (
-          <div className="space-y-6">
-            {/* Transaction Summary */}
-            <div className="bg-[var(--card-color)] rounded-lg p-4 border border-white/10">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
-                <CheckCircle className="size-5 mr-2 text-green-500" />
-                Transaction Summary
-              </h3>
-
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Token</span>
-                  <div className="flex items-center">
-                    <div className="flex items-center justify-center size-6 bg-[var(--card-color)] rounded-full mr-2">
-                      <TokenLogo
-                        symbol={token.symbol}
-                        existingLogo={token.logo}
-                        className="size-6 rounded-full object-cover p-1"
-                        fallbackText={token.symbol.charAt(0).toUpperCase()}
-                      />
-                    </div>
-                    <span className="text-white font-medium">
-                      {token.symbol}
-                    </span>
-                  </div>
+          <div className="space-y-4">
+            {/* Token Display */}
+            <div className="flex items-center justify-center size-24 bg-[var(--card-color)] rounded-full relative mx-auto">
+              <TokenLogo
+                symbol={token.symbol}
+                networkId={token.chain}
+                existingLogo={token.logo}
+                tokenAddress={token.contractAddress}
+                className="size-24 rounded-full object-cover"
+                fallbackText={token.symbol.charAt(0).toUpperCase()}
+              />
+              {token.chain && (
+                <div className="absolute bottom-0 right-0 flex items-center justify-center bg-[var(--card-color)] rounded-full">
+                  <img
+                    src={getNetworkIcon(token.chain)}
+                    alt={token.chain}
+                    className="size-6 rounded-full"
+                  />
                 </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Amount</span>
-                  <div className="text-right">
-                    <div className="text-white font-medium">
-                      {amount} {token.symbol}
-                    </div>
-                    <div className="text-gray-400 text-sm">
-                      ≈ $
-                      {(
-                        (parseFloat(amount) || 0) * (token.usdPrice || 0)
-                      ).toFixed(2)}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">To</span>
-                  <span className="text-white font-mono text-sm">
-                    {addressDomain
-                      ? addressDomain.slice(0, 6) +
-                        '...' +
-                        addressDomain.slice(-4)
-                      : recipient.slice(0, 6) +
-                        '...' +
-                        recipient.slice(-4)}{' '}
-                    {isHLName && `(${recipient})`}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-400">Network</span>
-                  <div className="flex items-center">
-                    <img
-                      src={getNetworkIcon(token.chain)}
-                      alt={token.chain}
-                      className="size-5 rounded-full mr-2"
-                    />
-                    <span className="text-white capitalize">{token.chain}</span>
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
+
+            {/* Transaction Summary */}
+            <Menu
+              items={[
+                {
+                  label: 'Token',
+                  description: token.symbol,
+                },
+                {
+                  label: 'Amount',
+                  description: `${amount} ${token.symbol}`,
+                },
+                {
+                  label: 'USD Value',
+                  description: `≈ $${(
+                    (parseFloat(amount) || 0) * (token.usdPrice || 0)
+                  ).toFixed(2)}`,
+                },
+                {
+                  label: 'To',
+                  description: isHLName
+                    ? `${addressDomain} (${recipient})`
+                    : recipient,
+                  isLongDescription: true,
+                },
+                {
+                  label: 'Network',
+                  description:
+                    token.chain === 'hyperevm'
+                      ? 'HypeEVM'
+                      : token.chain.charAt(0).toUpperCase() +
+                        token.chain.slice(1),
+                },
+              ]}
+            />
 
             {/* Gas Fee Details */}
             {isEstimatingGas ? (
-              <div className="bg-[var(--card-color)] rounded-lg p-4 border border-white/10">
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-2"></div>
-                  <span className="text-white">Estimating gas fees...</span>
-                </div>
-              </div>
+              <GasEstimationSkeleton />
+            ) : gasEstimationError ? (
+              <GasEstimationError
+                error={gasEstimationError}
+                onRetry={handleGasRetry}
+                retryCount={gasRetryCount}
+                isRetrying={isRetryingGas}
+              />
             ) : gasEstimate ? (
-              <div
-                className={` rounded-lg p-4 border ${
-                  !isHaveEnoughGasFee
-                    ? 'border-red-500/20 bg-red-500/10'
-                    : 'border-white/10 bg-[var(--card-color)]'
-                }`}
-              >
-                <h3
-                  className={`text-lg font-semibold mb-4 flex items-center justify-between ${
-                    !isHaveEnoughGasFee ? 'text-red-500' : 'text-white'
-                  }`}
-                >
-                  <div className="flex items-center">
-                    <AlertTriangle
-                      className={`size-5 mr-2 ${
-                        !isHaveEnoughGasFee ? 'text-red-500' : 'text-yellow-500'
-                      }`}
-                    />
-                    Gas Fee Estimation
-                  </div>
-                  <div className="text-xs text-gray-400 flex items-center">
-                    {refreshCountdown > 0
-                      ? `Refresh in ${refreshCountdown}s`
-                      : 'Auto-refreshing...'}
-                    <div
-                      className={`ml-1 size-2 rounded-full ${
-                        refreshCountdown <= 5
-                          ? 'bg-yellow-500 animate-pulse'
-                          : 'bg-green-500 animate-pulse'
-                      }`}
-                    ></div>
-                  </div>
-                </h3>
-
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Gas Limit</span>
-                    <span className="text-white">{gasEstimate.gasLimit}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">Gas Price</span>
-                    <span className="text-white">
-                      {gasEstimate.gasPrice} gwei
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-start">
-                    <span className="text-gray-400">Gas Fee</span>
-                    <div className="text-right">
-                      <div className="text-white font-medium">
-                        {gasEstimate.gasCostEth}{' '}
-                        {token.chain === 'hyperevm' ? 'HYPE' : 'ETH'}
-                      </div>
-                      <div className="text-gray-400 text-sm">
-                        ≈ ${gasEstimate.gasCostUsd}
-                      </div>
+              <>
+                <div>
+                  {/* Gas estimate header with refresh */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <h4 className="text-white text-base">Gas Estimate</h4>
+                      {refreshCountdown > 0 ? (
+                        <div className="flex items-center space-x-1">
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              refreshCountdown > 20
+                                ? 'bg-green-400'
+                                : refreshCountdown > 10
+                                  ? 'bg-yellow-400'
+                                  : 'bg-orange-400'
+                            }`}
+                          ></div>
+                          <span className="text-gray-400 text-xs">
+                            {refreshCountdown}s
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-1">
+                          <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
+                          <span className="text-blue-400 text-xs">
+                            updating...
+                          </span>
+                        </div>
+                      )}
                     </div>
+                    <IconButton
+                      onClick={() => setGasRefreshCounter(prev => prev + 1)}
+                      disabled={isEstimatingGas}
+                    >
+                      <RefreshCw className="size-4 text-gray-400" />
+                    </IconButton>
                   </div>
-
-                  <Collapsible className="flex flex-col justify-between items-center w-full">
-                    <CollapsibleTrigger className="w-full py-0">
-                      <span className="text-gray-400 text-xs font-medium">
-                        Speed
-                      </span>
-                      <Button className="text-white flex items-center hover:cursor-pointer hover:underline bg-transparent hover:bg-transparent p-0">
-                        <p className="text-white text-sm font-medium">
-                          {gasPriority}
-                        </p>
-                        <Pen className="size-3 text-white ml-1" />
-                      </Button>
+                  <Menu
+                    items={[
+                      {
+                        label: 'Gas Limit',
+                        description: gasEstimate.gasLimit,
+                      },
+                      {
+                        label: 'Gas Price',
+                        description: `${gasEstimate.gasPrice} gwei`,
+                      },
+                      {
+                        label: 'Gas Fee',
+                        description: `${gasEstimate.gasCostEth} ${token.chain === 'hyperevm' ? 'HYPE' : 'ETH'}`,
+                      },
+                      {
+                        label: 'Gas Fee (USD)',
+                        description: `≈ $${gasEstimate.gasCostUsd}`,
+                      },
+                      {
+                        label: 'Speed',
+                        description:
+                          gasPriority.charAt(0).toUpperCase() +
+                          gasPriority.slice(1),
+                        arrowLeftIcon: () => (
+                          <ChevronDown
+                            className={`size-5 transition-transform duration-200 ${
+                              isGasCollapsibleOpen ? 'rotate-180' : ''
+                            }`}
+                          />
+                        ),
+                        onClick: () => {
+                          // Toggle collapsible and update state
+                          setIsGasCollapsibleOpen(!isGasCollapsibleOpen);
+                          const trigger = document.querySelector(
+                            '[data-state]'
+                          ) as HTMLElement;
+                          if (trigger) trigger.click();
+                        },
+                      },
+                    ]}
+                  />
+                  <Collapsible
+                    open={isGasCollapsibleOpen}
+                    onOpenChange={setIsGasCollapsibleOpen}
+                  >
+                    <CollapsibleTrigger
+                      className="hidden"
+                      data-state={isGasCollapsibleOpen ? 'open' : 'closed'}
+                    >
+                      <span></span>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="w-full">
                       <GasFeeSelection
@@ -864,80 +1110,58 @@ const ConfirmSend = () => {
                       />
                     </CollapsibleContent>
                   </Collapsible>
-
-                  <div className="border-t border-white/10 pt-3 mt-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400 font-medium">
-                        Total Cost
-                      </span>
-                      <div className="text-right">
-                        <div className="text-white font-semibold text-lg">
-                          ${gasEstimate.totalCostUsd}
-                        </div>
-                        <div className="text-gray-400 text-sm">
-                          Token + Gas Fee
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                <p className="text-red-400 text-sm">
-                  ⚠️ Failed to estimate gas fees. Please try again.
-                </p>
-              </div>
-            )}
 
-            {!isHaveEnoughGasFee ? (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                <p className="text-red-400 text-sm flex items-center text-nowrap">
-                  <CircleAlert className="size-4 mr-2" />
-                  Don't have enough gas fee. Available:{' '}
-                  {parseFloat(
-                    nativeTokens.find(
-                      (t: NativeToken) => t.chain === token.chain
-                    )?.balance || '0'
-                  ).toFixed(2)}{' '}
-                  {token.chain === 'hyperevm' ? ' HYPE' : ' ETH'}
-                </p>
-              </div>
+                <Menu
+                  items={[
+                    {
+                      label: 'Total (Token + Gas Fee)',
+                      description: `$${gasEstimate.totalCostUsd}`,
+                    },
+                  ]}
+                />
+              </>
             ) : (
-              <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3">
-                <p className="text-yellow-400 text-sm">
-                  ⚠️ Please double-check all transaction details. This action
-                  cannot be undone.
-                </p>
-              </div>
+              <GasEstimationError
+                error="Failed to estimate gas fees. Please check your network connection and try again."
+                onRetry={handleGasRetry}
+                retryCount={gasRetryCount}
+                isRetrying={isRetryingGas}
+              />
             )}
           </div>
         )}
       </DialogContent>
       <DialogFooter>
         <Button
-          onClick={handleBackFromConfirm}
-          className="flex-1 bg-gray-600 hover:bg-gray-700"
-        >
-          <ArrowLeft className="size-4 mr-2" />
-          Back
-        </Button>
-        <Button
           onClick={handleConfirmSend}
-          className="flex-1 bg-green-600 hover:bg-green-700"
-          disabled={isEstimatingGas || !gasEstimate || !isHaveEnoughGasFee}
-          // disabled={isEstimatingGas || !gasEstimate}
+          disabled={
+            isEstimatingGas ||
+            !gasEstimate ||
+            !isHaveEnoughGasFee ||
+            !!gasEstimationError
+          }
+          variant="primary"
+          className="w-full"
         >
           {isEstimatingGas ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-              Sending...
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+              Updating...
             </>
           ) : (
             <>
               <Send className="size-4 mr-2" />
-              Confirm
+              Send
             </>
+          )}
+          {!isHaveEnoughGasFee && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+              <p className="text-red-400 text-sm flex items-center text-nowrap">
+                <CircleAlert className="size-4 mr-2" />
+                Don't have enough gas fee.
+              </p>
+            </div>
           )}
         </Button>
       </DialogFooter>
