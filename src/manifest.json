@@ -1,7 +1,7 @@
 {
   "name": "Purro (Beta)",
   "description": "The Purr-fect Web3 Wallet",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "homepage_url": "https://purro.xyz",
   "manifest_version": 3,
   "content_security_policy": {
@@ -26,7 +26,12 @@
   "content_scripts": [
     {
       "matches": [
-        "<all_urls>"
+        "https://*/*",
+        "http://*/*"
+      ],
+      "exclude_matches": [
+        "https://chrome.google.com/webstore/*",
+        "https://chromewebstore.google.com/*"
       ],
       "js": [
         "contentScript.js"
@@ -48,7 +53,12 @@
         "purro-icon.js"
       ],
       "matches": [
-        "<all_urls>"
+        "https://*/*",
+        "http://*/*"
+      ],
+      "exclude_matches": [
+        "https://chrome.google.com/webstore/*",
+        "https://chromewebstore.google.com/*"
       ]
     }
   ],
