@@ -1664,13 +1664,38 @@ export const evmHandler = {
   },
 
   async handleSwapHyperliquidToken(data: {
-    transaction: TransactionRequest;
+    transaction?: TransactionRequest;
+    to?: string;
+    from?: string;
+    value?: string;
+    data?: string;
+    gas?: string;
+    gasPrice?: string;
+    maxFeePerGas?: string;
+    maxPriorityFeePerGas?: string;
+    nonce?: string;
+    type?: string;
+    chainId?: string;
   }): Promise<MessageResponse> {
     try {
-      const { transaction } = data;
+      // Accept both shapes: { transaction: {...} } or direct tx fields
+      const transaction: TransactionRequest = (data as any).transaction ?? {
+        to: data.to,
+        from: data.from,
+        value: data.value,
+        data: data.data,
+        gas: data.gas,
+        gasPrice: data.gasPrice,
+        maxFeePerGas: data.maxFeePerGas,
+        maxPriorityFeePerGas: data.maxPriorityFeePerGas,
+        nonce: data.nonce,
+        type: data.type,
+        chainId: data.chainId,
+      };
 
       // Validate transaction data
-      if (!transaction.to) {
+      if (!transaction?.to) {
+        console.error('[Purro] ❌ Background: Invalid to address');
         return {
           success: false,
           error: TRANSACTION_ERRORS.INVALID_TO_ADDRESS.message,
@@ -1683,10 +1708,7 @@ export const evmHandler = {
         try {
           ethers.parseEther(transaction.value);
         } catch (error: unknown) {
-          console.error(
-            '[Purro] ❌ Error in handleSwapHyperliquidToken:',
-            error
-          );
+          console.error('[Purro] ❌ Background: Error parsing transaction value:', error);
           return {
             success: false,
             error: TRANSACTION_ERRORS.INVALID_VALUE.message,
@@ -1743,12 +1765,11 @@ export const evmHandler = {
           activeAccount.id
         );
       } catch (error) {
-        console.error('[Purro] ❌ Failed to retrieve private key:', error);
+        console.error('[Purro] ❌ Background: Failed to retrieve private key:', error);
 
         // Check if it's a session issue
         const session = await authHandler.getSession();
         if (!session) {
-          console.error('[Purro] ❌ Session not found or expired');
           return {
             success: false,
             error: 'Session not found or expired',
@@ -1786,7 +1807,7 @@ export const evmHandler = {
         data: tx.hash,
       };
     } catch (error) {
-      console.error('[Purro] ❌ Error in handleSendToken:', error);
+      console.error('[Purro] ❌ Background: Error in handleSwapHyperliquidToken:', error);
       return {
         success: false,
         error:
@@ -1798,18 +1819,39 @@ export const evmHandler = {
 
   async checkTokenAllowance(data: {
     tokenAddress: string;
-    ownerAddress: string;
     spenderAddress: string;
     chainId: string;
   }): Promise<MessageResponse> {
     try {
-      const { tokenAddress, ownerAddress, spenderAddress, chainId } = data;
+      const { tokenAddress, spenderAddress, chainId } = data;
+
+      // Get active account
+      const activeAccount = await storageHandler.getActiveAccount();
+      if (!activeAccount) {
+        console.error('[Purro] ❌ Background: No active account found for allowance check');
+        throw new Error('No active account');
+      }
+
+      // Get wallet info for owner address
+      const wallet = await storageHandler.getWalletById(activeAccount.id);
+      if (!wallet || !wallet.eip155) {
+        console.error('[Purro] ❌ Background: EVM wallet not found for allowance check');
+        throw new Error('EVM wallet not found for active account');
+      }
+
+      const ownerAddress = wallet.eip155.address;
+      if (!ownerAddress) {
+        console.error('[Purro] ❌ Background: No EVM address found for allowance check');
+        throw new Error('No EVM address found for active account');
+      }
 
       // Get RPC URL for the chain
       const chainInfo = supportedEVMChains[chainId];
       if (!chainInfo) {
+        console.error('[Purro] ❌ Background: Unsupported chain for allowance:', chainId);
         throw new Error(`Unsupported chain: ${chainId}`);
       }
+
       const rpcUrl = chainInfo.rpcUrls[0];
       const provider = new ethers.JsonRpcProvider(rpcUrl);
 
@@ -1829,7 +1871,7 @@ export const evmHandler = {
         },
       };
     } catch (error) {
-      console.error('[Purro] ❌ Error checking token allowance:', error);
+      console.error('[Purro] ❌ Background: Error checking token allowance:', error);
       return {
         success: false,
         error:

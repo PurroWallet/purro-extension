@@ -20,27 +20,40 @@ import { useNativeBalance } from '@/client/hooks/use-native-balance';
 import { useUnifiedTokens } from '@/client/hooks/use-unified-tokens';
 import { UnifiedToken } from '@/client/components/token-list';
 
-// Error messages constants
-const ERROR_MESSAGES = {
-  TRANSACTION_FAILED: 'Transaction failed. Please try again.',
-  USER_REJECTED: 'user rejected',
-  USER_DENIED: 'User denied',
+// Constants for easy customization
+const ERROR_CONFIG = {
+  SHOW_DETAILED_ERRORS: false,
+  USER_REJECTION_KEYWORDS: [
+    'user rejected',
+    'User denied',
+    'user denied transaction',
+  ],
+  GENERIC_MESSAGE: 'Transaction failed. Please try again.',
 } as const;
 
 // Helper function to format error messages
 const formatErrorMessage = (error: string | null): string => {
-  if (!error) return ERROR_MESSAGES.TRANSACTION_FAILED;
+  if (!error) return ERROR_CONFIG.GENERIC_MESSAGE;
+
+  // Always log the full error for debugging
+  console.error('[Purro] 🔍 Full error message:', error);
 
   // Keep user rejection messages as is
-  if (
-    error.includes(ERROR_MESSAGES.USER_REJECTED) ||
-    error.includes(ERROR_MESSAGES.USER_DENIED)
-  ) {
+  const isUserRejection = ERROR_CONFIG.USER_REJECTION_KEYWORDS.some(keyword =>
+    error.toLowerCase().includes(keyword.toLowerCase())
+  );
+
+  if (isUserRejection) {
     return error;
   }
 
-  // Use generic message for other errors
-  return ERROR_MESSAGES.TRANSACTION_FAILED;
+  // Show detailed errors in development or if configured to do so
+  if (ERROR_CONFIG.SHOW_DETAILED_ERRORS) {
+    return error;
+  }
+
+  // Use generic message for other errors in production
+  return ERROR_CONFIG.GENERIC_MESSAGE;
 };
 
 const ConfirmSwapButton = () => {
