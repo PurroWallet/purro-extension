@@ -86,7 +86,7 @@ const Welcome = ({
               <div className="text-sm text-gray-500 text-left">
                 I accept the{' '}
                 <a
-                  href="/terms-of-service"
+                  href="https://www.purro.xyz/terms"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[var(--primary-color)] underline"
@@ -95,7 +95,7 @@ const Welcome = ({
                 </a>{' '}
                 and{' '}
                 <a
-                  href="/privacy-policy"
+                  href="https://www.purro.xyz/privacy"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[var(--primary-color)] underline"
