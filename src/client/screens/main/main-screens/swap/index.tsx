@@ -13,7 +13,6 @@ import {
   isWrapScenario,
   isUnwrapScenario,
   getMaxSpendableBalance,
-  hasEnoughBalanceWithGas,
   estimateGasCost,
 } from '@/client/utils/swap-utils';
 // Create a comprehensive formatBalance function for display
@@ -233,14 +232,6 @@ const Swap = () => {
   const tokenOutBalance = tokenOut
     ? getTokenBalance(getNativeHypeWithBalance(tokenOut))
     : 0;
-
-  const tokenInBalanceCheck = tokenIn
-    ? hasEnoughBalanceWithGas(
-        getNativeHypeWithBalance(tokenIn),
-        amountIn,
-        estimateGasCost(tokenIn, 'swap')
-      )
-    : { hasEnough: true, shortfall: 0, details: '' };
 
   useEffect(() => {
     const fetchWHYPEBalance = async () => {
@@ -747,25 +738,6 @@ const Swap = () => {
             </div>
           </div>
         )}
-
-        {/* Enhanced balance error with gas fee information */}
-        {!tokenInBalanceCheck.hasEnough &&
-          amountIn &&
-          parseFloat(amountIn) > 0 && (
-            <div className="bg-[var(--button-color-destructive)]/10 border border-[var(--button-color-destructive)]/30 rounded-lg p-4">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="size-4 text-[var(--button-color-destructive)]" />
-                <div className="flex flex-col">
-                  <span className="text-sm text-[var(--button-color-destructive)]">
-                    Insufficient balance
-                  </span>
-                  <span className="text-xs text-[var(--button-color-destructive)]/70">
-                    {tokenInBalanceCheck.details}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
       </div>
     </div>
   );
