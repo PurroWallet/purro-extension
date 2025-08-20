@@ -1,54 +1,43 @@
-Purro Extension License
+Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License
 
 Copyright (c) 2025 Purro Team
 
-This software and associated documentation files (the "Software") are provided 
-for educational, research, and non-commercial use only.
+This work is licensed under the Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License. To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-nd/4.0/ or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
 
-TERMS AND CONDITIONS:
+## License Summary
 
-1. NON-COMMERCIAL USE ONLY
-   - This Software may only be used for non-commercial purposes
-   - Commercial use, including but not limited to selling, licensing, or 
-     monetizing the Software is strictly prohibited
-   - No commercial distribution or redistribution is permitted
+You are free to:
+- **Share** — copy and redistribute the material in any medium or format
 
-2. CONTRIBUTION RIGHTS
-   - You may contribute to this project through pull requests, issues, 
-     and community discussions
-   - All contributions must be made under the same license terms
-   - Contributors retain copyright to their contributions
+Under the following terms:
+- **Attribution** — You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.
+- **NonCommercial** — You may not use the material for commercial purposes.
+- **NoDerivatives** — If you remix, transform, or build upon the material, you may not distribute the modified material.
 
-3. EDUCATIONAL AND RESEARCH USE
-   - You may use, copy, and modify the Software for educational purposes
-   - You may use the Software for research and development
-   - You may create derivative works for learning and experimentation
+## What This Means for Purro Extension
 
-4. DISTRIBUTION RESTRICTIONS
-   - You may not distribute the Software for commercial purposes
-   - You may not sell, rent, or lease the Software
-   - You may not use the Software in any commercial product or service
+### ✅ Permitted Uses:
+- **Copy and share** the code for educational purposes
+- **Study and learn** from the code
+- **Contribute** to the project through pull requests and issues
+- **Use** the extension for personal, non-commercial purposes
 
-5. ATTRIBUTION
-   - Any use of this Software must include proper attribution to Purro Team
-   - Copyright notices must remain intact in all copies and modifications
+### ❌ Restricted Uses:
+- **Commercial use** - No selling, licensing, or monetizing
+- **Creating derivative works** - No modifying and redistributing
+- **Incorporating into other products** - No using in commercial software
+- **Distribution of modified versions** - No sharing altered code
 
-6. NO WARRANTY
-   - THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND
-   - No guarantee of functionality, security, or fitness for any purpose
-   - Use at your own risk
+### 📝 Attribution Requirements:
+- Must credit "Purro Team" when sharing
+- Must include link to original repository
+- Must indicate if any changes were made
 
-7. LIABILITY
-   - In no event shall the authors or copyright holders be liable for any 
-     claims, damages, or other liability arising from the use of this Software
+## Commercial Licensing
 
-8. ENFORCEMENT
-   - Violation of these terms may result in legal action
-   - The Purro Team reserves the right to modify these terms at any time
+For commercial use, derivative works, or incorporation into other products, please contact: thaiphamngoctuong@gmail.com
 
-For commercial licensing inquiries, please contact: thaiphamngoctuong@gmail.com
-
-**Links:**
+## Project Links:
 - **GitHub Repository:** https://github.com/purro-xyz/purro-extension
 - **Documentation:** https://docs.purro.xyz
 - **Website:** https://purro.xyz
@@ -56,4 +45,4 @@ For commercial licensing inquiries, please contact: thaiphamngoctuong@gmail.com
 - **Twitter:** https://x.com/purro_xyz
 - **Telegram:** https://t.me/purro_xyz
 
-Effective Date: January 1, 2025 
+**Effective Date:** January 1, 2025 

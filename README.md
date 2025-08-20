@@ -3,7 +3,7 @@
 > **Purro** is a native-first wallet crafted for the Hyperliquid and HyperEVM ecosystems. Built with practical UX, developer enablement, and deep protocol alignment in mind.
 
 [![Version](https://img.shields.io/badge/version-0.6.8-blue.svg)](https://github.com/purro-xyz/purro-extension)
-[![License](https://img.shields.io/badge/License-Non--Commercial-red.svg)](LICENSE)
+[![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC%20BY--NC--ND%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-nd/4.0/)
 [![Discord](https://img.shields.io/badge/discord-Join%20Community-blue.svg)](https://discord.gg/VJunuK9T5w)
 
 ## 🎯 Overview
@@ -364,15 +364,19 @@ We welcome contributions from the community! Here's how you can help:
 
 ## 📄 License
 
-This project is licensed under the **Purro Extension License** - a non-commercial license that allows educational use and contributions while protecting commercial rights.
+This project is licensed under the **Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International License** (CC BY-NC-ND 4.0).
 
 **Key Terms:**
-- ✅ **Educational & Research Use** - Free to use for learning and development
-- ✅ **Contributions Welcome** - Pull requests, issues, and community discussions
-- ❌ **Commercial Use Prohibited** - No commercial distribution or monetization
-- 📧 **Commercial Licensing** - Contact: thaiphamngoctuong@gmail.com
+- ✅ **Copy & Share** - Free to copy and redistribute for educational purposes
+- ✅ **Study & Learn** - Can study and learn from the code
+- ✅ **Contribute** - Welcome pull requests and issues
+- ❌ **No Commercial Use** - Cannot use for commercial purposes
+- ❌ **No Derivatives** - Cannot modify and redistribute
+- 📝 **Attribution Required** - Must credit Purro Team when sharing
 
-**Effective Date:** January 1, 2025
+**Commercial Licensing:** For commercial use or derivative works, contact: thaiphamngoctuong@gmail.com
+
+**License Link:** [https://creativecommons.org/licenses/by-nc-nd/4.0/](https://creativecommons.org/licenses/by-nc-nd/4.0/)
 
 See the [LICENSE](LICENSE) file for complete terms and conditions.
 
