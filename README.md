@@ -3,7 +3,7 @@
 > **Purro** is a native-first wallet crafted for the Hyperliquid and HyperEVM ecosystems. Built with practical UX, developer enablement, and deep protocol alignment in mind.
 
 [![Version](https://img.shields.io/badge/version-0.6.8-blue.svg)](https://github.com/purro-xyz/purro-extension)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Non--Commercial-red.svg)](LICENSE)
 [![Discord](https://img.shields.io/badge/discord-Join%20Community-blue.svg)](https://discord.gg/VJunuK9T5w)
 
 ## 🎯 Overview
@@ -279,28 +279,47 @@ Open `test-dapp-detection.html` in browser to test provider functionality.
 
 ## 🌟 Roadmap
 
-### Phase 1 (Completed ✅)
-- ✅ Basic wallet functionality
-- ✅ Hyperliquid EVM support
-- ✅ Multi-chain support (Ethereum, Arbitrum, Base)
-- ✅ dApp integration (EIP-1193, EIP-6963, EIP-712)
-- ✅ In-app swap functionality
-- ✅ DApp explorer with watchlist
-- ✅ Advanced security features
+### Phase 1: Core Infrastructure (Completed ✅)
+- ✅ **Multi-chain wallet functionality** - Ethereum, Arbitrum, Base, HyperEVM
+- ✅ **dApp integration** - EIP-1193, EIP-6963, EIP-712 standards
+- ✅ **Basic DeFi operations** - Send, receive, portfolio management
+- ✅ **Security framework** - Encryption, authentication, session management
+- ✅ **Provider system** - EVM provider with multi-wallet discovery
+- ✅ **UI/UX foundation** - React 19, Tailwind CSS, responsive design
 
-### Phase 2 (In Progress 🔄)
-- 🔄 Solana integration
-- 🔄 Sui integration
-- 🔄 Enhanced DeFi integrations
-- 🔄 Advanced portfolio analytics
-- 🔄 Hardware wallet support
+### Phase 2: Advanced Features (Completed ✅)
+- ✅ **In-app swap functionality** - Complete HyperEVM token swapping
+- ✅ **DApp explorer** - Curated directory with watchlist system
+- ✅ **Advanced token management** - Search, discovery, real-time pricing
+- ✅ **Enhanced security** - 100+ security tests, comprehensive audits
+- ✅ **Performance optimizations** - Smart caching, incremental fetching
+- ✅ **Notifications system** - Beta announcements and updates
+- ✅ **Hyperliquid DEX integration** - Deposit, transfer, portfolio tracking
 
-### Phase 3 (Planned 📋)
-- 📋 Account abstraction (EIP-4337)
-- 📋 Gasless onboarding
-- 📋 Advanced trading features
-- 📋 Social features and community
-- 📋 Multi-language support
+### Phase 3: Ecosystem Integration (In Progress 🔄)
+- 🔄 **Solana integration** - Full Solana network support
+- 🔄 **Sui integration** - Sui blockchain compatibility
+- 🔄 **Enhanced DeFi integrations** - More protocols and dApps
+- 🔄 **Advanced portfolio analytics** - Charts, P&L tracking, performance metrics
+- 🔄 **Hardware wallet support** - Ledger, Trezor integration
+- 🔄 **Mobile app development** - iOS and Android applications
+
+### Phase 4: Advanced Features (Planned 📋)
+- 📋 **Account abstraction (EIP-4337)** - Smart contract wallets
+- 📋 **Gasless onboarding** - Zero-fee user registration
+- 📋 **Advanced trading features** - Limit orders, DCA, portfolio rebalancing
+- 📋 **Social features** - Transaction sharing, community features
+- 📋 **Multi-language support** - Internationalization (i18n)
+- 📋 **Advanced bridging** - One-click cross-chain transfers
+- 📋 **Token launcher integration** - In-app token creation and deployment
+
+### Phase 5: Ecosystem Growth (Future Vision 🚀)
+- 🚀 **Referral & reward system** - Fee rebates and incentive programs
+- 🚀 **Community plugin layer** - Developer mini-app/extension support
+- 🚀 **Liquidity incentive tracker** - Farming, staking, yield optimization
+- 🚀 **Advanced identity system** - NFT-based identity and reputation
+- 🚀 **Cross-surface continuity** - Seamless experience across devices
+- 🚀 **AI-powered features** - Smart recommendations and automation
 
 ## 🤝 Contributing
 
@@ -341,11 +360,21 @@ We welcome contributions from the community! Here's how you can help:
 
 ### Website
 - **Homepage**: [https://purro.xyz](https://purro.xyz)
-- **Help Center**: [https://purro.xyz/help](https://purro.xyz/help)
+- **Install**: [https://purro.xyz/install](https://purro.xyz/install)
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **Purro Extension License** - a non-commercial license that allows educational use and contributions while protecting commercial rights.
+
+**Key Terms:**
+- ✅ **Educational & Research Use** - Free to use for learning and development
+- ✅ **Contributions Welcome** - Pull requests, issues, and community discussions
+- ❌ **Commercial Use Prohibited** - No commercial distribution or monetization
+- 📧 **Commercial Licensing** - Contact: thaiphamngoctuong@gmail.com
+
+**Effective Date:** January 1, 2025
+
+See the [LICENSE](LICENSE) file for complete terms and conditions.
 
 ## 🐱 About Purro
 
