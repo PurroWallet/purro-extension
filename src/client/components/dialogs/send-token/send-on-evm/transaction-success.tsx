@@ -22,7 +22,7 @@ const EXPLORER_URLS = {
   polygon: 'https://polygonscan.com/tx/',
   optimism: 'https://optimistic.etherscan.io/tx/',
   bsc: 'https://bscscan.com/tx/',
-  hyperevm: 'https://explorer.hyperliquid.xyz/tx/',
+  hyperevm: 'https://hyperevmscan.io/tx/',
 } as const;
 
 const NETWORK_NAMES = {

@@ -1,7 +1,7 @@
 {
   "name": "Purro (Beta)",
   "description": "The Purr-fect Web3 Wallet",
-  "version": "0.6.7",
+  "version": "0.6.8",
   "homepage_url": "https://purro.xyz",
   "manifest_version": 3,
   "content_security_policy": {
