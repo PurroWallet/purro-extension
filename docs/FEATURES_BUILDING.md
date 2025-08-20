@@ -3,6 +3,17 @@ title: Purro Extension Features Building
 description: Purro Extension Features Building
 ---
 
+## Single Purpose
+Purro is a non-custodial Web3 wallet. Its single purpose is to let users manage accounts/assets and connect/sign with dApps on EVM and Hyperliquid.
+
+- Connect to dApps via an injected provider
+- Manage accounts/keys and lock/unlock sessions
+- View balances, portfolio, tokens/NFTs
+- Sign messages/transactions and send/receive tokens
+- Show wallet UI (connect, sign, transaction, side panel) only for these tasks
+
+Does not: collect browsing history, modify page content beyond provider injection, or perform unrelated features.
+
 ## Wallet Management
 - [x] Create new wallet with 12-word seed phrase
 - [x] Import wallet from seed phrase or private key
@@ -44,6 +55,8 @@ description: Purro Extension Features Building
   - [x] **Watchlist system** for favorite dApps
   - [x] **Direct dApp integration** with one-click access
   - [x] **dApp categorization** (DeFi, Bridge, DEX, NFT, etc.)
+
+  > Explorer is a curated directory (links only) that opens external sites; it does not alter page content beyond provider injection.
 - [x] **NFT Screen** with collection viewing
 - [x] **History Screen** with transaction history
 - [x] **Account switching** with account sheet

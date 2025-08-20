@@ -1,8 +1,23 @@
-# Purro Extension - Hyperliquid Wallet
+# 🐱 Purro - The Purr-fect Web3 Wallet
 
-> **Purro** is a Chrome extension wallet specifically designed for the Hyperliquid ecosystem and other EVM networks. This wallet provides a user-friendly and secure interface for managing crypto assets and interacting with dApps.
+> **Purro** is a native-first wallet crafted for the Hyperliquid and HyperEVM ecosystems. Built with practical UX, developer enablement, and deep protocol alignment in mind.
 
-## 🎯 Key Features
+[![Version](https://img.shields.io/badge/version-0.6.8-blue.svg)](https://github.com/purro-xyz/purro-extension)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Discord](https://img.shields.io/badge/discord-Join%20Community-blue.svg)](https://discord.gg/VJunuK9T5w)
+
+## 🎯 Overview
+
+Purro is a frictionless liquidity access layer for Hyperliquid + HyperEVM—not just a key manager. Built on Alchemy infrastructure and Hyper-native primitives (names, gasless flows), Purro prioritizes intent-driven UX and developer extensibility.
+
+### 🌟 Key Highlights
+- **Native Hyperliquid Integration**: Built specifically for Hyperliquid and HyperEVM ecosystems
+- **Gasless Workflows**: Zero-fee transactions with native relayers (no HYPE needed)
+- **Unified Portfolio**: Seamless view across Hyperliquid L1 and HyperEVM
+- **Developer-First**: Standards-compliant provider and SDK modules
+- **Multichain-Ready**: Designed to extend to Ethereum, Arbitrum, Base, Solana, and Sui
+
+## ✨ Features
 
 ### 🔐 Secure Wallet Management
 - **Create new wallet** with 12-word seed phrase
@@ -10,6 +25,7 @@
 - **Watch-only accounts** for address monitoring
 - **Data encryption** with password protection
 - **Auto-lock** after inactivity period
+- **Password change** and **seed phrase management**
 
 ### 🌐 Multi-Network Support
 - **Hyperliquid EVM** (mainnet & testnet) - Primary network
@@ -19,37 +35,52 @@
 - **Solana** (in development)
 - **Sui** (in development)
 
-### 🔗 dApp Integration
-- **EIP-1193** standard support
-- **EIP-6963** multi-provider discovery
+### 🔄 Advanced Trading Features
+- **In-App Swap Execution**: Complete token swapping on HyperEVM network
+- **Advanced Token Search**: Comprehensive token discovery with infinite scroll
+- **Real-Time Pricing**: Live price feeds from GeckoTerminal API
+- **Gas Optimization**: Intelligent gas estimation with safety buffers
+- **WRAP/UNWRAP Support**: Seamless HYPE ↔ WHYPE token conversion
+
+### 🌐 dApp Integration & Discovery
+- **DApp Explorer**: Curated directory with 11+ featured dApps
+- **Watchlist System**: Star/unstar favorite dApps for quick access
+- **EIP-1193** standard support with multi-provider discovery (EIP-6963)
 - **EIP-712** typed data signing
-- **Legacy methods** compatibility
 - **Provider injection** for web pages
 
-### 🎨 User Interface
-- **Modern UI** with Tailwind CSS
-- **Responsive design** 
-- **Dark theme** by default
-- **Smooth animations** with Framer Motion
-- **Side panel** support
+### 🏷️ Hyperliquid Names
+- **Human-readable addresses**: Send and receive using Hyperliquid Names (e.g., `purro.hl`)
+- **Name resolution** in transaction history
+- **Native integration** with Hyperliquid ecosystem
+
+### 💰 Fee Rebates
+- **Default**: 40% swap fee rebates for all users in early phase
+- **Boost**: 50% tier by invite/eligibility (partners, builders, high-volume)
+
+### 🔒 Security & Testing
+- **Comprehensive Security Test Suite**: 100+ security tests
+- **Encryption Validation**: AES-256-GCM with PBKDF2 key derivation
+- **Session Management**: Enhanced timeout and expiration handling
+- **Memory Safety**: Secure cleanup and isolation
 
 ## 🏗️ Architecture
 
 ```
 purro-extension/
 ├── src/
-│   ├── background/          # Background scripts
-│   │   ├── providers/       # Blockchain providers
-│   │   ├── handlers/        # Message handlers
-│   │   ├── lib/            # Core libraries
+│   ├── background/          # Background scripts & service worker
+│   │   ├── providers/       # Blockchain providers (EVM, Hyperliquid)
+│   │   ├── handlers/        # Message handlers (accounts, storage, auth)
+│   │   ├── lib/            # Core libraries (encryption, offscreen)
 │   │   └── types/          # Type definitions
-│   ├── client/             # UI components
-│   │   ├── component/      # React components
-│   │   ├── screens/        # App screens
-│   │   ├── hooks/          # Custom hooks
-│   │   └── services/       # API services
-│   ├── assets/             # Static assets
-│   └── manifest.json       # Extension manifest
+│   ├── client/             # React UI components
+│   │   ├── components/     # Reusable UI components
+│   │   ├── screens/        # App screens (main, swap, explorer, etc.)
+│   │   ├── hooks/          # Custom React hooks
+│   │   └── services/       # API services (Alchemy, Etherscan, etc.)
+│   ├── assets/             # Static assets (icons, logos)
+│   └── manifest.json       # Extension manifest (v3)
 ├── html/                   # HTML entry points
 ├── docs/                   # Documentation
 └── public/                 # Public assets
@@ -58,17 +89,18 @@ purro-extension/
 ### Core Components
 
 #### 1. Background Script (`src/background/`)
-- **Provider Manager**: Manages blockchain providers
+- **Provider Manager**: Manages blockchain providers and connections
 - **EVM Provider**: EIP-1193 implementation for EVM chains
 - **Message Handler**: Handles communication between UI and background
-- **Account Handler**: Manages accounts and keys
+- **Account Handler**: Manages accounts, keys, and encryption
 - **Storage Handler**: Encrypted storage management
 
 #### 2. UI Client (`src/client/`)
-- **React components** with TypeScript
-- **Zustand** for state management
-- **TanStack Query** for data fetching
-- **Tailwind CSS** for styling
+- **React 19.1.0** with TypeScript for type safety
+- **Zustand** for state management with persistence
+- **TanStack Query 5.80.7** for data fetching and caching
+- **Tailwind CSS 4.1.8** for modern styling
+- **Framer Motion** for smooth animations
 
 #### 3. Provider System
 - **EIP-1193** compliant Ethereum provider
@@ -76,19 +108,29 @@ purro-extension/
 - **Content script injection** into web pages
 - **Event system** for dApp communication
 
-## 🚀 Installation and Development
+## 🚀 Quick Start
 
-### System Requirements
+### Prerequisites
 - Node.js 18+
 - pnpm (package manager)
 - Chrome browser
 
-### Install dependencies
+### Installation
+
 ```bash
+# Clone the repository
+git clone https://github.com/purro-xyz/purro-extension.git
+cd purro-extension
+
+# Install dependencies
 pnpm install
+
+# Build the extension
+pnpm run build
 ```
 
 ### Development
+
 ```bash
 # Build and watch changes
 pnpm run build:watch
@@ -97,15 +139,13 @@ pnpm run build:watch
 pnpm run type-check
 
 # Run tests
-pnpm run test:handlers
+pnpm run test
+
+# Run security tests
+pnpm run test:security
 ```
 
-### Build production
-```bash
-pnpm run build
-```
-
-### Load extension in Chrome
+### Load Extension in Chrome
 1. Open Chrome and go to `chrome://extensions/`
 2. Enable "Developer mode"
 3. Click "Load unpacked" and select the `dist` folder
@@ -125,14 +165,21 @@ pnpm run build
 - **View balances** across multiple networks
 
 ### dApp Interaction
-- **Connect wallet** with dApps
-- **Sign transactions** securely
+- **Connect wallet** with dApps via EIP-1193
+- **Sign transactions** securely with EIP-712 support
 - **Manage permissions** per-site
 - **Switch networks** as requested by dApp
 
-## 🔧 API Documentation
+### Trading & Swaps
+- **In-app token swapping** on HyperEVM
+- **Real-time pricing** from GeckoTerminal
+- **Gas optimization** with intelligent estimation
+- **Transaction tracking** with confirmation dialogs
 
-### EVM Provider
+## 🔧 Developer Integration
+
+### EVM Provider API
+
 Purro provides complete EVM provider API:
 
 ```javascript
@@ -167,25 +214,44 @@ const signature = await provider.request({
 - `eth_chainId` - Get current chain ID
 - `eth_sendTransaction` - Send transaction
 - `personal_sign` - Sign message
-- `eth_signTypedData_v4` - Sign typed data
+- `eth_signTypedData_v4` - Sign typed data (EIP-712)
 - `wallet_switchEthereumChain` - Switch chain
 - `wallet_addEthereumChain` - Add new chain
 
+### EIP-6963 Multi-Provider Discovery
+
+```javascript
+// Listen for provider announcements
+window.addEventListener('eip6963:announceProvider', (event) => {
+  const { detail } = event;
+  console.log('Provider found:', detail.info.name);
+  
+  // Connect to Purro specifically
+  if (detail.info.rdns === 'xyz.purro.app') {
+    const provider = detail.provider;
+    // Use provider...
+  }
+});
+```
+
 ## 🧪 Testing
 
-### Unit Tests
+### Test Commands
 ```bash
-# Test storage handler
-pnpm run test:storage
+# Run all tests
+pnpm run test
 
-# Test account handler
-pnpm run test:account
+# Run security tests
+pnpm run test:security
 
-# Test encryption
+# Run encryption tests
 pnpm run test:encryption
 
-# Run all tests
-pnpm run test:handlers
+# Run storage tests
+pnpm run test:storage
+
+# Full security audit
+pnpm run security:check
 ```
 
 ### Provider Testing
@@ -193,10 +259,11 @@ Open `test-dapp-detection.html` in browser to test provider functionality.
 
 ## 🔒 Security
 
-### Encryption
+### Encryption & Storage
 - **AES-256-GCM** encryption for sensitive data
 - **PBKDF2** key derivation from password
-- **Secure random** seed generation
+- **Secure random** seed generation with `crypto.getRandomValues()`
+- **Memory cleanup** for sensitive data
 
 ### Permission System
 - **Origin validation** for all requests
@@ -204,64 +271,73 @@ Open `test-dapp-detection.html` in browser to test provider functionality.
 - **Per-site permissions** management
 - **Session timeout** protection
 
-### Best Practices
+### Security Features
 - **Never store** private keys in plaintext
 - **Always verify** transaction details
-- **Use hardware wallets** when possible
-- **Regular backups** of seed phrases
+- **Comprehensive security tests** (100+ tests)
+- **Regular security audits**
 
 ## 🌟 Roadmap
 
-### Phase 1 (Current)
+### Phase 1 (Completed ✅)
 - ✅ Basic wallet functionality
 - ✅ Hyperliquid EVM support
-- ✅ Multi-chain support
-- ✅ dApp integration
+- ✅ Multi-chain support (Ethereum, Arbitrum, Base)
+- ✅ dApp integration (EIP-1193, EIP-6963, EIP-712)
+- ✅ In-app swap functionality
+- ✅ DApp explorer with watchlist
+- ✅ Advanced security features
 
-### Phase 2 (Coming Soon)
+### Phase 2 (In Progress 🔄)
 - 🔄 Solana integration
 - 🔄 Sui integration
-- 🔄 NFT support
-- 🔄 DeFi integrations
+- 🔄 Enhanced DeFi integrations
+- 🔄 Advanced portfolio analytics
+- 🔄 Hardware wallet support
 
-### Phase 3 (Future)
-- 📋 Hardware wallet support
-- 📋 Mobile app
+### Phase 3 (Planned 📋)
+- 📋 Account abstraction (EIP-4337)
+- 📋 Gasless onboarding
 - 📋 Advanced trading features
-- 📋 Portfolio analytics
+- 📋 Social features and community
+- 📋 Multi-language support
 
 ## 🤝 Contributing
 
-### How to Contribute
-1. Fork repository
-2. Create feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Create Pull Request
+We welcome contributions from the community! Here's how you can help:
 
-### Coding Standards
+### How to Contribute
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Create a Pull Request
+
+### Development Standards
 - **TypeScript** for type safety
 - **ESLint** for code quality
 - **Prettier** for code formatting
 - **Conventional commits** for commit messages
+- **Comprehensive testing** for new features
 
 ### Bug Reports
 - Use GitHub Issues
-- Provide steps to reproduce
+- Provide detailed steps to reproduce
 - Include browser and extension version
 - Attach console logs if available
 
-## 📞 Support
+## 📞 Support & Community
 
-### Community
-- **Discord**: [https://discord.gg/VJunuK9T5w](https://discord.gg/VJunuK9T5w)
+### Community Channels
+- **Discord**: [Join our community](https://discord.gg/VJunuK9T5w)
 - **Twitter**: [@purro_xyz](https://x.com/purro_xyz)
 - **Telegram**: [https://t.me/purro_xyz](https://t.me/purro_xyz)
 
 ### Documentation
-- **API Docs**: [docs/EVM_PROVIDER_README.md](docs/EVM_PROVIDER_README.md)
-- **Architecture**: [docs/evm-provider-architecture.md](docs/evm-provider-architecture.md)
-- **Communication**: [docs/evm-provider-communication.md](docs/evm-provider-communication.md)
+- **Official Docs**: [docs.purro.xyz](https://docs.purro.xyz)
+- **API Documentation**: [docs/EVM_PROVIDER_README.md](docs/EVM_PROVIDER_README.md)
+- **Architecture Guide**: [docs/evm-provider-architecture.md](docs/evm-provider-architecture.md)
+- **Features Guide**: [docs/FEATURES_BUILDING.md](docs/FEATURES_BUILDING.md)
 
 ### Website
 - **Homepage**: [https://purro.xyz](https://purro.xyz)
@@ -269,12 +345,20 @@ Open `test-dapp-detection.html` in browser to test provider functionality.
 
 ## 📄 License
 
-MIT License - see [LICENSE](LICENSE) file for more details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🐱 About Purro
 
-**Purro** was created with the goal of making Web3 accessible and secure for everyone. We believe that DeFi and blockchain technology will change the future of finance, and Purro is the bridge that helps users easily participate in this new world.
+**Purro** was created with the goal of making Hyperliquid and HyperEVM accessible and secure for everyone. We believe that DeFi and blockchain technology will change the future of finance, and Purro is the bridge that helps users easily participate in this new world.
+
+Our mission is to provide:
+- **Intent-aware UX**: Clear, contextual signing and gasless workflows
+- **Ecosystem-native features**: Hyperliquid Names, one-click bridging, and reliable swaps
+- **Builder-first approach**: Standards-compliant provider and SDK modules
+- **Multichain-ready design**: Extensible to Ethereum, Arbitrum, Base, Solana, and Sui
 
 ---
 
 💜 **Made with love by the Purro Team** 🐱
+
+*Purro v0.6.8 - Enhanced Stability & Compatibility*
