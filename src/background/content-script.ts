@@ -133,5 +133,15 @@ chrome.runtime.onMessage.addListener((message, _sender, _sendResponse) => {
       },
       '*'
     );
+  } else if (message.type === 'CHAIN_CHANGED') {
+    // Notify the injected provider that chain changed
+    window.postMessage(
+      {
+        source: 'purro-content-script',
+        type: 'CHAIN_CHANGED',
+        chainId: message.chainId,
+      },
+      '*'
+    );
   }
 });

@@ -150,7 +150,13 @@ export class MessageHandler {
           result = await evmHandler.handleGetCurrentChainId();
           break;
         case 'SWITCH_ETHEREUM_CHAIN':
-          result = await evmHandler.handleSwitchEthereumChain(data);
+          result = await evmHandler.handleSwitchEthereumChain(data, sender);
+          break;
+        case 'CHAIN_CHANGED':
+          result = await evmHandler.handleChainChanged(data, sender);
+          break;
+        case 'SWITCH_TO_SUPPORTED_CHAIN':
+          result = await evmHandler.handleSwitchToSupportedChain(data);
           break;
         case 'CHECK_CONNECTION_STATUS':
           result = await evmHandler.handleCheckConnectionStatus(data, sender);

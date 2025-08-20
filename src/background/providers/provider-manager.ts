@@ -101,6 +101,13 @@ export class PurroProviderManager implements PurroProvider {
           this.emit('accountChanged', null);
         }
       }
+
+      if (type === 'CHAIN_CHANGED') {
+        const chainId = event.data.chainId;
+
+        // Emit chainChanged event to dApp
+        this.emit('chainChanged', chainId);
+      }
     });
 
     // Initialize connection state immediately and with retries

@@ -107,7 +107,7 @@ export class PurroEVMProvider implements EthereumProvider {
         if (
           this.selectedAddress !== newAddress ||
           JSON.stringify(this.lastEmittedAccounts) !==
-            JSON.stringify(accountsToEmit)
+          JSON.stringify(accountsToEmit)
         ) {
           this.selectedAddress = newAddress;
 
@@ -136,7 +136,7 @@ export class PurroEVMProvider implements EthereumProvider {
         if (
           this.selectedAddress !== newAddress ||
           JSON.stringify(this.lastEmittedAccounts) !==
-            JSON.stringify(accountsToEmit)
+          JSON.stringify(accountsToEmit)
         ) {
           this.selectedAddress = newAddress;
 
@@ -256,6 +256,34 @@ export class PurroEVMProvider implements EthereumProvider {
 
       this.emit('accountsChanged', accountsToEmit);
     });
+
+    this.providerManager.on('chainChanged', (chainId: string) => {
+      const now = Date.now();
+
+      // Prevent duplicate events within short time window
+      if (this.lastEmitTime && now - this.lastEmitTime < 50) {
+        return;
+      }
+
+      // Check if chain actually changed
+      if (this.chainId === chainId) {
+        return;
+      }
+
+      this.chainId = chainId;
+      this.networkVersion = parseInt(chainId, 16).toString();
+      this.lastEmitTime = now;
+
+      this.emit('chainChanged', chainId);
+
+      // Send message to background script to handle chain change
+      this.sendMessage('CHAIN_CHANGED', {
+        chainId: chainId,
+        origin: window.location.origin,
+      }).catch(error => {
+        console.warn('Failed to send chain change message:', error);
+      });
+    });
   }
 
   // Event handling methods
@@ -306,6 +334,29 @@ export class PurroEVMProvider implements EthereumProvider {
   // Helper method for sending messages to background script
   private async sendMessage(type: string, data?: any): Promise<any> {
     return await this.providerManager.sendMessage(type, data);
+  }
+
+  // Method to handle chain change from wallet UI
+  public async handleChainChangeFromWallet(chainId: string): Promise<void> {
+    const oldChainId = this.chainId;
+
+    if (oldChainId !== chainId) {
+      this.chainId = chainId;
+      this.networkVersion = parseInt(chainId, 16).toString();
+
+      // Emit chainChanged event
+      this.emit('chainChanged', chainId);
+
+      // Send message to background script
+      try {
+        await this.sendMessage('CHAIN_CHANGED', {
+          chainId: chainId,
+          origin: window.location.origin,
+        });
+      } catch (error) {
+        console.warn('Failed to send chain change message:', error);
+      }
+    }
   }
 
   private async getConnectedAccountForSite(): Promise<any> {
@@ -1077,6 +1128,14 @@ export class PurroEVMProvider implements EthereumProvider {
         chainId,
       });
 
+      // If background reports unsupported, throw provider error 4902
+      if (result && result.data && result.data.success === false) {
+        throw this.createProviderError(
+          4902,
+          result.data.error || 'Unsupported chain'
+        );
+      }
+
       if (result && result.data && result.data.chainId) {
         // Update local state
         const newChainId = `0x${result.data.chainId.toString(16)}`;
@@ -1088,6 +1147,16 @@ export class PurroEVMProvider implements EthereumProvider {
         // Emit chainChanged event if chain actually changed
         if (oldChainId !== newChainId) {
           this.emit('chainChanged', newChainId);
+
+          // Send message to background script to handle chain change
+          try {
+            await this.sendMessage('CHAIN_CHANGED', {
+              chainId: newChainId,
+              origin: window.location.origin,
+            });
+          } catch (error) {
+            console.warn('Failed to send chain change message:', error);
+          }
         }
       } else {
         console.warn('⚠️ Unexpected result structure:', result);
