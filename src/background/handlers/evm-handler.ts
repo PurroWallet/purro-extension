@@ -264,7 +264,7 @@ export const evmHandler = {
 
   async handleSwitchEthereumChain(data: {
     chainId: string;
-  }): Promise<MessageResponse> {
+  }, sender?: chrome.runtime.MessageSender): Promise<MessageResponse> {
     try {
       const { chainId } = data;
 
@@ -279,6 +279,22 @@ export const evmHandler = {
 
       // Check if the chain is supported
       if (!supportedEVMChains[chainId]) {
+        // Open unsupported chain popup
+        try {
+          const popupConfig = await this.calculatePopupPosition(sender as chrome.runtime.MessageSender);
+          await chrome.windows.create({
+            url: `${chrome.runtime.getURL('html/unsupported-chain.html')}?chainId=${chainId}`,
+            type: 'popup',
+            width: popupConfig.width,
+            height: popupConfig.height,
+            left: popupConfig.left,
+            top: popupConfig.top,
+            focused: true,
+          });
+        } catch (e) {
+          console.warn('Failed to open unsupported chain popup:', e);
+        }
+
         return {
           success: false,
           error: `Unsupported chain ID: ${chainId}. Supported chains: ${Object.keys(supportedEVMChains).join(', ')}`,
@@ -291,9 +307,24 @@ export const evmHandler = {
         [STORAGE_KEYS.CURRENT_CHAIN_ID]: chainId,
       });
 
+      // Notify all connected tabs about the chain change
+      const tabs = await chrome.tabs.query({});
+      for (const tab of tabs) {
+        if (tab.id) {
+          try {
+            await chrome.tabs.sendMessage(tab.id, {
+              type: 'CHAIN_CHANGED',
+              chainId: chainId,
+            });
+          } catch (error) {
+            // Ignore errors for tabs that don't have our content script
+          }
+        }
+      }
+
       return {
         success: true,
-        data: { chainId: parseInt(chainId, 16) },
+        data: { chainId: parseInt(chainId, 16) }, // Return as number for compatibility
       };
     } catch (error) {
       console.error('Error in handleSwitchEthereumChain:', error);
@@ -1972,6 +2003,105 @@ export const evmHandler = {
       }
     } catch (error) {
       console.warn('Failed to close existing popups:', error);
+    }
+  },
+
+  async handleChainChanged(
+    data: { chainId: string; origin: string },
+    sender: chrome.runtime.MessageSender
+  ): Promise<MessageResponse> {
+    try {
+      const { chainId } = data;
+
+      // Check if the chain is supported
+      const isSupported = Object.values(supportedEVMChains).some(chain =>
+        chain.chainId === chainId ||
+        chain.chainIdNumber.toString() === chainId
+      );
+
+      if (!isSupported) {
+        // Open unsupported chain screen with chain ID parameter
+        const popupPosition = await this.calculatePopupPosition(sender);
+
+        await chrome.windows.create({
+          url: `${chrome.runtime.getURL('html/unsupported-chain.html')}?chainId=${chainId}`,
+          type: 'popup',
+          width: popupPosition.width,
+          height: popupPosition.height,
+          left: Math.round(popupPosition.left),
+          top: Math.round(popupPosition.top),
+        });
+
+        return {
+          success: false,
+          error: 'Unsupported chain',
+          code: 4902, // Custom error code for unsupported chain
+        };
+      }
+
+      // Chain is supported, update the current chain
+      await storageHandler.setCurrentChainId(chainId);
+
+      return {
+        success: true,
+        data: { chainId },
+      };
+    } catch (error) {
+      console.error('Error handling chain change:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  },
+
+  async handleSwitchToSupportedChain(
+    data: { chainId: string }
+  ): Promise<MessageResponse> {
+    try {
+      const { chainId } = data;
+
+      // Validate that the target chain is supported
+      const isSupported = Object.values(supportedEVMChains).some(chain =>
+        chain.chainId === chainId ||
+        chain.chainIdNumber.toString() === chainId
+      );
+
+      if (!isSupported) {
+        return {
+          success: false,
+          error: 'Target chain is not supported',
+        };
+      }
+
+      // Update the current chain
+      await storageHandler.setCurrentChainId(chainId);
+
+      // Notify all connected tabs about the chain change
+      const tabs = await chrome.tabs.query({});
+      for (const tab of tabs) {
+        if (tab.id) {
+          try {
+            await chrome.tabs.sendMessage(tab.id, {
+              type: 'CHAIN_CHANGED',
+              chainId: chainId,
+            });
+          } catch (error) {
+            // Ignore errors for tabs that don't have our content script
+          }
+        }
+      }
+
+      return {
+        success: true,
+        data: { chainId },
+      };
+    } catch (error) {
+      console.error('Error switching to supported chain:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
   },
 

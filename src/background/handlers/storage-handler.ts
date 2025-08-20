@@ -108,7 +108,7 @@ export const storageHandler = {
     ]);
     return (
       result[
-        STORAGE_KEYS.ACCOUNT_SEED_PHRASE_BY_ID.replace('id', seedPhraseId)
+      STORAGE_KEYS.ACCOUNT_SEED_PHRASE_BY_ID.replace('id', seedPhraseId)
       ] || null
     );
   },
@@ -121,7 +121,7 @@ export const storageHandler = {
     ]);
     return (
       result[
-        STORAGE_KEYS.ACCOUNT_PRIVATE_KEY_BY_ID.replace('id', privateKeyId)
+      STORAGE_KEYS.ACCOUNT_PRIVATE_KEY_BY_ID.replace('id', privateKeyId)
       ] || null
     );
   },
@@ -645,6 +645,29 @@ export const storageHandler = {
     } catch (error) {
       console.error('Error deleting all connected sites: ', error);
       throw error;
+    }
+  },
+
+  setCurrentChainId: async (chainId: string): Promise<void> => {
+    try {
+      await chrome.storage.local.set({
+        [STORAGE_KEYS.CURRENT_CHAIN_ID]: chainId,
+      });
+    } catch (error) {
+      console.error('Error setting current chain ID: ', error);
+      throw error;
+    }
+  },
+
+  getCurrentChainId: async (): Promise<string | null> => {
+    try {
+      const result = await chrome.storage.local.get([
+        STORAGE_KEYS.CURRENT_CHAIN_ID,
+      ]);
+      return result[STORAGE_KEYS.CURRENT_CHAIN_ID] || null;
+    } catch (error) {
+      console.error('Error getting current chain ID: ', error);
+      return null;
     }
   },
 };
