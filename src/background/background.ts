@@ -24,6 +24,16 @@ class Background {
   }
 
   private init() {
+    // Handle extension installation
+    chrome.runtime.onInstalled.addListener((details) => {
+      if (details.reason === 'install') {
+        // Open onboarding page when extension is first installed
+        chrome.tabs.create({
+          url: chrome.runtime.getURL('html/onboarding.html')
+        });
+      }
+    });
+
     chrome.runtime.onMessage.addListener(
       (message: MessageRequest, sender, sendResponse) => {
         this.messageHandler
