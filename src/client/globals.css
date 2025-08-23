@@ -72,3 +72,44 @@ textarea {
   font-family: 'Livvic', sans-serif;
   font-style: normal;
 }
+
+/* Animation utilities */
+@keyframes slide-in-from-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+
+.slide-in-from-right {
+  animation-name: slide-in-from-right;
+  animation-duration: 0.3s;
+  animation-timing-function: ease-out;
+}
+
+.fade-out {
+  animation-name: fade-out;
+  animation-duration: 0.2s;
+  animation-timing-function: ease-in;
+}

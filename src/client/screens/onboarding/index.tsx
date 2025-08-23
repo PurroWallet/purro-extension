@@ -1,6 +1,7 @@
 import { Buffer } from 'buffer';
 (globalThis as any).Buffer = Buffer;
 import UniverseBackground from '@/client/components/universe-background';
+import PinExtensionNotification from '@/client/components/pin-extension-notification';
 import { createRoot } from 'react-dom/client';
 import { useState } from 'react';
 import Welcome from './welcome';
@@ -15,6 +16,7 @@ const Onboarding = () => {
   return (
     <div className="relative">
       <UniverseBackground />
+      <PinExtensionNotification />
       <div className="container mx-auto max-w-md h-screen flex items-center justify-center">
         <div className="flex flex-col items-center justify-center h-[600px] w-full border border-white/10 rounded-xl shadow bg-[var(--background-color)]/30 backdrop-blur-md z-10 overflow-hidden">
           {step === 'welcome' && (
