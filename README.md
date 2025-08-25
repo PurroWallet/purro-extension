@@ -2,7 +2,7 @@
 
 > **Purro** is a native-first wallet crafted for the Hyperliquid and HyperEVM ecosystems. Built with practical UX, developer enablement, and deep protocol alignment in mind.
 
-[![Version](https://img.shields.io/badge/version-0.6.8-blue.svg)](https://github.com/purro-xyz/purro-extension)
+[![Version](https://img.shields.io/badge/version-0.6.11-blue.svg)](https://github.com/purro-xyz/purro-extension)
 [![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC%20BY--NC--ND%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-nd/4.0/)
 [![Discord](https://img.shields.io/badge/discord-Join%20Community-blue.svg)](https://discord.gg/VJunuK9T5w)
 
