@@ -203,13 +203,17 @@ export const useHlPortfolioData = (
       const perpsData = perpsBalanceQuery.data;
       if (!perpsData || !perpsData.assetPositions) return 0;
 
-      return Object.values(perpsData.assetPositions).reduce(
+      const withdrawable = parseFloat(perpsData.withdrawable || '0');
+
+      const totalPositionValue = Object.values(perpsData.assetPositions).reduce(
         (total: number, position: any) => {
           const notionalUsd = parseFloat(position.notionalUsd || '0');
           return total + notionalUsd;
         },
         0
       );
+
+      return withdrawable + totalPositionValue;
     } catch (error) {
       console.error('Error calculating perps value:', error);
       return 0;

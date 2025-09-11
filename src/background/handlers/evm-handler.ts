@@ -316,6 +316,7 @@ export const evmHandler = {
               type: 'CHAIN_CHANGED',
               chainId: chainId,
             });
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
           } catch (error) {
             // Ignore errors for tabs that don't have our content script
           }
@@ -1829,6 +1830,7 @@ export const evmHandler = {
             : ethers.parseEther(transaction.value)
           : undefined,
         data: transaction.data,
+        chainId: transaction.chainId,
       };
 
       const tx = await connectedWallet.sendTransaction(txParams);
@@ -2086,6 +2088,7 @@ export const evmHandler = {
               type: 'CHAIN_CHANGED',
               chainId: chainId,
             });
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
           } catch (error) {
             // Ignore errors for tabs that don't have our content script
           }

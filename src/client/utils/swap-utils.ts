@@ -114,6 +114,16 @@ export const validateSwap = (
   routeError: Error | null,
   route: SwapRouteV2Response | null
 ): boolean => {
+  if (isWrapScenario(tokenIn, tokenOut) || isUnwrapScenario(tokenIn, tokenOut)) {
+    return !!(
+      tokenIn &&
+      tokenOut &&
+      amountIn &&
+      amountOut &&
+      !hasInsufficientBalance
+    );
+  }
+
   return !!(
     tokenIn &&
     tokenOut &&
@@ -198,17 +208,13 @@ export const formatMaxBalance = (
 
   // Limit display decimals for better UX
   const maxDisplayDecimals = Math.min(decimals, 8);
-
-  // For very small amounts, show more precision
-  if (balance < 0.0001) {
-    return balance.toFixed(maxDisplayDecimals).replace(/\.?0+$/, '');
-  }
-
-  // For normal amounts, show reasonable precision
+  
+  // Choose precision but ROUND DOWN to avoid exceeding actual balance
   const precision = balance < 1 ? 6 : balance < 1000 ? 4 : 2;
-  return balance
-    .toFixed(Math.min(precision, maxDisplayDecimals))
-    .replace(/\.?0+$/, '');
+  const usedDecimals = Math.min(precision, maxDisplayDecimals);
+  const factor = Math.pow(10, usedDecimals);
+  const floored = Math.floor(balance * factor) / factor;
+  return floored.toFixed(usedDecimals).replace(/\.?0+$/, '');
 };
 
 /**
@@ -266,7 +272,8 @@ export const estimateGasCost = (
 export const hasEnoughBalanceWithGas = (
   token: UnifiedToken | null,
   amount: string,
-  gasEstimate?: GasEstimate
+  gasEstimate?: GasEstimate,
+  gasAlreadyDeducted: boolean = false
 ): { hasEnough: boolean; shortfall: number; details: string } => {
   if (!token || !amount) {
     return {
@@ -279,9 +286,13 @@ export const hasEnoughBalanceWithGas = (
   const balance = getTokenBalance(token);
   const requestedAmount = parseFloat(amount);
 
+  // Debug: basic inputs
+  
+
   // For non-native tokens, only check token balance
   if (!isHypeToken(token)) {
     const hasEnough = balance >= requestedAmount;
+    
     return {
       hasEnough,
       shortfall: hasEnough ? 0 : requestedAmount - balance,
@@ -289,11 +300,39 @@ export const hasEnoughBalanceWithGas = (
     };
   }
 
-  // For native tokens, consider gas fees
+  // For native tokens, check if this is a max balance scenario
+  // If the requested amount is very close to what getMaxSpendableBalance would return,
+  // treat it as a max balance request to avoid floating point precision issues
   const gasCost =
     gasEstimate?.gasCostEth || GAS_ESTIMATION_CONSTANTS.NATIVE_GAS_RESERVE;
+  const maxSpendable = getMaxSpendableBalance(token, {
+    customGasEstimate: gasEstimate,
+  });
+  const maxSpendableAmount = parseFloat(maxSpendable);
+  
+  // Check if amount is essentially the max spendable (within 0.0001% tolerance)
+  const isMaxAmount = Math.abs(requestedAmount - maxSpendableAmount) < maxSpendableAmount * 0.000001;
+  
+  if (isMaxAmount || gasAlreadyDeducted) {
+    // For max balance or when gas is already deducted, 
+    // just verify the total doesn't exceed balance
+    const totalWithGas = requestedAmount + gasCost;
+    const hasEnough = balance >= totalWithGas - 0.000000001; // Small tolerance for floating point
+    
+    
+    return {
+      hasEnough,
+      shortfall: hasEnough ? 0 : totalWithGas - balance,
+      details: hasEnough
+        ? 'Sufficient balance (max amount with gas reserved)'
+        : `Need ${(totalWithGas - balance).toFixed(6)} more`,
+    };
+  }
+
+  // Normal case: check if balance covers both amount and gas
   const totalNeeded = requestedAmount + gasCost;
   const hasEnough = balance >= totalNeeded;
+  
 
   return {
     hasEnough,

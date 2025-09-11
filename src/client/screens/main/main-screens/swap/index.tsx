@@ -10,8 +10,6 @@ import { fetchHyperEvmTokenPrices } from '@/client/services/gecko-terminal-api';
 import TokenLogo from '@/client/components/token-logo';
 import {
   getTokenBalance,
-  isWrapScenario,
-  isUnwrapScenario,
   getMaxSpendableBalance,
   estimateGasCost,
 } from '@/client/utils/swap-utils';
@@ -49,6 +47,7 @@ import useMainSwapStore from '@/client/hooks/use-main-swap-store';
 import { fetchBalances } from '@/client/services/liquidswap-api';
 import { Balance } from '@/client/types/liquidswap-api';
 import { UnifiedToken } from '@/client/components/token-list';
+import { getTokenLogo } from '@/client/utils/icons';
 
 // Default WHYPE token data
 const DEFAULT_WHYPE_TOKEN = {
@@ -117,36 +116,51 @@ const Swap = () => {
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
 
   // Get native token balances
-  const { nativeTokens } = useNativeBalance();
+  const { nativeTokens, refetch } = useNativeBalance();
+
+  useEffect(() => {
+    refetch();
+  }, []);
 
   // Initialize swap route hook with React Query
-  const { isLoading: isLoadingRoute, error: routeError } = useSwapRoute();
+  const {
+    isLoading: isLoadingRoute,
+    error: routeError,
+    isWrapScenario,
+    isUnwrapScenario,
+  } = useSwapRoute();
 
   // Auto-set HYPE (native) as default output token if no token is selected
   useEffect(() => {
-    if (!tokenOut) {
-      // Find native HYPE token from native balance hook
-      const nativeHypeToken = nativeTokens.find(
-        token => token.chain === 'hyperevm' && token.symbol === 'HYPE'
-      );
+    const setDefaultNativeHype = async () => {
+      if (!tokenOut) {
+        // Find native HYPE token from native balance hook
+        const nativeHypeToken = nativeTokens.find(
+          token => token.chain === 'hyperevm' && token.symbol === 'HYPE'
+        );
 
-      const defaultNativeHype = {
-        contractAddress: 'native',
-        symbol: 'HYPE',
-        name: 'HYPE',
-        decimals: 18,
-        balance: nativeHypeToken?.balance || '0',
-        chain: 'hyperevm' as const,
-        chainName: 'HyperEVM',
-        logo: DEFAULT_WHYPE_TOKEN.logo, // Use same logo as WHYPE
-        balanceFormatted: nativeHypeToken?.balanceFormatted || 0,
-        usdValue: nativeHypeToken?.usdValue || 0,
-        usdPrice: nativeHypeToken?.usdPrice,
-        isNative: true,
-      };
+        const logo = (await getTokenLogo('HYPE')) || DEFAULT_WHYPE_TOKEN.logo;
 
-      setTokenOut(defaultNativeHype);
-    }
+        const defaultNativeHype = {
+          contractAddress: 'native',
+          symbol: 'HYPE',
+          name: 'HYPE',
+          decimals: 18,
+          balance: nativeHypeToken?.balance || '0',
+          chain: 'hyperevm' as const,
+          chainName: 'HyperEVM',
+          logo: logo, // Use same logo as WHYPE
+          balanceFormatted: nativeHypeToken?.balanceFormatted || 0,
+          usdValue: nativeHypeToken?.usdValue || 0,
+          usdPrice: nativeHypeToken?.usdPrice,
+          isNative: true,
+        };
+
+        setTokenOut(defaultNativeHype);
+      }
+    };
+
+    setDefaultNativeHype();
   }, [tokenOut, setTokenOut, nativeTokens]);
 
   // Fetch token prices when tokens are selected
@@ -333,6 +347,21 @@ const Swap = () => {
 
   // No cleanup needed - React Query handles cleanup automatically
 
+  const checkAndHandleAmountChangeWrapUnwrap = useCallback(
+    (value: string) => {
+      if (!isUnwrapScenario() && !isWrapScenario()) return;
+
+      console.log('checkAndHandleAmountChangeWrapUnwrap', value);
+
+      if (isExactIn) {
+        setAmountOut(value);
+      } else {
+        setAmountIn(value);
+      }
+    },
+    [isUnwrapScenario, isWrapScenario, isExactIn, setAmountIn, setAmountOut]
+  );
+
   // Handle input changes with decimal validation
   const handleAmountInChange = (value: string) => {
     // Allow empty input
@@ -341,6 +370,8 @@ const Swap = () => {
       setIsExactIn(true);
       return;
     }
+
+    checkAndHandleAmountChangeWrapUnwrap(value);
 
     // Validate numeric input with decimals
     const regex = /^\d*\.?\d*$/;
@@ -364,6 +395,8 @@ const Swap = () => {
       setIsExactIn(false);
       return;
     }
+
+    checkAndHandleAmountChangeWrapUnwrap(value);
 
     // Validate numeric input with decimals
     const regex = /^\d*\.?\d*$/;
@@ -395,6 +428,8 @@ const Swap = () => {
       if (parseFloat(maxAmount) > 0) {
         setAmountIn(maxAmount);
         setIsExactIn(true);
+
+        checkAndHandleAmountChangeWrapUnwrap(maxAmount);
       }
     }
   };
@@ -420,6 +455,8 @@ const Swap = () => {
           .replace(/\.?0+$/, '');
         setAmountIn(formattedHalf);
         setIsExactIn(true);
+
+        checkAndHandleAmountChangeWrapUnwrap(formattedHalf);
       }
     }
   };
@@ -651,82 +688,78 @@ const Swap = () => {
         </div>
 
         {/* Route Info - Hide for wrap/unwrap scenarios */}
-        {!isWrapScenario(tokenIn, tokenOut) &&
-          !isUnwrapScenario(tokenIn, tokenOut) && (
-            <>
-              {route && !isLoadingRoute && (
-                <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-white/60">Price Impact</span>
-                    <span
-                      className={`text-sm font-medium ${
-                        parseFloat(route.averagePriceImpact) > 5
-                          ? 'text-[var(--button-color-destructive)]'
-                          : parseFloat(route.averagePriceImpact) > 1
-                            ? 'text-[var(--primary-color-light)]'
-                            : 'text-[var(--primary-color)]'
-                      }`}
-                    >
-                      {parseFloat(route.averagePriceImpact).toFixed(2)}%
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-white/60">
-                      Slippage Tolerance
-                    </span>
-                    <span className="text-sm text-[var(--text-color)]">
-                      {slippage}%
-                    </span>
-                  </div>
-
-                  {route.execution?.details.hopSwaps &&
-                    route.execution.details.hopSwaps.length > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-white/60">Route</span>
-                        <div className="flex items-center gap-1">
-                          <Zap className="size-3 text-[var(--primary-color-light)]" />
-                          <span className="text-xs text-white/60">
-                            {route.execution.details.hopSwaps.length} hop
-                            {route.execution.details.hopSwaps.length > 1
-                              ? 's'
-                              : ''}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-white/60">Fee</span>
-                    <div className="flex items-center gap-1">0.2%</div>
-                  </div>
+        {!isWrapScenario() && !isUnwrapScenario() && (
+          <>
+            {route && !isLoadingRoute && (
+              <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white/60">Price Impact</span>
+                  <span
+                    className={`text-sm font-medium ${
+                      parseFloat(route.averagePriceImpact) > 5
+                        ? 'text-[var(--button-color-destructive)]'
+                        : parseFloat(route.averagePriceImpact) > 1
+                          ? 'text-[var(--primary-color-light)]'
+                          : 'text-[var(--primary-color)]'
+                    }`}
+                  >
+                    {parseFloat(route.averagePriceImpact).toFixed(2)}%
+                  </span>
                 </div>
-              )}
-            </>
-          )}
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white/60">
+                    Slippage Tolerance
+                  </span>
+                  <span className="text-sm text-[var(--text-color)]">
+                    {slippage}%
+                  </span>
+                </div>
+
+                {route.execution?.details.hopSwaps &&
+                  route.execution.details.hopSwaps.length > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-white/60">Route</span>
+                      <div className="flex items-center gap-1">
+                        <Zap className="size-3 text-[var(--primary-color-light)]" />
+                        <span className="text-xs text-white/60">
+                          {route.execution.details.hopSwaps.length} hop
+                          {route.execution.details.hopSwaps.length > 1
+                            ? 's'
+                            : ''}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white/60">Fee</span>
+                  <div className="flex items-center gap-1">0.2%</div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
 
         {/* Exchange Rate for Wrap/Unwrap Operations */}
-        {(isWrapScenario(tokenIn, tokenOut) ||
-          isUnwrapScenario(tokenIn, tokenOut)) &&
-          tokenIn &&
-          tokenOut && (
-            <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-white/60">Exchange Rate</span>
-                <span className="text-sm text-[var(--text-color)] font-medium">
-                  1 {tokenIn.symbol} = 1 {tokenOut.symbol}
-                </span>
-              </div>
-              <div className="flex items-center justify-center mt-2">
-                <span className="text-xs text-white/50">
-                  {isWrapScenario(tokenIn, tokenOut)
-                    ? 'Wrapping HYPE to WHYPE'
-                    : 'Unwrapping WHYPE to HYPE'}{' '}
-                  • No fees • Instant
-                </span>
-              </div>
+        {(isWrapScenario() || isUnwrapScenario()) && tokenIn && tokenOut && (
+          <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-white/60">Exchange Rate</span>
+              <span className="text-sm text-[var(--text-color)] font-medium">
+                1 {tokenIn.symbol} = 1 {tokenOut.symbol}
+              </span>
             </div>
-          )}
+            <div className="flex items-center justify-center mt-2">
+              <span className="text-xs text-white/50">
+                {isWrapScenario()
+                  ? 'Wrapping HYPE to WHYPE'
+                  : 'Unwrapping WHYPE to HYPE'}{' '}
+                • No fees • Instant
+              </span>
+            </div>
+          </div>
+        )}
 
         {routeError && (
           <div className="bg-[var(--button-color-destructive)]/10 border border-[var(--button-color-destructive)]/30 rounded-lg p-4">

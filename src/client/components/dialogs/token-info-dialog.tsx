@@ -463,18 +463,6 @@ const TokenInfoDialog: React.FC<TokenInfoDialogProps> = ({
             View on Explorer
           </Button>
         )}
-
-        {/* Swap button - only show for HyperEVM tokens */}
-        {isHyperEvmToken && (
-          <Button
-            variant="primary"
-            className="w-full flex items-center gap-2"
-            onClick={handleSwapClick}
-          >
-            <ArrowUpDown className="size-4" />
-            Swap {token.symbol}
-          </Button>
-        )}
       </DialogFooter>
     </DialogWrapper>
   );
