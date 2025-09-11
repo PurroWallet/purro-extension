@@ -316,7 +316,7 @@ export const evmHandler = {
               type: 'CHAIN_CHANGED',
               chainId: chainId,
             });
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
           } catch (error) {
             // Ignore errors for tabs that don't have our content script
           }
@@ -1817,13 +1817,9 @@ export const evmHandler = {
         };
       }
 
-      console.log("1")
       const signerWallet = new ethers.Wallet(privateKey);
-      console.log("2")
       const provider = new ethers.JsonRpcProvider(chainInfo.rpcUrls[0]);
-      console.log("3")
       const connectedWallet = signerWallet.connect(provider);
-      console.log("4")
 
       // Prepare transaction with all parameters from frontend
       const txParams: any = {
@@ -1837,11 +1833,7 @@ export const evmHandler = {
         chainId: transaction.chainId,
       };
 
-      console.log("5", txParams)
-
       const tx = await connectedWallet.sendTransaction(txParams);
-
-      console.log("6")
 
       return {
         success: true,
@@ -2096,7 +2088,7 @@ export const evmHandler = {
               type: 'CHAIN_CHANGED',
               chainId: chainId,
             });
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
           } catch (error) {
             // Ignore errors for tabs that don't have our content script
           }
