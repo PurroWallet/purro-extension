@@ -10,9 +10,8 @@ import {
   validateSwap,
   hasEnoughBalanceWithGas,
   estimateGasCost,
-  isWrapScenario,
-  isUnwrapScenario,
   getActionButtonText,
+  getMaxSpendableBalance,
 } from '@/client/utils/swap-utils';
 import { executeSwapTransaction } from '@/client/utils/swap-transaction-handler';
 import { useHyperEvmTokens } from '@/client/hooks/use-hyper-evm-tokens';
@@ -72,11 +71,18 @@ const ConfirmSwapButton = () => {
     route,
     isSwapping,
     setIsSwapping,
-    resetAmounts,
+    reset,
   } = useSwapStore();
 
-  const { isLoading: isLoadingRoute, error: routeError } = useSwapRoute();
+  const {
+    isLoading: isLoadingRoute,
+    error: routeError,
+    isWrapScenario,
+    isUnwrapScenario,
+  } = useSwapRoute();
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
+
+  console.log('isLoadingRoute', isLoadingRoute);
 
   // Function to get updated native HYPE token data
   const getNativeHypeWithBalance = useCallback(
@@ -105,11 +111,31 @@ const ConfirmSwapButton = () => {
 
   // Validation
   // Enhanced balance validation that considers gas fees for native tokens
+  const nativeTokenIn = tokenIn ? getNativeHypeWithBalance(tokenIn) : null;
+  const gasEst = tokenIn ? estimateGasCost(tokenIn, 'swap') : undefined;
+
+  // Detect if current amount equals max spendable (gas already reserved)
+  let gasAlreadyDeducted = false;
+  if (nativeTokenIn && amountIn) {
+    const maxAmt = getMaxSpendableBalance(nativeTokenIn, {
+      reserveGas: true,
+      customGasEstimate: gasEst,
+    });
+    const a = parseFloat(amountIn);
+    const m = parseFloat(maxAmt);
+    if (isFinite(a) && isFinite(m) && m > 0) {
+      gasAlreadyDeducted = Math.abs(a - m) < m * 0.000001; // 0.0001% tolerance
+    }
+    
+  }
+
   const balanceCheck = hasEnoughBalanceWithGas(
-    tokenIn ? getNativeHypeWithBalance(tokenIn) : null,
+    nativeTokenIn,
     amountIn,
-    tokenIn ? estimateGasCost(tokenIn, 'swap') : undefined
+    gasEst,
+    gasAlreadyDeducted
   );
+  
   const hasInsufficientBalance = !balanceCheck.hasEnough;
 
   const isValidSwap = validateSwap(
@@ -124,14 +150,9 @@ const ConfirmSwapButton = () => {
 
   // Handle swap execution
   const handleSwap = async () => {
-    if (
-      !isValidSwap ||
-      !activeAccountAddress ||
-      !route ||
-      !tokenIn ||
-      !tokenOut
-    )
-      return;
+    if (!isValidSwap || !activeAccountAddress || !tokenIn || !tokenOut) return;
+
+    if (!route && !isWrapScenario() && !isUnwrapScenario()) return;
 
     setIsSwapping(true);
     clearSwapError();
@@ -146,7 +167,7 @@ const ConfirmSwapButton = () => {
 
       if (result.success && result.data) {
         // Reset swap amounts and route for next swap
-        resetAmounts();
+        reset();
 
         // Refetch all token balances to show updated amounts across all chains
         refetchAllTokens();
@@ -200,9 +221,9 @@ const ConfirmSwapButton = () => {
         {isSwapping ? (
           <div className="flex items-center gap-2">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            {isWrapScenario(tokenIn, tokenOut)
+            {isWrapScenario()
               ? 'Wrapping...'
-              : isUnwrapScenario(tokenIn, tokenOut)
+              : isUnwrapScenario()
                 ? 'Unwrapping...'
                 : 'Swapping...'}
           </div>
@@ -214,7 +235,7 @@ const ConfirmSwapButton = () => {
           `Insufficient ${tokenIn.symbol} balance`
         ) : routeError ? (
           'No route available'
-        ) : !route ? (
+        ) : !route && !isWrapScenario() && !isUnwrapScenario() ? (
           'Finding best route...'
         ) : (
           getActionButtonText(tokenIn, tokenOut)

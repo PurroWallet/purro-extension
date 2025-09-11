@@ -126,7 +126,7 @@ const SwapSuccess = ({
                 <TokenLogo
                   symbol={tokenIn.symbol}
                   existingLogo={tokenIn.logo}
-                  className="size-10 rounded-full"
+                  className="size-9 rounded-full"
                   fallbackText={tokenIn.symbol.slice(0, 3)}
                 />
               </div>
@@ -149,7 +149,7 @@ const SwapSuccess = ({
                 <TokenLogo
                   symbol={tokenOut.symbol}
                   existingLogo={tokenOut.logo}
-                  className="size-10 rounded-full"
+                  className="size-9 rounded-full"
                   fallbackText={tokenOut.symbol.slice(0, 3)}
                 />
               </div>

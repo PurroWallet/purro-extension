@@ -126,10 +126,27 @@ export const useSwapRoute = () => {
     getSwapParams,
   ]);
 
+  // Helper functions for wrap/unwrap detection
+  const isWrapScenario = (): boolean => {
+    return tokenIn && tokenOut
+      ? isHypeToken(tokenIn) && isWhypeToken(tokenOut)
+      : false;
+  };
+
+  const isUnwrapScenario = (): boolean => {
+    return tokenIn && tokenOut
+      ? isWhypeToken(tokenIn) && isHypeToken(tokenOut)
+      : false;
+  };
+
+  const isDirectWrapUnwrap = (): boolean => {
+    return isWrapScenario() || isUnwrapScenario();
+  };
+
   // React Query for swap route
   const {
     data: routeData,
-    isLoading,
+    isFetching,
     error,
     refetch,
     isRefetching,
@@ -139,6 +156,7 @@ export const useSwapRoute = () => {
       : ['swapRoute', 'disabled'],
     queryFn: () => fetchSwapRoute(swapParams!),
     enabled:
+      !isDirectWrapUnwrap() &&
       !!swapParams &&
       parseFloat(
         (swapParams.amountIn || swapParams.amountOut || '0').toString()
@@ -180,6 +198,8 @@ export const useSwapRoute = () => {
     } else {
       setRoute(null);
     }
+
+    console.log('routeData', routeData);
   }, [
     routeData,
     isExactIn,
@@ -208,27 +228,10 @@ export const useSwapRoute = () => {
     });
   };
 
-  // Helper functions for wrap/unwrap detection
-  const isWrapScenario = (): boolean => {
-    return tokenIn && tokenOut
-      ? isHypeToken(tokenIn) && isWhypeToken(tokenOut)
-      : false;
-  };
-
-  const isUnwrapScenario = (): boolean => {
-    return tokenIn && tokenOut
-      ? isWhypeToken(tokenIn) && isHypeToken(tokenOut)
-      : false;
-  };
-
-  const isDirectWrapUnwrap = (): boolean => {
-    return isWrapScenario() || isUnwrapScenario();
-  };
-
   return {
     // Route data
     route: routeData || null,
-    isLoading,
+    isLoading: isFetching,
     isRefetching,
     error: error as Error | null,
 

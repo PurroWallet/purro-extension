@@ -3,6 +3,7 @@ import { UnifiedToken } from '@/client/components/token-list';
 import { isHypeToken, isWrapScenario, isUnwrapScenario } from './swap-utils';
 import { SwapRouteV2Response } from '@/client/types/liquidswap-api';
 import { ethers } from 'ethers';
+import { WHYPE_TOKEN_ADDRESS } from './swap-utils';
 
 // Constants for easy customization
 const SWAP_CONSTANTS = {
@@ -13,6 +14,7 @@ const SWAP_CONSTANTS = {
     NO_SPENDER_ADDRESS: 'No spender address in route execution',
     TOKEN_APPROVAL_FAILED: 'Token approval failed',
     INSUFFICIENT_ALLOWANCE: 'Insufficient token allowance',
+    NO_ROUTE: 'No route found',
   },
   DEBUG: {
     ENABLED: false,
@@ -77,13 +79,16 @@ export const executeSwapTransaction = async ({
   tokenIn: UnifiedToken;
   tokenOut: UnifiedToken;
   amountIn: string;
-  route: SwapRouteV2Response;
+  route: SwapRouteV2Response | null;
 }): Promise<SwapExecutionResult> => {
   debugLog('[Purro] 🔄 Starting swap transaction:', {
     tokenIn: { symbol: tokenIn.symbol, address: tokenIn.contractAddress },
     tokenOut: { symbol: tokenOut.symbol, address: tokenOut.contractAddress },
     amountIn,
-    route: { to: route.execution?.to, hasCalldata: !!route.execution?.calldata }
+    route: {
+      to: route?.execution?.to,
+      hasCalldata: !!route?.execution?.calldata,
+    },
   });
 
   try {
@@ -98,12 +103,17 @@ export const executeSwapTransaction = async ({
       isDirectWrapUnwrapScenario,
       isFromNativeToken,
       isWrap: isWrapScenario(tokenIn, tokenOut),
-      isUnwrap: isUnwrapScenario(tokenIn, tokenOut)
+      isUnwrap: isUnwrapScenario(tokenIn, tokenOut),
     });
 
     // Step 1: Handle approval for ERC20 tokens (skip for direct wrap/unwrap)
     if (!isFromNativeToken && !isDirectWrapUnwrapScenario) {
       debugLog('[Purro] 🔒 Checking token allowance for ERC20 token...');
+
+      if (!route) {
+        debugError('[Purro] ❌ No route found');
+        throw new Error(SWAP_CONSTANTS.ERROR_MESSAGES.NO_ROUTE);
+      }
 
       const spenderAddress = route.execution?.to;
       if (!spenderAddress) {
@@ -120,7 +130,10 @@ export const executeSwapTransaction = async ({
         chainId: SWAP_CONSTANTS.HYPEREVM_CHAIN_ID,
       };
 
-      debugLog('[Purro] 📞 Calling EVM_CHECK_TOKEN_ALLOWANCE with:', allowanceData);
+      debugLog(
+        '[Purro] 📞 Calling EVM_CHECK_TOKEN_ALLOWANCE with:',
+        allowanceData
+      );
 
       const allowanceResult = await sendMessage(
         'EVM_CHECK_TOKEN_ALLOWANCE',
@@ -143,7 +156,7 @@ export const executeSwapTransaction = async ({
       debugLog('[Purro] 💰 Allowance comparison:', {
         amountInWei: amountInWei.toString(),
         allowanceWei: allowanceWei.toString(),
-        needsApproval: allowanceWei < amountInWei
+        needsApproval: allowanceWei < amountInWei,
       });
 
       // If allowance is insufficient, request approval
@@ -168,7 +181,10 @@ export const executeSwapTransaction = async ({
 
         if (approvalResult.error) {
           debugError('[Purro] ❌ Token approval failed:', approvalResult.error);
-          throw new Error(approvalResult.error || SWAP_CONSTANTS.ERROR_MESSAGES.TOKEN_APPROVAL_FAILED);
+          throw new Error(
+            approvalResult.error ||
+              SWAP_CONSTANTS.ERROR_MESSAGES.TOKEN_APPROVAL_FAILED
+          );
         }
 
         debugLog('[Purro] ✅ Token approval successful');
@@ -176,7 +192,9 @@ export const executeSwapTransaction = async ({
         debugLog('[Purro] ✅ Sufficient allowance, no approval needed');
       }
     } else {
-      debugLog('[Purro] ⏭️ Skipping allowance check (native token or wrap/unwrap)');
+      debugLog(
+        '[Purro] ⏭️ Skipping allowance check (native token or wrap/unwrap)'
+      );
     }
 
     // Step 2: Execute the swap transaction
@@ -215,8 +233,13 @@ export const executeSwapTransaction = async ({
           Math.floor(amountInFloat * Math.pow(10, decimals))
         );
 
+        const toData =
+          tokenOut.contractAddress === 'native'
+            ? WHYPE_TOKEN_ADDRESS
+            : tokenOut.contractAddress;
+
         transactionData = {
-          to: tokenOut.contractAddress || '',
+          to: toData || '',
           data: `${SWAP_CONSTANTS.UNWRAP_FUNCTION_SELECTOR}${amountInWei.toString(16).padStart(64, '0')}`, // withdraw(uint256) function
           value: '0x0',
           chainId: SWAP_CONSTANTS.HYPEREVM_CHAIN_ID,
@@ -244,17 +267,24 @@ export const executeSwapTransaction = async ({
         transactionValue = `0x${amountInWei.toString(16)}`;
       }
 
+      if (!route) {
+        debugError('[Purro] ❌ No route found');
+        throw new Error(SWAP_CONSTANTS.ERROR_MESSAGES.NO_ROUTE);
+      }
+
       // Prepare transaction data
       transactionData = {
-        to: route.execution?.to || '',
-        data: route.execution?.calldata || '',
+        to: route?.execution?.to || '',
+        data: route?.execution?.calldata || '',
         value: transactionValue,
       };
 
       debugLog('[Purro] 🔀 Regular swap transaction data:', transactionData);
 
       // Send transaction via background script
-      debugLog('[Purro] 📞 Calling EVM_SWAP_HYPERLIQUID_TOKEN for regular swap');
+      debugLog(
+        '[Purro] 📞 Calling EVM_SWAP_HYPERLIQUID_TOKEN for regular swap'
+      );
       result = await sendMessage('EVM_SWAP_HYPERLIQUID_TOKEN', transactionData);
     }
 
@@ -272,7 +302,7 @@ export const executeSwapTransaction = async ({
     debugError('[Purro] ❌ Error details:', {
       name: error instanceof Error ? error.name : 'Unknown',
       message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
     // Re-throw the error so it can be caught by the UI layer
