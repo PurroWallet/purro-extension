@@ -262,9 +262,12 @@ export const evmHandler = {
     }
   },
 
-  async handleSwitchEthereumChain(data: {
-    chainId: string;
-  }, sender?: chrome.runtime.MessageSender): Promise<MessageResponse> {
+  async handleSwitchEthereumChain(
+    data: {
+      chainId: string;
+    },
+    sender?: chrome.runtime.MessageSender
+  ): Promise<MessageResponse> {
     try {
       const { chainId } = data;
 
@@ -281,7 +284,9 @@ export const evmHandler = {
       if (!supportedEVMChains[chainId]) {
         // Open unsupported chain popup
         try {
-          const popupConfig = await this.calculatePopupPosition(sender as chrome.runtime.MessageSender);
+          const popupConfig = await this.calculatePopupPosition(
+            sender as chrome.runtime.MessageSender
+          );
           await chrome.windows.create({
             url: `${chrome.runtime.getURL('html/unsupported-chain.html')}?chainId=${chainId}`,
             type: 'popup',
@@ -316,7 +321,7 @@ export const evmHandler = {
               type: 'CHAIN_CHANGED',
               chainId: chainId,
             });
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
           } catch (error) {
             // Ignore errors for tabs that don't have our content script
           }
@@ -1544,8 +1549,10 @@ export const evmHandler = {
       // Validate value if provided
       if (transaction.value && !transaction.data) {
         try {
-          ethers.parseEther(transaction.value);
-        } catch {
+          const ethAmount = ethers.formatEther(transaction.value);
+          ethers.parseEther(ethAmount);
+        } catch (error) {
+          console.error('[Purro] ❌ Error in handleSendToken:', error);
           return {
             success: false,
             error: TRANSACTION_ERRORS.INVALID_VALUE.message,
@@ -1740,7 +1747,10 @@ export const evmHandler = {
         try {
           ethers.parseEther(transaction.value);
         } catch (error: unknown) {
-          console.error('[Purro] ❌ Background: Error parsing transaction value:', error);
+          console.error(
+            '[Purro] ❌ Background: Error parsing transaction value:',
+            error
+          );
           return {
             success: false,
             error: TRANSACTION_ERRORS.INVALID_VALUE.message,
@@ -1797,7 +1807,10 @@ export const evmHandler = {
           activeAccount.id
         );
       } catch (error) {
-        console.error('[Purro] ❌ Background: Failed to retrieve private key:', error);
+        console.error(
+          '[Purro] ❌ Background: Failed to retrieve private key:',
+          error
+        );
 
         // Check if it's a session issue
         const session = await authHandler.getSession();
@@ -1817,13 +1830,13 @@ export const evmHandler = {
         };
       }
 
-      console.log("1")
+      console.log('1');
       const signerWallet = new ethers.Wallet(privateKey);
-      console.log("2")
+      console.log('2');
       const provider = new ethers.JsonRpcProvider(chainInfo.rpcUrls[0]);
-      console.log("3")
+      console.log('3');
       const connectedWallet = signerWallet.connect(provider);
-      console.log("4")
+      console.log('4');
 
       // Prepare transaction with all parameters from frontend
       const txParams: any = {
@@ -1837,18 +1850,21 @@ export const evmHandler = {
         chainId: transaction.chainId,
       };
 
-      console.log("5", txParams)
+      console.log('5', txParams);
 
       const tx = await connectedWallet.sendTransaction(txParams);
 
-      console.log("6")
+      console.log('6');
 
       return {
         success: true,
         data: tx.hash,
       };
     } catch (error) {
-      console.error('[Purro] ❌ Background: Error in handleSwapHyperliquidToken:', error);
+      console.error(
+        '[Purro] ❌ Background: Error in handleSwapHyperliquidToken:',
+        error
+      );
       return {
         success: false,
         error:
@@ -1869,27 +1885,36 @@ export const evmHandler = {
       // Get active account
       const activeAccount = await storageHandler.getActiveAccount();
       if (!activeAccount) {
-        console.error('[Purro] ❌ Background: No active account found for allowance check');
+        console.error(
+          '[Purro] ❌ Background: No active account found for allowance check'
+        );
         throw new Error('No active account');
       }
 
       // Get wallet info for owner address
       const wallet = await storageHandler.getWalletById(activeAccount.id);
       if (!wallet || !wallet.eip155) {
-        console.error('[Purro] ❌ Background: EVM wallet not found for allowance check');
+        console.error(
+          '[Purro] ❌ Background: EVM wallet not found for allowance check'
+        );
         throw new Error('EVM wallet not found for active account');
       }
 
       const ownerAddress = wallet.eip155.address;
       if (!ownerAddress) {
-        console.error('[Purro] ❌ Background: No EVM address found for allowance check');
+        console.error(
+          '[Purro] ❌ Background: No EVM address found for allowance check'
+        );
         throw new Error('No EVM address found for active account');
       }
 
       // Get RPC URL for the chain
       const chainInfo = supportedEVMChains[chainId];
       if (!chainInfo) {
-        console.error('[Purro] ❌ Background: Unsupported chain for allowance:', chainId);
+        console.error(
+          '[Purro] ❌ Background: Unsupported chain for allowance:',
+          chainId
+        );
         throw new Error(`Unsupported chain: ${chainId}`);
       }
 
@@ -1912,7 +1937,10 @@ export const evmHandler = {
         },
       };
     } catch (error) {
-      console.error('[Purro] ❌ Background: Error checking token allowance:', error);
+      console.error(
+        '[Purro] ❌ Background: Error checking token allowance:',
+        error
+      );
       return {
         success: false,
         error:
@@ -2024,9 +2052,10 @@ export const evmHandler = {
       const { chainId } = data;
 
       // Check if the chain is supported
-      const isSupported = Object.values(supportedEVMChains).some(chain =>
-        chain.chainId === chainId ||
-        chain.chainIdNumber.toString() === chainId
+      const isSupported = Object.values(supportedEVMChains).some(
+        chain =>
+          chain.chainId === chainId ||
+          chain.chainIdNumber.toString() === chainId
       );
 
       if (!isSupported) {
@@ -2065,16 +2094,17 @@ export const evmHandler = {
     }
   },
 
-  async handleSwitchToSupportedChain(
-    data: { chainId: string }
-  ): Promise<MessageResponse> {
+  async handleSwitchToSupportedChain(data: {
+    chainId: string;
+  }): Promise<MessageResponse> {
     try {
       const { chainId } = data;
 
       // Validate that the target chain is supported
-      const isSupported = Object.values(supportedEVMChains).some(chain =>
-        chain.chainId === chainId ||
-        chain.chainIdNumber.toString() === chainId
+      const isSupported = Object.values(supportedEVMChains).some(
+        chain =>
+          chain.chainId === chainId ||
+          chain.chainIdNumber.toString() === chainId
       );
 
       if (!isSupported) {
@@ -2096,7 +2126,7 @@ export const evmHandler = {
               type: 'CHAIN_CHANGED',
               chainId: chainId,
             });
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
           } catch (error) {
             // Ignore errors for tabs that don't have our content script
           }
