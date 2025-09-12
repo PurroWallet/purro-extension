@@ -23,6 +23,7 @@ import {
   CircleAlert,
   ChevronDown,
   RefreshCw,
+  Loader2,
 } from 'lucide-react';
 import { getNetworkIcon } from '@/utils/network-icons';
 import { getAddressByDomain } from '@/client/services/hyperliquid-name-api';
@@ -600,6 +601,8 @@ const ConfirmSend = () => {
   const [lastGasUpdate, setLastGasUpdate] = useState<number>(Date.now());
   const [refreshCountdown, setRefreshCountdown] = useState<number>(30);
   const [isGasCollapsibleOpen, setIsGasCollapsibleOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
 
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
   const isHLName = recipient.match(/^[a-zA-Z0-9]+\.hl$/);
@@ -748,7 +751,7 @@ const ConfirmSend = () => {
 
   const handleConfirmSend = async () => {
     if (token && recipient && amount && gasEstimate && activeAccountAddress) {
-      setIsEstimatingGas(true);
+      setIsSending(true);
 
       try {
         // Validate domain resolution for HL names
@@ -882,15 +885,23 @@ const ConfirmSend = () => {
           };
         }
 
+        console.log('transactionData', transactionData);
+
         // Send transaction through the EVM handler
         const result = await sendMessage('EVM_SEND_TOKEN', {
           transaction: transactionData,
         });
 
-        // Store transaction hash and navigate to success page
-        const txHash = result.data || 'Processing...';
-        setTransactionHash(txHash);
-        setStep('success');
+        console.log('result', result);
+
+        if (result.success) {
+          // Store transaction hash and navigate to success page
+          const txHash = result.data || 'Processing...';
+          setTransactionHash(txHash);
+          setStep('success');
+        } else {
+          setErrorMessage('Transaction failed, please try again.');
+        }
       } catch (error) {
         console.error('❌ Transaction failed:', error);
 
@@ -914,12 +925,18 @@ const ConfirmSend = () => {
           }
         }
 
-        alert(`❌ ${errorMessage}`);
+        setErrorMessage(errorMessage);
       } finally {
-        setIsEstimatingGas(false);
+        setIsSending(false);
       }
     }
   };
+
+  useEffect(() => {
+    setTimeout(() => {
+      setErrorMessage(null);
+    }, 10000);
+  }, [errorMessage]);
 
   const handleBackFromConfirm = () => {
     setStep('send');
@@ -1132,14 +1149,23 @@ const ConfirmSend = () => {
           </div>
         )}
       </DialogContent>
-      <DialogFooter>
+      <DialogFooter className="space-y-2 flex flex-col">
+        {errorMessage && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 w-full">
+            <p className="text-red-400 text-sm flex items-center text-nowrap">
+              <CircleAlert className="size-4 mr-2" />
+              {errorMessage}
+            </p>
+          </div>
+        )}
         <Button
           onClick={handleConfirmSend}
           disabled={
             isEstimatingGas ||
             !gasEstimate ||
             !isHaveEnoughGasFee ||
-            !!gasEstimationError
+            !!gasEstimationError ||
+            isSending
           }
           variant="primary"
           className="w-full"
@@ -1151,8 +1177,11 @@ const ConfirmSend = () => {
             </>
           ) : (
             <>
-              <Send className="size-4 mr-2" />
-              Send
+              {isSending ? (
+                <Loader2 className="size-4 mr-2 animate-spin" />
+              ) : (
+                'Send'
+              )}
             </>
           )}
           {!isHaveEnoughGasFee && (
