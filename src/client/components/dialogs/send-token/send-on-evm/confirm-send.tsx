@@ -17,7 +17,6 @@ import { useEffect, useState } from 'react';
 import useDialogStore from '@/client/hooks/use-dialog-store';
 import {
   ArrowLeft,
-  Send,
   AlertTriangle,
   X,
   CircleAlert,
