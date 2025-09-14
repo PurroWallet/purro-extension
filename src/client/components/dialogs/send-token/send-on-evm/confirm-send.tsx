@@ -768,10 +768,13 @@ const ConfirmSend = () => {
 
         // Fallback if gas price is 0 or invalid
         if (!gasPriceGwei || gasPriceGwei <= 0) {
-          console.warn(
-            `⚠️ Invalid gas price, using fallback of ${GAS_ESTIMATION_CONSTANTS.FALLBACK_GAS_PRICE} gwei`
-          );
           gasPriceGwei = GAS_ESTIMATION_CONSTANTS.FALLBACK_GAS_PRICE;
+        }
+
+        // Ensure minimum gas price (1 gwei minimum)
+        const MIN_GAS_PRICE_GWEI = 1;
+        if (gasPriceGwei < MIN_GAS_PRICE_GWEI) {
+          gasPriceGwei = MIN_GAS_PRICE_GWEI;
         }
 
         // Add safety buffer to gas price (10% extra) to account for network changes
@@ -884,14 +887,10 @@ const ConfirmSend = () => {
           };
         }
 
-        console.log('transactionData', transactionData);
-
         // Send transaction through the EVM handler
         const result = await sendMessage('EVM_SEND_TOKEN', {
           transaction: transactionData,
         });
-
-        console.log('result', result);
 
         if (result.success) {
           // Store transaction hash and navigate to success page
