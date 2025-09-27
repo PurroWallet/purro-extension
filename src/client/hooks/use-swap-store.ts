@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { UnifiedToken } from '@/client/components/token-list';
-import { SwapRouteV2Response } from '@/client/types/liquidswap-api';
+import { GluexQuoteResult } from '@/client/types/gluex-api';
 
 /**
  * Swap Store with Persistence
@@ -72,11 +72,11 @@ export interface SwapState {
   // UI state
   showTokenSelector: 'in' | 'out' | null;
 
-  // Amounts
-  amountIn: string;
-  amountOut: string;
+  // Amounts (using GlueX API naming convention)
+  inputAmount: string;
+  outputAmount: string;
 
-  // Swap direction (true = user input tokenIn amount, false = user input tokenOut amount)
+  // Swap direction (true = user input inputAmount, false = user input outputAmount)
   isExactIn: boolean;
 
   // Settings
@@ -84,7 +84,7 @@ export interface SwapState {
   deadline: number; // minutes
 
   // Route data - now managed by React Query
-  route: SwapRouteV2Response | null;
+  route: GluexQuoteResult | null;
 
   // Transaction state
   isSwapping: boolean;
@@ -106,12 +106,12 @@ export interface SwapState {
   setTokenIn: (token: UnifiedToken | null) => void;
   setTokenOut: (token: UnifiedToken | null) => void;
   setShowTokenSelector: (show: 'in' | 'out' | null) => void;
-  setAmountIn: (amount: string) => void;
-  setAmountOut: (amount: string) => void;
+  setInputAmount: (amount: string) => void;
+  setOutputAmount: (amount: string) => void;
   setIsExactIn: (isExactIn: boolean) => void;
   setSlippage: (slippage: number) => void;
   setDeadline: (deadline: number) => void;
-  setRoute: (route: SwapRouteV2Response | null) => void;
+  setRoute: (route: GluexQuoteResult | null) => void;
   setIsSwapping: (swapping: boolean) => void;
   setTokenPrices: (prices: {
     [address: string]: { price: number; priceChange24h: number };
@@ -159,8 +159,8 @@ const useSwapStore = create<SwapState>()(
       tokenIn: null,
       tokenOut: null,
       showTokenSelector: null,
-      amountIn: '',
-      amountOut: '',
+      inputAmount: '',
+      outputAmount: '',
       isExactIn: true,
       slippage: DEFAULT_SLIPPAGE,
       deadline: DEFAULT_DEADLINE,
@@ -175,8 +175,8 @@ const useSwapStore = create<SwapState>()(
       setTokenIn: token => set({ tokenIn: token }),
       setTokenOut: token => set({ tokenOut: token }),
       setShowTokenSelector: show => set({ showTokenSelector: show }),
-      setAmountIn: amount => set({ amountIn: amount }),
-      setAmountOut: amount => set({ amountOut: amount }),
+      setInputAmount: amount => set({ inputAmount: amount }),
+      setOutputAmount: amount => set({ outputAmount: amount }),
       setIsExactIn: isExactIn => set({ isExactIn }),
       setSlippage: slippage => {
         // Validate slippage value
@@ -218,20 +218,20 @@ const useSwapStore = create<SwapState>()(
 
       // Utility actions
       switchTokens: () => {
-        const { tokenIn, tokenOut, amountIn, amountOut, isExactIn } = get();
+        const { tokenIn, tokenOut, inputAmount, outputAmount, isExactIn } = get();
         set({
           tokenIn: tokenOut,
           tokenOut: tokenIn,
-          amountIn: isExactIn ? amountOut : amountIn,
-          amountOut: isExactIn ? amountIn : amountOut,
+          inputAmount: isExactIn ? outputAmount : inputAmount,
+          outputAmount: isExactIn ? inputAmount : outputAmount,
           route: null, // Clear route when switching
         });
       },
 
       resetAmounts: () =>
         set({
-          amountIn: '',
-          amountOut: '',
+          inputAmount: '',
+          outputAmount: '',
           route: null,
         }),
 
@@ -239,8 +239,8 @@ const useSwapStore = create<SwapState>()(
         set({
           tokenIn: null,
           tokenOut: null,
-          amountIn: '',
-          amountOut: '',
+          inputAmount: '',
+          outputAmount: '',
           isExactIn: true,
           route: null,
           isSwapping: false,
@@ -248,20 +248,21 @@ const useSwapStore = create<SwapState>()(
         }),
 
       // Helper method to get swap parameters for React Query
+      // Now using consistent inputAmount/outputAmount naming
       getSwapParams: () => {
-        const { tokenIn, tokenOut, amountIn, amountOut, isExactIn, slippage } =
+        const { tokenIn, tokenOut, inputAmount, outputAmount, isExactIn, slippage } =
           get();
 
         if (!tokenIn || !tokenOut) return null;
 
-        const amount = isExactIn ? amountIn : amountOut;
+        const amount = isExactIn ? inputAmount : outputAmount;
         if (!amount || parseFloat(amount) <= 0) return null;
 
         // Map native token addresses to WHYPE for API calls
         const WHYPE_TOKEN_ADDRESS =
           '0x5555555555555555555555555555555555555555';
 
-        const getApiAddress = (token: any): string => {
+        const getApiAddress = (token: UnifiedToken): string => {
           const address = token.contractAddress;
           // If token is native (HYPE), use WHYPE address for API
           if (
@@ -275,9 +276,9 @@ const useSwapStore = create<SwapState>()(
         };
 
         return {
-          tokenInAddress: getApiAddress(tokenIn),
-          tokenOutAddress: getApiAddress(tokenOut),
-          amount,
+          tokenInAddress: getApiAddress(tokenIn), // Maps to GlueX inputToken
+          tokenOutAddress: getApiAddress(tokenOut), // Maps to GlueX outputToken
+          amount, // Maps to GlueX inputAmount or outputAmount
           isExactIn,
           slippage,
         };

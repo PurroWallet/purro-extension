@@ -51,8 +51,8 @@ const MainHeader = ({
     route,
     tokenIn,
     tokenOut,
-    amountIn,
-    amountOut,
+    inputAmount,
+    outputAmount,
   } = useSwapStore();
 
   // Calculate countdown timer
@@ -63,7 +63,7 @@ const MainHeader = ({
     route &&
     tokenIn &&
     tokenOut &&
-    (amountIn || amountOut) &&
+    (inputAmount || outputAmount) &&
     lastRefreshTimestamp
   );
 

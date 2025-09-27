@@ -1,7 +1,7 @@
 import { sendMessage } from '@/client/utils/extension-message-utils';
 import { UnifiedToken } from '@/client/components/token-list';
 import { isHypeToken, isWrapScenario, isUnwrapScenario } from './swap-utils';
-import { SwapRouteV2Response } from '@/client/types/liquidswap-api';
+import { GluexQuoteResult } from '@/client/types/gluex-api';
 import { ethers } from 'ethers';
 import { WHYPE_TOKEN_ADDRESS } from './swap-utils';
 
@@ -23,7 +23,7 @@ const SWAP_CONSTANTS = {
 } as const;
 
 // Debug logging utility
-const debugLog = (message: string, data?: any) => {
+const debugLog = (message: string, data?: unknown) => {
   if (SWAP_CONSTANTS.DEBUG.ENABLED) {
     if (data && SWAP_CONSTANTS.DEBUG.LOG_TRANSACTION_DATA) {
       console.log(message, data);
@@ -33,7 +33,7 @@ const debugLog = (message: string, data?: any) => {
   }
 };
 
-const debugError = (message: string, error?: any) => {
+const debugError = (message: string, error?: unknown) => {
   // Prevent TypeScript unused parameter errors when logging is disabled
   void message;
   void error;
@@ -61,7 +61,7 @@ export interface SwapTransactionParams {
   tokenIn: UnifiedToken;
   tokenOut: UnifiedToken;
   amountIn: string;
-  route: SwapRouteV2Response;
+  route: GluexQuoteResult;
 }
 
 export interface SwapExecutionResult {
@@ -79,15 +79,15 @@ export const executeSwapTransaction = async ({
   tokenIn: UnifiedToken;
   tokenOut: UnifiedToken;
   amountIn: string;
-  route: SwapRouteV2Response | null;
+  route: GluexQuoteResult | null;
 }): Promise<SwapExecutionResult> => {
   debugLog('[Purro] 🔄 Starting swap transaction:', {
     tokenIn: { symbol: tokenIn.symbol, address: tokenIn.contractAddress },
     tokenOut: { symbol: tokenOut.symbol, address: tokenOut.contractAddress },
     amountIn,
     route: {
-      to: route?.execution?.to,
-      hasCalldata: !!route?.execution?.calldata,
+      to: route?.router,
+      hasCalldata: !!route?.calldata,
     },
   });
 
@@ -115,7 +115,7 @@ export const executeSwapTransaction = async ({
         throw new Error(SWAP_CONSTANTS.ERROR_MESSAGES.NO_ROUTE);
       }
 
-      const spenderAddress = route.execution?.to;
+      const spenderAddress = route.router;
       if (!spenderAddress) {
         debugError('[Purro] ❌ No spender address found in route');
         throw new Error(SWAP_CONSTANTS.ERROR_MESSAGES.NO_SPENDER_ADDRESS);
@@ -274,8 +274,8 @@ export const executeSwapTransaction = async ({
 
       // Prepare transaction data
       transactionData = {
-        to: route?.execution?.to || '',
-        data: route?.execution?.calldata || '',
+        to: route?.router || '',
+        data: route?.calldata || '',
         value: transactionValue,
       };
 
