@@ -5,6 +5,7 @@ import useSwapStore from '@/client/hooks/use-swap-store';
 import { useSwapRoute } from '@/client/hooks/use-swap-route';
 import { SwapTokenSelectorDrawer } from '@/client/components/drawers';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
+import GlueXLogo from '@/assets/logo/gluex.svg';
 // Removed fetchHyperEvmTokenPrices since GlueX API provides USD values directly
 
 import TokenLogo from '@/client/components/token-logo';
@@ -109,8 +110,6 @@ const Swap = () => {
     setTokenIn,
     switchTokens,
   } = useSwapStore();
-
-  console.log("check amount in swap store", inputAmount, outputAmount);
 
   const { getActiveAccountWalletObject } = useWalletStore();
   const { openDrawer } = useDrawerStore();
@@ -319,7 +318,13 @@ const Swap = () => {
         setInputAmount(value);
       }
     },
-    [isUnwrapScenario, isWrapScenario, isExactIn, setInputAmount, setOutputAmount]
+    [
+      isUnwrapScenario,
+      isWrapScenario,
+      isExactIn,
+      setInputAmount,
+      setOutputAmount,
+    ]
   );
 
   // Handle input changes with decimal validation
@@ -539,10 +544,12 @@ const Swap = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-white/60">
                     ~ $
-                    {route?.inputAmountUSD 
+                    {route?.inputAmountUSD
                       ? parseFloat(route.inputAmountUSD).toFixed(2)
-                      : ((parseFloat(inputAmount) || 0) * getTokenPrice(tokenIn, tokenPrices)).toFixed(2)
-                    }
+                      : (
+                          (parseFloat(inputAmount) || 0) *
+                          getTokenPrice(tokenIn, tokenPrices)
+                        ).toFixed(2)}
                   </span>
                   {tokenIn.contractAddress &&
                     tokenPrices[tokenIn.contractAddress] &&
@@ -617,10 +624,12 @@ const Swap = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-white/60">
                     ~ $
-                    {route?.outputAmountUSD 
+                    {route?.outputAmountUSD
                       ? parseFloat(route.outputAmountUSD).toFixed(2)
-                      : ((parseFloat(outputAmount) || 0) * getTokenPrice(tokenOut, tokenPrices)).toFixed(2)
-                    }
+                      : (
+                          (parseFloat(outputAmount) || 0) *
+                          getTokenPrice(tokenOut, tokenPrices)
+                        ).toFixed(2)}
                   </span>
                   {tokenOut.contractAddress &&
                     tokenPrices[tokenOut.contractAddress] &&
@@ -646,6 +655,15 @@ const Swap = () => {
             </div>
           </div>
         </div>
+        <a
+          href="https://gluex.xyz"
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-1 opacity-70 w-full justify-end"
+        >
+          <p className="text-[10px] text-white">Powered by</p>
+          <img src={GlueXLogo} alt="GlueX" className="w-12 h-3" />
+        </a>
 
         {/* Route Info - Hide for wrap/unwrap scenarios */}
         {!isWrapScenario() && !isUnwrapScenario() && (
@@ -683,18 +701,21 @@ const Swap = () => {
                   </span>
                 </div>
 
-                {route.liquidityModules && route.liquidityModules.length > 0 && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-white/60">Liquidity Sources</span>
-                    <div className="flex items-center gap-1">
-                      <Zap className="size-3 text-[var(--primary-color-light)]" />
-                      <span className="text-xs text-white/60">
-                        {route.liquidityModules.length} source
-                        {route.liquidityModules.length > 1 ? 's' : ''}
+                {route.liquidityModules &&
+                  route.liquidityModules.length > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-white/60">
+                        Liquidity Sources
                       </span>
+                      <div className="flex items-center gap-1">
+                        <Zap className="size-3 text-[var(--primary-color-light)]" />
+                        <span className="text-xs text-white/60">
+                          {route.liquidityModules.length} source
+                          {route.liquidityModules.length > 1 ? 's' : ''}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-white/60">Partner Fee</span>
@@ -705,14 +726,19 @@ const Swap = () => {
                   </div>
                 </div>
 
-                {route.estimatedNetSurplus && parseFloat(route.estimatedNetSurplus) > 0 && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-white/60">Net Surplus</span>
-                    <span className="text-sm text-[var(--primary-color)] font-medium">
-                      {(parseFloat(route.estimatedNetSurplus) / Math.pow(10, tokenOut?.decimals || 18)).toFixed(6)} {tokenOut?.symbol}
-                    </span>
-                  </div>
-                )}
+                {route.estimatedNetSurplus &&
+                  parseFloat(route.estimatedNetSurplus) > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-white/60">Net Surplus</span>
+                      <span className="text-sm text-[var(--primary-color)] font-medium">
+                        {(
+                          parseFloat(route.estimatedNetSurplus) /
+                          Math.pow(10, tokenOut?.decimals || 18)
+                        ).toFixed(6)}{' '}
+                        {tokenOut?.symbol}
+                      </span>
+                    </div>
+                  )}
               </div>
             )}
           </>

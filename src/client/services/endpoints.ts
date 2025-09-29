@@ -11,7 +11,8 @@ export const ENDPOINTS = {
   HL_NAME_API_BASE: 'https://api.hlnames.xyz',
   LIQUID_SWAP: 'https://api.liqd.ag',
   ETHERSCAN: 'https://api.etherscan.io/v2/api',
-  GLUEX: 'https://router.gluex.xyz/v1',
+  GLUEX: 'https://router.gluex.xyz',
+  TOKENS_GLUEX: 'https://tokens.gluex.xyz',
 };
 
 export const ENDPOINTS_TESTNET = {

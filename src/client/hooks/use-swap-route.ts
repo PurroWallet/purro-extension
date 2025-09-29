@@ -1,9 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
-import {
-  GluexRequest,
-  GluexQuoteResult,
-} from '@/client/types/gluex-api';
+import { GluexRequest, GluexQuoteResult } from '@/client/types/gluex-api';
 import { getQuote } from '@/client/services/gluex-api';
 import useSwapStore from './use-swap-store';
 import useWalletStore from './use-wallet-store';
@@ -16,7 +13,9 @@ const WHYPE_TOKEN_ADDRESS = '0x5555555555555555555555555555555555555555';
 const HYPE_DEAD_ADDRESS = '0x000000000000000000000000000000000000dEaD';
 
 // Helper functions to detect HYPE/WHYPE tokens
-const isHypeToken = (token: { symbol?: string; contractAddress?: string } | null): boolean => {
+const isHypeToken = (
+  token: { symbol?: string; contractAddress?: string } | null
+): boolean => {
   if (!token) return false;
   return (
     token.symbol === 'HYPE' ||
@@ -26,7 +25,9 @@ const isHypeToken = (token: { symbol?: string; contractAddress?: string } | null
   );
 };
 
-const isWhypeToken = (token: { symbol?: string; contractAddress?: string } | null): boolean => {
+const isWhypeToken = (
+  token: { symbol?: string; contractAddress?: string } | null
+): boolean => {
   if (!token) return false;
   return (
     token.symbol === 'WHYPE' ||
@@ -84,22 +85,22 @@ export const useSwapRoute = () => {
     const params = getSwapParams();
     const activeWallet = getActiveAccountWalletObject();
     const userAddress = activeWallet?.eip155?.address;
-    
+
     if (!params || !userAddress) return null;
 
-    const {
-      tokenInAddress,
-      tokenOutAddress,
-      isExactIn: exactIn,
-    } = params;
+    const { tokenInAddress, tokenOutAddress, isExactIn: exactIn } = params;
 
     // Use debounced amounts
     const amount = exactIn ? debouncedInputAmount : debouncedOutputAmount;
     if (!amount || parseFloat(amount) <= 0) return null;
 
     // Convert debounced amount to wei for GlueX API
-    const decimals = exactIn ? (tokenIn?.decimals || 18) : (tokenOut?.decimals || 18);
-    const amountInWei = (parseFloat(amount) * Math.pow(10, decimals)).toString();
+    const decimals = exactIn
+      ? tokenIn?.decimals || 18
+      : tokenOut?.decimals || 18;
+    const amountInWei = (
+      parseFloat(amount) * Math.pow(10, decimals)
+    ).toString();
 
     const requestParams: GluexRequest = {
       chainID: 'hyperevm', // Always use hyperliquid chain
@@ -107,7 +108,8 @@ export const useSwapRoute = () => {
       outputToken: tokenOutAddress,
       userAddress,
       outputReceiver: userAddress,
-      uniquePID: '115bc1b52b741606be6ed7960e5c84e2e18f37cae6db00741a8751e248890f28', // Partner ID for analytics
+      uniquePID:
+        '115bc1b52b741606be6ed7960e5c84e2e18f37cae6db00741a8751e248890f28', // Partner ID for analytics
       computeEstimate: true,
     };
 
@@ -188,7 +190,11 @@ export const useSwapRoute = () => {
       }
 
       // Update amounts based on route response (GlueX format)
-      if (routeData.inputAmount && routeData.outputAmount && !routeData.revert) {
+      if (
+        routeData.inputAmount &&
+        routeData.outputAmount &&
+        !routeData.revert
+      ) {
         if (isExactIn && routeData.outputAmount) {
           // User input inputAmount, update outputAmount from route
           // Convert from wei to human readable
@@ -214,8 +220,6 @@ export const useSwapRoute = () => {
     } else {
       setRoute(null);
     }
-
-    console.log('GlueX routeData', routeData);
   }, [
     routeData,
     isExactIn,

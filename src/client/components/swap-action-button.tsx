@@ -82,8 +82,6 @@ const ConfirmSwapButton = () => {
   } = useSwapRoute();
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
 
-  console.log('isLoadingRoute', isLoadingRoute);
-
   // Function to get updated native HYPE token data
   const getNativeHypeWithBalance = useCallback(
     (baseToken: UnifiedToken) => {
@@ -126,7 +124,6 @@ const ConfirmSwapButton = () => {
     if (isFinite(a) && isFinite(m) && m > 0) {
       gasAlreadyDeducted = Math.abs(a - m) < m * 0.000001; // 0.0001% tolerance
     }
-    
   }
 
   const balanceCheck = hasEnoughBalanceWithGas(
@@ -135,7 +132,7 @@ const ConfirmSwapButton = () => {
     gasEst,
     gasAlreadyDeducted
   );
-  
+
   const hasInsufficientBalance = !balanceCheck.hasEnough;
 
   const isValidSwap = validateSwap(

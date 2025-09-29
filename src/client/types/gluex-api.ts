@@ -70,3 +70,58 @@ export interface GluexResponse {
   statusCode: number;
   result: GluexQuoteResult;
 }
+
+export type GluexTokenType =
+  | 'tradable'
+  | 'lp'
+  | 'stake'
+  | 'lend'
+  | 'invest'
+  | 'stable';
+
+export interface GlueXTokensRequest {
+  query: string;
+  variables?: GlueXTokensVariables;
+  operationName?: string;
+}
+
+export interface GlueXTokensVariables {
+  chain: string;
+  tokenType?: GluexTokenType;
+  limit?: number;
+  offset?: number;
+  pattern?: string;
+}
+
+export interface GluexTokensResult {
+  tokenAddress: string;
+  symbol: string;
+  name: string;
+  decimals: number;
+  type: GluexTokenType;
+  priority: number;
+  branding: {
+    logoUri: string;
+  };
+}
+
+export interface GluexTokensResponse {
+  data: {
+    tokens?: {
+      items: GluexTokensResult[];
+      total: number;
+      hasMore: boolean;
+    };
+    searchTokens?: {
+      items: GluexTokensResult[];
+      total: number;
+      hasMore: boolean;
+    };
+    tokensByType?: {
+      items: GluexTokensResult[];
+      total: number;
+      hasMore: boolean;
+    };
+  };
+  errors?: any[];
+}
