@@ -16,6 +16,7 @@ import useWalletStore from '@/client/hooks/use-wallet-store';
 import { getTokens, searchTokens } from '@/client/services/gluex-api';
 import { GluexTokensResult } from '@/client/types/gluex-api';
 import useLiquidSwapTokens from '@/client/hooks/use-liquidswap-tokens';
+import { fetchBalances } from '@/client/services/liquidswap-api';
 
 // Simple formatBalance function
 const formatBalance = (balance: number): string => {
@@ -62,7 +63,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
   selectedTokenAddress,
   excludeTokenAddress,
 }) => {
-  const { setTokenIn, setTokenOut, tokenOut } = useSwapStore();
+  const { setTokenIn, setTokenOut } = useSwapStore();
   const { closeDrawer } = useDrawerStore();
   const { getActiveAccountWalletObject } = useWalletStore();
 
@@ -73,9 +74,6 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
   const [hasUserTokensError, setHasUserTokensError] = useState(false);
   const [isYourTokensExpanded, setIsYourTokensExpanded] = useState(true);
   const [isDefaultTokensExpanded, setIsDefaultTokensExpanded] = useState(true);
-  const [defaultTokenLogos, setDefaultTokenLogos] = useState<{
-    [address: string]: string | null;
-  }>({});
 
   // Infinite scroll state
   const [allTokens, setAllTokens] = useState<Token[]>([]);
@@ -110,10 +108,6 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
         setIsLoadingUserTokens(true);
         setHasUserTokensError(false);
 
-        // We keep using liquidswap for balances since GlueX doesn't provide balance endpoint
-        const { fetchBalances } = await import(
-          '@/client/services/liquidswap-api'
-        );
         const response = await fetchBalances({
           wallet: activeAccountAddress,
           limit: 200,
@@ -253,8 +247,10 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
             }))
             .filter(token => {
               // Filter out tokens that user already owns to avoid duplicates
-              return !userTokens.some(userToken => 
-                userToken.address.toLowerCase() === token.address.toLowerCase()
+              return !userTokens.some(
+                userToken =>
+                  userToken.address.toLowerCase() ===
+                  token.address.toLowerCase()
               );
             });
           setAllTokens(convertedTokens);
@@ -316,8 +312,9 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
           }))
           .filter(token => {
             // Filter out tokens that user already owns to avoid duplicates
-            return !userTokens.some(userToken => 
-              userToken.address.toLowerCase() === token.address.toLowerCase()
+            return !userTokens.some(
+              userToken =>
+                userToken.address.toLowerCase() === token.address.toLowerCase()
             );
           });
 
@@ -330,39 +327,58 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
     } finally {
       setIsLoadingMoreTokens(false);
     }
-  }, [currentLimit, isLoadingMoreTokens, hasMoreTokens, debouncedSearchQuery, userTokens]);
+  }, [
+    currentLimit,
+    isLoadingMoreTokens,
+    hasMoreTokens,
+    debouncedSearchQuery,
+    userTokens,
+  ]);
 
   // Convert API tokens to Token format with WHYPE and HYPE as default tokens
   const defaultTokens = useMemo(() => {
     const tokens: Token[] = [];
 
-    // Add HYPE native token using dead address convention
-    const hypeToken: Token = {
-      address: '0x000000000000000000000000000000000000dEaD',
-      symbol: 'HYPE',
-      name: 'Native HYPE',
-      decimals: 18,
-      balance: '0',
-      balanceRaw: '0',
-      logo: null, // Will be loaded asynchronously
-      transfers24h: 0,
-      isERC20Verified: true,
-      totalTransfers: 0,
-    };
+    let hypeToken: Token;
+    let whypeToken: Token;
 
-    // Add WHYPE token
-    const whypeToken: Token = {
-      address: DEFAULT_WHYPE_TOKEN.address,
-      symbol: DEFAULT_WHYPE_TOKEN.symbol,
-      name: DEFAULT_WHYPE_TOKEN.name,
-      decimals: DEFAULT_WHYPE_TOKEN.decimals,
-      balance: '0',
-      balanceRaw: '0',
-      logo: null, // Will be loaded asynchronously
-      transfers24h: DEFAULT_WHYPE_TOKEN.transfers24h,
-      isERC20Verified: DEFAULT_WHYPE_TOKEN.isERC20Verified,
-      totalTransfers: DEFAULT_WHYPE_TOKEN.totalTransfers,
-    };
+    if (allTokens.some(token => token.name === 'HYPE')) {
+      hypeToken = allTokens.find(token => token.name === 'HYPE') as Token;
+    } else {
+      hypeToken = {
+        address: '0x000000000000000000000000000000000000dEaD',
+        symbol: 'HYPE',
+        name: 'Native HYPE',
+        decimals: 18,
+        balance: '0',
+        balanceRaw: '0',
+        logo: null, // Will be loaded asynchronously
+        transfers24h: 0,
+        isERC20Verified: true,
+        totalTransfers: 0,
+      };
+    }
+
+    if (
+      allTokens.some(token => token.address === DEFAULT_WHYPE_TOKEN.address)
+    ) {
+      whypeToken = allTokens.find(
+        token => token.address === DEFAULT_WHYPE_TOKEN.address
+      ) as Token;
+    } else {
+      whypeToken = {
+        address: DEFAULT_WHYPE_TOKEN.address,
+        symbol: DEFAULT_WHYPE_TOKEN.symbol,
+        name: DEFAULT_WHYPE_TOKEN.name,
+        decimals: DEFAULT_WHYPE_TOKEN.decimals,
+        balance: '0',
+        balanceRaw: '0',
+        logo: null, // Will be loaded asynchronously
+        transfers24h: DEFAULT_WHYPE_TOKEN.transfers24h,
+        isERC20Verified: DEFAULT_WHYPE_TOKEN.isERC20Verified,
+        totalTransfers: DEFAULT_WHYPE_TOKEN.totalTransfers,
+      };
+    }
 
     // Always add both HYPE and WHYPE
     tokens.push(hypeToken);
@@ -393,73 +409,46 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
     return tokens;
   }, [allTokens]);
 
-  // Load logos for default tokens asynchronously
-  useEffect(() => {
-    const loadDefaultTokenLogos = async () => {
-      const logoPromises = defaultTokens.map(async token => {
-        if (token.logo) {
-          return { address: token.address, logo: token.logo };
-        }
-
-        // const logo = await getTokenLogo(
-        //   token.symbol,
-        //   'hyperevm',
-        //   token.address
-        // );
-        return { address: token.address, logo: null };
-      });
-
-      const logoResults = await Promise.all(logoPromises);
-      const logoMap: { [address: string]: string | null } = {};
-
-      logoResults.forEach(({ address, logo }) => {
-        logoMap[address] = logo;
-      });
-
-      setDefaultTokenLogos(logoMap);
-    };
-
-    if (defaultTokens.length > 0) {
-      loadDefaultTokenLogos();
-    }
-  }, [defaultTokens]);
-
   // Merge default tokens with user balances and logos, with owned tokens at the top
   const defaultTokensWithBalances = useMemo(() => {
-    const tokensWithBalances = defaultTokens.map(token => {
-      const userBalance = userBalances.find(
-        balance => balance.token.toLowerCase() === token.address.toLowerCase()
-      );
-
-      const tokenWithLogo = {
-        ...token,
-        logo: defaultTokenLogos[token.address] || token.logo,
-      };
-
-      if (userBalance) {
-        const balanceNum =
-          parseFloat(userBalance.balance) / Math.pow(10, userBalance.decimals);
-        return {
-          ...tokenWithLogo,
-          balance: balanceNum.toString(),
-          balanceRaw: userBalance.balance,
-          decimals: userBalance.decimals, // Use accurate decimals from balance API
-        };
-      }
-
-      return tokenWithLogo;
-    });
-
     // Add user owned tokens at the top of the list
-    const ownedTokens = userTokens.filter(userToken => {
-      // Don't duplicate tokens that are already in defaultTokens
-      return !defaultTokens.some(defaultToken => 
-        defaultToken.address.toLowerCase() === userToken.address.toLowerCase()
-      );
-    });
+
+    const tokensWithBalances = defaultTokens
+      .map(token => {
+        const userBalance = userBalances.find(
+          balance => balance.token.toLowerCase() === token.address.toLowerCase()
+        );
+
+        const tokenWithLogo = {
+          ...token,
+          logo: token.logo,
+        };
+
+        if (userBalance) {
+          const balanceNum =
+            parseFloat(userBalance.balance) /
+            Math.pow(10, userBalance.decimals);
+          return {
+            ...tokenWithLogo,
+            balance: balanceNum.toString(),
+            balanceRaw: userBalance.balance,
+            decimals: userBalance.decimals, // Use accurate decimals from balance API
+          };
+        }
+
+        return tokenWithLogo;
+      })
+      .filter(token => {
+        return !userTokens.some(
+          defaultToken =>
+            defaultToken.address.toLowerCase() ===
+              token.address.toLowerCase() ||
+            defaultToken.name.toLowerCase() === token.name.toLowerCase()
+        );
+      });
 
     // Sort owned tokens by balance (highest first)
-    const sortedOwnedTokens = ownedTokens.sort((a, b) => {
+    const sortedOwnedTokens = userTokens.sort((a, b) => {
       const balanceA = parseFloat(a.balance) || 0;
       const balanceB = parseFloat(b.balance) || 0;
       return balanceB - balanceA;
@@ -467,7 +456,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
 
     // Return owned tokens first, then default tokens
     return [...sortedOwnedTokens, ...tokensWithBalances];
-  }, [defaultTokens, userBalances, defaultTokenLogos, userTokens]);
+  }, [defaultTokens, userBalances, userTokens]);
 
   // Filter user tokens based on search and sort by balance
   const filteredUserTokens = useMemo(() => {
@@ -495,44 +484,6 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
       return a.symbol.localeCompare(b.symbol); // Alphabetical fallback
     });
   }, [userTokens, searchQuery]);
-
-
-  // Auto-select WHYPE as default output token if no token is selected and mode is output
-  // Memoize this to prevent unnecessary re-runs
-  const shouldAutoSelectWhype = useMemo(() => {
-    return (
-      mode === 'output' &&
-      !tokenOut &&
-      !isLoadingMoreTokens &&
-      defaultTokens.length > 0
-    );
-  }, [mode, tokenOut, isLoadingMoreTokens, defaultTokens.length]);
-
-  useEffect(() => {
-    if (shouldAutoSelectWhype) {
-      // Find WHYPE token in the list
-      const whypeToken = defaultTokens.find(
-        token => token.address === DEFAULT_WHYPE_TOKEN.address
-      );
-
-      if (whypeToken) {
-        const unifiedToken: UnifiedToken = {
-          contractAddress: whypeToken.address,
-          symbol: whypeToken.symbol,
-          name: whypeToken.name,
-          decimals: whypeToken.decimals,
-          balance: whypeToken.balanceRaw,
-          chain: 'hyperevm',
-          chainName: 'HyperEVM',
-          logo: whypeToken.logo || undefined,
-          balanceFormatted: parseFloat(whypeToken.balance) || 0,
-          usdValue: 0,
-        };
-
-        setTokenOut(unifiedToken);
-      }
-    }
-  }, [shouldAutoSelectWhype, defaultTokens, setTokenOut]);
 
   const handleTokenSelect = (token: Token) => {
     // Don't allow selection of disabled tokens
@@ -660,10 +611,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
 
     setIsLoadingUserTokens(true);
     try {
-      // We keep using liquidswap for balances since GlueX doesn't provide balance endpoint
-      const { fetchBalances } = await import(
-        '@/client/services/liquidswap-api'
-      );
+      // We keep using liquidswap for balances since GlueX doesn't provide balance endpoint\
       const response = await fetchBalances({
         wallet: activeAccountAddress,
         limit: 200,

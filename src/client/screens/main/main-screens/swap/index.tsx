@@ -6,14 +6,17 @@ import { useSwapRoute } from '@/client/hooks/use-swap-route';
 import { SwapTokenSelectorDrawer } from '@/client/components/drawers';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
 import GlueXLogo from '@/assets/logo/gluex.svg';
-// Removed fetchHyperEvmTokenPrices since GlueX API provides USD values directly
-
 import TokenLogo from '@/client/components/token-logo';
 import {
   getTokenBalance,
   getMaxSpendableBalance,
   estimateGasCost,
 } from '@/client/utils/swap-utils';
+import { useNativeBalance } from '@/client/hooks/use-native-balance';
+import useMainSwapStore from '@/client/hooks/use-main-swap-store';
+import { UnifiedToken } from '@/client/components/token-list';
+import { getTokenLogo } from '@/client/utils/icons';
+
 // Create a comprehensive formatBalance function for display
 const formatBalance = (balance: number): string => {
   if (balance === 0) return '0';
@@ -40,15 +43,6 @@ const formatPriceChange = (change: number): string => {
   const sign = change >= 0 ? '+' : '';
   return `${sign}${change.toFixed(2)}%`;
 };
-
-import useWalletStore from '@/client/hooks/use-wallet-store';
-import { useNativeBalance } from '@/client/hooks/use-native-balance';
-import useMainSwapStore from '@/client/hooks/use-main-swap-store';
-
-import { fetchBalances } from '@/client/services/liquidswap-api';
-import { Balance } from '@/client/types/liquidswap-api';
-import { UnifiedToken } from '@/client/components/token-list';
-import { getTokenLogo } from '@/client/utils/icons';
 
 // Default WHYPE token data
 const DEFAULT_WHYPE_TOKEN = {
@@ -107,14 +101,11 @@ const Swap = () => {
     setOutputAmount,
     setIsExactIn,
     setTokenOut,
-    setTokenIn,
     switchTokens,
   } = useSwapStore();
 
-  const { getActiveAccountWalletObject } = useWalletStore();
   const { openDrawer } = useDrawerStore();
   const { clearSwapError } = useMainSwapStore();
-  const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
 
   // Get native token balances
   const { nativeTokens, refetch } = useNativeBalance();
@@ -134,7 +125,7 @@ const Swap = () => {
   // Auto-set HYPE (native) as default output token if no token is selected
   useEffect(() => {
     const setDefaultNativeHype = async () => {
-      if (!tokenOut) {
+      if (!tokenOut && !tokenIn) {
         // Find native HYPE token from native balance hook
         const nativeHypeToken = nativeTokens.find(
           token => token.chain === 'hyperevm' && token.symbol === 'HYPE'
@@ -162,7 +153,7 @@ const Swap = () => {
     };
 
     setDefaultNativeHype();
-  }, [tokenOut, setTokenOut, nativeTokens]);
+  }, [tokenOut, setTokenOut, nativeTokens, tokenIn]);
 
   // Note: Token prices are now provided by GlueX API response directly
   // No need to fetch prices separately since route response includes USD values
@@ -205,101 +196,6 @@ const Swap = () => {
     ? getTokenBalance(getNativeHypeWithBalance(tokenOut))
     : 0;
 
-  useEffect(() => {
-    const whypeAddress = '0x5555555555555555555555555555555555555555';
-    const fetchWHYPEBalance = async () => {
-      if (!activeAccountAddress) return;
-      if (
-        tokenOut?.contractAddress !== whypeAddress &&
-        tokenIn?.contractAddress !== whypeAddress
-      ) {
-        return;
-      }
-
-      try {
-        const balance = await fetchBalances({
-          wallet: activeAccountAddress || '',
-          limit: 1000,
-        });
-
-        // Check if balance response has the expected structure
-        if (!balance?.data?.tokens || !Array.isArray(balance.data.tokens)) {
-          return;
-        }
-
-        const whypeBalance = balance.data.tokens.find(
-          (token: Balance) => token.token === whypeAddress
-        );
-
-        if (whypeBalance && whypeBalance.balance !== undefined) {
-          // Create a temporary token object to use getTokenBalance function
-          const tempToken: UnifiedToken = {
-            balance: whypeBalance.balance,
-            decimals: 18, // WHYPE has 18 decimals
-            chain: 'hyperevm' as const,
-            chainName: 'HyperEVM',
-            symbol: 'WHYPE',
-            name: 'Wrapped HYPE',
-            logo: 'https://coin-images.coingecko.com/coins/images/54469/large/_UP3jBsi_400x400.jpg?1739905920',
-            balanceFormatted: 0,
-            usdValue: 0,
-            contractAddress: DEFAULT_WHYPE_TOKEN.address,
-          };
-          const formattedBalance = getTokenBalance(tempToken);
-
-          if (tokenOut?.contractAddress === whypeAddress) {
-            setTokenOut({
-              ...tokenOut,
-              balance: whypeBalance.balance,
-              balanceFormatted: formattedBalance,
-              usdValue: formattedBalance * (tokenOut?.usdPrice || 0),
-            });
-          } else if (tokenIn?.contractAddress === whypeAddress) {
-            setTokenIn({
-              ...tokenIn,
-              balance: whypeBalance.balance,
-              balanceFormatted: formattedBalance,
-              usdValue: formattedBalance * (tokenIn?.usdPrice || 0),
-            });
-          }
-        } else {
-          // Set default balance of 0 for WHYPE tokens if not found
-          if (tokenOut?.contractAddress === whypeAddress) {
-            setTokenOut({
-              ...tokenOut,
-              balance: '0',
-              balanceFormatted: 0,
-              usdValue: 0,
-            });
-          } else if (tokenIn?.contractAddress === whypeAddress) {
-            setTokenIn({
-              ...tokenIn,
-              balance: '0',
-              balanceFormatted: 0,
-              usdValue: 0,
-            });
-          }
-        }
-      } catch (error) {
-        console.error('❌ Error fetching WHYPE balance:', error);
-      }
-    };
-
-    // Only fetch if we have an active account and either token is WHYPE
-    if (
-      activeAccountAddress &&
-      (tokenOut?.contractAddress === whypeAddress ||
-        tokenIn?.contractAddress === whypeAddress)
-    ) {
-      fetchWHYPEBalance();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    activeAccountAddress,
-    tokenOut?.contractAddress,
-    tokenIn?.contractAddress,
-  ]);
-
   // Timer is now handled by header using timestamp approach - much simpler!
 
   // Token prices are now handled by useHyperEvmTokens hook with React Query
@@ -309,8 +205,6 @@ const Swap = () => {
   const checkAndHandleAmountChangeWrapUnwrap = useCallback(
     (value: string) => {
       if (!isUnwrapScenario() && !isWrapScenario()) return;
-
-      console.log('checkAndHandleAmountChangeWrapUnwrap', value);
 
       if (isExactIn) {
         setOutputAmount(value);
@@ -659,7 +553,7 @@ const Swap = () => {
           href="https://gluex.xyz"
           target="_blank"
           rel="noreferrer"
-          className="flex items-center gap-1 opacity-70 w-full justify-end"
+          className="flex items-center gap-1 opacity-70 w-fit justify-end ms-auto"
         >
           <p className="text-[10px] text-white">Powered by</p>
           <img src={GlueXLogo} alt="GlueX" className="w-12 h-3" />
