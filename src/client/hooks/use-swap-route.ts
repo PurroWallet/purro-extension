@@ -220,6 +220,9 @@ export const useSwapRoute = () => {
     } else {
       setRoute(null);
     }
+    // Removed inputAmount and outputAmount from deps to prevent infinite loop
+    // The effect already checks if values are different before updating
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     routeData,
     isExactIn,
@@ -229,8 +232,6 @@ export const useSwapRoute = () => {
     setLastRefreshTimestamp,
     tokenIn,
     tokenOut,
-    inputAmount,
-    outputAmount,
   ]);
 
   // Update timestamp when refetching (even if data is same)

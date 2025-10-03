@@ -11,16 +11,26 @@ import { ENDPOINTS } from './endpoints';
 //this is for testing purpose
 const GLUEX_API_KEY = '32dsEDbbQ5Fz9Dy4P9uPIVTnLZ7Byju4';
 
+const platformFeeAddress = "0x490BF4E4425092382612aE7f88D5D98b5029C1aF";
+const platformFeeBps = 80;
+
 export const getQuote = async (
   request: GluexRequest
 ): Promise<GluexQuoteResult> => {
+  // Create a new request object with partner fee instead of mutating the input
+  const requestWithPartnerFee: GluexRequest = {
+    ...request,
+    partnerAddress: platformFeeAddress,
+    partnerFee: platformFeeBps,
+  };
+
   const response = await fetch(`${ENDPOINTS.GLUEX}/v1/quote`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'x-api-key': GLUEX_API_KEY,
     },
-    body: JSON.stringify(request),
+    body: JSON.stringify(requestWithPartnerFee),
   });
 
   if (!response.ok) {

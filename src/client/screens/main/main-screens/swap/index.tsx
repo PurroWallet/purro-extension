@@ -108,11 +108,7 @@ const Swap = () => {
   const { clearSwapError } = useMainSwapStore();
 
   // Get native token balances
-  const { nativeTokens, refetch } = useNativeBalance();
-
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
+  const { nativeTokens } = useNativeBalance();
 
   // Initialize swap route hook with React Query
   const {
@@ -569,18 +565,29 @@ const Swap = () => {
                   <div className="flex flex-col items-end">
                     <span className="text-sm text-[var(--text-color)] font-medium">
                       {(() => {
-                        // Use proper gas estimation for swaps
-                        const gasEstimate = estimateGasCost(tokenIn, 'swap');
-                        return `${gasEstimate.gasLimit.toLocaleString()} units`;
+                        // Use actual computationUnits from GlueX API
+                        const gasUnits = route.computationUnits || 150000;
+                        return `${gasUnits.toLocaleString()} units`;
                       })()}
                     </span>
                     <span className="text-xs text-white/50">
                       {(() => {
-                        // Show gas cost in HYPE and USD
-                        const gasEstimate = estimateGasCost(tokenIn, 'swap');
-                        const gasInHype = gasEstimate.gasCostEth.toFixed(6);
-                        const gasInUsd = gasEstimate.gasCostUsd.toFixed(3);
-                        return `~${gasInHype} HYPE (~$${gasInUsd})`;
+                        // Calculate gas cost using actual computation units and HYPE price
+                        const gasUnits = route.computationUnits || 150000;
+                        // HyperEVM gas price is typically very low (0.01-0.1 gwei)
+                        // Using 0.05 gwei as a reasonable estimate (50000000 wei)
+                        const gasPriceWei = 50000000; // 0.05 gwei
+                        const gasCostWei = gasUnits * gasPriceWei;
+                        const gasInHype = gasCostWei / 1e18;
+                        
+                        // Get HYPE price from native tokens
+                        const hypeToken = nativeTokens.find(
+                          token => token.chain === 'hyperevm' && token.symbol === 'HYPE'
+                        );
+                        const hypePrice = hypeToken?.usdPrice || 50; // Default to $50 if not found
+                        const gasInUsd = gasInHype * hypePrice;
+                        
+                        return `~${gasInHype.toFixed(6)} HYPE (~$${gasInUsd.toFixed(3)})`;
                       })()}
                     </span>
                   </div>
@@ -613,10 +620,34 @@ const Swap = () => {
 
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-white/60">Partner Fee</span>
-                  <div className="flex items-center gap-1">
-                    {route.partnerFee && parseFloat(route.partnerFee) > 0
-                      ? `${((parseFloat(route.partnerFee) / parseFloat(route.outputAmount)) * 100).toFixed(2)}%`
-                      : '0%'}
+                  <div className="flex flex-col items-end">
+                    <span className="text-sm text-[var(--text-color)] font-medium">
+                      {(() => {
+                        if (!route.partnerFee || parseFloat(route.partnerFee) === 0) {
+                          return '0%';
+                        }
+                        const feePercentage = ((parseFloat(route.partnerFee) / parseFloat(route.outputAmount)) * 100).toFixed(2);
+                        return `${feePercentage}%`;
+                      })()}
+                    </span>
+                    {route.partnerFee && parseFloat(route.partnerFee) > 0 && (
+                      <span className="text-xs text-white/50">
+                        {(() => {
+                          // Convert fee from wei to token amount
+                          const feeTokenDecimals = 18; // WHYPE has 18 decimals
+                          const feeAmount = parseFloat(route.partnerFee) / Math.pow(10, feeTokenDecimals);
+                          
+                          // Get fee token symbol (usually WHYPE for output)
+                          const feeTokenSymbol = tokenOut?.symbol || 'WHYPE';
+                          
+                          // Calculate USD value using token price
+                          const tokenPrice = getTokenPrice(tokenOut, tokenPrices);
+                          const feeUsd = feeAmount * tokenPrice;
+                          
+                          return `~${feeAmount.toFixed(6)} ${feeTokenSymbol} (~$${feeUsd.toFixed(3)})`;
+                        })()}
+                      </span>
+                    )}
                   </div>
                 </div>
 

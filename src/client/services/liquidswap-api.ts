@@ -73,6 +73,19 @@ export const fetchTokens = async (
 export const fetchBalances = async (
   request: FetchBalancesRequest
 ): Promise<FetchBalancesResponse> => {
+  // Validate wallet address before making API call
+  if (!request.wallet || !request.wallet.trim()) {
+    return {
+      success: false,
+      data: {
+        wallet: '',
+        tokens: [],
+        count: 0,
+        limitedCount: 0,
+      },
+    };
+  }
+
   const params = new URLSearchParams();
   params.set('wallet', request.wallet);
   if (request.limit) params.set('limit', request.limit.toString());
