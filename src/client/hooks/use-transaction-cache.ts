@@ -312,11 +312,9 @@ export const useCachedInfiniteTransactions = (
       const nextLastBlocks: Record<number, string> = {};
 
       for (const chainId of chainIds) {
-        console.log("chainId", chainId)
         try {
           let startBlock = '0';
 
-          console.log("enableCache", enableCache)
           if (enableCache) {
             // Get cached data
             const cached = await TransactionCacheLib.getCachedTransactions(
@@ -324,7 +322,7 @@ export const useCachedInfiniteTransactions = (
               chainId
             );
 
-            console.log("cached", cached)
+            console.log('cached', cached);
 
             if (cached && TransactionCacheLib.isCacheFresh(cached)) {
               results.push({
@@ -356,8 +354,6 @@ export const useCachedInfiniteTransactions = (
             startBlock,
             endBlock: 'latest',
           });
-
-          console.log("result", chainId, result)
 
           if (enableCache) {
             const cached = await TransactionCacheLib.getCachedTransactions(
