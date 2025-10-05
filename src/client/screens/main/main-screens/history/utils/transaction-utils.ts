@@ -64,6 +64,26 @@ export const decodeTransactionData = (
     };
   }
 
+  // Special handling for GlueX swap method ID 0x57eb8db4
+  if (methodId === '0x57eb8db4') {
+    try {
+      const decoded = commonInterface.parseTransaction({ data: inputData });
+      if (decoded && decoded.args) {
+        return {
+          name: 'swap',
+          args: decoded.args,
+        };
+      }
+    } catch (error) {
+      console.error('Error decoding GlueX swap:', error);
+    }
+
+    return {
+      name: 'swap',
+      args: [], // We'll parse manually in the extraction function
+    };
+  }
+
   try {
     const decoded = commonInterface.parseTransaction({ data: inputData });
     if (!decoded) {
@@ -239,6 +259,55 @@ export const extractTokenInfoFromTransaction = (
         return {
           tokenAddress: tx.to, // The contract being called
           tokenAmount: args[1]?.toString() || '0',
+        };
+
+      case 'swap':
+        // GlueX swap(address executor, desc tuple, interactions array)
+        // Check if this is GlueX swap (method ID: 0x57eb8db4)
+        if (tx.input && tx.input.startsWith('0x57eb8db4')) {
+          try {
+            if (args && args.length >= 2) {
+              // args[0] = executor address
+              // args[1] = desc tuple: (inputToken, outputToken, inputReceiver, outputReceiver, partnerAddress, 
+              //                        inputAmount, outputAmount, partnerFee, routingFee, partnerSurplusShare,
+              //                        protocolSurplusShare, partnerSlippageShare, protocolSlippageShare, 
+              //                        effectiveOutputAmount, minOutputAmount, isPermit2, uniquePID)
+              const desc = args[1];
+              
+              if (desc && typeof desc === 'object') {
+                // Try as object with named properties first, fall back to array indices
+                const descObj = desc as Record<string, unknown>;
+                const descArr = desc as unknown[];
+                
+                const inputToken = (descObj.inputToken || descArr[0]) as string; // Input token
+                const outputToken = (descObj.outputToken || descArr[1]) as string; // Output token
+                const inputAmount = descObj.inputAmount || descArr[5]; // Input amount
+                const effectiveOutputAmount = descObj.effectiveOutputAmount || descArr[13]; // Effective output amount
+                
+                return {
+                  tokenAddress: inputToken,
+                  tokenAmount: inputAmount?.toString() || '0',
+                  outputTokenAddress: outputToken,
+                  outputTokenAmount: effectiveOutputAmount?.toString() || '0',
+                };
+              }
+            }
+          } catch (error) {
+            console.error('Error parsing GlueX swap:', error);
+          }
+          
+          // Fallback
+          return {
+            tokenAddress: tx.to,
+            tokenAmount: tx.value || '0',
+          };
+        }
+        
+        // Handle other swap function variants (1inch, etc.)
+        // Falls through to default if not GlueX
+        return {
+          tokenAddress: tx.to,
+          tokenAmount: tx.value || '0',
         };
 
       case 'executeswaps':
