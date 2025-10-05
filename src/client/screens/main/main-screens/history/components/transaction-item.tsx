@@ -196,7 +196,12 @@ export const TransactionItem = ({
                     : METHOD_INDICATOR_COLORS.DEFAULT
             }`}
           >
-            <MethodIcon className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+            <MethodIcon
+              className={`w-2.5 h-2.5  ${
+                transaction.method === 'swap' ? 'text-black' : 'text-white'
+              }`}
+              strokeWidth={3}
+            />
           </div>
         </div>
       )}

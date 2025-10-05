@@ -13,9 +13,10 @@ import { Button, IconButton } from '@/client/components/ui/button';
 import useSwapStore from '@/client/hooks/use-swap-store';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
 import useWalletStore from '@/client/hooks/use-wallet-store';
-import { fetchBalances, fetchTokens } from '@/client/services/liquidswap-api';
-import { Token as ApiToken } from '@/client/types/liquidswap-api';
+import { getTokens, searchTokens } from '@/client/services/gluex-api';
+import { GluexTokensResult } from '@/client/types/gluex-api';
 import useLiquidSwapTokens from '@/client/hooks/use-liquidswap-tokens';
+import { fetchBalances } from '@/client/services/liquidswap-api';
 
 // Simple formatBalance function
 const formatBalance = (balance: number): string => {
@@ -62,7 +63,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
   selectedTokenAddress,
   excludeTokenAddress,
 }) => {
-  const { setTokenIn, setTokenOut, tokenOut } = useSwapStore();
+  const { setTokenIn, setTokenOut } = useSwapStore();
   const { closeDrawer } = useDrawerStore();
   const { getActiveAccountWalletObject } = useWalletStore();
 
@@ -73,9 +74,6 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
   const [hasUserTokensError, setHasUserTokensError] = useState(false);
   const [isYourTokensExpanded, setIsYourTokensExpanded] = useState(true);
   const [isDefaultTokensExpanded, setIsDefaultTokensExpanded] = useState(true);
-  const [defaultTokenLogos, setDefaultTokenLogos] = useState<{
-    [address: string]: string | null;
-  }>({});
 
   // Infinite scroll state
   const [allTokens, setAllTokens] = useState<Token[]>([]);
@@ -193,10 +191,12 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
     };
 
     loadBalances();
-  }, [activeAccountAddress, selectedTokenAddress, excludeTokenAddress]);
+  }, [activeAccountAddress]); // Removed selectedTokenAddress and excludeTokenAddress dependencies
 
-  // Load tokens based on search query
+  // Load tokens based on search query with proper cleanup and caching
   useEffect(() => {
+    let isCancelled = false; // Prevent race conditions
+
     const loadTokens = async () => {
       try {
         setIsLoadingMoreTokens(true);
@@ -204,111 +204,181 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
         setCurrentLimit(20);
         setHasMoreTokens(true);
 
-        const response = await fetchTokens({
-          limit: 20,
-          metadata: true,
-          search: debouncedSearchQuery.trim() || undefined, // Only pass search if not empty
-        });
+        let response;
+        if (debouncedSearchQuery.trim()) {
+          // Use search API when there's a search query
+          response = await searchTokens(
+            'hyperevm',
+            debouncedSearchQuery.trim(),
+            20,
+            0
+          );
+        } else {
+          // Use general tokens API when no search query
+          response = await getTokens('hyperevm', 20, 0);
+        }
 
-        if (response.success) {
-          // Convert API tokens to local Token interface
-          const convertedTokens: Token[] = response.data.tokens.map(
-            (apiToken: ApiToken) => ({
-              address: apiToken.address,
-              symbol: apiToken.symbol,
-              name: apiToken.name,
-              decimals: apiToken.decimals,
+        // Don't update state if component was unmounted or search changed
+        if (isCancelled) return;
+
+        let tokens, hasMore;
+        if (debouncedSearchQuery.trim()) {
+          tokens = response.data?.searchTokens?.items || [];
+          hasMore = response.data?.searchTokens?.hasMore || false;
+        } else {
+          tokens = response.data?.tokens?.items || [];
+          hasMore = response.data?.tokens?.hasMore || false;
+        }
+
+        if (tokens) {
+          // Convert GlueX API tokens to local Token interface
+          const convertedTokens: Token[] = tokens
+            .map((gluexToken: GluexTokensResult) => ({
+              address: gluexToken.tokenAddress,
+              symbol: gluexToken.symbol,
+              name: gluexToken.name,
+              decimals: gluexToken.decimals,
               balance: '0',
               balanceRaw: '0',
-              transfers24h: apiToken.transfers24h,
-              isERC20Verified: apiToken.isERC20Verified,
-              totalTransfers: apiToken.totalTransfers,
-            })
-          );
+              logo: gluexToken.branding?.logoUri || null, // Use GlueX logo if available
+              transfers24h: 0, // GlueX doesn't provide this
+              isERC20Verified: true, // Assume verified tokens from GlueX
+              totalTransfers: 0, // GlueX doesn't provide this
+            }))
+            .filter(token => {
+              // Filter out tokens that user already owns to avoid duplicates
+              return !userTokens.some(
+                userToken =>
+                  userToken.address.toLowerCase() ===
+                  token.address.toLowerCase()
+              );
+            });
           setAllTokens(convertedTokens);
-          setHasMoreTokens(response.data.tokens.length === 20);
+          setHasMoreTokens(hasMore);
         }
       } catch (error) {
-        console.error('Error loading tokens:', error);
+        if (!isCancelled) {
+          console.error('Error loading tokens:', error);
+        }
       } finally {
-        setIsLoadingMoreTokens(false);
+        if (!isCancelled) {
+          setIsLoadingMoreTokens(false);
+        }
       }
     };
 
     loadTokens();
-  }, [debouncedSearchQuery]);
 
-  // Load more tokens function
+    // Cleanup function to cancel ongoing requests
+    return () => {
+      isCancelled = true;
+    };
+  }, [debouncedSearchQuery, userTokens]);
+
+  // Load more tokens function - simplified
   const loadMoreTokens = useCallback(async () => {
     if (isLoadingMoreTokens || !hasMoreTokens) return;
 
     try {
       setIsLoadingMoreTokens(true);
-      const newLimit = currentLimit + 20;
+      const newOffset = currentLimit;
 
-      const response = await fetchTokens({
-        limit: newLimit,
-        metadata: true,
-        search: debouncedSearchQuery.trim() || undefined, // Use current search query
-      });
+      const response = debouncedSearchQuery.trim()
+        ? await searchTokens(
+            'hyperevm',
+            debouncedSearchQuery.trim(),
+            20,
+            newOffset
+          )
+        : await getTokens('hyperevm', 20, newOffset);
 
-      if (response.success) {
-        // Convert API tokens to local Token interface
-        const convertedTokens: Token[] = response.data.tokens.map(
-          (apiToken: ApiToken) => ({
-            address: apiToken.address,
-            symbol: apiToken.symbol,
-            name: apiToken.name,
-            decimals: apiToken.decimals,
+      const result = debouncedSearchQuery.trim()
+        ? response.data?.searchTokens
+        : response.data?.tokens;
+
+      if (result?.items) {
+        const convertedTokens: Token[] = result.items
+          .map((gluexToken: GluexTokensResult) => ({
+            address: gluexToken.tokenAddress,
+            symbol: gluexToken.symbol,
+            name: gluexToken.name,
+            decimals: gluexToken.decimals,
             balance: '0',
             balanceRaw: '0',
-            transfers24h: apiToken.transfers24h,
-            isERC20Verified: apiToken.isERC20Verified,
-            totalTransfers: apiToken.totalTransfers,
-          })
-        );
-        setAllTokens(convertedTokens);
-        setCurrentLimit(newLimit);
-        setHasMoreTokens(response.data.tokens.length === newLimit);
+            logo: gluexToken.branding?.logoUri || null,
+            transfers24h: 0,
+            isERC20Verified: true,
+            totalTransfers: 0,
+          }))
+          .filter(token => {
+            // Filter out tokens that user already owns to avoid duplicates
+            return !userTokens.some(
+              userToken =>
+                userToken.address.toLowerCase() === token.address.toLowerCase()
+            );
+          });
+
+        setAllTokens(prev => [...prev, ...convertedTokens]);
+        setCurrentLimit(prev => prev + 20);
+        setHasMoreTokens(result.hasMore || false);
       }
     } catch (error) {
       console.error('Error loading more tokens:', error);
     } finally {
       setIsLoadingMoreTokens(false);
     }
-  }, [currentLimit, isLoadingMoreTokens, hasMoreTokens, debouncedSearchQuery]);
+  }, [
+    currentLimit,
+    isLoadingMoreTokens,
+    hasMoreTokens,
+    debouncedSearchQuery,
+    userTokens,
+  ]);
 
   // Convert API tokens to Token format with WHYPE and HYPE as default tokens
   const defaultTokens = useMemo(() => {
     const tokens: Token[] = [];
 
-    // Add HYPE native token using dead address convention
-    const hypeToken: Token = {
-      address: '0x000000000000000000000000000000000000dEaD',
-      symbol: 'HYPE',
-      name: 'Native HYPE',
-      decimals: 18,
-      balance: '0',
-      balanceRaw: '0',
-      logo: null, // Will be loaded asynchronously
-      transfers24h: 0,
-      isERC20Verified: true,
-      totalTransfers: 0,
-    };
+    let hypeToken: Token;
+    let whypeToken: Token;
 
-    // Add WHYPE token
-    const whypeToken: Token = {
-      address: DEFAULT_WHYPE_TOKEN.address,
-      symbol: DEFAULT_WHYPE_TOKEN.symbol,
-      name: DEFAULT_WHYPE_TOKEN.name,
-      decimals: DEFAULT_WHYPE_TOKEN.decimals,
-      balance: '0',
-      balanceRaw: '0',
-      logo: null, // Will be loaded asynchronously
-      transfers24h: DEFAULT_WHYPE_TOKEN.transfers24h,
-      isERC20Verified: DEFAULT_WHYPE_TOKEN.isERC20Verified,
-      totalTransfers: DEFAULT_WHYPE_TOKEN.totalTransfers,
-    };
+    if (allTokens.some(token => token.name === 'HYPE')) {
+      hypeToken = allTokens.find(token => token.name === 'HYPE') as Token;
+    } else {
+      hypeToken = {
+        address: '0x000000000000000000000000000000000000dEaD',
+        symbol: 'HYPE',
+        name: 'Native HYPE',
+        decimals: 18,
+        balance: '0',
+        balanceRaw: '0',
+        logo: null, // Will be loaded asynchronously
+        transfers24h: 0,
+        isERC20Verified: true,
+        totalTransfers: 0,
+      };
+    }
+
+    if (
+      allTokens.some(token => token.address === DEFAULT_WHYPE_TOKEN.address)
+    ) {
+      whypeToken = allTokens.find(
+        token => token.address === DEFAULT_WHYPE_TOKEN.address
+      ) as Token;
+    } else {
+      whypeToken = {
+        address: DEFAULT_WHYPE_TOKEN.address,
+        symbol: DEFAULT_WHYPE_TOKEN.symbol,
+        name: DEFAULT_WHYPE_TOKEN.name,
+        decimals: DEFAULT_WHYPE_TOKEN.decimals,
+        balance: '0',
+        balanceRaw: '0',
+        logo: null, // Will be loaded asynchronously
+        transfers24h: DEFAULT_WHYPE_TOKEN.transfers24h,
+        isERC20Verified: DEFAULT_WHYPE_TOKEN.isERC20Verified,
+        totalTransfers: DEFAULT_WHYPE_TOKEN.totalTransfers,
+      };
+    }
 
     // Always add both HYPE and WHYPE
     tokens.push(hypeToken);
@@ -329,7 +399,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
         decimals: token.decimals,
         balance: '0',
         balanceRaw: '0',
-        logo: null, // Will be loaded asynchronously
+        logo: token.logo,
         transfers24h: token.transfers24h,
         isERC20Verified: token.isERC20Verified,
         totalTransfers: token.totalTransfers,
@@ -337,61 +407,56 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
 
     tokens.push(...otherTokens);
     return tokens;
-  }, [allTokens, selectedTokenAddress, excludeTokenAddress]);
+  }, [allTokens]);
 
-  // Load logos for default tokens asynchronously
-  useEffect(() => {
-    const loadDefaultTokenLogos = async () => {
-      const logoPromises = defaultTokens.map(async token => {
-        const logo = await getTokenLogo(
-          token.symbol,
-          'hyperevm',
-          token.address
-        );
-        return { address: token.address, logo };
-      });
-
-      const logoResults = await Promise.all(logoPromises);
-      const logoMap: { [address: string]: string | null } = {};
-
-      logoResults.forEach(({ address, logo }) => {
-        logoMap[address] = logo;
-      });
-
-      setDefaultTokenLogos(logoMap);
-    };
-
-    if (defaultTokens.length > 0) {
-      loadDefaultTokenLogos();
-    }
-  }, [defaultTokens]);
-
-  // Merge default tokens with user balances and logos
+  // Merge default tokens with user balances and logos, with owned tokens at the top
   const defaultTokensWithBalances = useMemo(() => {
-    return defaultTokens.map(token => {
-      const userBalance = userBalances.find(
-        balance => balance.token.toLowerCase() === token.address.toLowerCase()
-      );
+    // Add user owned tokens at the top of the list
 
-      const tokenWithLogo = {
-        ...token,
-        logo: defaultTokenLogos[token.address] || token.logo,
-      };
+    const tokensWithBalances = defaultTokens
+      .map(token => {
+        const userBalance = userBalances.find(
+          balance => balance.token.toLowerCase() === token.address.toLowerCase()
+        );
 
-      if (userBalance) {
-        const balanceNum =
-          parseFloat(userBalance.balance) / Math.pow(10, userBalance.decimals);
-        return {
-          ...tokenWithLogo,
-          balance: balanceNum.toString(),
-          balanceRaw: userBalance.balance,
-          decimals: userBalance.decimals, // Use accurate decimals from balance API
+        const tokenWithLogo = {
+          ...token,
+          logo: token.logo,
         };
-      }
 
-      return tokenWithLogo;
+        if (userBalance) {
+          const balanceNum =
+            parseFloat(userBalance.balance) /
+            Math.pow(10, userBalance.decimals);
+          return {
+            ...tokenWithLogo,
+            balance: balanceNum.toString(),
+            balanceRaw: userBalance.balance,
+            decimals: userBalance.decimals, // Use accurate decimals from balance API
+          };
+        }
+
+        return tokenWithLogo;
+      })
+      .filter(token => {
+        return !userTokens.some(
+          defaultToken =>
+            defaultToken.address.toLowerCase() ===
+              token.address.toLowerCase() ||
+            defaultToken.name.toLowerCase() === token.name.toLowerCase()
+        );
+      });
+
+    // Sort owned tokens by balance (highest first)
+    const sortedOwnedTokens = userTokens.sort((a, b) => {
+      const balanceA = parseFloat(a.balance) || 0;
+      const balanceB = parseFloat(b.balance) || 0;
+      return balanceB - balanceA;
     });
-  }, [defaultTokens, userBalances, defaultTokenLogos]);
+
+    // Return owned tokens first, then default tokens
+    return [...sortedOwnedTokens, ...tokensWithBalances];
+  }, [defaultTokens, userBalances, userTokens]);
 
   // Filter user tokens based on search and sort by balance
   const filteredUserTokens = useMemo(() => {
@@ -419,81 +484,6 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
       return a.symbol.localeCompare(b.symbol); // Alphabetical fallback
     });
   }, [userTokens, searchQuery]);
-
-  // Filter default tokens based on search and sort by activity/balance
-  const filteredDefaultTokens = useMemo(() => {
-    let filtered = defaultTokensWithBalances;
-
-    // Only filter locally if there's no search query (API handles search filtering)
-    // For user tokens, we still filter locally since they're not searched via API
-    if (searchQuery.trim() && !debouncedSearchQuery.trim()) {
-      // This handles the case where user is typing but debounced search hasn't triggered yet
-      const query = searchQuery.toLowerCase();
-      filtered = defaultTokensWithBalances.filter(
-        token =>
-          token.symbol.toLowerCase().includes(query) ||
-          token.name.toLowerCase().includes(query) ||
-          token.address.toLowerCase().includes(query)
-      );
-    }
-
-    // Sort by: 1) User balance (if any), 2) Activity (transfers24h), 3) Symbol
-    return filtered.sort((a, b) => {
-      const balanceA = parseFloat(a.balance) || 0;
-      const balanceB = parseFloat(b.balance) || 0;
-
-      // First priority: tokens user already owns
-      if (balanceA > 0 && balanceB === 0) return -1;
-      if (balanceB > 0 && balanceA === 0) return 1;
-
-      // If both have balances, sort by balance amount
-      if (balanceA > 0 && balanceB > 0) {
-        return balanceB - balanceA;
-      }
-
-      // If neither has balance, sort by activity (transfers24h)
-      const activityA = a.transfers24h || 0;
-      const activityB = b.transfers24h || 0;
-
-      if (activityA !== activityB) {
-        return activityB - activityA; // More active tokens first
-      }
-
-      return a.symbol.localeCompare(b.symbol); // Alphabetical fallback
-    });
-  }, [defaultTokensWithBalances, searchQuery, debouncedSearchQuery]);
-
-  // Auto-select WHYPE as default output token if no token is selected and mode is output
-  useEffect(() => {
-    if (
-      mode === 'output' &&
-      !tokenOut &&
-      !isLoadingMoreTokens &&
-      defaultTokens.length > 0
-    ) {
-      // Find WHYPE token in the list
-      const whypeToken = defaultTokens.find(
-        token => token.address === DEFAULT_WHYPE_TOKEN.address
-      );
-
-      if (whypeToken) {
-        const unifiedToken: UnifiedToken = {
-          contractAddress: whypeToken.address,
-          symbol: whypeToken.symbol,
-          name: whypeToken.name,
-          decimals: whypeToken.decimals,
-          balance: whypeToken.balanceRaw,
-          chain: 'hyperevm',
-          chainName: 'HyperEVM',
-          logo: whypeToken.logo || undefined,
-          balanceFormatted: parseFloat(whypeToken.balance) || 0,
-          usdValue: 0,
-        };
-
-        setTokenOut(unifiedToken);
-      }
-    }
-  }, [mode, tokenOut, isLoadingMoreTokens, defaultTokens, setTokenOut]);
 
   const handleTokenSelect = (token: Token) => {
     // Don't allow selection of disabled tokens
@@ -616,11 +606,12 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
     return false; // Don't disable other tokens
   };
 
-  const refreshBalances = async () => {
+  const refreshBalances = useCallback(async () => {
     if (!activeAccountAddress) return;
 
     setIsLoadingUserTokens(true);
     try {
+      // We keep using liquidswap for balances since GlueX doesn't provide balance endpoint\
       const response = await fetchBalances({
         wallet: activeAccountAddress,
         limit: 200,
@@ -700,43 +691,12 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
       setIsLoadingUserTokens(false);
     }
 
-    // Also refresh balances and reload tokens
+    // Also refresh balances
     refetchBalances();
 
-    // Reset and reload tokens
-    setAllTokens([]);
-    setCurrentLimit(20);
-    setHasMoreTokens(true);
-
-    try {
-      const response = await fetchTokens({
-        limit: 20,
-        metadata: true,
-        search: debouncedSearchQuery.trim() || undefined, // Use current search query
-      });
-
-      if (response.success) {
-        // Convert API tokens to local Token interface
-        const convertedTokens: Token[] = response.data.tokens.map(
-          (apiToken: ApiToken) => ({
-            address: apiToken.address,
-            symbol: apiToken.symbol,
-            name: apiToken.name,
-            decimals: apiToken.decimals,
-            balance: '0',
-            balanceRaw: '0',
-            transfers24h: apiToken.transfers24h,
-            isERC20Verified: apiToken.isERC20Verified,
-            totalTransfers: apiToken.totalTransfers,
-          })
-        );
-        setAllTokens(convertedTokens);
-        setHasMoreTokens(response.data.tokens.length === 20);
-      }
-    } catch (error) {
-      console.error('Error refreshing tokens:', error);
-    }
-  };
+    // Don't reload tokens automatically on refresh - let the existing useEffect handle it
+    // This prevents duplicate API calls when user manually refreshes
+  }, [activeAccountAddress, refetchBalances]);
 
   return (
     <div className="flex flex-col h-full max-h-[80vh] bg-[var(--background-color)] rounded-t-lg overflow-hidden">
@@ -956,7 +916,7 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[var(--primary-color-light)] mr-2"></div>
                   <span className="text-white/60">Loading tokens...</span>
                 </div>
-              ) : filteredDefaultTokens.length === 0 ? (
+              ) : defaultTokensWithBalances.length === 0 ? (
                 <div className="flex items-center justify-center py-8">
                   <span className="text-white/60">
                     {searchQuery
@@ -966,9 +926,11 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
                 </div>
               ) : (
                 <InfiniteScroll
-                  dataLength={filteredDefaultTokens.length}
+                  dataLength={defaultTokensWithBalances.length}
                   next={loadMoreTokens}
                   hasMore={hasMoreTokens}
+                  scrollableTarget="scrollable-container"
+                  scrollThreshold={0.99}
                   loader={
                     <div className="flex items-center justify-center py-4">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[var(--primary-color-light)] mr-2"></div>
@@ -986,10 +948,10 @@ const SwapTokenSelectorDrawer: React.FC<SwapTokenSelectorDrawerProps> = ({
                       </div>
                     )
                   }
-                  scrollableTarget="scrollable-container"
                   className=""
                 >
-                  {filteredDefaultTokens.map(token => {
+                  {/* put the default tokens with balances here */}
+                  {defaultTokensWithBalances.map(token => {
                     const tokenLogo = token.logo; // Logos are now loaded in defaultTokensWithBalances
                     const balance = getTokenBalance(token);
                     const hasBalance = parseFloat(token.balance) > 0;

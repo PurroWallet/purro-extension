@@ -53,9 +53,15 @@ export const COMMON_FUNCTION_ABIS = [
 
   // Common DEX aggregator functions
   'function swap(address caller, (address srcToken, address dstToken, address srcReceiver, address dstReceiver, uint256 amount, uint256 minReturnAmount, uint256 flags) desc, bytes permit, bytes data)',
-  'function unoswap(address srcToken, uint256 amount, uint256 minReturn, uint256[] calldata pools)',
+  'function uniswap(address srcToken, uint256 amount, uint256 minReturn, uint256[] calldata pools)',
 
   // Custom DEX aggregator functions
   // Swap struct: (address tokenIn, address tokenOut, uint8 routerIndex, uint24 fee, uint256 amountIn, bool stable)
   'function executeSwaps(address[] calldata tokens, uint256 amountIn, uint256 minAmountOut, uint256 expectedAmountOut, tuple[][] calldata hopSwaps, uint256 feeBps, address feeRecipient)',
+
+  // GlueX swap functions (method ID: 0x57eb8db4)
+  // Official GlueX Router swap function with accurate tuple structure
+  // desc: complete swap description with tokens, amounts, fees, surplus, and slippage shares
+  // interactions: array of contract calls to execute the multi-step swap
+  'function swap(address executor, (address inputToken, address outputToken, address inputReceiver, address outputReceiver, address partnerAddress, uint256 inputAmount, uint256 outputAmount, uint256 partnerFee, uint256 routingFee, uint256 partnerSurplusShare, uint256 protocolSurplusShare, uint256 partnerSlippageShare, uint256 protocolSlippageShare, uint256 effectiveOutputAmount, uint256 minOutputAmount, bool isPermit2, bytes32 uniquePID) desc, (address target, uint256 value, bytes callData)[] interactions)',
 ] as const;

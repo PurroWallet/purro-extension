@@ -322,6 +322,8 @@ export const useCachedInfiniteTransactions = (
               chainId
             );
 
+            console.log('cached', cached);
+
             if (cached && TransactionCacheLib.isCacheFresh(cached)) {
               results.push({
                 chainId,

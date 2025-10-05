@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useCachedInfiniteTransactions } from '@/client/hooks/use-transaction-cache';
 import type {
   MultiChainTransactionPage,
@@ -16,6 +16,7 @@ import {
   CHAIN_IDS,
   type ChainFilter,
 } from '@/client/constants/chain-filter-options';
+import { TokenMetadataCacheLib } from '@/client/lib/token-metadata-cache';
 
 export const useTransactionProcessing = (
   address: string | undefined,
@@ -38,10 +39,91 @@ export const useTransactionProcessing = (
       enableCache: true, // Enable caching for better performance
     });
 
-  // Token metadata cache to avoid repeated API calls
+  // Local in-memory cache for sync access during rendering (hydrated from persistent cache)
+  // This is for performance - we keep a sync copy to avoid async lookups during render
   const [tokenMetadataCache, setTokenMetadataCache] = useState<
     Map<string, TokenInfo>
   >(new Map());
+
+  // Hydrate local cache from persistent cache when transactions change
+  useEffect(() => {
+    const hydrateCache = async () => {
+      if (!data || !address) return;
+
+      const pages = 'pages' in data ? data.pages : data;
+      if (!Array.isArray(pages)) return;
+
+      // Collect all unique token addresses from all transactions
+      const tokenAddressesMap = new Map<string, number>(); // address -> chainId
+
+      pages.forEach((page: MultiChainTransactionPage) => {
+        page.results.forEach((result: ChainTransactionResult) => {
+          result.transactions.forEach(tx => {
+            const analysis = analyzeTransactionMethod(tx, address);
+            const isTokenTx =
+              analysis.isTokenTransfer || isLikelyTokenTransfer(tx);
+
+            if (isTokenTx) {
+              const extractedInfo = extractTokenInfoFromTransaction(tx);
+              const tokenAddress = extractedInfo.tokenAddress || tx.to;
+
+              if (tokenAddress) {
+                tokenAddressesMap.set(
+                  tokenAddress.toLowerCase(),
+                  result.chainId
+                );
+              }
+
+              if (extractedInfo.outputTokenAddress) {
+                tokenAddressesMap.set(
+                  extractedInfo.outputTokenAddress.toLowerCase(),
+                  result.chainId
+                );
+              }
+            }
+          });
+        });
+      });
+
+      // Fetch metadata from persistent cache for all addresses
+      const updates = new Map<string, TokenInfo>();
+
+      for (const [tokenAddress, chainId] of tokenAddressesMap) {
+        const cacheKey = `${chainId}-${tokenAddress}`;
+
+        // Skip if already in local cache
+        if (tokenMetadataCache.has(cacheKey)) continue;
+
+        const cachedMetadata = await TokenMetadataCacheLib.getCachedMetadata(
+          chainId.toString(),
+          tokenAddress
+        );
+
+        if (cachedMetadata) {
+          updates.set(cacheKey, {
+            address: tokenAddress,
+            name: cachedMetadata.name,
+            symbol: cachedMetadata.symbol,
+            decimals: cachedMetadata.decimals,
+            logo: cachedMetadata.logo,
+          });
+        }
+      }
+
+      // Update local cache if we found any cached metadata
+      if (updates.size > 0) {
+        setTokenMetadataCache(prev => {
+          const newCache = new Map(prev);
+          updates.forEach((value, key) => newCache.set(key, value));
+          return newCache;
+        });
+      }
+    };
+
+    hydrateCache();
+    // tokenMetadataCache is intentionally omitted to avoid infinite loops - it's updated by this effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, address]);
 
   // Process and filter transactions
   const processedTransactions = useMemo(() => {

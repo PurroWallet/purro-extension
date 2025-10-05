@@ -1,5 +1,5 @@
 import { UnifiedToken } from '@/client/components/token-list';
-import { SwapRouteV2Response } from '@/client/types/liquidswap-api';
+import { GluexQuoteResult } from '@/client/types/gluex-api';
 
 // Constants for HYPE/WHYPE detection
 export const HYPE_NATIVE_IDENTIFIERS = ['HYPE', 'native', 'NATIVE'];
@@ -112,7 +112,7 @@ export const validateSwap = (
   amountOut: string,
   hasInsufficientBalance: boolean,
   routeError: Error | null,
-  route: SwapRouteV2Response | null
+  route: GluexQuoteResult | null
 ): boolean => {
   if (isWrapScenario(tokenIn, tokenOut) || isUnwrapScenario(tokenIn, tokenOut)) {
     return !!(

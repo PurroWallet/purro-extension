@@ -5,14 +5,18 @@ import useSwapStore from '@/client/hooks/use-swap-store';
 import { useSwapRoute } from '@/client/hooks/use-swap-route';
 import { SwapTokenSelectorDrawer } from '@/client/components/drawers';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
-import { fetchHyperEvmTokenPrices } from '@/client/services/gecko-terminal-api';
-
+import GlueXLogo from '@/assets/logo/gluex.svg';
 import TokenLogo from '@/client/components/token-logo';
 import {
   getTokenBalance,
   getMaxSpendableBalance,
   estimateGasCost,
 } from '@/client/utils/swap-utils';
+import { useNativeBalance } from '@/client/hooks/use-native-balance';
+import useMainSwapStore from '@/client/hooks/use-main-swap-store';
+import { UnifiedToken } from '@/client/components/token-list';
+import { getTokenLogo } from '@/client/utils/icons';
+
 // Create a comprehensive formatBalance function for display
 const formatBalance = (balance: number): string => {
   if (balance === 0) return '0';
@@ -40,15 +44,6 @@ const formatPriceChange = (change: number): string => {
   return `${sign}${change.toFixed(2)}%`;
 };
 
-import useWalletStore from '@/client/hooks/use-wallet-store';
-import { useNativeBalance } from '@/client/hooks/use-native-balance';
-import useMainSwapStore from '@/client/hooks/use-main-swap-store';
-
-import { fetchBalances } from '@/client/services/liquidswap-api';
-import { Balance } from '@/client/types/liquidswap-api';
-import { UnifiedToken } from '@/client/components/token-list';
-import { getTokenLogo } from '@/client/utils/icons';
-
 // Default WHYPE token data
 const DEFAULT_WHYPE_TOKEN = {
   address: '0x5555555555555555555555555555555555555555',
@@ -61,18 +56,19 @@ const DEFAULT_WHYPE_TOKEN = {
   logo: 'https://coin-images.coingecko.com/coins/images/54469/large/_UP3jBsi_400x400.jpg?1739905920',
 };
 
-const WHYPE_TOKEN_ADDRESS = '0x5555555555555555555555555555555555555555';
+// Removed WHYPE_TOKEN_ADDRESS since we no longer fetch prices separately
 
 // Helper function to get token price with proper fallbacks
 const getTokenPrice = (
-  token: any,
+  token: { contractAddress?: string; usdPrice?: number } | null,
   tokenPrices: Record<string, { price: number; priceChange24h: number }>
 ): number => {
   if (!token) return 0;
 
   // For native HYPE tokens, use WHYPE price
   if (token.contractAddress === 'native') {
-    const whypePrice = tokenPrices[WHYPE_TOKEN_ADDRESS.toLowerCase()]?.price;
+    const whypeAddress = '0x5555555555555555555555555555555555555555';
+    const whypePrice = tokenPrices[whypeAddress.toLowerCase()]?.price;
     if (whypePrice) return whypePrice;
   }
 
@@ -95,32 +91,24 @@ const Swap = () => {
   const {
     tokenIn,
     tokenOut,
-    amountIn,
-    amountOut,
+    inputAmount,
+    outputAmount,
     isExactIn,
     slippage,
     route,
-    tokenPrices,
-    updateTokenPrice,
-    setAmountIn,
-    setAmountOut,
+    tokenPrices, // Keep for fallback when route data is not available
+    setInputAmount,
+    setOutputAmount,
     setIsExactIn,
     setTokenOut,
-    setTokenIn,
     switchTokens,
   } = useSwapStore();
 
-  const { getActiveAccountWalletObject } = useWalletStore();
   const { openDrawer } = useDrawerStore();
   const { clearSwapError } = useMainSwapStore();
-  const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
 
   // Get native token balances
-  const { nativeTokens, refetch } = useNativeBalance();
-
-  useEffect(() => {
-    refetch();
-  }, []);
+  const { nativeTokens } = useNativeBalance();
 
   // Initialize swap route hook with React Query
   const {
@@ -133,7 +121,7 @@ const Swap = () => {
   // Auto-set HYPE (native) as default output token if no token is selected
   useEffect(() => {
     const setDefaultNativeHype = async () => {
-      if (!tokenOut) {
+      if (!tokenOut && !tokenIn) {
         // Find native HYPE token from native balance hook
         const nativeHypeToken = nativeTokens.find(
           token => token.chain === 'hyperevm' && token.symbol === 'HYPE'
@@ -161,53 +149,10 @@ const Swap = () => {
     };
 
     setDefaultNativeHype();
-  }, [tokenOut, setTokenOut, nativeTokens]);
+  }, [tokenOut, setTokenOut, nativeTokens, tokenIn]);
 
-  // Fetch token prices when tokens are selected
-  useEffect(() => {
-    const fetchTokenPrices = async () => {
-      const addressesToFetch: string[] = [];
-
-      // Add tokenIn address if it exists and not native
-      if (tokenIn?.contractAddress && tokenIn.contractAddress !== 'native') {
-        addressesToFetch.push(tokenIn.contractAddress);
-      }
-
-      // Add tokenOut address if it exists and not native
-      if (tokenOut?.contractAddress && tokenOut.contractAddress !== 'native') {
-        addressesToFetch.push(tokenOut.contractAddress);
-      }
-
-      // Add WHYPE address for native HYPE tokens
-      if (
-        tokenIn?.contractAddress === 'native' ||
-        tokenOut?.contractAddress === 'native'
-      ) {
-        addressesToFetch.push(WHYPE_TOKEN_ADDRESS);
-      }
-
-      if (addressesToFetch.length > 0) {
-        try {
-          const response = await fetchHyperEvmTokenPrices(addressesToFetch);
-
-          if (response?.data?.attributes?.token_prices) {
-            Object.entries(response.data.attributes.token_prices).forEach(
-              ([address, priceStr]) => {
-                const price = parseFloat(priceStr as string);
-                if (!isNaN(price)) {
-                  updateTokenPrice(address.toLowerCase(), price, 0); // No price change data from this API
-                }
-              }
-            );
-          }
-        } catch (error) {
-          console.error('❌ Error fetching token prices:', error);
-        }
-      }
-    };
-
-    fetchTokenPrices();
-  }, [tokenIn?.contractAddress, tokenOut?.contractAddress, updateTokenPrice]);
+  // Note: Token prices are now provided by GlueX API response directly
+  // No need to fetch prices separately since route response includes USD values
 
   // Function to get updated native HYPE token data
   const getNativeHypeWithBalance = useCallback(
@@ -237,7 +182,7 @@ const Swap = () => {
   // Clear error when user changes input
   useEffect(() => {
     clearSwapError();
-  }, [amountIn, amountOut, tokenIn, tokenOut, clearSwapError]);
+  }, [inputAmount, outputAmount, tokenIn, tokenOut, clearSwapError]);
 
   // Get token balances using utility function (with updated native balance)
   const tokenInBalance = tokenIn
@@ -246,100 +191,6 @@ const Swap = () => {
   const tokenOutBalance = tokenOut
     ? getTokenBalance(getNativeHypeWithBalance(tokenOut))
     : 0;
-
-  useEffect(() => {
-    const fetchWHYPEBalance = async () => {
-      if (!activeAccountAddress) return;
-      if (
-        tokenOut?.contractAddress !== WHYPE_TOKEN_ADDRESS &&
-        tokenIn?.contractAddress !== WHYPE_TOKEN_ADDRESS
-      ) {
-        return;
-      }
-
-      try {
-        const balance = await fetchBalances({
-          wallet: activeAccountAddress || '',
-          limit: 1000,
-        });
-
-        // Check if balance response has the expected structure
-        if (!balance?.data?.tokens || !Array.isArray(balance.data.tokens)) {
-          return;
-        }
-
-        const whypeBalance = balance.data.tokens.find(
-          (token: Balance) => token.token === WHYPE_TOKEN_ADDRESS
-        );
-
-        if (whypeBalance && whypeBalance.balance !== undefined) {
-          // Create a temporary token object to use getTokenBalance function
-          const tempToken: UnifiedToken = {
-            balance: whypeBalance.balance,
-            decimals: 18, // WHYPE has 18 decimals
-            chain: 'hyperevm' as const,
-            chainName: 'HyperEVM',
-            symbol: 'WHYPE',
-            name: 'Wrapped HYPE',
-            logo: 'https://coin-images.coingecko.com/coins/images/54469/large/_UP3jBsi_400x400.jpg?1739905920',
-            balanceFormatted: 0,
-            usdValue: 0,
-            contractAddress: DEFAULT_WHYPE_TOKEN.address,
-          };
-          const formattedBalance = getTokenBalance(tempToken);
-
-          if (tokenOut?.contractAddress === WHYPE_TOKEN_ADDRESS) {
-            setTokenOut({
-              ...tokenOut,
-              balance: whypeBalance.balance,
-              balanceFormatted: formattedBalance,
-              usdValue: formattedBalance * (tokenOut?.usdPrice || 0),
-            });
-          } else if (tokenIn?.contractAddress === WHYPE_TOKEN_ADDRESS) {
-            setTokenIn({
-              ...tokenIn,
-              balance: whypeBalance.balance,
-              balanceFormatted: formattedBalance,
-              usdValue: formattedBalance * (tokenIn?.usdPrice || 0),
-            });
-          }
-        } else {
-          // Set default balance of 0 for WHYPE tokens if not found
-          if (tokenOut?.contractAddress === WHYPE_TOKEN_ADDRESS) {
-            setTokenOut({
-              ...tokenOut,
-              balance: '0',
-              balanceFormatted: 0,
-              usdValue: 0,
-            });
-          } else if (tokenIn?.contractAddress === WHYPE_TOKEN_ADDRESS) {
-            setTokenIn({
-              ...tokenIn,
-              balance: '0',
-              balanceFormatted: 0,
-              usdValue: 0,
-            });
-          }
-        }
-      } catch (error) {
-        console.error('❌ Error fetching WHYPE balance:', error);
-      }
-    };
-
-    // Only fetch if we have an active account and either token is WHYPE
-    if (
-      activeAccountAddress &&
-      (tokenOut?.contractAddress === WHYPE_TOKEN_ADDRESS ||
-        tokenIn?.contractAddress === WHYPE_TOKEN_ADDRESS)
-    ) {
-      fetchWHYPEBalance();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    activeAccountAddress,
-    tokenOut?.contractAddress,
-    tokenIn?.contractAddress,
-  ]);
 
   // Timer is now handled by header using timestamp approach - much simpler!
 
@@ -351,22 +202,26 @@ const Swap = () => {
     (value: string) => {
       if (!isUnwrapScenario() && !isWrapScenario()) return;
 
-      console.log('checkAndHandleAmountChangeWrapUnwrap', value);
-
       if (isExactIn) {
-        setAmountOut(value);
+        setOutputAmount(value);
       } else {
-        setAmountIn(value);
+        setInputAmount(value);
       }
     },
-    [isUnwrapScenario, isWrapScenario, isExactIn, setAmountIn, setAmountOut]
+    [
+      isUnwrapScenario,
+      isWrapScenario,
+      isExactIn,
+      setInputAmount,
+      setOutputAmount,
+    ]
   );
 
   // Handle input changes with decimal validation
-  const handleAmountInChange = (value: string) => {
+  const handleInputAmountChange = (value: string) => {
     // Allow empty input
     if (value === '') {
-      setAmountIn('');
+      setInputAmount('');
       setIsExactIn(true);
       return;
     }
@@ -384,14 +239,14 @@ const Swap = () => {
       if (decimal && decimal.length > maxDecimals) return;
     }
 
-    setAmountIn(value);
+    setInputAmount(value);
     setIsExactIn(true);
   };
 
-  const handleAmountOutChange = (value: string) => {
+  const handleOutputAmountChange = (value: string) => {
     // Allow empty input
     if (value === '') {
-      setAmountOut('');
+      setOutputAmount('');
       setIsExactIn(false);
       return;
     }
@@ -409,7 +264,7 @@ const Swap = () => {
       if (decimal && decimal.length > maxDecimals) return;
     }
 
-    setAmountOut(value);
+    setOutputAmount(value);
     setIsExactIn(false);
   };
 
@@ -426,7 +281,7 @@ const Swap = () => {
       );
 
       if (parseFloat(maxAmount) > 0) {
-        setAmountIn(maxAmount);
+        setInputAmount(maxAmount);
         setIsExactIn(true);
 
         checkAndHandleAmountChangeWrapUnwrap(maxAmount);
@@ -453,7 +308,7 @@ const Swap = () => {
         const formattedHalf = halfAmount
           .toFixed(maxDecimals)
           .replace(/\.?0+$/, '');
-        setAmountIn(formattedHalf);
+        setInputAmount(formattedHalf);
         setIsExactIn(true);
 
         checkAndHandleAmountChangeWrapUnwrap(formattedHalf);
@@ -562,8 +417,8 @@ const Swap = () => {
                 <Input
                   type="text"
                   placeholder="0"
-                  value={amountIn}
-                  onChange={e => handleAmountInChange(e.target.value)}
+                  value={inputAmount}
+                  onChange={e => handleInputAmountChange(e.target.value)}
                   className="flex-1 bg-transparent border-none text-4xl font-medium text-[var(--text-color)] placeholder-white/40 p-0 focus:ring-0 focus:outline-none"
                   disabled={isLoadingRoute && !isExactIn}
                 />
@@ -575,14 +430,16 @@ const Swap = () => {
               </div>
             </div>
             <div>
-              {tokenIn && amountIn && parseFloat(amountIn) > 0 ? (
+              {tokenIn && inputAmount && parseFloat(inputAmount) > 0 ? (
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-white/60">
                     ~ $
-                    {(
-                      (parseFloat(amountIn) || 0) *
-                      getTokenPrice(tokenIn, tokenPrices)
-                    ).toFixed(2)}
+                    {route?.inputAmountUSD
+                      ? parseFloat(route.inputAmountUSD).toFixed(2)
+                      : (
+                          (parseFloat(inputAmount) || 0) *
+                          getTokenPrice(tokenIn, tokenPrices)
+                        ).toFixed(2)}
                   </span>
                   {tokenIn.contractAddress &&
                     tokenPrices[tokenIn.contractAddress] &&
@@ -640,8 +497,8 @@ const Swap = () => {
                 <Input
                   type="text"
                   placeholder="0"
-                  value={amountOut}
-                  onChange={e => handleAmountOutChange(e.target.value)}
+                  value={outputAmount}
+                  onChange={e => handleOutputAmountChange(e.target.value)}
                   className="flex-1 bg-transparent border-none text-4xl font-medium text-[var(--text-color)] placeholder-white/40 p-0 focus:ring-0 focus:outline-none"
                   disabled={isLoadingRoute && !isExactIn}
                 />
@@ -653,14 +510,16 @@ const Swap = () => {
               </div>
             </div>
             <div>
-              {tokenOut && amountOut && parseFloat(amountOut) > 0 ? (
+              {tokenOut && outputAmount && parseFloat(outputAmount) > 0 ? (
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-white/60">
                     ~ $
-                    {(
-                      (parseFloat(amountOut) || 0) *
-                      getTokenPrice(tokenOut, tokenPrices)
-                    ).toFixed(2)}
+                    {route?.outputAmountUSD
+                      ? parseFloat(route.outputAmountUSD).toFixed(2)
+                      : (
+                          (parseFloat(outputAmount) || 0) *
+                          getTokenPrice(tokenOut, tokenPrices)
+                        ).toFixed(2)}
                   </span>
                   {tokenOut.contractAddress &&
                     tokenPrices[tokenOut.contractAddress] &&
@@ -686,6 +545,15 @@ const Swap = () => {
             </div>
           </div>
         </div>
+        <a
+          href="https://gluex.xyz"
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center gap-1 opacity-70 w-fit justify-end ms-auto"
+        >
+          <p className="text-[10px] text-white">Powered by</p>
+          <img src={GlueXLogo} alt="GlueX" className="w-12 h-3" />
+        </a>
 
         {/* Route Info - Hide for wrap/unwrap scenarios */}
         {!isWrapScenario() && !isUnwrapScenario() && (
@@ -693,18 +561,36 @@ const Swap = () => {
             {route && !isLoadingRoute && (
               <div className="bg-[var(--card-color)]/30 border border-[var(--primary-color)]/20 rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Price Impact</span>
-                  <span
-                    className={`text-sm font-medium ${
-                      parseFloat(route.averagePriceImpact) > 5
-                        ? 'text-[var(--button-color-destructive)]'
-                        : parseFloat(route.averagePriceImpact) > 1
-                          ? 'text-[var(--primary-color-light)]'
-                          : 'text-[var(--primary-color)]'
-                    }`}
-                  >
-                    {parseFloat(route.averagePriceImpact).toFixed(2)}%
-                  </span>
+                  <span className="text-sm text-white/60">Estimated Gas</span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-sm text-[var(--text-color)] font-medium">
+                      {(() => {
+                        // Use actual computationUnits from GlueX API
+                        const gasUnits = route.computationUnits || 150000;
+                        return `${gasUnits.toLocaleString()} units`;
+                      })()}
+                    </span>
+                    <span className="text-xs text-white/50">
+                      {(() => {
+                        // Calculate gas cost using actual computation units and HYPE price
+                        const gasUnits = route.computationUnits || 150000;
+                        // HyperEVM gas price is typically very low (0.01-0.1 gwei)
+                        // Using 0.05 gwei as a reasonable estimate (50000000 wei)
+                        const gasPriceWei = 50000000; // 0.05 gwei
+                        const gasCostWei = gasUnits * gasPriceWei;
+                        const gasInHype = gasCostWei / 1e18;
+                        
+                        // Get HYPE price from native tokens
+                        const hypeToken = nativeTokens.find(
+                          token => token.chain === 'hyperevm' && token.symbol === 'HYPE'
+                        );
+                        const hypePrice = hypeToken?.usdPrice || 50; // Default to $50 if not found
+                        const gasInUsd = gasInHype * hypePrice;
+                        
+                        return `~${gasInHype.toFixed(6)} HYPE (~$${gasInUsd.toFixed(3)})`;
+                      })()}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -716,26 +602,68 @@ const Swap = () => {
                   </span>
                 </div>
 
-                {route.execution?.details.hopSwaps &&
-                  route.execution.details.hopSwaps.length > 0 && (
+                {route.liquidityModules &&
+                  route.liquidityModules.length > 0 && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-white/60">Route</span>
+                      <span className="text-sm text-white/60">
+                        Liquidity Sources
+                      </span>
                       <div className="flex items-center gap-1">
                         <Zap className="size-3 text-[var(--primary-color-light)]" />
                         <span className="text-xs text-white/60">
-                          {route.execution.details.hopSwaps.length} hop
-                          {route.execution.details.hopSwaps.length > 1
-                            ? 's'
-                            : ''}
+                          {route.liquidityModules.length} source
+                          {route.liquidityModules.length > 1 ? 's' : ''}
                         </span>
                       </div>
                     </div>
                   )}
 
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/60">Fee</span>
-                  <div className="flex items-center gap-1">0.2%</div>
+                  <span className="text-sm text-white/60">Partner Fee</span>
+                  <div className="flex flex-col items-end">
+                    <span className="text-sm text-[var(--text-color)] font-medium">
+                      {(() => {
+                        if (!route.partnerFee || parseFloat(route.partnerFee) === 0) {
+                          return '0%';
+                        }
+                        const feePercentage = ((parseFloat(route.partnerFee) / parseFloat(route.outputAmount)) * 100).toFixed(2);
+                        return `${feePercentage}%`;
+                      })()}
+                    </span>
+                    {route.partnerFee && parseFloat(route.partnerFee) > 0 && (
+                      <span className="text-xs text-white/50">
+                        {(() => {
+                          // Convert fee from wei to token amount
+                          const feeTokenDecimals = 18; // WHYPE has 18 decimals
+                          const feeAmount = parseFloat(route.partnerFee) / Math.pow(10, feeTokenDecimals);
+                          
+                          // Get fee token symbol (usually WHYPE for output)
+                          const feeTokenSymbol = tokenOut?.symbol || 'WHYPE';
+                          
+                          // Calculate USD value using token price
+                          const tokenPrice = getTokenPrice(tokenOut, tokenPrices);
+                          const feeUsd = feeAmount * tokenPrice;
+                          
+                          return `~${feeAmount.toFixed(6)} ${feeTokenSymbol} (~$${feeUsd.toFixed(3)})`;
+                        })()}
+                      </span>
+                    )}
+                  </div>
                 </div>
+
+                {route.estimatedNetSurplus &&
+                  parseFloat(route.estimatedNetSurplus) > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-white/60">Net Surplus</span>
+                      <span className="text-sm text-[var(--primary-color)] font-medium">
+                        {(
+                          parseFloat(route.estimatedNetSurplus) /
+                          Math.pow(10, tokenOut?.decimals || 18)
+                        ).toFixed(6)}{' '}
+                        {tokenOut?.symbol}
+                      </span>
+                    </div>
+                  )}
               </div>
             )}
           </>

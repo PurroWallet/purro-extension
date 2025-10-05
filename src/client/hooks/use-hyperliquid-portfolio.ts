@@ -11,7 +11,7 @@ import useWalletStore from './use-wallet-store';
 import SpotDataIndexer from '../lib/spot-data-indexer';
 import { HyperliquidApiSpotAssetContext } from '../types/hyperliquid-api';
 import { FetchBalancesResponse } from '../types/liquidswap-api';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import useDevModeStore from './use-dev-mode';
 
 // Constants for easy customization
@@ -229,14 +229,9 @@ export const useHlPortfolioData = (
     tokenPricesData,
   };
 
-  useEffect(() => {
-    (async () => {
-      spotBalanceQuery.refetch();
-      spotContextQuery.refetch();
-      perpsBalanceQuery.refetch();
-      evmTokensQuery.refetch();
-    })();
-  }, [isDevMode]);
+  // Removed: This useEffect was causing excessive refetching and 429 rate limit errors
+  // The refetch methods are already available via the return object
+  // Dev mode changes should be handled by invalidating queries, not force refetching
 
   return {
     // Individual data

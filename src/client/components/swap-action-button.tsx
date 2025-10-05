@@ -66,8 +66,8 @@ const ConfirmSwapButton = () => {
   const {
     tokenIn,
     tokenOut,
-    amountIn,
-    amountOut,
+    inputAmount,
+    outputAmount,
     route,
     isSwapping,
     setIsSwapping,
@@ -81,8 +81,6 @@ const ConfirmSwapButton = () => {
     isUnwrapScenario,
   } = useSwapRoute();
   const activeAccountAddress = getActiveAccountWalletObject()?.eip155?.address;
-
-  console.log('isLoadingRoute', isLoadingRoute);
 
   // Function to get updated native HYPE token data
   const getNativeHypeWithBalance = useCallback(
@@ -116,33 +114,32 @@ const ConfirmSwapButton = () => {
 
   // Detect if current amount equals max spendable (gas already reserved)
   let gasAlreadyDeducted = false;
-  if (nativeTokenIn && amountIn) {
+  if (nativeTokenIn && inputAmount) {
     const maxAmt = getMaxSpendableBalance(nativeTokenIn, {
       reserveGas: true,
       customGasEstimate: gasEst,
     });
-    const a = parseFloat(amountIn);
+    const a = parseFloat(inputAmount);
     const m = parseFloat(maxAmt);
     if (isFinite(a) && isFinite(m) && m > 0) {
       gasAlreadyDeducted = Math.abs(a - m) < m * 0.000001; // 0.0001% tolerance
     }
-    
   }
 
   const balanceCheck = hasEnoughBalanceWithGas(
     nativeTokenIn,
-    amountIn,
+    inputAmount,
     gasEst,
     gasAlreadyDeducted
   );
-  
+
   const hasInsufficientBalance = !balanceCheck.hasEnough;
 
   const isValidSwap = validateSwap(
     tokenIn,
     tokenOut,
-    amountIn,
-    amountOut,
+    inputAmount,
+    outputAmount,
     hasInsufficientBalance,
     routeError,
     route
@@ -161,7 +158,7 @@ const ConfirmSwapButton = () => {
       const result = await executeSwapTransaction({
         tokenIn,
         tokenOut,
-        amountIn,
+        amountIn: inputAmount,
         route,
       });
 
@@ -179,8 +176,8 @@ const ConfirmSwapButton = () => {
             transactionHash={result.data}
             tokenIn={tokenIn}
             tokenOut={tokenOut}
-            amountIn={amountIn}
-            amountOut={amountOut}
+            amountIn={inputAmount}
+            amountOut={outputAmount}
             chainId={'0x3e7'}
           />
         );
@@ -229,7 +226,7 @@ const ConfirmSwapButton = () => {
           </div>
         ) : !tokenIn || !tokenOut ? (
           'Select tokens'
-        ) : !amountIn || !amountOut ? (
+        ) : !inputAmount || !outputAmount ? (
           'Enter amount'
         ) : hasInsufficientBalance ? (
           `Insufficient ${tokenIn.symbol} balance`

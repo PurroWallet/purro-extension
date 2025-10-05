@@ -3,6 +3,7 @@ import { fetchSingleTokenMetadataFast } from '@/client/services/alchemy-api';
 import { fetchTokens } from '@/client/services/liquidswap-api';
 import type { FetchTokenRequest } from '@/client/types/liquidswap-api';
 import type { TokenInfo } from '../types';
+import { TokenMetadataCacheLib } from '@/client/lib/token-metadata-cache';
 
 // Get Alchemy endpoint for chain
 export const getAlchemyEndpoint = (chainId: number): string => {
@@ -92,14 +93,15 @@ export const fetchHyperEvmTokenMetadata = async (
   }
 };
 
-// Main function to fetch token metadata based on chain
+// Main function to fetch token metadata based on chain with persistent caching
 export const fetchTokenMetadata = async (
   tokenAddress: string,
   chainId: number
 ): Promise<TokenInfo> => {
   try {
-    let result: TokenInfo;
-
+    const chainIdStr = chainId.toString();
+    
+    // Special case: native HYPE token
     if (tokenAddress === '0x000000000000000000000000000000000000dEaD') {
       return {
         address: tokenAddress,
@@ -110,6 +112,25 @@ export const fetchTokenMetadata = async (
       };
     }
 
+    // 1. Check persistent cache first
+    const cachedMetadata = await TokenMetadataCacheLib.getCachedMetadata(
+      chainIdStr,
+      tokenAddress
+    );
+
+    if (cachedMetadata) {
+      return {
+        address: tokenAddress,
+        name: cachedMetadata.name,
+        symbol: cachedMetadata.symbol,
+        decimals: cachedMetadata.decimals,
+        logo: cachedMetadata.logo,
+      };
+    }
+
+    // 2. If not in cache, fetch from API
+    let result: TokenInfo;
+
     // Check if it's HyperEVM
     if (chainId === 999) {
       // HyperEVM chain ID
@@ -118,6 +139,14 @@ export const fetchTokenMetadata = async (
       // Use Alchemy for other EVM chains
       result = await fetchEvmTokenMetadata(tokenAddress, chainId);
     }
+
+    // 3. Cache the result permanently
+    await TokenMetadataCacheLib.cacheMetadata(chainIdStr, tokenAddress, {
+      name: result.name,
+      symbol: result.symbol,
+      decimals: result.decimals,
+      logo: result.logo,
+    });
 
     return result;
   } catch (error) {
