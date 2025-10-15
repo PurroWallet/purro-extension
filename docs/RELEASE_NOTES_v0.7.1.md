@@ -46,6 +46,6 @@ pnpm run build
 ---
 
 **Version**: 0.7.1  
-**Release Date**: January 2025  
+**Release Date**: 15 Otc 2025  
 **Previous Version**: 0.7.0
 
