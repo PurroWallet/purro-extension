@@ -10,6 +10,7 @@ import {
   TimerReset,
   XIcon,
   SquareDashedBottomCode,
+  BookText,
 } from 'lucide-react';
 import {
   DialogContent,
@@ -31,6 +32,7 @@ interface MainSettingsProps {
   onResetWallet: () => void;
   onActiveNetwork: () => void;
   onDeveloperMode: () => void;
+  onAddressBook: () => void;
 }
 
 const MainSettings = ({
@@ -41,6 +43,7 @@ const MainSettings = ({
   onResetWallet,
   onActiveNetwork,
   onDeveloperMode,
+  onAddressBook,
 }: MainSettingsProps) => {
   const { closeDialog } = useDialogStore();
 
@@ -59,6 +62,12 @@ const MainSettings = ({
                 icon: Plug,
                 label: 'Connected DApps',
                 onClick: onConnectedDApps,
+                arrowLeft: true,
+              },
+              {
+                icon: BookText,
+                label: 'Address Book',
+                onClick: onAddressBook,
                 arrowLeft: true,
               },
               {

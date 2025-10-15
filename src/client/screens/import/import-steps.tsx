@@ -5,6 +5,7 @@ import { ChevronLeft } from 'lucide-react';
 import ImportSeedPhrase from '../onboarding/import-steps/import-seed-phrase';
 import ImportPrivateKey from '../onboarding/import-steps/import-private-key';
 import ImportWatchOnly from './import-watch-only';
+import ImportFromAddressBook from './import-from-address-book';
 import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
 import ChooseChain from '../onboarding/import-steps/choose-chain';
 import ImportFinish from './import-finish';
@@ -19,7 +20,12 @@ const ImportSteps = ({ onBack }: { onBack?: () => void }) => {
     'import-method'
   );
   const [importMethod, setImportMethod] = useState<
-    'seed' | 'privateKey' | 'create-account' | 'watchOnly' | null
+    | 'seed'
+    | 'privateKey'
+    | 'create-account'
+    | 'watchOnly'
+    | 'addressBook'
+    | null
   >(null);
 
   const { chain, setChain, reset } = useCreateWalletStore();
@@ -30,7 +36,8 @@ const ImportSteps = ({ onBack }: { onBack?: () => void }) => {
         importMethod === 'privateKey' ||
         importMethod === 'seed' ||
         importMethod === 'create-account' ||
-        importMethod === 'watchOnly'
+        importMethod === 'watchOnly' ||
+        importMethod === 'addressBook'
       ) {
         setStep('import-method');
         setImportMethod(null);
@@ -74,6 +81,10 @@ const ImportSteps = ({ onBack }: { onBack?: () => void }) => {
               setImportMethod('watchOnly');
               setStep('import');
             }}
+            onAddressBook={() => {
+              setImportMethod('addressBook');
+              setStep('import');
+            }}
           />
         )}
         {step === 'import' && importMethod === 'create-account' && (
@@ -107,6 +118,13 @@ const ImportSteps = ({ onBack }: { onBack?: () => void }) => {
         )}
         {step === 'import' && importMethod === 'watchOnly' && chain != null && (
           <ImportWatchOnly
+            onNext={() => {
+              setStep('finish');
+            }}
+          />
+        )}
+        {step === 'import' && importMethod === 'addressBook' && (
+          <ImportFromAddressBook
             onNext={() => {
               setStep('finish');
             }}

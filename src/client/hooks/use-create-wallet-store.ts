@@ -6,6 +6,7 @@ export type ImportType =
   | 'privateKey'
   | 'create-account'
   | 'watchOnly'
+  | 'addressBook'
   | null;
 
 export interface CreateWalletState {

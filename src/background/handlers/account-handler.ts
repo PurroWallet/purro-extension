@@ -549,9 +549,12 @@ export const accountHandler = {
     }
 
     try {
-      // Parallel removal operations
+      // IMPORTANT: Remove from account list first to properly set new active account
+      // This must happen before removing the account data to avoid race conditions
+      await storageHandler.removeAccountFromList(accountId);
+
+      // Now remove account data in parallel
       const removePromises = [
-        storageHandler.removeAccountFromList(accountId),
         storageHandler.removeAccountById(accountId),
         storageHandler.removeWallet(accountId),
       ];

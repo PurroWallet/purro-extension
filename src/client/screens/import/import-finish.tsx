@@ -101,6 +101,11 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
           }
 
           case 'watchOnly':
+            // Watch-only wallet was already imported in the previous step
+            break;
+
+          case 'addressBook':
+            // Watch-only wallet from address book was already imported in the previous step
             break;
 
           default:
@@ -166,6 +171,12 @@ const ImportFinish = ({ onBack }: { onBack: () => void }) => {
         return {
           title: 'Watch-Only Wallet Imported!',
           description: 'Your watch-only wallet has been imported successfully.',
+        };
+      case 'addressBook':
+        return {
+          title: 'Contact Imported!',
+          description:
+            'Your contact has been imported as watch-only wallet successfully.',
         };
       default:
         return {

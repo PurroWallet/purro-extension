@@ -7,6 +7,7 @@ import DeleteSeedPhrase from './delete-seedphrare';
 import ResetWallet from './reset-wallet';
 import ActiveNetwork from './active-network';
 import DeveloperMode from './developer-mode';
+import { AddressBook } from '../address-book';
 
 const SettingsDialog = () => {
   const [screen, setScreen] = useState<
@@ -19,6 +20,7 @@ const SettingsDialog = () => {
     | 'active-network'
     | 'token-cache-management'
     | 'developer-mode'
+    | 'address-book'
   >('main');
 
   return (
@@ -32,6 +34,7 @@ const SettingsDialog = () => {
           onResetWallet={() => setScreen('reset-wallet')}
           onActiveNetwork={() => setScreen('active-network')}
           onDeveloperMode={() => setScreen('developer-mode')}
+          onAddressBook={() => setScreen('address-book')}
         />
       )}
       {screen === 'connected-dapps' && (
@@ -54,6 +57,9 @@ const SettingsDialog = () => {
       )}
       {screen === 'developer-mode' && (
         <DeveloperMode onBack={() => setScreen('main')} />
+      )}
+      {screen === 'address-book' && (
+        <AddressBook onBack={() => setScreen('main')} />
       )}
     </>
   );
