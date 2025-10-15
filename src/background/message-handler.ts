@@ -6,6 +6,7 @@ import { storageHandler } from './handlers/storage-handler';
 import { evmHandler } from './handlers/evm-handler';
 import { evmRpcHandler } from './handlers/evm-rpc-handler';
 import { hyperliquidHandler } from './handlers/hyperliquid-handler';
+import { addressBookHandler } from './handlers/address-book-handler';
 
 export class MessageHandler {
   async handleMessage(
@@ -236,6 +237,32 @@ export class MessageHandler {
           break;
         case 'HYPERLIQUID_SEND_TOKEN':
           result = await hyperliquidHandler.sendToken(data);
+          break;
+
+        // Address Book
+        case 'GET_ADDRESS_BOOK':
+          result = await addressBookHandler.getAddressBook();
+          break;
+        case 'GET_CONTACT':
+          result = await addressBookHandler.getContact(data.contactId);
+          break;
+        case 'ADD_CONTACT':
+          result = await addressBookHandler.addContact(data);
+          break;
+        case 'UPDATE_CONTACT':
+          result = await addressBookHandler.updateContact(data);
+          break;
+        case 'DELETE_CONTACT':
+          result = await addressBookHandler.deleteContact(data.contactId);
+          break;
+        case 'SEARCH_CONTACTS':
+          result = await addressBookHandler.searchContacts(data.query);
+          break;
+        case 'GET_CONTACTS_BY_CHAIN':
+          result = await addressBookHandler.getContactsByChain(data.chain);
+          break;
+        case 'REORDER_CONTACTS':
+          result = await addressBookHandler.reorderContacts(data.order);
           break;
 
         default:

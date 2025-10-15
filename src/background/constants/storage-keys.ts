@@ -18,4 +18,7 @@ export const STORAGE_KEYS = {
 
   // HL Name Public API Key
   HL_NAME_API_KEY: 'CPEPKMI-HUSUX6I-SE2DHEA-YYWFG5Y',
+
+  // Address Book
+  ADDRESS_BOOK: 'purro:address-book',
 };

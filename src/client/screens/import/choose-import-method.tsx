@@ -1,5 +1,12 @@
 import { Button } from '@/client/components/ui';
-import { ChevronRight, ListOrdered, KeyRound, Plus, Eye } from 'lucide-react';
+import {
+  ChevronRight,
+  ListOrdered,
+  KeyRound,
+  Plus,
+  Eye,
+  BookText,
+} from 'lucide-react';
 import useCreateWalletStore from '@/client/hooks/use-create-wallet-store';
 
 const ChooseImportMethod = ({
@@ -7,11 +14,13 @@ const ChooseImportMethod = ({
   onSeedPhrase,
   onPrivateKey,
   onWatchOnly,
+  onAddressBook,
 }: {
   onCreateAccount: () => void;
   onSeedPhrase: () => void;
   onPrivateKey: () => void;
   onWatchOnly: () => void;
+  onAddressBook: () => void;
 }) => {
   const { setImportType } = useCreateWalletStore();
 
@@ -33,6 +42,11 @@ const ChooseImportMethod = ({
   const handleWatchOnly = () => {
     setImportType('watchOnly');
     onWatchOnly();
+  };
+
+  const handleAddressBook = () => {
+    setImportType('addressBook');
+    onAddressBook();
   };
 
   return (
@@ -80,6 +94,16 @@ const ChooseImportMethod = ({
           <div className="flex items-center gap-3">
             <Eye className="size-6" />
             Import Watch-Only Wallet
+          </div>
+          <ChevronRight className="size-5" />
+        </Button>
+        <Button
+          onClick={handleAddressBook}
+          className="w-full bg-[var(--card-color)] text-[var(--primary-color-light)] hover:bg-[var(--card-color)]/80 justify-between py-4"
+        >
+          <div className="flex items-center gap-3">
+            <BookText className="size-6" />
+            Import from Address Book
           </div>
           <ChevronRight className="size-5" />
         </Button>

@@ -7,26 +7,22 @@ import {
   Input,
 } from '@/client/components/ui';
 import useSendTokenStore from '@/client/hooks/use-send-token-store';
-import useWalletStore from '@/client/hooks/use-wallet-store';
 import { formatCurrency } from '@/client/utils/formatters';
 import {
   Send,
   CircleAlert,
   CircleCheck,
   Loader2,
-  User,
+  BookText,
   ArrowUpDown,
   XIcon,
 } from 'lucide-react';
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { createPortal } from 'react-dom';
-import { truncateAddress } from '@/client/utils/formatters';
-import { AccountIcon } from '@/client/components/account';
 import useDebounce from '@/client/hooks/use-debounce';
 import { getAddressByDomain } from '@/client/services/hyperliquid-name-api';
 import { getNetworkIcon } from '@/utils/network-icons';
 import TokenLogo from '@/client/components/token-logo';
+import { AddressSelectorDropdown } from '../address-selector-dropdown';
 
 type InputMode = 'token' | 'usd';
 
@@ -94,11 +90,9 @@ const formatConversionNumber = (
 const SendToken = () => {
   const { token, setStep, recipient, setRecipient, amount, setAmount } =
     useSendTokenStore();
-  const { accounts, wallets } = useWalletStore();
   const [inputMode, setInputMode] = useState<InputMode>('token');
   const [isAddressDropdownOpen, setIsAddressDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isValidDomain, setIsValidDomain] = useState<boolean>(false);
   const debouncedRecipientAddress = useDebounce(recipient, 500);
@@ -182,8 +176,8 @@ const SendToken = () => {
   useEffect(() => {
     if (isAddressDropdownOpen && buttonRef.current) {
       const buttonRect = buttonRef.current.getBoundingClientRect();
-      const dropdownWidth = 320;
-      const dropdownHeight = Math.min(accounts.length * 60 + 40, 240);
+      const dropdownWidth = 340;
+      const dropdownHeight = 400;
 
       let top = buttonRect.bottom + 8;
       let left = buttonRect.left;
@@ -200,26 +194,6 @@ const SendToken = () => {
 
       setDropdownPosition({ top, left });
     }
-  }, [isAddressDropdownOpen, accounts.length]);
-
-  // Handle click outside to close dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        isAddressDropdownOpen &&
-        dropdownRef.current &&
-        buttonRef.current &&
-        !dropdownRef.current.contains(event.target as Node) &&
-        !buttonRef.current.contains(event.target as Node)
-      ) {
-        setIsAddressDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
   }, [isAddressDropdownOpen]);
 
   const handleAddressSelect = (address: string) => {
@@ -310,66 +284,19 @@ const SendToken = () => {
                     setIsAddressDropdownOpen(!isAddressDropdownOpen)
                   }
                   className="absolute right-2 top-1/2 -translate-y-1/2 size-8 rounded-full hover:bg-white/10 transition-colors flex items-center justify-center cursor-pointer"
+                  title="Select from address book"
                 >
-                  <User className="size-4 text-white" />
+                  <BookText className="size-4 text-white" />
                 </button>
 
-                {/* Address Dropdown */}
-                {isAddressDropdownOpen &&
-                  createPortal(
-                    <AnimatePresence>
-                      <motion.div
-                        ref={dropdownRef}
-                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                        transition={{ duration: 0.15, ease: 'easeOut' }}
-                        className="fixed bg-[var(--background-color)] border border-white/10 rounded-lg shadow-lg max-h-60 overflow-y-auto min-w-[320px] w-max z-[9999] flex flex-col"
-                        style={{
-                          top: `${dropdownPosition.top}px`,
-                          left: `${dropdownPosition.left}px`,
-                        }}
-                      >
-                        <p className="p-3 text-sm font-medium text-[var(--text-color)] border-b border-white/10">
-                          Select Address
-                        </p>
-                        <div className="flex-1 overflow-y-auto">
-                          {accounts.map(account => {
-                            const wallet = wallets[account.id];
-                            return (
-                              <button
-                                key={account.id}
-                                onClick={() =>
-                                  handleAddressSelect(
-                                    wallet?.eip155?.address || ''
-                                  )
-                                }
-                                className="w-full flex items-center gap-3 p-3 hover:bg-white/5 transition-colors last:rounded-b-lg whitespace-nowrap cursor-pointer"
-                              >
-                                <div className="size-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                                  <AccountIcon
-                                    icon={account.icon}
-                                    alt="Account"
-                                  />
-                                </div>
-                                <div className="flex-1 text-left">
-                                  <p className="text-sm font-medium text-[var(--text-color)]">
-                                    {account.name}
-                                  </p>
-                                  <p className="text-xs text-[var(--text-color)]/60">
-                                    {truncateAddress(
-                                      wallet?.eip155?.address || ''
-                                    )}
-                                  </p>
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </motion.div>
-                    </AnimatePresence>,
-                    document.body
-                  )}
+                {/* Address Selector Dropdown */}
+                <AddressSelectorDropdown
+                  isOpen={isAddressDropdownOpen}
+                  onClose={() => setIsAddressDropdownOpen(false)}
+                  onSelect={handleAddressSelect}
+                  position={dropdownPosition}
+                  chain="eip155"
+                />
               </div>
 
               {/* Validation Messages */}
