@@ -213,6 +213,8 @@ export const getTokenExplorerUrl = (
 
   // For ERC20 tokens, return normal token contract URLs
   switch (chain) {
+    case 'hyperliquid':
+      return `https://app.hyperliquid.xyz/explorer/token/${contractAddress}`;
     case 'hyperevm':
       return `https://hyperevmscan.io/token/${contractAddress}`;
     case 'ethereum':
