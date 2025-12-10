@@ -7,15 +7,17 @@ import {
   DialogWrapper,
 } from '@/client/components/ui';
 import { Menu } from '@/client/components/ui/menu';
-import { XIcon, DollarSign, BarChart3, Code, ExternalLink } from 'lucide-react';
+import { XIcon, DollarSign, BarChart3, Code } from 'lucide-react';
 import { formatCurrency, truncateAddress } from '@/client/utils/formatters';
 import { getNetworkIcon } from '@/utils/network-icons';
 import {
   formatTokenNumber,
+  getHyperliquidTradeLink,
   getTokenExplorerUrl,
 } from '@/client/hooks/use-detailed-token-info';
 import { UserBalance } from '@/client/types/hyperliquid-api';
 import { getSpotTokenImage } from '@/client/utils/icons';
+import { hyperliquidLogo } from '@/assets/logo';
 
 interface TokenInfoSpotDialogProps {
   token: UserBalance;
@@ -106,19 +108,38 @@ const TokenInfoSpotDialog: React.FC<TokenInfoSpotDialogProps> = ({
               },
               {
                 icon: Code,
+                label: 'Token ID',
+                description:
+                  truncateAddress(token.tokenInfo?.tokenId || '') || 'N/A',
+                onClick: () => {
+                  window.open(
+                    getTokenExplorerUrl(
+                      'hyperliquid',
+                      token.tokenInfo?.tokenId || '',
+                      false
+                    )!,
+                    '_blank'
+                  );
+                },
+              },
+              {
+                icon: Code,
                 label: 'Evm Contract',
+                isHidden: !token.tokenInfo?.evmContract?.address,
                 description:
                   truncateAddress(
                     token.tokenInfo?.evmContract?.address || ''
                   ) || 'N/A',
-              },
-              {
-                icon: Code,
-                label: 'Token ID',
-                description:
-                  truncateAddress(
-                    token.tokenInfo?.tokenId || ''
-                  ) || 'N/A',
+                onClick: () => {
+                  window.open(
+                    getTokenExplorerUrl(
+                      'hyperevm',
+                      token.tokenInfo?.evmContract?.address || '',
+                      false
+                    )!,
+                    '_blank'
+                  );
+                },
               },
             ]}
           />
@@ -131,25 +152,23 @@ const TokenInfoSpotDialog: React.FC<TokenInfoSpotDialogProps> = ({
           'hyperliquid',
           token.tokenInfo?.tokenId || '',
           false
-        ) && (
-          <Button
-            variant="secondary"
-            className="w-full flex items-center gap-2"
-            onClick={() =>
-              window.open(
-                getTokenExplorerUrl(
-                  'hyperliquid',
-                  token.tokenInfo?.tokenId || '',
-                  false
-                )!,
-                '_blank'
-              )
-            }
-          >
-            <ExternalLink className="size-4" />
-            View on Explorer
-          </Button>
-        )}
+        ) &&
+          token.tokenInfo?.tokenId &&
+          token.tokenInfo?.tokenId !== '0x6d1e7cde53ba9467b783cb7c530ce054' && (
+            <Button
+              variant="secondary"
+              className="w-full flex items-center gap-2"
+              onClick={() =>
+                window.open(
+                  getHyperliquidTradeLink(token.tokenInfo?.tokenId || '')!,
+                  '_blank'
+                )
+              }
+            >
+              <img src={hyperliquidLogo} alt="Hyperliquid" className="size-4" />
+              Trade on Hyperliquid
+            </Button>
+          )}
       </DialogFooter>
     </DialogWrapper>
   );

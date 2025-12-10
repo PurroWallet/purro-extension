@@ -243,3 +243,9 @@ export const getGeckoTerminalUrl = (
   const network = networkMap[chain] || 'hyperevm';
   return `https://www.geckoterminal.com/${network}/tokens/${contractAddress}`;
 };
+
+export const getHyperliquidTradeLink = (
+  tokenId: string
+): string => {
+  return `https://app.hyperliquid.xyz/trade/${tokenId}`;
+};
