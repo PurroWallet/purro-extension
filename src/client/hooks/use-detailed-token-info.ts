@@ -213,6 +213,8 @@ export const getTokenExplorerUrl = (
 
   // For ERC20 tokens, return normal token contract URLs
   switch (chain) {
+    case 'hyperliquid':
+      return `https://app.hyperliquid.xyz/explorer/token/${contractAddress}`;
     case 'hyperevm':
       return `https://hyperevmscan.io/token/${contractAddress}`;
     case 'ethereum':
@@ -240,4 +242,10 @@ export const getGeckoTerminalUrl = (
 
   const network = networkMap[chain] || 'hyperevm';
   return `https://www.geckoterminal.com/${network}/tokens/${contractAddress}`;
+};
+
+export const getHyperliquidTradeLink = (
+  tokenId: string
+): string => {
+  return `https://app.hyperliquid.xyz/trade/${tokenId}`;
 };

@@ -5,7 +5,10 @@ export interface HyperliquidToken {
   index: number;
   tokenId: string;
   isCanonical: boolean;
-  evmContract: string | null;
+  evmContract: {
+    address: string;
+    evm_extra_wei_decimals: number;
+  } | null;
   fullName: string | null;
 }
 

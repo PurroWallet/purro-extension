@@ -1,4 +1,5 @@
 export type ChainType =
+  | 'hyperliquid'
   | 'hyperevm'
   | 'ethereum'
   | 'base'

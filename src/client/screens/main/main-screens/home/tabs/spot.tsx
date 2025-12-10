@@ -1,5 +1,8 @@
 import { useMemo } from 'react';
-import { HyperliquidApiSpotAssetContext } from '@/client/types/hyperliquid-api';
+import {
+  HyperliquidApiSpotAssetContext,
+  UserBalance,
+} from '@/client/types/hyperliquid-api';
 import { useHlPortfolioData } from '@/client/hooks/use-hyperliquid-portfolio';
 import { formatCurrency } from '@/client/utils/formatters';
 import HyperLiquidSpotDataIndexer from '@/client/lib/spot-data-indexer';
@@ -11,9 +14,12 @@ import { Button } from '@/client/components/ui';
 import { DepositHyperDexDrawer } from '@/client/components/drawers';
 import useDrawerStore from '@/client/hooks/use-drawer-store';
 import useWalletStore from '@/client/hooks/use-wallet-store';
+import TokenInfoSpotDialog from '@/client/components/dialogs/token-infor-spot-dialog';
+import useDialogStore from '@/client/hooks/use-dialog-store';
 
 const WalletTabsSpot = () => {
   const { isHyperliquidDexEnabled } = useNetworkSettingsStore();
+  const { openDialog, closeDialog } = useDialogStore();
   const { openDrawer } = useDrawerStore();
   const { activeAccount } = useWalletStore();
   const isWatchOnly = activeAccount?.source === 'watchOnly';
@@ -63,6 +69,12 @@ const WalletTabsSpot = () => {
     if (!isHyperliquidDexEnabled || !userBalances.length) return 0;
     return indexer?.getPortfolioValue(userBalances) || 0;
   }, [isHyperliquidDexEnabled, userBalances, indexer]);
+
+  const handleTokenClick = (token: UserBalance) => {
+    openDialog(
+      <TokenInfoSpotDialog token={token} onClose={() => closeDialog()} />
+    );
+  };
 
   // Handle loading state
   if (isSpotLoading) {
@@ -134,6 +146,7 @@ const WalletTabsSpot = () => {
                 symbol={balance.coin}
                 balance={balance.total}
                 value={balance.marketValue || 0}
+                onClick={() => handleTokenClick(balance)}
               />
             ))}
           </div>
@@ -166,7 +179,7 @@ export const SpotItem = ({
 }: SpotItemProps) => {
   return (
     <div
-      className={`bg-[var(--card-color)] rounded-lg p-3 flex items-center gap-3 ${className}`}
+      className={`bg-[var(--card-color)] rounded-lg p-3 flex items-center gap-3 ${className} cursor-pointer hover:bg-[var(--card-color)]/80 transition-colors`}
       onClick={onClick}
     >
       <div className="relative flex-shrink-0">
